@@ -373,10 +373,17 @@ struct
     handle RhcOptions.Usage msg => (eprint ("rhc: " ^ msg ^ "\n" ^ "rhc --help says what rhc takes\n"); 1)
          | Failed => 1
 
-  (* --share DIR, where rhc's library is, which the wrapper bin/rhc gives *)
+  (* the snapshot (D45's A, ruling 66): the store of the library compiled
+     once, which the wrapper bin/rhc names, a layer of every compile in
+     units after those --layer names *)
+  val snapshot : string option ref = ref NONE
+
+  (* --share DIR, where rhc's library is, and --snapshot DIR, which the
+     wrapper bin/rhc gives *)
   fun share args =
     case args of
       "--share" :: d :: rest => (RhcLibrary.share := SOME d; share rest)
+    | "--snapshot" :: d :: rest => (snapshot := SOME d; share rest)
     | ["--share"] => raise RhcOptions.Usage "--share takes a directory"
     | a :: rest => a :: share rest
     | [] => []
@@ -476,7 +483,8 @@ struct
       val out = case #output opts of SOME f => f | NONE => raise RhcOptions.Usage "--units compiles: give -o FILE"
       val () = Pass.startup ()
       val status =
-        RhcDriver.compile {roots = roots, out = out, store = #store opts, layers = #layers opts, show = #showUnits opts,
+        RhcDriver.compile {roots = roots, out = out, store = #store opts,
+                           layers = #layers opts @ (case !snapshot of SOME d => [d] | NONE => []), show = #showUnits opts,
                            strings = #strings opts, fault = #fault opts, compile = fn (p, f) => compile (opts, p, f)}
         handle RhcDriver.Failed msg => (eprint ("rhc: error: " ^ msg ^ "\n"); 1)
     in Pass.finish (); status end

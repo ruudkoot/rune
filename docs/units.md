@@ -1164,8 +1164,11 @@ hello, in VM instructions: whole 145M; through the units, with nothing
 edited about 9M (the graph read 1M, the library taken 4.5M, Main taken
 2.3M, the link taken), with hello edited about 41M (Main compiled 20M, the
 link's reach 6M and its compile 9M), the program byte for byte the whole
-one. Against a snapshot, a store another compile made given as `--layer`
-with a fresh overlay, hello takes the library's unit from the layer
+one. bin/rhc names a snapshot of its own (D45's A, ruling 66):
+`bin/rhc.layer`, the library compiled once at make time from a Main that
+imports every module of it, at `RUNE_LINT=2`, which a compile in units reads
+after any `--layer` (`--snapshot`, which the wrapper gives). Against a
+snapshot, with a fresh overlay, hello takes the library's unit from the layer
 unwritten and costs about 44M (the graph read 3M, its headers the layer's),
 then 9M again. A clause program's compile (13 of `tests/hs/lang`'s run
 programs of one module, an even sample; a snapshot of every module of the
