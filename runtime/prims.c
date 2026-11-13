@@ -2000,16 +2000,19 @@ static int p_file_open(VM *vm) {
     Value r = mk_some(vm, mk_int(h));   /* may collect; the path string is no longer needed */
     return ret(vm, 2, r);
 }
+/* false where fclose fails (the last of the buffer not written: a full
+   device), io_errno saying why; the handle is closed either way */
 static int p_file_close(VM *vm) {
     check_tag(vm, ARG(0), T_INT, "file_close");
     int64_t i = val_imm(ARG(0));
+    int ok = 1;
     if (i >= 3 && (uint64_t)i < vm->nfiles && vm->files[i]) {
-        fclose(vm->files[i]);
+        if (fclose(vm->files[i]) != 0) { vm->io_errno = errno; ok = 0; }
         vm->files[i] = NULL;
         free(vm->file_paths[i]);
         vm->file_paths[i] = NULL;
     }
-    return ret(vm, 1, mk_unit());
+    return ret(vm, 1, mk_bool(ok));
 }
 static int p_file_write(VM *vm) {
     FILE *f = file_of(vm, ARG(1), "file_write");
@@ -2020,10 +2023,12 @@ static int p_file_write(VM *vm) {
     if (fwrite(obj_bytes(s), 1, obj_len(s), f) != obj_len(s)) { vm->io_errno = errno; return ret(vm, 2, mk_bool(0)); }
     return ret(vm, 2, mk_bool(1));
 }
+/* false where fflush fails (a full device), io_errno saying why; true for
+   a handle that is closed or none, which holds nothing */
 static int p_file_flush(VM *vm) {
     FILE *f = file_of(vm, ARG(0), "file_flush");
-    if (f) fflush(f);
-    return ret(vm, 1, mk_unit());
+    if (f && fflush(f) != 0) { vm->io_errno = errno; return ret(vm, 1, mk_bool(0)); }
+    return ret(vm, 1, mk_bool(1));
 }
 static int p_file_read_line(VM *vm) {
     FILE *f = file_of(vm, ARG(0), "file_read_line");

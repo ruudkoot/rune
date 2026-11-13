@@ -841,9 +841,12 @@ instances), changed exactly by the lines of `tests/hs/library/overlay.names`,
 each with its entry; `compile`, `bin/rhc --whole` compiling
 `tests/hs/library/All20.hs`, a program over a name of each of the 20
 modules, which the VM runs to `All20.expected` (M18: the 20 modules compile);
-and `exitzero`, `exitWith (ExitFailure 0)` an IOError that `isIllegalOperation`
+`exitzero`, `exitWith (ExitFailure 0)` an IOError that `isIllegalOperation`
 holds of (ruling 57), caught by `ExitZeroCaught` and uncaught by
-`ExitZeroUncaught`, status 1, on Core's interpreter and on the VM.
+`ExitZeroUncaught`, status 1, on Core's interpreter and on the VM; and
+`devicefull`, `DeviceFull.hs` on a full device (`/dev/full`): `hFlush`, `hClose`,
+`writeFile`, `appendFile` and an unbuffered `hPutStr` raise `isFullError`
+(ruling 62), on both.
 
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants
