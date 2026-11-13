@@ -563,7 +563,11 @@ jobs. Rune's is `Lang.rune`; rhc's is `HsLang.rhc` (`tests/runner/hslang.sml`).
 * **The oracle `jit`** (`tests/runner/oracles.sml`) takes the compiler and
   the path a program's siblings are named from (`bin/rune-test jit-one-with
   COMPILER BASE SOURCE`), and runs rhc's programs nightly, interpreted and in
-  every mode of the JIT (`hs/jit/NAME`), beside D56's three ways in `check`.
+  every mode of the JIT (`hs/jit/NAME`), beside D56's three ways in `check`:
+  the same output, instruction counts and standard error, but for a program
+  whose path depends on its run, which says so on a line `-- jit: output only:
+  REASON` and has its output alone compared (`jit-one-output`; the global
+  generator's program, seeded from the clock).
 
 **Round trips** (the roadmap's D28; `tests/runner/hsroundtrip.sml`). On every
 file of `tests/hs/lang`, `tests/hs/accept` and `tests/hs/roundtrip`

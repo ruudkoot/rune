@@ -255,8 +255,14 @@ struct
   (* the oracle jit of Rune's programs (Oracles.jitOneWith) on rhc's:
      interpreted and in each mode of the JIT, the same output, counts and
      errors; nightly, with the ways beyond D56's three *)
+  (* a program whose path depends on its run says so on a line `-- jit:
+     output only: REASON`, and its modes' outputs alone are compared *)
+  fun outputOnly (p : Lang.program) =
+    List.exists (String.isPrefix "-- jit: output only: ") (String.fields (fn c => c = #"\n") (read (fromRoot (#src p))))
+    handle _ => false
   fun jit (p : Lang.program) =
-    let val t = Oracles.jobIn ("", #name p, ["jit-one-with", "bin/rhc", #base p, #src p], [], 1, 600, 3600)
+    let val t = Oracles.jobIn ("", #name p, [if outputOnly p then "jit-one-output" else "jit-one-with", "bin/rhc", #base p, #src p],
+                               [], 1, 600, 3600)
     in case HsConformance.pending p of SOME why => Test.pending why t | NONE => t end
   fun tree () =
     Test.describe ""
