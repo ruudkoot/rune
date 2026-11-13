@@ -6,9 +6,11 @@
    or RET happens with a handler of the function still installed, and no
    POPHANDLER without one; every operand fits an int; and every function is
    given one number of arguments -- as many as every known call of it
-   (CALLK, TAILCALLK) passes, and one where it is made a closure or is the
-   top level -- since its code sets the rest of its locals to unit. The
-   compiler's stack target keeps all of it (lib/compiler/backend/stack.sml); a file
+   (CALLK, TAILCALLK) passes, one where it is made a closure (or the k
+   of the ARITY k that follows that CLOSURE), one where it is the top
+   level, and all its locals for one of the general path's (<apply ..>)
+   -- since its code sets the rest of its locals to unit. The compiler's
+   stack target keeps all of it (lib/compiler/backend/stack.sml); a file
    that does not is refused, and runevm-stack remains the place where it runs. *)
 structure RbcCheck =
 struct
@@ -193,12 +195,25 @@ struct
         else refuse ("function " ^ name f ^ " is given " ^ Int.toString (Array.sub (params, f)) ^ " and "
                      ^ Int.toString k ^ " arguments (at " ^ Int.toString pc ^ ")")
       val () = if nfuncs > 0 then give (0, 1, 0) else ()
+      (* the general path's functions (Rbc.withApply, as the loader adds
+         them) are given every local they have *)
+      val () = Vector.appi (fn (f, {name, nlocals, offset, ...} : Rbc.func) =>
+                              if String.isPrefix "<apply " name then give (f, nlocals, offset) else ())
+                           funcs
+      (* a closure's function is entered with one argument, or with k where
+         ARITY k follows the CLOSURE that makes it (the general path, in
+         stack_apply, enters it saturated) *)
+      fun arityAfter i =
+        if i + 1 < n andalso #opc (Vector.sub (instrs, i + 1)) = Opcodes.ARITY then #a (Vector.sub (instrs, i + 1)) else 1
       val () =
-        Vector.app (fn {pc, opc, a, b} =>
-                      if opc = Opcodes.CALLK orelse opc = Opcodes.TAILCALLK then give (a, b, pc)
-                      else if opc = Opcodes.CLOSURE then give (a, 1, pc)
-                      else ())
-                   instrs
+        Vector.appi (fn (i, {pc, opc, a, b}) =>
+                       if opc = Opcodes.CALLK orelse opc = Opcodes.TAILCALLK then give (a, b, pc)
+                       else if opc = Opcodes.CLOSURE then give (a, arityAfter i, pc)
+                       else if opc = Opcodes.ARITY
+                               andalso (i = 0 orelse #opc (Vector.sub (instrs, i - 1)) <> Opcodes.CLOSURE) then
+                         refuse ("ARITY not after a CLOSURE (at " ^ Int.toString pc ^ ")")
+                       else ())
+                    instrs
     in
       {instrs = instrs,
        func = Array.vector func,

@@ -49,6 +49,7 @@ struct
        ("handler-ret", "a handler of the function is still installed at 6 in f", single (bytes [25]
                     ^ BytecodeFixture.u32 7 ^ bytes [3, 21, 21])),
        ("pophandler", "POPHANDLER without a handler of the function at 0 in f", single (bytes [26, 3, 21])),
+       ("arity", "ARITY not after a CLOSURE (at 1)", single (bytes [3, 45] ^ BytecodeFixture.le 4 2 ^ bytes [21])),
        ("immediate", "an operand at 0 is out of range", single (bytes [2] ^ BytecodeFixture.le 4 1073741824 ^ bytes [21])),
        ("leave", "a jump leaves its function at 0 in f", header ^ zero ^ zero ^ two ^ zero ^ one ^ BytecodeFixture.text "f"
                    ^ BytecodeFixture.u32 5 ^ one ^ BytecodeFixture.text "g" ^ BytecodeFixture.u32 7

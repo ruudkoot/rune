@@ -521,7 +521,9 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `CONTAG` | | Pop a constructor value (nullary or not), push its tag as an int. |
 | `CLOSURE f, n` | function, count | Pop `n` values into the environment of a new closure of function `f`. |
 | `SETENV e` | slot | Pop value `v`, pop closure `c`, set `c.env[e] := v` (patches mutually recursive closures). |
-| `CALL` / `TAILCALL` | | Pop argument, pop closure, call (replacing the frame for `TAILCALL`). |
+| `CALL` / `TAILCALL` | | Pop argument, pop closure, call (replacing the frame for `TAILCALL`); a closure of more parameters than one, or a partial application, is the general path's (*Calls through a closure*, below). |
+| `ARITY k` | count | The closure on top, just made by `CLOSURE`, takes `k` parameters, `k` from 2: `k` in its header's contag, which a call tests. |
+| `CALLN m` / `TAILCALLN m` | count | Call the closure `m - 1` below the top with the `m - 1` values above it, `m` from 3, which become its locals 0 to `m - 2` (replacing the frame for `TAILCALLN`); a closure of another number of parameters, or a partial application, is the general path's. |
 | `CALLK f, n` / `TAILCALLK f, n` | function, count | Call function `f` with the `n` values on top of the stack as its locals 0 to `n-1`, and no closure (replacing the frame for `TAILCALLK`); `n` is at most `f`'s locals. |
 | `RET` | | Return the top of stack to the caller. |
 | `JUMP o` | offset | Jump to absolute code offset `o`. |
@@ -543,7 +545,7 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 ## The register bytecode (runtime/register)
 
 `runtime/register`'s loop (`bin/runevm`, `runtime/register/interp.c`; `runtime/register/README.md`
-is the VM as built) runs a second instruction set, of 45 registers
+is the VM as built) runs a second instruction set, of 48 registers
 instructions (`src/isa/regs.sml`; decision D4 of
 [plans/middle-end.md](plans/middle-end.md)). `rune` makes it unless told
 `--target=stack`, from `-O1`. Its `.rbc` is laid out as the stack bytecode's, with the
@@ -653,7 +655,8 @@ refuses the other's file and image.
 | `UNIT d` / `CON0 d t` | register, tag | `d := ()` / the nullary constructor `t`. |
 | `GLOBAL d g` / `SETGLOBAL g s` | register, global | `d :=` global `g` / global `g := s`. |
 | `ENV d e` / `SELF d` | register, slot | `d :=` slot `e` of the running closure / the running closure. |
-| `CALL f x` / `TAILCALL f x` | registers | Call the closure in `f` with `x` (replacing the frame for `TAILCALL`). |
+| `CALL f x` / `TAILCALL f x` | registers | Call the closure in `f` with `x` (replacing the frame for `TAILCALL`); a closure of more parameters than one, or a partial application, is the general path's (*Calls through a closure*, below). |
+| `CALLN f n a...` / `TAILCALLN f n a...` | register, count, registers | Call the closure in `f` with the `n` registers `a...`, `n` from 2, as its registers 0 to `n-1` (replacing the frame for `TAILCALLN`); a closure of another number of parameters, or a partial application, is the general path's. |
 | `CALLK f n a...` / `TAILCALLK f n a...` | function, count, registers | Call function `f` with the registers `a...` as its registers 0 to `n-1`, and no closure (replacing the frame for `TAILCALLK`). |
 | `RESULT d` | register | `d :=` what the call or `PRIMPUSH` before it left. |
 | `RET s` | register | Return `s` to the caller. |
@@ -661,6 +664,7 @@ refuses the other's file and image.
 | `PRIMPUSH p a...` | primitive, registers | Primitive `p` of `a...`, its result left for `RESULT`. |
 | `TUPLE d n a...` | register, count, registers | `d :=` a tuple of `a...`; `n = 0` gives `()`. |
 | `CLOSURE d f n a...` | register, function, count, registers | `d :=` a closure of function `f` capturing `a...`. |
+| `CLOSUREN d f k n a...` | register, function, count, count, registers | `d :=` a closure of function `f`, of `k` parameters (`k` from 2: in its contag), capturing `a...`. |
 | `SELECT d i s` | register, index, register | `d :=` field `i` of the tuple in `s`. |
 | `CON d t s` / `DECON d s t` / `CONTAG d s` | registers, tag | Build a constructor value / take the argument of one of tag `t` (tested only under `--checked`) / its tag as an int. |
 | `CONN d t n a...` / `FIELD d s t i` | registers, tag, count or index | As the stack bytecode's: `d :=` constructor `t` made of the fields `a...` / field `i` of the constructor value in `s`, of tag `t` (tested only under `--checked`). |
@@ -677,6 +681,41 @@ refuses the other's file and image.
 | `FORCE d s o` | registers, offset | Where `s` holds no unevaluated suspension, `d :=` its value -- what an indirection holds, else what `s` holds -- and jump to `o`; else on to the `ENTER` after it ([ir.md](ir.md), *Suspensions*). |
 | `ENTER f x` | registers | Enter the suspension in `f`, as `CALL` enters a closure, with `x`; `RESULT` takes its value. One under evaluation is a loop, and the exception `Loop` is raised from here. |
 | `BLACKHOLE` / `UPDATE s` | register | The suspension running goes under evaluation, its captures read and no longer followed by the collector / becomes an indirection to `s`, or holds `s` now where it is one already (lazy ML's). |
+
+## Calls through a closure
+
+Both instruction sets call through a closure as eval/apply does (the haskell98
+roadmap's D15, decided C on 2026-11-13): the closure says how many parameters
+its function takes, and the call tests it.
+
+* **A closure's parameters** are in its header's contag: 0 for one, as every
+  closure `CLOSURE` makes, else the number, which the stack bytecode's `ARITY`
+  and the register bytecode's `CLOSUREN` give it. The compiler makes one of
+  more parameters of a curried function's twin (`Uncurry`, [ir.md](ir.md)),
+  and a call of several arguments through a closure, `CALLN`, of a chain of
+  calls each of whose result the next applies at once.
+* **A partial application** is a `K_CLOSURE` whose field 0 is the int -1, where
+  a closure's is its function: its contag is how many more arguments it
+  wants, field 1 the closure it applies (never itself a partial application)
+  and the fields after it the arguments it was given, in order.
+* **The general path.** A call whose closure has as many parameters as the
+  call gives arguments enters its function at once. Any other -- a closure of
+  more parameters (a partial application made: the call's value, a tail
+  call's frame returning it through `<apply return>`), of fewer (the closure
+  called with its first arguments and what it gives with the rest, by
+  `<apply K R>`), a partial application (what it holds put before the
+  arguments, and the call made again) -- is done in C (`reg_apply` in
+  `runtime/register/isa_regs.c`, `stack_apply` in `runtime/stack/isa_stack.c`).
+  `<apply return>` (its argument returned) and `<apply K R>` (local 0 the
+  closure, 1 to K its arguments, K+1 to K+R the rest) are functions the
+  loader adds to a program that has a closure of more parameters than one or
+  a call of more arguments, `<apply K R>` for each K up to the most parameters
+  and each R up to one less than the most arguments; runeopt adds the same to
+  the program it translates (`Rbc.withApply`), so each has its native code.
+  The JIT keeps a partial application made, one entered with what it wants,
+  one given fewer, and a closure of one over-applied, in compiled code
+  (`runtime/register/README.md`); runeopt's code calls the glue
+  (`runtime/native/native.c`) for any but a closure of one.
 
 ## Primitives
 

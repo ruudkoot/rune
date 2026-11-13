@@ -175,6 +175,11 @@ uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t err
         }
         /* a known call gives no more arguments than its function has locals */
         if ((op == OP_CALLK || op == OP_TAILCALLK) && !bad) bad = (uint32_t)b > p->funcs[a].nlocals;
+        /* D15 C: a closure of 2 parameters or more (ARITY), a call through one of 2
+           arguments or more (CALLN, TAILCALLN: m the closure and they); the
+           most of each, for the general path's functions (vm_isa_after_load) */
+        if (op == OP_ARITY && !bad) { bad = a < 2 || a > 65535; if (!bad && (uint32_t)a > p->apply_amax) p->apply_amax = (uint32_t)a; }
+        if ((op == OP_CALLN || op == OP_TAILCALLN) && !bad) { bad = a < 3; if (!bad && (uint32_t)a - 1 > p->apply_nmax) p->apply_nmax = (uint32_t)a - 1; }
         if (op == OP_UPDATE) updates = 1;
         if (op == OP_BLACKHOLE) holes = 1;
         if (bad) { free(starts); snprintf(err, errlen, "bad operand for %s at %u", op_names[op], pc); return NULL; }
@@ -266,8 +271,6 @@ int relocate_code(uint8_t *code, const Relocation *r, char *err, size_t errlen) 
 /* runevm-stack has no debugger (runtime/debug.c) */
 uint32_t debug_function_code(uint8_t *out, uint32_t *nlocals) { (void)out; *nlocals = 0; return 0; }
 
-int vm_isa_after_load(VM *vm, char *err, size_t errlen) { (void)vm; (void)err; (void)errlen; return 1; }
-
 uint32_t return_function_code(uint8_t *out, uint32_t *nlocals) {
     out[0] = OP_LOCAL;
     write_u32(out + 1, 0);
@@ -312,5 +315,174 @@ void disassemble(const Program *p, FILE *out) {
     }
 }
 
+
+/* ---- Eval/apply proper (the haskell98 roadmap's D15 C) ----
+   A call through a closure that has not as many parameters as the call
+   gives arguments, or through a partial application, is this general
+   path's (src/isa/stack.sml: CALL, TAILCALL, CALLN, TAILCALLN; and
+   runtime/native/native.c's glue, for runeopt's code). The closure and its
+   n arguments are on the stack's top, the last at vm->sp - 1. A partial
+   application is a K_CLOSURE whose field 0 is mk_int(-1), its contag what
+   it still wants, field 1 the closure it applies and the rest what it was
+   given; a closure of k parameters says k in its contag (ARITY), 0 for
+   one. Over-application enters <apply K R>, which calls the closure with
+   its K and what that gives with the rest, by a tail call; a partial
+   application made by a tail call returns through <apply return>. Those
+   functions are added to a program that has an ARITY, CALLN or TAILCALLN
+   (vm_isa_after_load), the same ones, in the same order, that runeopt
+   adds to the program it translates (src/opt/rbc.sml, Rbc.withApply). */
+
+/* <apply K R>: local 0 the closure, 1 to K its arguments, K + 1 to K + R
+   the rest */
+static uint32_t apply_code(uint8_t *out, uint32_t k, uint32_t r) {
+    uint32_t n = 0;
+    for (uint32_t i = 0; i <= k; i++) { out[n++] = OP_LOCAL; write_u32(out + n, i); n += 4; }
+    if (k == 1) out[n++] = OP_CALL;
+    else { out[n++] = OP_CALLN; write_u32(out + n, k + 1); n += 4; }
+    for (uint32_t i = 0; i < r; i++) { out[n++] = OP_LOCAL; write_u32(out + n, k + 1 + i); n += 4; }
+    if (r == 1) out[n++] = OP_TAILCALL;
+    else { out[n++] = OP_TAILCALLN; write_u32(out + n, r + 1); n += 4; }
+    return n;
+}
+
+/* the table of the general path's functions, by their names, made again
+   where the program has another number of functions than it was made of */
+static void apply_table(VM *vm) {
+    Program *p = &vm->prog;
+    if (vm->apply_nfuncs == p->nfuncs && (vm->apply_stubs || vm->apply_return != UINT32_MAX)) return;
+    uint32_t kmax = 0, rmax = 0;
+    for (uint32_t f = 0; f < p->nfuncs; f++) {
+        unsigned k, r;
+        if (p->funcs[f].name && sscanf(p->funcs[f].name, "<apply %u %u>", &k, &r) == 2) {
+            if (k > kmax) kmax = k;
+            if (r > rmax) rmax = r;
+        }
+    }
+    free(vm->apply_stubs);
+    vm->apply_stubs = NULL;
+    vm->apply_kmax = kmax; vm->apply_rmax = rmax;
+    vm->apply_return = UINT32_MAX;
+    if (kmax && rmax) {
+        vm->apply_stubs = malloc((size_t)kmax * rmax * sizeof(uint32_t));
+        if (!vm->apply_stubs) vm_fatal(vm, "out of memory");
+        for (size_t i = 0; i < (size_t)kmax * rmax; i++) vm->apply_stubs[i] = UINT32_MAX;
+    }
+    for (uint32_t f = 0; f < p->nfuncs; f++) {
+        unsigned k, r;
+        if (!p->funcs[f].name) continue;
+        if (strcmp(p->funcs[f].name, "<apply return>") == 0) vm->apply_return = f;
+        else if (sscanf(p->funcs[f].name, "<apply %u %u>", &k, &r) == 2 && k >= 1 && r >= 1)
+            vm->apply_stubs[(size_t)(k - 1) * rmax + (r - 1)] = f;
+    }
+    vm->apply_nfuncs = p->nfuncs;
+}
+
+/* The general path's functions added to a program that has an ARITY,
+   CALLN or TAILCALLN (the check of the code found the most parameters and
+   arguments: Program.apply_amax, apply_nmax): <apply return>, then
+   <apply K R> for each K up to the most parameters a closure of it has and
+   each R up to one less than the most arguments a call of it gives, K the
+   outer. 1, or 0 and why. */
+int vm_isa_after_load(VM *vm, char *err, size_t errlen) {
+    Program *p = &vm->prog;
+    if (!p->apply_amax && !p->apply_nmax) return 1;
+    for (uint32_t f = 0; f < p->nfuncs; f++)
+        if (p->funcs[f].name && strncmp(p->funcs[f].name, "<apply ", 7) == 0) return 1;   /* there already (an image's program) */
+    uint32_t amax = p->apply_amax > 1 ? p->apply_amax : 1, nmax = p->apply_nmax > 1 ? p->apply_nmax : 1;
+    uint8_t code[16];
+    uint32_t nlocals;
+    uint32_t len = return_function_code(code, &nlocals);
+    if (program_add_function(vm, "<apply return>", code, len, nlocals, 1, err, errlen) == UINT32_MAX) return 0;
+    for (uint32_t k = 1; k <= amax; k++)
+        for (uint32_t r = 1; r + 1 <= nmax; r++) {
+            uint8_t *buf = malloc(32 + 5 * (size_t)(k + r + 1));
+            if (!buf) return fail(err, errlen, "out of memory");
+            char name[48];
+            snprintf(name, sizeof name, "<apply %u %u>", k, r);
+            len = apply_code(buf, k, r);
+            uint32_t f = program_add_function(vm, name, buf, len, k + r + 1, k + r + 1, err, errlen);
+            free(buf);
+            if (f == UINT32_MAX) return 0;
+        }
+    vm->apply_nfuncs = 0;
+    apply_table(vm);
+    return 1;
+}
+
+/* the frame of function f with the count values at stack[from] as its
+   first locals, its closure c: pushed at t, returning to ret_pc (and, from
+   native code, to back), or for a tail call in the running frame's place */
+static void apply_enter(VM *vm, uint32_t f, Obj *c, size_t t, size_t from, uint32_t count, int tail, uint32_t ret_pc,
+                        const void *back) {
+    const Function *fn = &vm->prog.funcs[f];
+    size_t at;
+    if (tail) {
+        Frame *fr = &vm->frames[vm->fp];
+        at = fr->base;
+        fr->func = f;
+        fr->closure = c;
+    } else {
+        at = t;
+        vm_push_frame(vm, f, c, ret_pc, at);
+        if (back) vm->frames[vm->fp].native_ret = (void *)back;
+    }
+    size_t need = at + fn->nlocals + fn->maxstack;
+    if (need < from + count) need = from + count;
+    if (need > vm->stack_cap) vm_grow_stack(vm, need);
+    memmove(vm->stack + at, vm->stack + from, (size_t)count * sizeof(Value));
+    for (uint32_t i = count; i < fn->nlocals; i++) vm->stack[at + i] = mk_unit();
+    vm->sp = at + fn->nlocals;
+    vm->pc = fn->code_offset;
+}
+
+int stack_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc, const void *back) {
+    Program *p = &vm->prog;
+    size_t t = vm->sp - (n + 1);   /* the closure; the arguments after it */
+    for (;;) {
+        Obj *c = vm_expect_obj(vm, vm->stack[t], K_CLOSURE, "closure in call");
+        int64_t fidx = val_imm(obj_field(c, 0));
+        if (fidx == -1) {
+            /* a partial application: what it holds before the arguments,
+               and the closure it applies */
+            uint32_t s = obj_len(c) - 2;
+            if (vm->sp + s > vm->stack_cap) { vm_grow_stack(vm, vm->sp + s); c = val_ptr(vm->stack[t]); }
+            memmove(vm->stack + t + 1 + s, vm->stack + t + 1, (size_t)n * sizeof(Value));
+            for (uint32_t i = 0; i < s; i++) vm->stack[t + 1 + i] = obj_field(c, 2 + i);
+            vm->stack[t] = obj_field(c, 1);
+            n += s;
+            vm->sp += s;
+            continue;
+        }
+        if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) vm_fatal(vm, "bad function index");
+        uint32_t arity = obj_contag(c) ? obj_contag(c) : 1;
+        if (n == arity) {
+            apply_enter(vm, (uint32_t)fidx, c, t, t + 1, n, tail, ret_pc, back);
+            return STACK_APPLY_ENTERED;
+        }
+        if (n < arity) {
+            /* a partial application, made with the closure and the
+               arguments where the collector sees them */
+            Obj *pap = vm_alloc_fields(vm, K_CLOSURE, (uint16_t)(arity - n), n + 2);
+            Value *fs = obj_fields(pap);
+            fs[0] = mk_int(-1);
+            for (uint32_t i = 0; i <= n; i++) fs[1 + i] = vm->stack[t + i];
+            vm->stack[t] = mk_ptr(pap);
+            vm->sp = t + 1;
+            if (!tail) { vm->pc = ret_pc; return STACK_APPLY_VALUE; }
+            apply_table(vm);
+            if (vm->apply_return == UINT32_MAX) vm_fatal(vm, "a partial application in tail position, in a program without <apply return>");
+            apply_enter(vm, vm->apply_return, NULL, t, t, 1, 1, ret_pc, back);
+            return STACK_APPLY_ENTERED;
+        }
+        /* over-applied: <apply K R> given the closure and every argument */
+        uint32_t k = arity, r = n - arity;
+        apply_table(vm);
+        uint32_t stub = k <= vm->apply_kmax && r <= vm->apply_rmax && vm->apply_stubs
+                            ? vm->apply_stubs[(size_t)(k - 1) * vm->apply_rmax + (r - 1)] : UINT32_MAX;
+        if (stub == UINT32_MAX) vm_fatal(vm, "a closure of %u parameters given %u arguments, and no <apply %u %u>", k, n, k, r);
+        apply_enter(vm, stub, NULL, t, t, n + 1, tail, ret_pc, back);
+        return STACK_APPLY_ENTERED;
+    }
+}
 /* the frames, as the runtime walks them (vm.h; native-frames.md, M3) */
 #include "frames_array.inc"

@@ -6,8 +6,8 @@
    .rbc, and the fingerprint of each set, which its .rbc and its images
    carry. */
 #define RBC_VERSION 6
-#define STACK_ISA_FINGERPRINT 0x00125ed9u
-#define STACK_ISA_FINGERPRINT_HEX "00125ed9"
+#define STACK_ISA_FINGERPRINT 0x0042625eu
+#define STACK_ISA_FINGERPRINT_HEX "0042625e"
 #define REG_ISA_FINGERPRINT 0x00a0919au
 #define REG_ISA_FINGERPRINT_HEX "00a0919a"
 

@@ -47,6 +47,11 @@
    NEXT is `continue` in the switch's loop. */
 #define POLL() if (vm_interrupted(vm)) { SYNC(); vm_interrupt(vm); RELOAD(); NEXT; } else (void)0
 #define EXPECT(v, kind, what) expect_obj(vm, (v), (kind), (what), sp, pc, count)
+/* D15 C: the general path (stack_apply, runtime/stack/isa_stack.c), the
+   closure and n arguments on the stack's top: on in the function it
+   enters, or after the call with the partial application it made. Not a
+   do-while: NEXT is `continue` in the switch's loop. */
+#define APPLY(n, tail) { SYNC(); stack_apply(vm, (uint32_t)(n), (tail), PC, NULL); RELOAD(); NEXT; }
 
 /* The object v points to, which must be of that kind; the program stops
    with "expected <what>" where it is not, the VM told where it is. */

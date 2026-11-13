@@ -35,6 +35,11 @@ struct
   val int32Max : IntInf.int = IntInf.fromInt 1073741823
   val int32Min : IntInf.int = IntInf.fromInt ~1073741824
 
+  (* each function's number of parameters, by its id: a closure of one of
+     2 or more is made with them in it (ARITY, D15 C) *)
+  val funcArity : int IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Stack.funcArity", funcArity)
+
   (* Whether an operation is made again where its value is used, rather
      than kept: but a captured value in a suspension's code, which reads
      them at its entry, before it goes under evaluation (Low.hoistEnv) *)
@@ -252,7 +257,7 @@ struct
         | L.Env i => op' (Opcodes.ENV, [i])
         | L.Self => op' (Opcodes.SELF, [])
         | L.Call (f, a) => (load f; load a; op' (Opcodes.CALL, []))
-        | L.CallN _ => bug "a call of more than one argument through a closure: the register target's alone (D15 C)"
+        | L.CallN (f, xs) => (load f; List.app load xs; op' (Opcodes.CALLN, [1 + List.length xs]))
         | L.CallK (fid, vs) => (List.app load vs; op' (Opcodes.CALLK, [fid, List.length vs]))
         (* a suspension's (docs/ir.md, Suspensions): a force is FORCE, and
            where the value is an unevaluated suspension UNIT and ENTER; the
@@ -280,7 +285,10 @@ struct
         | L.ExnArg v => (load v; op' (Opcodes.EXNARG, []))
         | L.Closure (fid, vs) =>
             (List.app (fn SOME v => load v | NONE => op' (Opcodes.UNIT, [])) vs;
-             op' (Opcodes.CLOSURE, [fid, List.length vs]))
+             op' (Opcodes.CLOSURE, [fid, List.length vs]);
+             case IntMap.find (!funcArity, fid) of
+               SOME k => if k >= 2 then op' (Opcodes.ARITY, [k]) else ()
+             | NONE => ())
         | L.SetEnv (c, i, v) => (load c; load v; op' (Opcodes.SETENV, [i]))
         end
 
@@ -383,7 +391,7 @@ struct
               end
           | L.Return v => (load v; op' (Opcodes.RET, []))
           | L.TailCall (fv, a) => (load fv; load a; op' (Opcodes.TAILCALL, []))
-          | L.TailCallN _ => bug "a tail call of more than one argument through a closure: the register target's alone (D15 C)"
+          | L.TailCallN (fv, xs) => (load fv; List.app load xs; op' (Opcodes.TAILCALLN, [1 + List.length xs]))
           | L.TailCallK (fid, vs) => (List.app load vs; op' (Opcodes.TAILCALLK, [fid, List.length vs]))
           | L.Raise v => (load v; op' (Opcodes.RAISE, []))
         end
@@ -396,6 +404,7 @@ struct
   fun program (p : L.program) : C.program =
     let
       val () = C.reset ()
+      val () = funcArity := List.foldl (fn (f : L.func, m) => IntMap.insert (m, #id f, List.length (#params f))) IntMap.empty p
       val funcs = List.map func p
       val sorted = IntMap.listItems (List.foldl (fn (f : C.func, m) => IntMap.insert (m, #id f, f)) IntMap.empty funcs)
     in

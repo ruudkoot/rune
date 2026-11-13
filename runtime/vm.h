@@ -987,10 +987,20 @@ typedef struct Relocation {
 int relocate_code(uint8_t *code, const Relocation *r, char *err, size_t errlen);
 /* into out, at least 16 bytes: the code; its frame's size; how long */
 uint32_t return_function_code(uint8_t *out, uint32_t *nlocals);
-/* what the instruction set adds to a program it has loaded: runtime/register's,
-   the functions of the general path of a call (D15 C); nothing for the
-   stack's. 1, or 0 and why. */
+/* what the instruction set adds to a program it has loaded: the functions
+   of the general path of a call (D15 C), <apply return> and <apply K R>,
+   where the program has a closure of more parameters than one or a call
+   of more arguments. 1, or 0 and why. */
 int vm_isa_after_load(VM *vm, char *err, size_t errlen);
+/* The stack bytecode's general path of a call through a closure (D15 C;
+   runtime/stack/isa_stack.c), for its loop and runeopt's glue: the closure
+   and n arguments on the stack's top; a frame made (pushed at the
+   closure, returning to ret_pc and from native code to back; for a tail
+   call in the running one's place) and vm->pc its function's code, or a
+   partial application left on the stack for the instruction at ret_pc,
+   vm->pc. */
+enum { STACK_APPLY_ENTERED = 0, STACK_APPLY_VALUE = 1 };
+int stack_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc, const void *back);
 
 /* What each VM's instruction set gives (runtime/stack/isa_stack.c, runtime/register/isa_regs.c):
    the fingerprint an .rbc must carry, and the first bytes of an image. */
