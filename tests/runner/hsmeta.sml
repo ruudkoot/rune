@@ -69,8 +69,13 @@ struct
     in List.foldl apply text sorted end
 
   (* a program's text as its header -- its first lines to the module's
-     header and its imports -- and its top-level blocks: runs of lines
-     separated by blank lines, each starting at column 1 *)
+     header and its imports, with their comments and the lines that
+     continue them -- and its top-level blocks: runs of lines separated by
+     blank lines, each starting at column 1. The header ends at the first
+     line of a declaration, and the comment lines right above that line
+     (no blank between) are the declaration's, not the header's: a comment
+     between the imports and the first declaration, in a block of its own or
+     above it, stays below where the header ends (O's case, ruling 63). *)
   fun blocks text =
     let
       val ls = String.fields (fn c => c = #"\n") text
@@ -78,13 +83,50 @@ struct
       fun group ([], cur, acc) = List.rev (if null cur then acc else List.rev cur :: acc)
         | group (l :: rest, cur, acc) =
             if blank l then group (rest, [], if null cur then acc else List.rev cur :: acc) else group (rest, l :: cur, acc)
-      val bs = group (ls, [], [])
-      fun isHead b = case b of
-                       l :: _ => String.isPrefix "--" l orelse String.isPrefix "module " l orelse String.isPrefix "import " l
-                     | [] => true
-      fun split (h, b :: rest) = if isHead b then split (h @ [b], rest) else (h, b :: rest)
-        | split (h, []) = (h, [])
-    in split ([], bs) end
+      fun comment l = String.isPrefix "--" l
+      fun headLine l = String.isPrefix "module " l orelse String.isPrefix "import " l
+      fun indented l = size l > 0 andalso Char.isSpace (String.sub (l, 0))
+      fun count (l, s) = length (CompilerMutants.places (l, s))
+      (* the lines before the first declaration: blank, comments (a {- -}
+         comment by its nesting), the header's lines and their continuations *)
+      fun headOf ([], _, _, acc) = (List.rev acc, [])
+        | headOf (l :: rest, depth, cont, acc) =
+            if depth > 0 orelse String.isPrefix "{-" l then
+              headOf (rest, Int.max (0, depth + count (l, "{-") - count (l, "-}")), cont, l :: acc)
+            else if blank l orelse comment l then headOf (rest, depth, cont, l :: acc)
+            else if headLine l then headOf (rest, depth, true, l :: acc)
+            else if indented l andalso cont then headOf (rest, depth, true, l :: acc)
+            else (List.rev acc, l :: rest)
+      val (head, body) = headOf (ls, 0, false, [])
+      (* the comment lines at the header's end that touch the declaration *)
+      fun moveBack (h, b) =
+        case List.rev h of
+          l :: _ => if comment l andalso not (null b) then moveBack (List.take (h, length h - 1), l :: b) else (h, b)
+        | [] => (h, b)
+      val (head, body) = moveBack (head, body)
+      (* a body's blocks: a blank line ends one only where the next line
+         that is not blank starts at column 1, so that a class's, an
+         instance's or a where's lines stay together; and blocks that define
+         one name, a function's clauses or a signature and its binding, are
+         one block, which no relation separates *)
+      fun bodyGroups ls =
+        let
+          fun nextIndented [] = false
+            | nextIndented (l :: rest) = if blank l then nextIndented rest else indented l
+          fun go ([], cur, acc) = List.rev (if null cur then acc else List.rev cur :: acc)
+            | go (l :: rest, cur, acc) =
+                if blank l then
+                  if not (null cur) andalso nextIndented rest then go (rest, l :: cur, acc)
+                  else go (rest, [], if null cur then acc else List.rev cur :: acc)
+                else go (rest, l :: cur, acc)
+          fun name b = case List.filter (not o comment) b of
+                         l :: _ => (case String.tokens Char.isSpace l of w :: _ => SOME w | [] => NONE)
+                       | [] => NONE
+          fun merge (a :: b :: rest) =
+                if isSome (name a) andalso name a = name b then merge ((a @ [""] @ b) :: rest) else a :: merge (b :: rest)
+            | merge bs = bs
+        in merge (go (ls, [], [])) end
+    in (group (head, [], []), bodyGroups body) end
   fun unblocks bs = String.concatWith "\n\n" (List.map (String.concatWith "\n") bs) ^ "\n"
   (* reorder: the top-level blocks in the reverse order *)
   fun reorder text = let val (h, bs) = blocks text in unblocks (h @ List.rev bs) end
@@ -96,7 +138,17 @@ struct
       val (h, bs) = blocks text
       fun first b = case b of l :: _ => l | [] => ""
       fun isMain b = String.isPrefix "main " (first b) orelse String.isPrefix "main=" (first b)
-      val imports = List.filter (fn b => String.isPrefix "import " (first b)) h
+      (* the header's imports, each with the lines that continue it *)
+      fun importsOf ([], acc) = List.rev acc
+        | importsOf (l :: rest, acc) =
+            if String.isPrefix "import " l then
+              let fun cont (m :: more, got) = if size m > 0 andalso Char.isSpace (String.sub (m, 0)) then cont (more, m :: got)
+                                              else (List.rev got, m :: more)
+                    | cont ([], got) = (List.rev got, [])
+                  val (more, rest') = cont (rest, [])
+              in importsOf (rest', (l :: more) :: acc) end
+            else importsOf (rest, acc)
+      val imports = importsOf (List.concat h, [])
       val lib = List.filter (not o isMain) bs
       val mainBs = List.filter isMain bs
       fun has s = List.exists (fn b => List.exists (String.isSubstring s) b) bs
@@ -245,9 +297,56 @@ struct
           end
     end
 
+  (* the relations' own test, with no rhc: texts whose split and reorder
+     are known, the header's end among them *)
+  fun selfTest () =
+    let
+      fun check (name, got, want) =
+        if got = want then () else say ("FAIL hs-meta-self " ^ name ^ ": got\n" ^ getOpt (got, "NONE") ^ "\nwanted\n" ^ getOpt (want, "NONE") ^ "\n")
+      fun splitBoth t = Option.map (fn (a, b) => a ^ "--- Lib\n" ^ b) (split t)
+      val commented = String.concatWith "\n"
+        ["module Main (main) where", "", "import Char", "", "-- a helper, with its comment", "f :: Int -> Int",
+         "f x = x + 1", "", "main :: IO ()", "main = print (f 1)", ""]
+      val touching = String.concatWith "\n"
+        ["module Main (main) where", "import Char", "-- a helper", "f :: Int -> Int", "f x = x + 1", "",
+         "main :: IO ()", "main = print (f 1)", ""]
+      val continued = String.concatWith "\n"
+        ["-- rows: x", "module Main (main) where", "", "import List (sort,", "             nub)", "{- a block", "   comment -}",
+         "", "g :: [Int] -> [Int]", "g = sort . nub", "", "main :: IO ()", "main = print (g [2, 1, 2])", ""]
+      val bodies = String.concatWith "\n"
+        ["module Main (main) where", "", "class C a where", "  c :: a -> Int", "", "  d :: a -> Int", "  d = c", "",
+         "f :: Int -> Int", "", "f 0 = 1", "", "f n = n", "", "main :: IO ()", "main = print (f 2)", ""]
+    in
+      check ("comment-block", splitBoth commented,
+             SOME (String.concatWith "\n" ["module Main (main) where", "", "import Char", "", "import Lib", "",
+                                           "main :: IO ()", "main = print (f 1)", "--- Lib",
+                                           "module Lib where", "", "import Char", "", "-- a helper, with its comment",
+                                           "f :: Int -> Int", "f x = x + 1", ""]));
+      check ("comment-touching", splitBoth touching,
+             SOME (String.concatWith "\n" ["module Main (main) where", "import Char", "", "import Lib", "",
+                                           "main :: IO ()", "main = print (f 1)", "--- Lib",
+                                           "module Lib where", "", "import Char", "", "-- a helper",
+                                           "f :: Int -> Int", "f x = x + 1", ""]));
+      check ("continued-import", splitBoth continued,
+             SOME (String.concatWith "\n" ["-- rows: x", "module Main (main) where", "", "import List (sort,",
+                                           "             nub)", "{- a block", "   comment -}", "", "import Lib", "",
+                                           "main :: IO ()", "main = print (g [2, 1, 2])", "--- Lib",
+                                           "module Lib where", "", "import List (sort,", "             nub)", "",
+                                           "g :: [Int] -> [Int]", "g = sort . nub", ""]));
+      check ("reorder-bodies", SOME (reorder bodies),
+             SOME (String.concatWith "\n" ["module Main (main) where", "", "main :: IO ()", "main = print (f 2)", "",
+                                           "f :: Int -> Int", "", "f 0 = 1", "", "f n = n", "",
+                                           "class C a where", "  c :: a -> Int", "", "  d :: a -> Int", "  d = c", ""]));
+      check ("reorder", SOME (reorder commented),
+             SOME (String.concatWith "\n" ["module Main (main) where", "", "import Char", "", "main :: IO ()",
+                                           "main = print (f 1)", "", "-- a helper, with its comment", "f :: Int -> Int",
+                                           "f x = x + 1", ""]))
+    end
+
   fun command args =
     case args of
-      ["hs-meta", relation, src] => SOME (mechanicalOne (relation, src))
+      ["hs-meta-self"] => SOME selfTest
+    | ["hs-meta", relation, src] => SOME (mechanicalOne (relation, src))
     | ["hs-meta-names", relation, src] => SOME (namesOne (relation, src))
     | ["hs-meta-pair", src] => SOME (pairOne src)
     | _ => NONE
@@ -289,6 +388,8 @@ struct
       val (inSample, rest) = List.partition (HsLang.sampled o base) progs
       val checked = List.map (Test.tag "nightly") (List.concat (List.map (mechOf inSample) (List.filter inCheck mechanical)))
                     @ List.map pair pairs @ names "reorder"
+                    (* the relations' own texts, with no rhc *)
+                    @ [job ("@self", ["hs-meta-self"])]
       val nightly = List.concat (List.map (mechOf rest) (List.filter inCheck mechanical))
                     @ List.concat (List.map mech (List.filter (not o inCheck) mechanical)) @ names "split" @ names "rename"
     in
