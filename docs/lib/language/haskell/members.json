@@ -78,7 +78,7 @@
      "kind": "val",
      "name": "builtinTypes",
      "spec": "val builtinTypes : (string * kind) list",
-     "doc": "`builtinTypes` is each type constructor built in with its kind: `Int`,\n`Integer`, `Char`, `Double`, `Float`, `Str`, `Exn`, `Bool`, `World`,\n`Ref` and `Arr`.\n\n",
+     "doc": "`builtinTypes` is each type constructor built in with its kind: `Int`,\n`Integer`, `Char`, `Double`, `Float`, `Str`, `Exn`, `Bool`, `World`,\n`Ref`, `Arr` and `->`.\n\n`->` is the function type's constructor, which a type holds given\nfewer than two arguments (Haskell's `(->)` in an instance's head, 4.3.2);\ngiven both it is the function type, `TFun`, which `apply` and\n`substTy` make it.\n\n",
      "page": "sig/CORE.md#val-builtintypes"
     },
     {
