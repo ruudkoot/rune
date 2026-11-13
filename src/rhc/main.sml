@@ -496,6 +496,10 @@ struct
   and haskellUnits (args : string list) : int =
     let
       val (roots, rest) = List.partition isHaskell args
+      (* --hslint-claims=FILE: claims HsLint's check of each unit made at
+         level 2 is held to, as a whole compile's *)
+      val (claimed, rest) = List.partition (String.isPrefix "--hslint-claims=") rest
+      val () = List.app (fn a => RhcLint.claims := SOME (String.extract (a, size "--hslint-claims=", NONE))) claimed
       val opts = RhcOptions.parse rest
       val out = case #output opts of SOME f => f | NONE => raise RhcOptions.Usage "--units compiles: give -o FILE"
       val () = Pass.startup ()

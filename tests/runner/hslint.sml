@@ -37,14 +37,16 @@
    - `hs/hslint/faults`: each rule of HsLint's comparison, of its replay
      and of its target check refuses its fault (as `astlintFaults` holds
      AstLint's), from the saved world, where HsLint takes its inference of
-     the library from the world, and whole (`--whole`), where it infers the
-     library too: tests/hs/hslint/faults.hs, desugared, its checker's
+     the library from the world, whole (`--whole`), where it infers the
+     library too, and in units (`--units`, a store of its own each time),
+     where it takes the library's from the snapshot's entry of its unit
+     (ruling 66): tests/hs/hslint/faults.hs, desugared, its checker's
      records replayed and held to the second inference, its Core held to
      it, and held by `--hslint-claims` to its own expected dump, is
      accepted, and with RHC_HSLINT_FAULT=RULE, which reads the first claim,
      record or Core type RULE checks corrupted, refused with `lint after
      hslint` and `[RULE]`; and the faults are the rules `bin/rhc
-     --hslint-rules` names, both ways.
+     --hslint-rules` names, all three ways.
 
    - `hs/hslint/lint-level`: the run's RUNE_LINT is 2, in make check and
      nightly, so that G2's line (HsLint, CoreLint and MidLint clean at level
@@ -264,14 +266,27 @@ struct
       val out = run ^ "/hs-hslint/faults"
       val () = mkdirs out
       (* from the saved world, HsLint taking its inference of the library
-         from it, or whole (`--whole`), inferring the library too: each fault
-         refused both ways *)
-      fun rhcWith (fault, file, whole) =
-        execEnv (fn e => if fault = "" then unsetEnv ["RHC_HSLINT_FAULT"] e else setEnv ("RHC_HSLINT_FAULT", fault) e)
-          {cmd = [fromRoot "bin/rhc"] @ (if whole then ["--whole"] else []) @
-                 ["--lint=2", "--desugar-only", "--hslint-claims=" ^ faultClaims, faultProgram],
-           dir = SOME root, stdin = "", stdout = file, stderr = file, timeout = 600}
-      val ways = [(false, ""), (true, ".whole")]
+         from it, whole (`--whole`), inferring the library too, or in units
+         (`--units`), taking the library's part from the snapshot's entry,
+         in a store of its own each time so that the program's unit is
+         made: each fault refused all three ways *)
+      datatype way = World | Whole | Units
+      fun rhcWith (fault, file, way) =
+        let
+          val store = file ^ ".store"
+          val () = rmTree store
+        in
+          execEnv (fn e => if fault = "" then unsetEnv ["RHC_HSLINT_FAULT"] e else setEnv ("RHC_HSLINT_FAULT", fault) e)
+            {cmd = [fromRoot "bin/rhc"] @
+                   (case way of
+                      World => ["--desugar-only"]
+                    | Whole => ["--whole", "--desugar-only"]
+                    | Units => ["--units", "--store", store, "-o", file ^ ".rbc"]) @
+                   ["--lint=2", "--hslint-claims=" ^ faultClaims, faultProgram],
+             dir = SOME root, stdin = "", stdout = file, stderr = file, timeout = 600}
+          before rmTree store
+        end
+      val ways = [(World, ""), (Whole, ".whole"), (Units, ".units")]
       val listed = out ^ "/rules"
       val _ = exec {cmd = [fromRoot "bin/rhc", "--hslint-rules"], dir = SOME root, stdin = "", stdout = listed,
                     stderr = listed ^ ".err", timeout = 300}
@@ -285,14 +300,14 @@ struct
       List.app (fn f => if List.exists (fn r => r = f) rules then ()
                         else fail ("hs/hslint/faults: the fault " ^ f ^ " is no rule of bin/rhc --hslint-rules")) faults;
       List.app
-        (fn (whole, way) =>
-           (if rhcWith ("", clean ^ way, whole) = 0 then ()
+        (fn (how, way) =>
+           (if rhcWith ("", clean ^ way, how) = 0 then ()
             else fail ("hs/hslint/faults: the program is refused with its own claims" ^ way ^ ": " ^ firstLine (clean ^ way));
             List.app
               (fn f =>
                  let
                    val file = out ^ "/" ^ f ^ way ^ ".out"
-                   val status = rhcWith (f, file, whole)
+                   val status = rhcWith (f, file, how)
                    val text = read file
                  in
                    if status = 0 then fail ("hs/hslint/faults: " ^ f ^ way ^ ": accepted")
