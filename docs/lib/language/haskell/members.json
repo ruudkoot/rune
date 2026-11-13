@@ -2070,6 +2070,13 @@
      "page": "sig/HS_INFER.md#val-renumber"
     },
     {
+     "kind": "val",
+     "name": "numberFrom",
+     "spec": "val numberFrom : int -> unit",
+     "doc": "`numberFrom n` makes the checker's next fresh variables, and HsTypes',\nnumber from `n`, whatever came before.\n\nA unit given a range of its own is then numbered alike whatever was\nchecked before it: the library's units, which the saved world and a\nwhole program check in different numbers.\n\n",
+     "page": "sig/HS_INFER.md#val-numberfrom"
+    },
+    {
      "kind": "type",
      "name": "part",
      "spec": "type part = {values : (string * HsTypes.scheme) list, tycons : HsKinds.tycon list, classes : HsClasses.class list,\n             instances : HsClasses.instance list,\n             cons : (string * {tycon : string, arity : int, fields : string list}) list,\n             fields : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,\n             methods : (string * {cls : string, scheme : HsTypes.scheme}) list}",
@@ -3214,6 +3221,13 @@
      "spec": "val renumber : int -> unit",
      "doc": "`renumber n` makes the next fresh unification and kind variables\nnumber from `n`, where they have not passed it.\n\nWhat follows is then numbered alike however much came before it below\n`n` (rhc's saved world, a program checked by interfaces).\n\n",
      "page": "sig/HS_TYPES.md#val-renumber"
+    },
+    {
+     "kind": "val",
+     "name": "numberFrom",
+     "spec": "val numberFrom : int -> unit",
+     "doc": "`numberFrom n` makes the next fresh unification and kind variables\nnumber from `n`, whatever came before.\n\nThe caller sees that no variable it numbered at or past `n` stands.\n\n",
+     "page": "sig/HS_TYPES.md#val-numberfrom"
     },
     {
      "kind": "val",

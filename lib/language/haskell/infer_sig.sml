@@ -71,6 +71,14 @@ sig
      since a dictionary's name is one of them. *)
   val renumber : int -> unit
 
+  (* `numberFrom n` makes the checker's next fresh variables, and HsTypes',
+     number from `n`, whatever came before.
+
+     A unit given a range of its own is then numbered alike whatever was
+     checked before it: the library's units, which the saved world and a
+     whole program check in different numbers. *)
+  val numberFrom : int -> unit
+
   (* What the environment holds of one module's entities, by key.
 
      That is its values' types (its constructors', fields' and methods'

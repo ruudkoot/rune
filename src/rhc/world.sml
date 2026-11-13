@@ -24,9 +24,16 @@ struct
 
   (* the library as it was saved: the directory --share named, each file
      of its modules with its bytes, its graph, and what its groups left *)
-  type world = {share : string, files : (string * string) list, graph : G.graph, state : RhcNames.state}
+  type world = {share : string, files : (string * string) list, graph : G.graph, state : RhcNames.state,
+                desugared : HsDesugar.library option}
 
   val world : world option ref = ref NONE
+
+  (* the library's desugaring, made with the world (RhcMain sets it to
+     RhcDesugar.library, D's split), and the one of the world the last
+     program went from, NONE where it went whole *)
+  val desugarLibrary : (G.graph * RhcNames.result -> HsDesugar.library option) ref = ref (fn _ => NONE)
+  val desugared : HsDesugar.library option ref = ref NONE
 
   (* --whole: the whole program read and checked, the saved world unused *)
   val whole = ref false
@@ -56,9 +63,11 @@ struct
       val nodes = List.concat (#groups g)
       val s = RhcNames.groups (RhcNames.extend (RhcNames.initial (RhcNames.leavesOf nodes), nodes), #groups g,
                                HsModules.Least, SOME HsInfer.PerModule)
-      val () = !checkLibrary (g, RhcNames.result (s, true))
+      val rl = RhcNames.result (s, true)
+      val () = !checkLibrary (g, rl)
+      val lib = !desugarLibrary (g, rl)
     in
-      world := SOME {share = share, files = libraryNow (), graph = g, state = s};
+      world := SOME {share = share, files = libraryNow (), graph = g, state = s, desugared = lib};
       TextIO.flushOut TextIO.stdOut; TextIO.flushOut TextIO.stdErr;
       ignore (Runtime.share ());
       case Runtime.save image of
@@ -123,7 +132,7 @@ struct
     case (fromWorld := isSome (usable (fixpoint, check)); usable (fixpoint, check)) of
       NONE =>
         let val g = G.load {roots = roots, dotted = dotted}
-        in (g, RhcNames.run (g, fixpoint, check)) end
+        in desugared := NONE; (g, RhcNames.run (g, fixpoint, check)) end
     | SOME w =>
         let
           val libraryGroups = #groups (#graph w)
@@ -155,6 +164,7 @@ struct
           val s = RhcNames.groups (RhcNames.extend (from, nodes), #groups gp, fixpoint, check)
           val libraryFiles = List.foldl (fn (n : G.node, m) => M.insert (m, #file n, keeps n)) M.empty (List.concat libraryGroups)
           val r = RhcNames.result (s, isSome check)
+          val () = desugared := #desugared w
           (* a file of a kept module, or a derived instance's, `derived C T
              in M`, of a kept M *)
           fun keepsFile f =

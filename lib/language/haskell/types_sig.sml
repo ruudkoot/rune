@@ -98,6 +98,12 @@ sig
      `n` (rhc's saved world, a program checked by interfaces). *)
   val renumber : int -> unit
 
+  (* `numberFrom n` makes the next fresh unification and kind variables
+     number from `n`, whatever came before.
+
+     The caller sees that no variable it numbered at or past `n` stands. *)
+  val numberFrom : int -> unit
+
   (* `repr t` follows `t`'s links to its head. *)
   val repr : ty -> ty
 
