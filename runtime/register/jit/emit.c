@@ -1542,7 +1542,6 @@ static int apply_fast_on(Jit *j) {
     if (on < 0) { const char *e = getenv("RUNE_JIT_APPLY_FAST"); on = !(e && *e == '0'); }
     return on && !j->callret && j->jit->all_meta;
 }
-#define PAP_FIELD(i) ((int32_t)(sizeof(Obj) + sizeof(Value) * (i)))
 /* jit_apply_fast_counts[k] += 1, where RUNE_APPLY_STATS asks (r scratch) */
 static void apply_counted(Jit *j, int k, int r) {
     if (!reg_apply_stats) return;
@@ -1566,12 +1565,10 @@ static void make_pap(Jit *j, uint32_t n, const int32_t *args, AsmLabel *general)
     AsmLabel fail; as_label_init(&fail);
     ms_alloc(M, K_CLOSURE, 0, n + 2, &fail);   /* rax; rcx clobbered */
     as_sub_ri(A, R_S3, (int32_t)n);
-    as_shl_ri(A, R_S3, 16);
-    as_or_ri(A, R_S3, K_CLOSURE);
-    as_st32(A, R_S0, 0, R_S3);   /* its kind, and its contag: what it still wants */
-    as_st64i(A, R_S0, PAP_FIELD(0), (int32_t)mk_int(REG_PAP));
-    as_st64(A, R_S0, PAP_FIELD(1), R_S2);
-    for (uint32_t i = 0; i < n; i++) ms_store_value(M, R_S0, PAP_FIELD(2 + i), args[i]);
+    ms_set_kind_contag(M, R_S0, K_CLOSURE, R_S3);   /* its contag: what it still wants */
+    ms_store_field_imm(M, R_S0, 0, T_INT, REG_PAP);
+    ms_store_field_reg(M, R_S0, 1, R_S2);
+    for (uint32_t i = 0; i < n; i++) ms_store_field(M, R_S0, 2 + i, args[i]);
     AsmLabel done; as_label_init(&done);
     as_jmp(A, &done);
     as_bind(A, &fail);
@@ -1580,56 +1577,39 @@ static void make_pap(Jit *j, uint32_t n, const int32_t *args, AsmLabel *general)
     as_bind(A, &done);
     as_label_free(&fail); as_label_free(&done);
 }
-/* the words from [src] up to [end] to [dst] up, tmp clobbered */
-static void copy_words_r(Jit *j, int src, int dst, int end, int tmp) {
-    AsmLabel loop, done; as_label_init(&loop); as_label_init(&done);
-    as_bind(A, &loop);
-    as_cmp_rr(A, src, end);
-    as_jcc(A, CC_AE, &done);
-    as_ld64(A, tmp, src, 0);
-    as_st64(A, dst, 0, tmp);
-    as_add_ri(A, src, (int32_t)sizeof(Value));
-    as_add_ri(A, dst, (int32_t)sizeof(Value));
-    as_jmp(A, &loop);
-    as_bind(A, &done);
-    as_label_free(&loop); as_label_free(&done);
-}
 /* the words from [rax] up to [r8] to [rcx] up (r11 clobbered) */
-static void copy_words(Jit *j) { copy_words_r(j, R_S0, R_S1, R_S3, R_S6); }
+static void copy_words(Jit *j) { ms_copy_words(M, R_S0, R_S1, R_S3, R_S6); }
 /* rax := a partial application of what the one in rdx holds and the n
    arguments, which it wants fewer of than it wants (its contag the less
    by n), or to general where the nursery has no room (rdx clobbered) */
 static void more_pap(Jit *j, uint32_t n, const int32_t *args, AsmLabel *general) {
-    as_ld32(A, R_S6, R_S2, (int32_t)offsetof(Obj, len));
+    ms_load_len(M, R_S6, R_S2);
     as_add_ri(A, R_S6, (int32_t)n);   /* its fields */
     as_mov_rr(A, R_S3, R_S6);
-    as_shl_ri(A, R_S3, 3);
-    as_add_ri(A, R_S3, (int32_t)sizeof(Obj));   /* its size */
+    ms_object_size(M, R_S3);
     ms_alloc_dynamic(M, K_CLOSURE, R_S6, R_S3, general);
     ms_load_contag(M, R_S3, R_S2);
     as_sub_ri(A, R_S3, (int32_t)n);
-    as_shl_ri(A, R_S3, 16);
-    as_or_ri(A, R_S3, K_CLOSURE);
-    as_st32(A, R_S0, 0, R_S3);
-    as_st64i(A, R_S0, PAP_FIELD(0), (int32_t)mk_int(REG_PAP));
-    as_ld64(A, R_S3, R_S2, PAP_FIELD(1));
-    as_st64(A, R_S0, PAP_FIELD(1), R_S3);
+    ms_set_kind_contag(M, R_S0, K_CLOSURE, R_S3);
+    ms_store_field_imm(M, R_S0, 0, T_INT, REG_PAP);
+    ms_load_field_bits(M, R_S3, R_S2, 1);
+    ms_store_field_reg(M, R_S0, 1, R_S3);
     as_sub_ri(A, R_S6, (int32_t)n + 2);
-    as_shl_ri(A, R_S6, 3);
-    as_add_ri(A, R_S2, PAP_FIELD(2));
+    ms_scale_index(M, R_S6);
+    ms_field_address(M, R_S2, R_S2, 2);
     as_add_rr(A, R_S6, R_S2);
-    as_lea(A, R_S1, R_S0, -1, 1, PAP_FIELD(2));
-    copy_words_r(j, R_S2, R_S1, R_S6, R_S3);
+    ms_field_address(M, R_S1, R_S0, 2);
+    ms_copy_words(M, R_S2, R_S1, R_S6, R_S3);
     for (uint32_t i = 0; i < n; i++) ms_store_value(M, R_S1, (int32_t)sizeof(Value) * (int32_t)i, args[i]);
 }
 /* rax := the first of what the partial application in register a holds,
    r8 := past its last */
 static void pap_held(Jit *j, int32_t a) {
     ms_load_bits(M, R_S0, a);
-    as_ld32(A, R_S3, R_S0, (int32_t)offsetof(Obj, len));
+    ms_load_len(M, R_S3, R_S0);
     as_sub_ri(A, R_S3, 2);
-    as_shl_ri(A, R_S3, 3);
-    as_add_ri(A, R_S0, PAP_FIELD(2));
+    ms_scale_index(M, R_S3);
+    ms_field_address(M, R_S0, R_S0, 2);
     as_add_rr(A, R_S3, R_S0);
 }
 /* A call's cases, at odd (rdx the closure or partial application that the

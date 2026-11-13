@@ -1711,10 +1711,39 @@ void ms_alloc_dynamic(Masm *m, int kind, int len, int size, AsmLabel *slow) {
         as_add_mi(&m->a, VMR, OFF(objects_allocated), 1);
         as_add_rm(&m->a, R_S0, VMR, OFF(alloc.from));
     }
-    as_st32i(&m->a, R_S0, 0, (int32_t)(uint32_t)kind);
-    as_st32(&m->a, R_S0, 4, len);
+    as_st32i(&m->a, R_S0, (int32_t)offsetof(Obj, kind), (int32_t)(uint32_t)kind);
+    as_st32(&m->a, R_S0, (int32_t)offsetof(Obj, len), len);
     m->nfields = UINT32_MAX;
     ms_role(m, role);
+}
+/* What D15 C's cases in compiled code do to a partial application
+   (emit.c, apply_fast): an object's layout is masm.c's alone. */
+void ms_store_field_reg(Masm *m, int obj, uint32_t i, int r) {
+    if (i >= m->nfields) bug("a field the object does not have", i, m->nfields);
+    as_st64(&m->a, obj, FIELD_OFF(i), r);
+}
+void ms_field_address(Masm *m, int rd, int obj, uint32_t i) { as_lea(&m->a, rd, obj, -1, 1, FIELD_OFF(i)); }
+void ms_object_size(Masm *m, int r) {
+    as_shl_ri(&m->a, r, VALUE_SHIFT);
+    as_add_ri(&m->a, r, (int32_t)sizeof(Obj));
+}
+void ms_set_kind_contag(Masm *m, int obj, int kind, int r) {
+    as_shl_ri(&m->a, r, 16);
+    as_or_ri(&m->a, r, kind);
+    as_st32(&m->a, obj, (int32_t)offsetof(Obj, kind), r);
+}
+void ms_copy_words(Masm *m, int src, int dst, int end, int tmp) {
+    AsmLabel loop, done; as_label_init(&loop); as_label_init(&done);
+    as_bind(&m->a, &loop);
+    as_cmp_rr(&m->a, src, end);
+    as_jcc(&m->a, CC_AE, &done);
+    as_ld64(&m->a, tmp, src, 0);
+    as_st64(&m->a, dst, 0, tmp);
+    as_add_ri(&m->a, src, VALUE_SIZE);
+    as_add_ri(&m->a, dst, VALUE_SIZE);
+    as_jmp(&m->a, &loop);
+    as_bind(&m->a, &done);
+    as_label_free(&loop); as_label_free(&done);
 }
 void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s) {
     if (i >= m->nfields) bug("a field the object does not have", i, m->nfields);

@@ -374,6 +374,17 @@ void ms_alloc_undo(Masm *m, int kind, uint32_t n);
    R_S0 nor R_S1 nor kept by it, its contag 0; to slow with the bump undone
    (D15 C tuned: a partial application of another's held values) */
 void ms_alloc_dynamic(Masm *m, int kind, int len, int size, AsmLabel *slow);
+/* What a partial application's cases in compiled code do to one (D15 C, emit.c
+   apply_fast): field i of the new object in obj := machine register r;
+   rd := the address of field i; r, a number of fields, := the size of an
+   object of them; the new object's kind and its contag from r (r
+   clobbered); the words from [src] up to [end] to [dst] up, tmp clobbered
+   (a new object's fields, a frame's slots: no barrier) */
+void ms_store_field_reg(Masm *m, int obj, uint32_t i, int r);
+void ms_field_address(Masm *m, int rd, int obj, uint32_t i);
+void ms_object_size(Masm *m, int r);
+void ms_set_kind_contag(Masm *m, int obj, int kind, int r);
+void ms_copy_words(Masm *m, int src, int dst, int end, int tmp);
 void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s);       /* field i of the object in obj := R(s) */
 void ms_need_unmarked(Masm *m, AsmLabel *slow);                     /* to slow while the low-pause collector's cycle marks (the barrier's flag; before a store) */
 void ms_set_field(Masm *m, int obj, uint32_t i, int32_t s);         /* a store into an object that exists, through the barrier: field i of the object in obj := R(s); obj is not kept; R_S2, R_S3 and R_S6 clobbered */
