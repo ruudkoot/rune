@@ -1,6 +1,6 @@
-KIND	Main	Ping :: *
 KIND	Main	Bar :: * -> *
 KIND	Main	Foo :: * -> *
+KIND	Main	Ping :: *
 KIND	Main	T :: * -> * -> *
 DERIVED	Main	(Eq a, Eq b, Ping a, Ping b) => Eq (T a b)
 SIGNED	Main	main :: IO ()

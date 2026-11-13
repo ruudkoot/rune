@@ -1,23 +1,23 @@
+SIGNED	Main	main :: IO ()
 TYPE	haskell98:Array	arrPrec :: Int
 TYPE	haskell98:Char	asciiTab :: Array Char [Char]
 TYPE	haskell98:Char	protectEsc :: (Char -> Bool) -> ([Char] -> a) -> [Char] -> a
-TYPE	haskell98:PreludeRuntime	handleId :: Handle -> Int
-TYPE	haskell98:PreludeRuntime	handleState :: Handle -> Ref Int
-TYPE	haskell98:PreludeRuntime	handleWrites :: Handle -> Bool
-TYPE	haskell98:PreludeRuntime	handleName :: Handle -> [Char]
-TYPE	haskell98:PreludeRuntime	handleFd :: Handle -> Int
-TYPE	haskell98:PreludeRuntime	handleSeeks :: Handle -> Bool
-TYPE	haskell98:PreludeRuntime	handleAhead :: Handle -> Ref [Char]
-TYPE	haskell98:PreludeRuntime	handleIndex :: Handle -> Ref Int
-TYPE	haskell98:PreludeRuntime	handleBytes :: Handle -> Ref Str
-TYPE	haskell98:PreludeRuntime	handleReads :: Handle -> Bool
-TYPE	haskell98:PreludeRuntime	handleSize :: Handle -> Ref Int
-TYPE	haskell98:PreludeRuntime	handleMode :: Handle -> Ref Int
-TYPE	haskell98:Ratio	reduce :: Integral a => a -> a -> Ratio a
 TYPE	haskell98:Numeric	maxExpt :: Int
 TYPE	haskell98:Numeric	minExpt :: Int
+TYPE	haskell98:PreludeRuntime	handleAhead :: Handle -> Ref [Char]
+TYPE	haskell98:PreludeRuntime	handleBytes :: Handle -> Ref Str
+TYPE	haskell98:PreludeRuntime	handleFd :: Handle -> Int
+TYPE	haskell98:PreludeRuntime	handleId :: Handle -> Int
+TYPE	haskell98:PreludeRuntime	handleIndex :: Handle -> Ref Int
+TYPE	haskell98:PreludeRuntime	handleMode :: Handle -> Ref Int
+TYPE	haskell98:PreludeRuntime	handleName :: Handle -> [Char]
+TYPE	haskell98:PreludeRuntime	handleReads :: Handle -> Bool
+TYPE	haskell98:PreludeRuntime	handleSeeks :: Handle -> Bool
+TYPE	haskell98:PreludeRuntime	handleSize :: Handle -> Ref Int
+TYPE	haskell98:PreludeRuntime	handleState :: Handle -> Ref Int
+TYPE	haskell98:PreludeRuntime	handleWrites :: Handle -> Bool
 TYPE	haskell98:Ratio	ratPrec :: Int
-SIGNED	Main	main :: IO ()
-DEFAULT	haskell98:Numeric	281:17	Floating a, RealFrac a -> Double
-DEFAULT	haskell98:Complex	33:1	Integral a -> Integer
-DEFAULT	haskell98:Complex	33:1	Integral a -> Integer
+TYPE	haskell98:Ratio	reduce :: Integral a => a -> a -> Ratio a
+DEFAULT	haskell98:Complex	*	Integral a -> Integer
+DEFAULT	haskell98:Complex	*	Integral a -> Integer
+DEFAULT	haskell98:Numeric	*	Floating a, RealFrac a -> Double

@@ -208,6 +208,25 @@ struct
     HsLintTarget.check (t, p, fault)
     handle T.Refuse (span, msg) => raise Refused (span, msg)
 
+  (* lines in a canonical order, by their keys, so that only a change of
+     what they say moves the dump, not one of the order the inference met
+     the bindings in (a library's edit that moves a definition) *)
+  fun sortBy (key : 'a -> string) (xs : 'a list) : 'a list =
+    let
+      fun merge ([], ys) = ys
+        | merge (xs, []) = xs
+        | merge (x :: xs, y :: ys) = if String.<= (key x, key y) then x :: merge (xs, y :: ys) else y :: merge (x :: xs, ys)
+      fun go [] = []
+        | go [x] = [x]
+        | go xs = let val n = length xs div 2 in merge (go (List.take (xs, n)), go (List.drop (xs, n))) end
+    in
+      go xs
+    end
+
+  (* a place, `LINE:COLUMN`, as a key in its numbers' order *)
+  fun placeKey p =
+    String.concatWith ":" (List.map (fn f => StringCvt.padLeft #"0" 9 f) (String.fields (fn c => c = #":") p))
+
   fun dump ({bindings, defaults, kinds, derived, ...} : report, where_, library) =
     let
       fun shown m = library orelse not (String.isPrefix "haskell98:" m)
@@ -215,25 +234,34 @@ struct
       val ks =
         List.mapPartial (fn {module, name, kind} =>
                            if shown module andalso not (lib module)
-                           then SOME ("KIND\t" ^ module ^ "\t" ^ name ^ " :: " ^ kind ^ "\n")
+                           then SOME (module ^ "\t" ^ name, "KIND\t" ^ module ^ "\t" ^ name ^ " :: " ^ kind ^ "\n")
                            else NONE)
           kinds
       val ds =
         List.mapPartial (fn {module, instance} =>
-                           if shown module andalso not (lib module) then SOME ("DERIVED\t" ^ module ^ "\t" ^ instance ^ "\n")
+                           if shown module andalso not (lib module)
+                           then SOME (module ^ "\t" ^ instance, "DERIVED\t" ^ module ^ "\t" ^ instance ^ "\n")
                            else NONE)
           derived
       val bs =
         List.mapPartial (fn {module, name, scheme, signed, ...} : binding =>
                            if not (shown module) orelse lib module andalso signed then NONE
-                           else SOME ((if signed then "SIGNED\t" else "TYPE\t") ^ module ^ "\t" ^ name ^ " :: " ^ scheme ^ "\n"))
+                           else SOME (module ^ "\t" ^ name,
+                                      (if signed then "SIGNED\t" else "TYPE\t") ^ module ^ "\t" ^ name ^ " :: " ^ scheme ^ "\n"))
           bindings
+      (* a default of the library's at no place: its line moves with any
+         edit of the library above it *)
       val fs =
         List.mapPartial (fn {module, span, preds, choice, ...} : default =>
                            if not (shown module) then NONE
-                           else SOME ("DEFAULT\t" ^ module ^ "\t" ^ where_ span ^ "\t" ^ preds ^ " -> " ^ choice ^ "\n"))
+                           else
+                             let val place = if lib module then "*" else where_ span
+                             in SOME (module ^ "\t" ^ placeKey place ^ "\t" ^ preds ^ "\t" ^ choice,
+                                      "DEFAULT\t" ^ module ^ "\t" ^ place ^ "\t" ^ preds ^ " -> " ^ choice ^ "\n")
+                             end)
           defaults
+      fun sorted xs = List.map #2 (sortBy #1 xs)
     in
-      String.concat (ks @ ds @ bs @ fs)
+      String.concat (sorted ks @ sorted ds @ sorted bs @ sorted fs)
     end
 end
