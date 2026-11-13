@@ -686,7 +686,11 @@ than two (Haskell's `(->)`, which an instance head may name: ruling 60),
 in the text `(->)` and `int (->)`, so that `int 'm` at `int (->)` is `int ->
 int`, the arrow given both being the function type itself (`Ty.arrowName`,
 `Ty.arrowStamp`; MidLint holds it to two, as a type name to its
-parameters); and `Forall`, the polymorphic
+parameters), and for the lazy arrow `(~>)` (ruling 65), which given both is
+`a susp -> b`, so that a front end whose function types take a suspension
+(rhc's Core) gives it where Haskell's `(->)` is given (`Ty.lazyArrowName`); a
+type variable applied matches a function type at `(~>)` where its argument
+is a suspension, at `(->)` otherwise; and `Forall`, the polymorphic
 type of a field (a dictionary's method; in the text `(forall ['b] 'b ->
 'b)`), which binds its own variables. A forall is the same type as one that
 differs from it only in the names it binds (`Ty.equal`), and a
