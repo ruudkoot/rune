@@ -223,6 +223,115 @@ struct
                     | Newtype (t, _, _, _) => CoreMap.member (!seenT, t)) p
     end
 
+  (* ---- a unit by its declarations (indexText, reachIndexed) ---- *)
+
+  fun field (s : string) = Int.toString (size s) ^ ":" ^ s
+  fun fields xs = Int.toString (length xs) ^ " " ^ String.concat (List.map field xs)
+  fun kindOf d = case d of Data _ => "d" | Newtype _ => "n" | Val _ => "v" | Import _ => "i"
+  (* the constructors a type declaration makes *)
+  fun makes d = case d of Data (_, _, cs) => List.map #1 cs | Newtype (_, _, c, _) => [c] | _ => []
+
+  fun index (p : program) : string * string list =
+    (String.concat ("CoreIndex 2 " :: Int.toString (length p) ^ " "
+                    :: List.map (fn d =>
+                                   let val {values, types, cons} = uses d
+                                   in
+                                     (* what it names in one field, read only where
+                                        the reach visits it *)
+                                     String.concat [field (kindOf d), field (nameOf d), fields (makes d),
+                                                    field (fields values ^ fields types ^ fields cons)]
+                                   end) p),
+     List.map (fn d => CoreText.show [d]) p)
+
+  datatype unitCore = Indexed of string * (int -> string) | InHand of program
+
+  (* an entry of an index: what the declaration is, its name, what it
+     names and makes, and the declaration, read where it is asked for *)
+  type entry = {kind : string, name : string, makes : string list,
+                uses : unit -> {values : string list, types : string list, cons : string list}, decl : unit -> decl}
+
+  fun entriesOf (text : string, textOf : int -> string) : entry list =
+    let
+      val pos = ref 0
+      fun bad what = raise Error ("a unit's index: " ^ what ^ " at " ^ Int.toString (!pos))
+      fun upTo c = let fun go i = if i < size text andalso String.sub (text, i) <> c then go (i + 1) else i in go (!pos) end
+      fun number () =
+        let val j = upTo #" "
+        in case Int.fromString (String.substring (text, !pos, j - !pos)) of SOME n => (pos := j + 1; n) | NONE => bad "a number" end
+      fun get () =
+        let
+          val c = upTo #":"
+          val n = case Int.fromString (String.substring (text, !pos, c - !pos)) of SOME n => n | NONE => bad "a length"
+          val v = String.substring (text, c + 1, n) handle Subscript => bad "a string"
+        in pos := c + 1 + n; v end
+      fun getList () = List.tabulate (number (), fn _ => get ())
+      (* a string's place in the text, not copied *)
+      fun span () =
+        let
+          val c = upTo #":"
+          val n = case Int.fromString (String.substring (text, !pos, c - !pos)) of SOME n => n | NONE => bad "a length"
+        in if c + 1 + n > size text then bad "a string" else (pos := c + 1 + n; (c + 1, n)) end
+      val () = if String.isPrefix "CoreIndex 2 " text then pos := size "CoreIndex 2 " else bad "the index's mark"
+      val n = number ()
+      fun entry i =
+        let
+          val kind = get () val name = get () val made = getList ()
+          val (us, _) = span ()
+          (* its names, read from their field where asked for *)
+          fun uses () =
+            let
+              val saved = !pos
+              val () = pos := us
+              val values = getList () val types = getList () val cons = getList ()
+            in pos := saved; {values = values, types = types, cons = cons} end
+          fun decl () =
+            case CoreText.parse (textOf i) of
+              [d] => d
+            | _ => raise Error ("a unit's index: the declaration of " ^ name ^ " is not one")
+        in {kind = kind, name = name, makes = made, uses = uses, decl = decl} end
+    in List.tabulate (n, entry) end
+
+  fun entriesIn (p : program) : entry list =
+    List.map (fn d => {kind = kindOf d, name = nameOf d, makes = makes d, uses = fn () => uses d, decl = fn () => d}) p
+
+  fun reachIndexed (units : unitCore list, roots : string list) : program =
+    let
+      val all = List.concat (List.map (fn Indexed (t, textOf) => entriesOf (t, textOf) | InHand p => entriesIn p) units)
+      val numbered = ListPair.zip (List.tabulate (length all, fn i => i), all)
+      fun isType (e : entry) = #kind e = "d" orelse #kind e = "n"
+      (* a value by its definition, a type by its first declaration, each by
+         its place among the entries *)
+      fun firsts pick =
+        List.foldl (fn ((i, e : entry), m) => if pick e andalso not (CoreMap.member (m, #name e)) then CoreMap.insert (m, #name e, (i, e)) else m)
+                   CoreMap.empty numbered
+      val values = firsts (fn e => #kind e = "v")
+      val types = firsts isType
+      val conType =
+        List.foldl (fn ((_, e : entry), m) =>
+                      if isType e then List.foldl (fn (c, m) => if CoreMap.member (m, c) then m else CoreMap.insert (m, c, #name e)) m (#makes e)
+                      else m)
+                   CoreMap.empty numbered
+      val seenV = ref (CoreMap.empty : unit CoreMap.map)
+      val seenT = ref (CoreMap.empty : unit CoreMap.map)
+      fun typ t =
+        if CoreMap.member (!seenT, t) then ()
+        else (seenT := CoreMap.insert (!seenT, t, ());
+              case CoreMap.find (types, t) of SOME (_, e) => List.app typ (#types (#uses e ())) | NONE => ())
+      fun value x =
+        if CoreMap.member (!seenV, x) then ()
+        else (seenV := CoreMap.insert (!seenV, x, ());
+              case CoreMap.find (values, x) of
+                SOME (_, e) =>
+                  let val {values = vs, types = ts, cons = cs} = #uses e ()
+                  in List.app typ ts; List.app (fn c => Option.app typ (CoreMap.find (conType, c))) cs; List.app value vs end
+              | NONE => ())
+      val () = List.app value roots
+      fun chosen (i, e : entry) =
+        if #kind e = "v" then CoreMap.member (!seenV, #name e) andalso Option.map #1 (CoreMap.find (values, #name e)) = SOME i
+        else if isType e then CoreMap.member (!seenT, #name e) andalso Option.map #1 (CoreMap.find (types, #name e)) = SOME i
+        else false
+    in List.map (fn (_, e : entry) => #decl e ()) (List.filter chosen numbered) end
+
   fun unresolved (p : program) : string list =
     let val defined = List.foldl (fn (Val (x, _, _), m) => CoreMap.insert (m, x, ()) | (_, m) => m) CoreMap.empty p
     in List.mapPartial (fn Import (x, _) => if CoreMap.member (defined, x) then NONE else SOME x | _ => NONE) p end

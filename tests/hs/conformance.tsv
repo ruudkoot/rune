@@ -328,7 +328,7 @@ exp.parse.let	3	let { ... } in x + y parses as let { ... } in (x + y)	syntax	run
 exp.parse.oplet	3	z + let { ... } in x + y parses as z + (let { ... } in (x + y))	syntax	run	printer output of the AST	hand	Supported		
 exp.parse.sig	3	f x y :: Int parses as (f x y) :: Int	syntax	run	printer output of the AST	hand	Supported		
 exp.parse.lambdasig	3	\ x -> a+b :: Int parses as \ x -> ((a+b) :: Int)	syntax	run	printer output of the AST	hand	Supported		
-exp.parse.letnonassoc	3	let x = True in x == x == True must parse as (let x = True in (x == x)) == True, since == is non-associative	syntax	run	see readings.md: the Report concedes a post-parse fixity pass gets this wrong; pinned reading or deviation	hand	Supported	R9	errors/exp.parse.letnonassoc_refused
+exp.parse.letnonassoc	3	let x = True in x == x == True must parse as (let x = True in (x == x)) == True, since == is non-associative	syntax	run	see readings.md: the Report concedes a post-parse fixity pass gets this wrong; pinned reading or deviation. A deviation conceded by the Report (D38's ground, the owner's decision of 2026-11-13): chapter 3 says implementations may well deliver the other parse and advises programmers to avoid the construct; rhc refuses x == x == True at fixity resolution (R9).	hand	Supported	R9	errors/exp.parse.letnonassoc_refused
 exp.parse.advice	3	Programmers are advised to avoid constructs whose parsing involves associativity interacting with the let/lambda meta-rule	syntax	none	advice to programmers, nothing a test can show. Nothing to meet (ruling 49): advice to programmers, which asks nothing of rhc.	hand	Supported		
 exp.err.nontermination	3.1	Errors, denoted ⊥, are indistinguishable by a Haskell program from non-termination	dynamic	none	a negative universal over programs; tests can only pin that catch and error do not meet (exp.err.uncatchable). Met by construction (ruling 49): rhc gives a program no way to tell an error from a loop, since catch takes only an IOError and error raises none (exp.err.uncatchable's program).	hand	Supported		
 exp.err.alltypes	3.1	All Haskell types include ⊥	dynamic	run	undefined bound at a function, data, tuple, list, newtype and Int type, unused, and the program finishes	hand	Supported		
@@ -561,9 +561,9 @@ exp.field.con.pos	3.15.2	Components are specified by name, not position	dynamic	
 exp.field.con.notown	3.15.2	Only field labels declared with the specified constructor may be mentioned	static	reject	C1 {f3 = 'a'}	hand	Supported		
 exp.field.con.twice	3.15.2	A field label may not be mentioned more than once	static	reject	C1 {f1 = 1, f1 = 2}	hand	Supported		
 exp.field.con.missing	3.15.2	Fields not mentioned are initialised to ⊥	dynamic	run	untouched field unused is fine; demanded it terminates as error does	hand	Supported		
-exp.field.con.strict	3.15.2	A compile-time error occurs when a strict field is omitted during construction	static	reject	data S = S {a :: !Int, b :: Int}; S {b = 1}	hand	Planned		
+exp.field.con.strict	3.15.2	A compile-time error occurs when a strict field is omitted during construction	static	reject	data S = S {a :: !Int, b :: Int}; S {b = 1}	hand	Supported		
 exp.field.con.empty	3.15.2	F {} is legal whether or not F was declared with record syntax	dynamic	run	data T = F Int Int; F {} compiles; case F {} of F _ _ -> 1	hand	Supported		
-exp.field.con.empty.strict	3.15.2	provided F has no strict fields	static	reject	data T = F !Int; F {}	hand	Planned		
+exp.field.con.empty.strict	3.15.2	provided F has no strict fields	static	reject	data T = F !Int; F {}	hand	Supported		
 exp.field.con.empty.value	3.15.2	F {} denotes F ⊥1 ... ⊥n, n the arity of F	dynamic	run	components are ⊥ individually	hand	Supported		
 tr.field.con	3.15.2	C { bs } = C (pickC1 bs undefined) ...(pickCk bs undefined), k the arity of C	dynamic	run	literal translation differenced	hand	Supported		
 tr.field.pick	3.15.2	pickCi bs d is v if component i of C has label f and f=v is in bs, else d	dynamic	run	exercised by tr.field.con and tr.field.upd	hand	Supported		
@@ -573,8 +573,8 @@ exp.field.upd.chain	3.15.3	An update's aexp may itself be an update	syntax	run	r
 exp.field.upd.tight	3.15.3	An update binds tighter than application, as it is an aexp	syntax	run	f r {a = 1} is f (r {a = 1})	hand	Supported		
 exp.field.upd.nondestructive	3.15.3	Update creates a new value; the old is unchanged	dynamic	run	both used afterwards	hand	Supported		
 exp.field.upd.onetype	3.15.3	All labels must be taken from the same datatype	static	reject	r {a = 1, b = 2} with a and b of two types	hand	Supported		
-exp.field.upd.onecon	3.15.3	At least one constructor must define all the labels mentioned	static	reject	x {f2 = 1, f3 = 'x'}, the Report's example	hand	Planned		
-exp.field.upd.twice	3.15.3	No label may be mentioned more than once	static	reject	r {a = 1, a = 2}	hand	Planned		
+exp.field.upd.onecon	3.15.3	At least one constructor must define all the labels mentioned	static	reject	x {f2 = 1, f3 = 'x'}, the Report's example	hand	Supported		
+exp.field.upd.twice	3.15.3	No label may be mentioned more than once	static	reject	r {a = 1, a = 2}	hand	Supported		
 exp.field.upd.runtime	3.15.3	An execution error occurs when the value lacks a specified label	dynamic	run	(C1 1 2) {f3 = 'a'} terminates as error does	hand	Supported		
 exp.field.upd.strictval	3.15.3	Update on ⊥ is ⊥, by the case of the translation	dynamic	run	seq (undefined {f1 = 1}) () terminates	hand	Supported		
 exp.field.upd.strictfield	3.15.3	An updated strict field is forced, by 4.2.1's replacement of K in the translation	dynamic	run	r {s = undefined} seq'd terminates	hand	Supported		
@@ -704,7 +704,7 @@ pat.guard.after	3.17.2	A guard is evaluated only after all arguments have matche
 pat.guard.true	3.17.2	It must be true for the overall match to succeed	dynamic	run	False guard falls to the next clause	hand	Supported		
 pat.guard.env	3.17.2	The guard's environment is that of the right-hand side	static	run	guard uses the where bindings and the pattern variables	hand	Supported		
 pat.guard.strict	3.17.2	An otherwise irrefutable pattern may be evaluated because of a guard	dynamic	run	f ~(x,y,z) [a] | (a == y) = 1 evaluates a and y: f undefined [1] terminates as error does, the Report's example	hand	Supported		
-tr.case.obligation	3.17.3	Any implementation should behave so that these identities hold, and need not use them directly	dynamic	run	-O0 as the literal rules differenced against decision trees, over the corpus and generated programs	hand	Planned	R86	
+tr.case.obligation	3.17.3	Any implementation should behave so that these identities hold, and need not use them directly	dynamic	run	-O0 as the literal rules differenced against decision trees, over the corpus and generated programs. Held by four jobs (ruling 59): hs/desugar/orders, the Report's rules against Sestoft's trees on every program of tests/hs/lang; hs/generated/@orders, the generated programs on Sestoft's trees against the Report's meaning; hs-corpus-run/sestoft, the corpus on Sestoft's trees against E8's output (nightly); and hs/interp-vm, the literal translation against the compiled form.	hand	Supported	R86	
 tr.case.base	3.17.3	All pattern-matching constructs other than case are defined by identities to case, and case by a series of identities	dynamic	none	a statement of method; the rules' completeness is in translations.md. Met by construction (ruling 49): HsMatch compiles case by 3.17.3's identities, in the Report's order by default (D34 A), and HsDesugar takes every other matching construct to it, function clauses, lambdas, pattern bindings, do and comprehensions (desugar.sml's HsMatch.clauses and HsMatch.pattern); the tr.case.* rows' programs and tests/hs/desugar's hs/desugar/report jobs run them	hand	Supported		
 tr.case.a	3.17.3	(a) case e of { alts } = (\v -> case v of { alts }) e, v new	dynamic	run	literal rule differenced; e evaluated at most once, sharing kept by the lambda	hand	Supported		
 tr.case.b	3.17.3	(b) case v of { p1 match1; ... ; pn matchn } = case v of { p1 match1 ; _ -> ... case v of { pn matchn ; _ -> error "No match" }...}	dynamic	run	literal rule differenced, for one to many alternatives	hand	Supported		
@@ -905,14 +905,14 @@ cls.method.clash.top	4.3.1	a method may not have the name of a top-level definit
 cls.method.clash.field	4.3.1	a method may not have the name of a field	static	reject	a method x and a field x in one module	hand	Supported		
 cls.method.clash.method	4.3.1	a method may not have the name of another method	static	reject	x in two classes of one module, and x twice in one class	hand	Supported		
 cls.method.type	4.3.1	the top-level type of vi is forall u,w. (C u, cxi) => ti	static	accept	for `class Foo a where op :: Num b => a -> b -> a`, a signature at `(Foo a, Num b) => a -> b -> a` is accepted	hand	Supported		
-cls.method.mentions	4.3.1	ti must mention u	static	reject	`class C a where m :: Int` is refused	hand	Planned		
+cls.method.mentions	4.3.1	ti must mention u	static	reject	`class C a where m :: Int` is refused	hand	Supported		
 cls.method.othervars	4.3.1	ti may mention other variables, in which the method is polymorphic	static	accept	a method used at two types of w	hand	Supported		
 cls.method.ctx.w	4.3.1	cxi may constrain w	static	accept	the example's `op :: Num b => a -> b -> a`	hand	Supported		
 cls.method.ctx.notu	4.3.1	cxi may not constrain u	static	reject	`class C a where m :: Eq a => a -> a` is refused	hand	Supported	R73	
 cls.fixity.inclass	4.3.1	cdecls may hold a fixity declaration for a method	static	run	an infix method's parse shown by evaluation	hand	Supported		
-cls.fixity.nonmethod	4.3.1	cdecls may hold a fixity declaration for no other value	static	reject	a fixity declaration of a top-level function inside a class is refused	hand	Planned		
+cls.fixity.nonmethod	4.3.1	cdecls may hold a fixity declaration for no other value	static	reject	a fixity declaration of a top-level function inside a class is refused	hand	Supported		
 cls.fixity.toplevel	4.3.1	a method's fixity declaration may instead appear at top level	static	run	the same test with the declaration outside the class	hand	Supported		
-cls.fixity.both	4.3.1	the two places count as one: at most one fixity declaration for an operator (4.4.2)	static	reject	one in the class and one at top level are refused	hand	Planned		
+cls.fixity.both	4.3.1	the two places count as one: at most one fixity declaration for an operator (4.4.2)	static	reject	one in the class and one at top level are refused	hand	Supported		
 cls.default.use	4.3.1	a default method is used if an instance gives no binding	dynamic	run	an instance without the method runs the default	hand	Supported		
 cls.default.override	4.3.1	an instance's binding replaces the default	dynamic	run	an instance with the method runs its own	hand	Supported		
 cls.default.mutual	4.3.1	defaults may refer to each other and to the class's other methods	dynamic	run	Eq-like mutual defaults, with one method defined	hand	Supported		
@@ -942,7 +942,7 @@ cls.inst.reject.synonymctx	4.3.2	that holds for a synonym which would expand to 
 cls.inst.ctx.simple	4.3.2	the instance context is an scontext: assertions on bare variables	syntax	reject	`instance Eq (f a) => C (T f a)` is refused	hand	Supported		
 cls.inst.ctx.qualifiedclass	4.3.2	the class of an instance head may be qualified	static	accept	`instance Ix.Ix T where ...`	hand	Supported		
 cls.inst.body.methodsonly	4.3.2	the declarations may hold bindings only for methods of C	static	reject	a binding of another variable, and of a method of another class, are refused	hand	Supported		
-cls.inst.body.notinscope	4.3.2	it is illegal to bind a method that is not in scope	static	reject	`import M (C)` without the method, then a binding of the method, is refused	hand	Planned	R76	
+cls.inst.body.notinscope	4.3.2	it is illegal to bind a method that is not in scope	static	reject	`import M (C)` without the method, then a binding of the method, is refused	hand	Supported	R76	
 cls.inst.body.anyname	4.3.2	the name under which the method is in scope is immaterial	static	accept	`import qualified Ix; instance Ix.Ix T where range = ...` is legal	hand	Supported		
 cls.inst.body.lhsunqualified	4.3.2	the binding names the method unqualified, whatever the name in scope	syntax	reject	`Ix.range = ...` in an instance is refused	hand	Supported		
 cls.inst.body.ambiguous	4.3.2	the binding resolves through the class, so a clash in the unqualified name does not matter	static	accept	a method binding where the name also has another import	hand	Supported		
@@ -1284,7 +1284,7 @@ mod.exp.con.bare	5.2	A data constructor cannot be named except as a subordinate 
 mod.exp.con.sametype	5.2	T in an export list names the type even where a constructor is also T	module	reject	data T = T; module M (T); importer uses constructor T: refused	hand	Supported		
 mod.exp.synonym	5.2	A type synonym is named by the form T	module	accept	module M (S) where type S = Int	hand	Supported		
 mod.exp.synonym.scope	5.2	The synonym must be in scope	module	reject	an unknown S: refused	hand	Supported		
-mod.exp.synonym.dotdot	5.2	Only the form T is given for a synonym, though the grammar allows S(..)	module	reject	module M (S(..)) where type S = Int; see readings.md	hand	Planned	R34	
+mod.exp.synonym.dotdot	5.2	Only the form T is given for a synonym, though the grammar allows S(..)	module	reject	module M (S(..)) where type S = Int; see readings.md	hand	Supported	R34	
 mod.exp.class.abs	5.2	The form C names the class but not its methods	module	reject	importer calls a method: refused	hand	Supported		
 mod.exp.class.abs.ok	5.2	The form C makes the class name available	module	accept	importer writes a context with C	hand	Supported		
 mod.exp.class.some	5.2	The form C(f1,...,fn) names the class and some or all of its methods	module	accept	importer calls a listed method	hand	Supported		
@@ -1386,7 +1386,7 @@ mod.inst.noname	5.4	Instance declarations cannot be named on import or export li
 mod.inst.exported	5.4	All instances in scope within a module are always exported	module	run	M with an export list naming nothing passes on its instances and those it imported	hand	Supported		
 mod.inst.imported	5.4	Any import brings in all instances from the imported module	module	run	import M; the instance is used	hand	Supported		
 mod.inst.chain	5.4	An instance is in scope if a chain of import declarations leads to its module	module	run	A imports B imports C, C holds the instance, A uses it without naming C	hand	Supported		
-mod.inst.nochain	5.4	An instance is in scope only if such a chain exists	module	reject	the instance is in a module of the program no chain from the user reaches: refused; see readings.md	hand	Planned	R26	
+mod.inst.nochain	5.4	An instance is in scope only if such a chain exists	module	reject	the instance is in a module of the program no chain from the module that uses it reaches: refused there; see readings.md	hand	Supported	R26	
 mod.inst.emptylist	5.4	import M() brings no names but does bring M's instances	module	run	show of M's type obtained another way	hand	Supported		
 mod.inst.qualified	5.4	A qualified import brings the instances	module	run	import qualified M ()	hand	Supported		
 mod.inst.hidden	5.4	A hiding import brings the instances	module	run	import M hiding (T)	hand	Supported		
@@ -1425,7 +1425,7 @@ mod.closure.class	5.5.3	The classes in a variable's signature need not be import
 mod.closure.t	5.5.3	Example: M1(x) with T not exported, M2 imports x and defines y = x	module	accept	compiles though T does not escape M1	hand	Supported		
 mod.closure.t.sig	5.5.3	There y can be given no signature, as T is not in scope	module	reject	y :: T: refused	hand	Supported		
 mod.closure.synonym	5.5.3	The type of an exported entity is unaffected by non-exported synonyms	module	accept	module M(x) where type T = Int; x :: T; importer uses x + (1 :: Int)	hand	Supported		
-mod.closure.iface	5.5.3	The system silently imports what must accompany an entity	module	none	the means are the compiler's; tested through the rows above. Met by construction (ruling 49): rhc reads every module a program reaches, and the library from the saved world (D45), so what an entity needs comes with it unasked; 5.5.3's rows are its programs.	hand	Supported		
+mod.closure.iface	5.5.3	The system silently imports what must accompany an entity	module	none	the means are the compiler's; tested through the rows above. Met by construction (ruling 49): rhc reads every module a program reaches, and the library's units from its snapshot (D45), so what an entity needs comes with it unasked; 5.5.3's rows are its programs.	hand	Supported		
 mod.std.fixed	5.6	The semantics of Prelude and library modules, not their implementation, are part of the language	module	none	tested by chapters 6, 8 and 12 to 27. Nothing to meet (ruling 49): a statement of what is part of the language; the rows of chapters 6, 8 and 12 to 27 hold rhc to those semantics.	hand	Supported		
 mod.std.optimise	5.6	A compiler may optimise calls to them without consulting their source	module	none	a permission, not a requirement. Nothing to meet (ruling 49): a permission; rhc compiles calls to the library as to any module.	hand	Supported		
 mod.prel.implicit	5.6.1	The Prelude is imported into all modules as if by import Prelude	module	accept	a module uses Prelude.map and map with no import	hand	Supported		
@@ -1457,7 +1457,7 @@ mod.shadow.special	5.6.2	Redefining names used by the Prelude does not affect sp
 mod.shadow.special.scope	5.6.2	Those constructs work with none of their names in scope	module	run	import Prelude (); comprehensions, do, literals and [1..] still compile; see readings.md	hand	Supported	R22	
 mod.shadow.instance	5.6.2	Instance declarations in the Prelude cannot be hidden	module	reject	instance Show Char in a user module, under any import form: refused	hand	Supported		
 mod.prel.ordinary	5.6.2	Other than its implicit import the Prelude is an ordinary module	module	accept	it is imported with each import form	hand	Supported		
-mod.sep.undefined	5.7	The precise details of separate compilation are not defined by the Report	module	none	left to the implementation: rhc's own decision. Nothing to meet (ruling 49): separate compilation's details are the implementation's; rhc's are D45's saved world and M21's units.	hand	Supported		
+mod.sep.undefined	5.7	The precise details of separate compilation are not defined by the Report	module	none	left to the implementation: rhc's own decision. Nothing to meet (ruling 49): separate compilation's details are the implementation's; rhc's are D45's snapshot and M21's units.	hand	Supported		
 mod.sep.recursive	5.7	Separate compilation of mutually recursive modules may need additional information	module	accept	a permission to the implementation; see readings.md, it qualifies 5's unconditional statement. E9's test was none; ruling 49 makes it an acceptance: accept/mod.recursive names it and pins R29, a cycle of modules compiled whole with no further information (R29 in readings.md).	hand	Supported	R29	
 mod.sep.sigs	5.7	Explicit signatures for all exported values may be necessary for mutual recursion	module	accept	whether rhc demands them is a decision; see readings.md. E9's test was none; ruling 49 makes it an acceptance (tests/hs/accept/mod.sep.sigs): rhc needs no signature for a function exported across a cycle, only, by D30, a restricted variable's type in its own module (R20 and R29 in readings.md).	hand	Supported	R20 R29	
 mod.adt.data	5.8	Example: module Stack( StkType, push, pop, empty ) exports a datatype without its constructors	module	accept	importer uses push, pop, empty	hand	Supported		
@@ -2364,7 +2364,7 @@ lay.note6.pending	9.3	Note 6: at end of input any pending close-braces are inser
 lay.note6.explicit	9.3	Note 6: it is an error to be within a non-layout context at end of input	layout	reject	unclosed explicit brace at end of file	hand	Supported		
 lay.notdetected	9.3	"Some error conditions are not detected by the algorithm, although they could be: for example let }"	layout	reject	the grammar refuses it either way; by equations 4 and 8 L does detect the usual case; see readings.md	hand	Supported	R3	
 lay.parseerror.let	9.3	`let x = e; y = x in e'` is valid and translates to `let { x = e; y = x } in e'`	layout	accept	expansion; the prose calls this Note 1, it is Note 5: see readings.md	hand	Supported	R1	
-lay.parseerror.fixity	9.3	`do a == b == c` has the single parse `(do { a == b }) == c` since (==) is non-associative	layout	accept	taking it needs fixity in the parser; the Report says hard to implement; a post-parse fixity pass gets it wrong; see readings.md	hand	Supported	R1	errors/lay.parseerror.fixity_refused
+lay.parseerror.fixity	9.3	`do a == b == c` has the single parse `(do { a == b }) == c` since (==) is non-associative	layout	accept	taking it needs fixity in the parser; the Report says hard to implement; a post-parse fixity pass gets it wrong; see readings.md. A deviation conceded by the Report (D38's ground, the owner's decision of 2026-11-13): 9.3 calls the rule hard to implement because it involves fixities and advises programmers to avoid it; rhc refuses the block at fixity resolution (R1).	hand	Supported	R1	errors/lay.parseerror.fixity_refused
 lay.parseerror.advice	9.3	Programmers are advised to avoid code needing a closing brace in such situations	layout	none	advice to programmers. Nothing to meet (ruling 49): advice to programmers.	hand	Supported		
 lay.parseerror.doif	9.3	`do { if a ; then b ; else c }` is refused: ; is valid only as a stmt end	layout	reject	the layout-free form of the same mistake; Haskell 2010's DoAndIfThenElse is not Haskell 98	hand	Supported		
 lay.parseerror.multiline	9.3	`if` in a do block with then and else indented more parses	layout	accept	no semicolons arise	hand	Supported		
@@ -3622,10 +3622,10 @@ lib.r.io.hfilesize	21.4	hFileSize returns the file's size in 8-bit bytes	library
 lib.r.io.hiseof	21.5	hIsEOF is True when no further input can be taken: position equals length	library	run	before and after the last character	hand	Supported		
 lib.r.io.iseof	21.5	isEOF is hIsEOF on stdin	library	run	with a piped input	hand	Supported		
 lib.r.io.buffer.line	21.6	Line buffering flushes on newline, overflow, hFlush and close	library	run	a second process observes the output, or a strace-free pipe test	hand	Supported		
-lib.r.io.buffer.block	21.6	Block buffering flushes on overflow, hFlush and close	library	run	as above	hand	Supported		
+lib.r.io.buffer.block	21.6	Block buffering flushes on overflow, hFlush and close	library	run	as above. Planned by ruling 64: rhc flushes on hFlush and close, and on overflow only of the runtime's own buffer: BlockBuffering (Just n)'s n is stored by PreludeRuntime.primHSetBuffering and used by nothing, so at BlockBuffering (Just 4) ten characters written leave the file empty, where 21.6 has written eight (lib.r.io.buffer.more's case); L's fix to come, then a program that shows the flushes.	hand	Planned		
 lib.r.io.buffer.none	21.6	No buffering writes immediately	library	run	as above	hand	Supported		
-lib.r.io.buffer.more	21.6	An implementation may flush more often than specified, never less	library	none	nothing to meet: a licence rhc does not take; lang/lib.r.io.buffer.line_shown shows it flushes as 21.6 says and no more	hand	Supported		
-lib.r.io.buffer.input.line	21.6	Line-buffered input reads until a newline or a full buffer	library	none	by construction: a read gives what the system has, up to 4096 bytes (PreludeRuntime.fileByte), which a terminal gives a line at a time	hand	Supported		
+lib.r.io.buffer.more	21.6	An implementation may flush more often than specified, never less	library	none	a licence to flush more often, and a bound: never less often. rhc flushes no more often than 21.6 says (lang/lib.r.io.buffer.line_shown), but less often for BlockBuffering (Just n): the size is kept (PreludeRuntime.primHSetBuffering) and not used, the writes held in the runtime's own buffer, so a handle at BlockBuffering (Just 4) has written nothing after ten characters, where 21.6 has written eight; Planned until it does	hand	Planned		
+lib.r.io.buffer.input.line	21.6	Line-buffered input reads until a newline or a full buffer	library	none	by construction: a read gives what the system has, up to 4096 bytes (PreludeRuntime.fileByte): a terminal gives a line at a time, and a file a block, more than a line, which no program of its own can tell from a line	hand	Supported		
 lib.r.io.buffer.input.block	21.6	Block-buffered input reads the next block when the buffer empties	library	none	by construction: the next 4096 bytes are read when the handle's are used up (PreludeRuntime.fileByte)	hand	Supported		
 lib.r.io.buffer.input.none	21.6	No buffering returns the next input item	library	run	an interactive pipe answers character by character	hand	Supported		
 lib.r.io.hsetbuffering	21.6	hSetBuffering sets the mode for subsequent reads and writes	library	run	read back by hGetBuffering	hand	Supported		
@@ -3751,7 +3751,7 @@ lib.r.system.exitwith.close	23	Before termination open and semi-closed handles a
 lib.r.system.exitfailure	23	exitFailure = exitWith (ExitFailure exitfail), exitfail implementation-dependent	library	run	a non-zero status	hand	Supported		
 lib.r.system.exitwith.nocatch	23	exitWith bypasses the I/O monad's error handling and cannot be intercepted by catch	library	run	`catch (exitWith ExitSuccess) h`: h does not run	hand	Supported		
 lib.r.system.term.error	23	A program ending by error, or with value _|_, is treated identically to exitFailure	library	run	non-zero status and handles closed, against 3.1's "immediate": see readings.md	hand	Supported	R37	
-lib.r.system.term.loop	23	A value "otherwise determined to be _|_" includes non-termination, detected or not	library	run	only a detected loop or stack exhaustion can be tested. E9's test was none; ruling 49 makes it a run and ruling 58 its test (tests/hs/lang/lib.r.system.term.loop): a loop rhc determines, the re-entry of a blackholed suspension, ends with status 1 on the interpreter and the VM; the stack's exhaustion is D18's limit, outside the clause.	hand	Planned	R95	
+lib.r.system.term.loop	23	A value "otherwise determined to be _|_" includes non-termination, detected or not	library	run	only a detected loop or stack exhaustion can be tested. E9's test was none; ruling 49 makes it a run and ruling 58 its test (tests/hs/lang/lib.r.system.term.loop): a loop rhc determines, the re-entry of a blackholed suspension, ends with status 1 on the interpreter and the VM; the stack's exhaustion is D18's limit, outside the clause.	hand	Supported	R95	
 lib.r.system.term.normal	23	A program p ending without exitWith is treated as (p >> exitWith ExitSuccess) `catch` \ _ -> exitFailure	library	run	status 0 on success	hand	Supported		
 lib.r.system.term.ioerror	23	An uncaught IOError gives exitFailure	library	run	non-zero status, and 7.3's printed value on stderr	hand	Supported		
 lib.system.data.exitcode	23	type ExitCode is declared as the Report gives it	library	accept	constructors, deriving and kinds used by a test program	generated	Supported		

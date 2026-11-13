@@ -1,0 +1,22 @@
+(* run: alone *)
+(* The lazy arrow as a type name (ruling 65): (~>) given both is `a susp -> b`, the function type rhc's Core lowers
+   Haskell's to, so that a type variable applied, instantiated at it given one type, int (~>), and alone, (~>), as
+   an instance at Haskell's (->) gives it, is that function type. *)
+(datatype box ('m) (0 "Box" : (int, int) 'm))
+(funs
+  (fn gforce ((vs : int susp)) : int
+    (let (vn : int) (prim thunk_force vs : int susp -> int)
+    (return (prim int_add vn 1 : (int * int) -> int)))))
+(funs
+  (fn gsame ['m] ((vf : int 'm)) : int 'm
+    (return vf)))
+(val gmain : unit
+  (let (vg : int susp -> int) (app gsame[int (~>)] gforce)
+  (let (vh : (int, int) (~>)) vg
+  (let (vb : (~>) box) (con 0 vh : (~>) box)
+  (let (vk : int susp -> int) (decon 0 vb : (~>) box)
+  (let (vx : int susp) (prim unsafe_cast 41 : int -> int susp)
+  (let (vr : int) (app vk vx)
+  (let (vt : string) (prim int_to_string vr : int -> string)
+  (let (vu : string) (prim string_concat vt "\n" : (string * string) -> string)
+  (return (prim print vu : string -> unit)))))))))))

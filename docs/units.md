@@ -1092,11 +1092,13 @@ as the edit says, and `--verify-cache` holds to the files' texts.
 ## rhc's units
 
 rhc, the Haskell 98 compiler of the haskell98 roadmap
-([plans/language/haskell98.md](plans/language/haskell98.md), M21), keeps its
-units in the same store as a client of its own (`src/rhc/store.sml`,
-`RhcStore`): its own format, head, `holds`, key and settings, in a
-configuration of rhc's (its `Config.identity`, the instruction set, the
-level and passes, the form of string literals). A unit is an SCC of a
+([plans/language/haskell98.md](plans/language/haskell98.md), M21;
+[rhc.md](rhc.md)), keeps its units in the same store as a client of its own
+(`src/rhc/store.sml`, `RhcStore`): its own format, head, `holds`, key and
+settings, in configurations of rhc's (`RhcStoreConfig`): a unit's of its
+`Config.identity` and what changes a unit's Core (the form of string
+literals, the order of matching), a link's of those and the instruction
+set, the level and passes besides. A unit is an SCC of a
 program's modules; Core in units (`lib/language/haskell/coreunits.sml`)
 names another unit's value by `(import x TYPE)` and its type by a copy of
 the declaration. `rhc --units` takes `--read-core` files as units, after
@@ -1135,6 +1137,82 @@ over what the program reaches at each link that changes it. The link memo
 is an entry keyed by the hash of the reached Core's text, which is all the
 back end reads, holding the program's bytecode. No change to Rune's Link
 is needed for it, where a Shake over linked bytecode would be one.
+
+**A program of Haskell.** `rhc --units FILE.hs` (`src/rhc/driver.sml`)
+takes each group of the module graph as a unit: named and checked from the
+interfaces of the units before it (`RhcIface`), desugared alone
+(`RhcDesugar.unit`), its interface (`HsIface`: each module's `HsModIface`,
+in bytes, each string once in a table), the desugaring's interface, its
+fingerprints and its Core kept, each a section of its own; its usages are the reads the
+naming, the checking and the desugaring made (`HsUsage`), each answered on
+the state of the units before with the unit's modules named
+(`RhcIface.answer`), an entity of another unit with its fingerprint. The
+first unit, the library's, reads only its own source and rhc's leaves, so
+it keeps none. A unit's fingerprints (`HsModIface.fingerprints`, which its
+importers' usages name) are by recursive group over all its modules, so that
+a group of types that spans the members of a cycle hashes as one (H8, M22);
+they are kept with it, with each fingerprint of another unit's they were
+made from: a unit taken reuses them where those are still what they were,
+else makes them again. A usage names no unit: under the link of C a client's
+Core names another unit's entities by their modules, so a cycle split in two
+units of new names takes its clients where what they read is as it was
+(`tests/hs/units/holes/h8-split`). A unit's Core is kept by its declarations
+(`CoreUnits.index`): an index of what each is, makes and names, and each
+declaration's text a section of its own, which the store reads and holds
+to its hash only where it is asked for. The link memo is keyed by the
+units' entries' sums, so a link taken reads no Core, and a link compiled
+reads only the declarations main reaches (`CoreUnits.reachIndexed`).
+The graph is read by its modules' headers (`RhcGraph.scan`): a module's
+name and the modules its imports name, kept in the store by the hash of its
+text, which the stat memo gives (`UnitStore.hashBy`), so that a module is
+parsed only where its unit is made or its usages are asked, and the
+library's, whose unit keeps none, never once it is taken.
+
+**The snapshot** (D45's A, rulings 66 and 67). `make bin/rhc` compiles
+the library once into a store, `bin/rhc.layer`, from a Main that imports
+every module of it, at `RUNE_LINT=2`, and `bin/rhc` names it
+(`--snapshot`). Every check and compile of `bin/rhc FILE.hs`, with `-o`,
+`--typecheck-only` or neither (a run on Core's interpreter), takes the
+library's units from it, read only, and reads, names, checks and desugars
+the program's own modules a unit at a time, keeping nothing
+(`RhcDriver.front`); `--units --store DIR` keeps them too, the snapshot
+read after any `--layer`; `--whole` reads the library as well, the
+reference. A unit's entry is kept in a configuration with no setting of
+the back end (the instruction set, the level, the width of int), since it
+holds no code, so one snapshot serves the stack machine and the register
+machine; the link's entry keeps them. A module's header is kept by the
+name it is read for and its text's hash, not its file, so a snapshot made
+in one place is read in another. `make` drops from the snapshot every
+configuration of another rhc (`rhc --prune-store`), so it holds this rhc's
+entries alone. At level 2 a unit made is checked by HsLint
+(`HsLint.check`) after what it found of the units before it, each unit's
+part of its entry joined (`HsLint.join`): its own modules inferred, their
+records replayed, its Core held to the inference; and what it found of its
+own modules is kept as a part of its entry (`HsLint.encode`), so the
+library, whose part the snapshot keeps, is never inferred again.
+
+**What it costs.** As it ships, `bin/rhc hello.hs -o OUT` at
+`RUNE_LINT=2` runs 59M VM instructions (42M at level 0; with
+`--typecheck-only` 20M; with `--whole` 288M), 1.26G of the machine's
+(`perf stat -e instructions:u`, the process whole) against 4.34G whole and
+1.81G from the saved world it replaced (D45's B until ruling 67); over 51
+run programs of `tests/hs/lang`, an even sample, its compile at level 2 is
+a median 0.76 of the saved world's (0.78 in all) and 0.46 of a whole one's
+in all, each program byte for byte the whole compile's. Loading
+`bin/rhc.rbc` is 0.24G of it, where restoring the world's image was 0.67G.
+The link's whole compile of what `main` reaches is three quarters of a
+compile, a third of that the checks of level 2; HsLint is 4%. Measured at
+level 0, hello compiled whole is 145M; in units with a store and nothing
+edited about 9M (the graph read 1M, the library taken 4.5M, Main taken
+2.3M, the link taken), with hello edited about 41M (Main compiled 20M, the
+link's reach 6M and its compile 9M). A clause program's compile (13 of
+`tests/hs/lang`'s run programs of one module, an even sample) at level 0:
+whole from source 147M to 379M, median 214M; against the snapshot with a
+fresh overlay 46M to 302M, median 118M; again, nothing edited, 9M to 26M,
+median 11M; each program byte for byte the whole compile's. Against the
+snapshot the link's compile is most of it where a program reaches much of
+the library (`Double`'s `show`: 224M of 302M), since the link compiles
+whole what `main` reaches.
 
 ## The graph
 

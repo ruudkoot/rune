@@ -159,8 +159,15 @@ void gc_queue(VM *vm, Obj *o);              /* an old object whose fields a coll
    a full one marks it -- the field that pointed to it given what it holds
    -- along a chain of at most IND_HOPS of them (D18); the copier of
    --nursery 0 copies it as it is, and the low-pause collector's cycle marks
-   it as it is */
+   it as it is. Where a function of the program says UPDATE and not
+   BLACKHOLE (Program's reruns: lazy ML's suspensions), not one a frame
+   runs, nor one whose value is a suspension or an indirection
+   (ind_may_shortcut, runtime/value.h; D57, M26). */
 #define IND_HOPS 16
+/* the indirections the frames from low up run as their closures pinned
+   (IND_RUNNING), before a collection that shortcuts: where the program
+   reruns, a lazy ML suspension's code may outlive its own update (copy.c) */
+void gc_pin_running(VM *vm, size_t low);
 void gc_born(VM *vm, Obj *o);               /* a large object with fields, made: scanned whole by the next minor */
 static inline int gc_in_nursery(const VM *vm, const void *p) {
     return vm->gc.nursery && (uintptr_t)((const char *)p - vm->alloc.from) < (uintptr_t)vm->alloc.size;
@@ -372,6 +379,7 @@ static inline void minor_globals(VM *vm, void (*take)(VM *, Value *)) {
         for (int i_ = 0; i_ < REAL_BOXES; i_++) \
             if ((vm)->real_boxes[i_]) O(&(vm)->real_boxes[i_]); \
         if ((vm)->interrupt_exn) O(&(vm)->interrupt_exn); \
+        if ((vm)->loop_exn) O(&(vm)->loop_exn); \
         for (size_t i_ = 0; i_ < (vm)->nhandles; i_++) V(&(vm)->handles[i_]); \
     } while (0)
 #define OTHER_ROOTS_FROM(vm, V, O, frame0) \
@@ -387,6 +395,7 @@ static inline void minor_globals(VM *vm, void (*take)(VM *, Value *)) {
         for (int i_ = 0; i_ < REAL_BOXES; i_++) \
             if ((vm)->real_boxes[i_]) O(&(vm)->real_boxes[i_]); \
         if ((vm)->interrupt_exn) O(&(vm)->interrupt_exn); \
+        if ((vm)->loop_exn) O(&(vm)->loop_exn); \
         for (size_t i_ = 0; i_ < (vm)->nhandles; i_++) V(&(vm)->handles[i_]); \
     } while (0)
 

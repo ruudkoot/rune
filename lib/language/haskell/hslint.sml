@@ -18,31 +18,62 @@ struct
   exception Refused of HsSource.span * string
 
   (* what the inference kept, let go once it is done *)
-  fun clear () = (HsLintInfer.reset (); HsLintEnv.reset (); T.names := [])
+  fun clear () = (HsLintInfer.reset (); HsLintEnv.reset (); T.names := []; HsLintClasses.inScope := (fn _ => true))
 
   fun zonkScheme (T.Forall (ks, (ps, t))) = T.Forall (ks, (List.map T.zonkPred ps, T.zonk t))
 
-  (* the second inference, its state kept for the report and replay *)
-  fun run {groups : module list list, main, cycleDefault, derived} =
-    (T.counter := 0;
-     T.names := [];
-     HsLintInfer.reset ();
-     HsLintEnv.build (List.concat groups);
-     List.app (fn g => HsLintInfer.modules {group = g, main = main, cycleDefault = cycleDefault, derived = derived}) groups)
+  (* the inference of a library's modules, as a saved world keeps it for
+     its programs (D45): the modules', their environment and what their
+     inference found *)
+  type library = HsLintCodec.part
 
-  (* what the inference found, while its state is kept *)
-  fun report () : report =
+  (* the second inference, its state kept for the report and replay: from
+     nothing, or after `library`, whose groups of modules it does not infer
+     again; the groups it inferred *)
+  fun run {groups : module list list, main, cycleDefault, derived, library} : module list list =
+    let
+      fun infer gs =
+        List.app (fn g => HsLintInfer.modules {group = g, main = main, cycleDefault = cycleDefault, derived = derived}) gs
+    in
+      case library of
+        NONE =>
+          (T.counter := 0;
+           T.names := [];
+           HsLintInfer.reset ();
+           HsLintEnv.build (List.concat groups);
+           infer groups;
+           groups)
+      | SOME ({modules = known, env, infer = inferred, counter, ...} : library) =>
+          let
+            fun kept g = List.all (fn {id, ...} : module => List.exists (fn k => k = id) known) g
+            val rest = List.filter (not o kept) groups
+          in
+            T.counter := counter;
+            T.names := [];
+            HsLintEnv.restore env;
+            HsLintInfer.restore inferred;
+            HsLintEnv.more (List.concat rest);
+            infer rest;
+            rest
+          end
+    end
+
+  (* what the inference found, while its state is kept, of the modules
+     `mine` holds *)
+  fun report (mine : string -> bool) : report =
     let
       val bindings =
-        List.map (fn {module, id, scheme, signed, restricted, span} =>
-                    {module = module, name = #name id, scheme = T.showScheme (zonkScheme scheme), signed = signed,
-                     restricted = restricted, span = span})
+        List.mapPartial (fn {module, id, scheme, signed, restricted, span} =>
+                           if not (mine module) then NONE
+                           else SOME {module = module, name = #name id, scheme = T.showScheme (zonkScheme scheme),
+                                      signed = signed, restricted = restricted, span = span})
           (!HsLintInfer.bindings)
       val defaults =
-        List.map (fn {module, span, preds, choice, ruleTwo} =>
-                    {module = module, span = span,
-                     preds = String.concatWith ", " (T.sortStrings (List.map (T.showPred o T.zonkPred) preds)),
-                     choice = T.showTy (T.zonk choice), ruleTwo = ruleTwo})
+        List.mapPartial (fn {module, span, preds, choice, ruleTwo} =>
+                           if not (mine module) then NONE
+                           else SOME {module = module, span = span,
+                                      preds = String.concatWith ", " (T.sortStrings (List.map (T.showPred o T.zonkPred) preds)),
+                                      choice = T.showTy (T.zonk choice), ruleTwo = ruleTwo})
           (!HsLintInfer.chosen)
       (* an entity's identity from its key, `QUAL NAME` *)
       fun ofKey k =
@@ -52,11 +83,14 @@ struct
       val kinds =
         HsStringMap.foldl
           (fn (k, d, acc) =>
-             let val kind = case d of HsLintEnv.Data {kind, ...} => kind | HsLintEnv.Synonym {kind, ...} => kind
-             in {module = #qual (ofKey k), name = #name (ofKey k), kind = T.showKind kind} :: acc end)
+             if not (mine (#qual (ofKey k))) then acc
+             else
+               let val kind = case d of HsLintEnv.Data {kind, ...} => kind | HsLintEnv.Synonym {kind, ...} => kind
+               in {module = #qual (ofKey k), name = #name (ofKey k), kind = T.showKind kind} :: acc end)
           [] (!HsLintEnv.tydefs)
         @ HsStringMap.foldl (fn (_, {id, kind, ...} : HsLintClasses.class, acc) =>
-                               {module = #qual id, name = #name id, kind = T.showKind kind} :: acc)
+                               if not (mine (#qual id)) then acc
+                               else {module = #qual id, name = #name id, kind = T.showKind kind} :: acc)
             [] (!HsLintClasses.classes)
       fun instanceText (c, h, context) =
         (case T.sortStrings (List.map T.showPred context) of
@@ -71,7 +105,8 @@ struct
                (fn {head = T.IsIn (c, h), context, derived = true, ...} : HsLintClasses.inst =>
                      (case T.spine h of
                         (T.TCon {id = {qual, ...}, ...}, _) =>
-                          if qual = "" then NONE else SOME {module = qual, instance = instanceText (c, h, context)}
+                          if qual = "" orelse not (mine qual) then NONE
+                          else SOME {module = qual, instance = instanceText (c, h, context)}
                       | _ => NONE)
                  | _ => NONE)
                is @ acc)
@@ -86,7 +121,8 @@ struct
     end
 
   fun infer {groups, main, cycleDefault} : report =
-    (run {groups = groups, main = main, cycleDefault = cycleDefault, derived = []}; report () before clear ())
+    (ignore (run {groups = groups, main = main, cycleDefault = cycleDefault, derived = [], library = NONE});
+     report (fn _ => true) before clear ())
     handle T.Refuse (span, msg) => (clear (); raise Refused (span, msg))
          | e => (clear (); raise e)
 
@@ -119,37 +155,87 @@ struct
 
   val replayRules = HsLintReplay.rules
 
-  (* `check {groups, main, cycleDefault, records, claims, where_, fault}`:
-     the second inference, then replay of the checker's records and those
-     records held to the inference as claims, then the claims given; and
-     what the target check reads, kept *)
-  fun check {groups : module list list, main, cycleDefault, records, claims, where_, fault} : report * target =
+  (* `check {groups, main, cycleDefault, records, claims, where_, fault,
+     library}`: the second inference, after `library`'s where it is given,
+     then replay of the checker's records of the modules it inferred and
+     those records held to the inference as claims, then the claims given;
+     what the target check reads, kept; and, where every module is the
+     library's, the inference of them for a saved world *)
+  fun check {groups : module list list, main, cycleDefault, records, claims, where_, fault, library}
+            : {report : report, target : target, part : library} =
     let
       val derived = case records of SOME {derived, ...} => derived | NONE => []
-      val () = run {groups = groups, main = main, cycleDefault = cycleDefault, derived = derived}
-      val r = report ()
-      val modules = List.concat groups
+      val inferred = run {groups = groups, main = main, cycleDefault = cycleDefault, derived = derived, library = library}
+      val modules = List.concat inferred
+      fun mine m = List.exists (fn {id, ...} : module => id = m) modules
+      val files = List.map (fn {ast = HsAst.Module ({span, ...}, _), ...} : module => #file span) modules
+      (* what the target check reads: of the modules inferred, after a
+         library's where it was given *)
+      val t =
+        HsLintTarget.collect
+          {bindings = List.mapPartial (fn {id, scheme, module, ...} => if mine module then SOME {id = id, scheme = scheme}
+                                                                      else NONE)
+                        (!HsLintInfer.bindings),
+           classes = fn {id = {qual, ...}, ...} : HsLintClasses.class => mine qual,
+           insts = fn {span = {file, ...}, ...} : HsLintClasses.inst =>
+                     if file = "" then not (isSome library) else List.exists (fn f => f = file) files}
+      (* what this check inferred alone, a unit's part (D45) *)
+      val ids = List.map (fn {id, ...} : module => id) modules
+      val part = {modules = ids, env = HsLintEnv.part (ids, files, not (isSome library)),
+                  infer = HsLintInfer.part ids, counter = !T.counter, target = t}
+      val t = case library of SOME l => HsLintTarget.join (#target l, t) | NONE => t
+      val r = report mine
       val () =
         case records of
           SOME {table, env, derived} =>
-            (HsLintReplay.replay {modules = modules, groups = groups, records = table, env = env, derived = derived,
+            (HsLintReplay.replay {modules = modules, groups = inferred, records = table, env = env, derived = derived,
                                   cycleDefault = cycleDefault, fault = fault}
              handle T.Refuse (span, msg) => raise Refused (span, msg);
              compare (r, HsLintReplay.claimsOf {modules = modules, records = table, derived = derived}, where_, fault))
         | NONE => ()
       val () = case claims of SOME c => compare (r, c, where_, fault) | NONE => ()
-      val t = HsLintTarget.collect (List.map (fn {id, scheme, ...} => {id = id, scheme = scheme}) (!HsLintInfer.bindings))
     in
-      clear (); (r, t)
+      clear (); {report = r, target = t, part = part}
     end
     handle T.Refuse (span, msg) => (clear (); raise Refused (span, msg))
          | e => (clear (); raise e)
 
   val targetRules = HsLintTarget.rules
 
+  (* parts put together, in order: a saved world's or the units' before a
+     unit *)
+  fun join (parts : library list) : library =
+    {modules = List.concat (List.map #modules parts), env = HsLintEnv.join (List.map #env parts),
+     infer = HsLintInfer.join (List.map #infer parts),
+     counter = List.foldl (fn (p, n) => Int.max (#counter p, n)) 0 parts,
+     target = List.foldl (fn (p, t) => HsLintTarget.join (t, #target p)) {values = [], classes = [], dfuns = []} parts}
+
+  exception Decode of string
+  val encode = HsLintCodec.encode
+  fun decode s = HsLintCodec.decode s handle HsLintCodec.Bad msg => raise Decode msg
+
   fun target (t, p, fault) =
     HsLintTarget.check (t, p, fault)
     handle T.Refuse (span, msg) => raise Refused (span, msg)
+
+  (* lines in a canonical order, by their keys, so that only a change of
+     what they say moves the dump, not one of the order the inference met
+     the bindings in (a library's edit that moves a definition) *)
+  fun sortBy (key : 'a -> string) (xs : 'a list) : 'a list =
+    let
+      fun merge ([], ys) = ys
+        | merge (xs, []) = xs
+        | merge (x :: xs, y :: ys) = if String.<= (key x, key y) then x :: merge (xs, y :: ys) else y :: merge (x :: xs, ys)
+      fun go [] = []
+        | go [x] = [x]
+        | go xs = let val n = length xs div 2 in merge (go (List.take (xs, n)), go (List.drop (xs, n))) end
+    in
+      go xs
+    end
+
+  (* a place, `LINE:COLUMN`, as a key in its numbers' order *)
+  fun placeKey p =
+    String.concatWith ":" (List.map (fn f => StringCvt.padLeft #"0" 9 f) (String.fields (fn c => c = #":") p))
 
   fun dump ({bindings, defaults, kinds, derived, ...} : report, where_, library) =
     let
@@ -158,25 +244,34 @@ struct
       val ks =
         List.mapPartial (fn {module, name, kind} =>
                            if shown module andalso not (lib module)
-                           then SOME ("KIND\t" ^ module ^ "\t" ^ name ^ " :: " ^ kind ^ "\n")
+                           then SOME (module ^ "\t" ^ name, "KIND\t" ^ module ^ "\t" ^ name ^ " :: " ^ kind ^ "\n")
                            else NONE)
           kinds
       val ds =
         List.mapPartial (fn {module, instance} =>
-                           if shown module andalso not (lib module) then SOME ("DERIVED\t" ^ module ^ "\t" ^ instance ^ "\n")
+                           if shown module andalso not (lib module)
+                           then SOME (module ^ "\t" ^ instance, "DERIVED\t" ^ module ^ "\t" ^ instance ^ "\n")
                            else NONE)
           derived
       val bs =
         List.mapPartial (fn {module, name, scheme, signed, ...} : binding =>
                            if not (shown module) orelse lib module andalso signed then NONE
-                           else SOME ((if signed then "SIGNED\t" else "TYPE\t") ^ module ^ "\t" ^ name ^ " :: " ^ scheme ^ "\n"))
+                           else SOME (module ^ "\t" ^ name,
+                                      (if signed then "SIGNED\t" else "TYPE\t") ^ module ^ "\t" ^ name ^ " :: " ^ scheme ^ "\n"))
           bindings
+      (* a default of the library's at no place: its line moves with any
+         edit of the library above it *)
       val fs =
         List.mapPartial (fn {module, span, preds, choice, ...} : default =>
                            if not (shown module) then NONE
-                           else SOME ("DEFAULT\t" ^ module ^ "\t" ^ where_ span ^ "\t" ^ preds ^ " -> " ^ choice ^ "\n"))
+                           else
+                             let val place = if lib module then "*" else where_ span
+                             in SOME (module ^ "\t" ^ placeKey place ^ "\t" ^ preds ^ "\t" ^ choice,
+                                      "DEFAULT\t" ^ module ^ "\t" ^ place ^ "\t" ^ preds ^ " -> " ^ choice ^ "\n")
+                             end)
           defaults
+      fun sorted xs = List.map #2 (sortBy #1 xs)
     in
-      String.concat (ks @ ds @ bs @ fs)
+      String.concat (sorted ks @ sorted ds @ sorted bs @ sorted fs)
     end
 end

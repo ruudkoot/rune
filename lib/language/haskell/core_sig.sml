@@ -102,7 +102,12 @@ sig
 
   (* `builtinTypes` is each type constructor built in with its kind: `Int`,
      `Integer`, `Char`, `Double`, `Float`, `Str`, `Exn`, `Bool`, `World`,
-     `Ref` and `Arr`. *)
+     `Ref`, `Arr` and `->`.
+
+     `->` is the function type's constructor, which a type holds given
+     fewer than two arguments (Haskell's `(->)` in an instance's head, 4.3.2);
+     given both it is the function type, `TFun`, which `apply` and
+     `substTy` make it. *)
   val builtinTypes : (string * kind) list
   (* `builtinData` is the data types built in: `Bool`, whose constructors
      `False` and `True` are 0 and 1, as Mid's `bool`. *)

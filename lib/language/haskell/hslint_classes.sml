@@ -59,13 +59,18 @@ struct
   fun bySuper (p as T.IsIn (c, t)) = p :: List.concat (List.map (fn c' => bySuper (T.IsIn (c', t))) (supers c))
 
   (* the context of the instance that `p` is an instance of, if any *)
+  (* 5.4: whether an instance is in scope where the inference is, a chain
+     of imports leading from there to its module (R26); HsLintInfer sets
+     it, every instance in scope while it does not *)
+  val inScope : (inst -> bool) ref = ref (fn _ => true)
+
   fun byInst (T.IsIn (c, t)) =
     let
       fun try [] = NONE
-        | try ({head = T.IsIn (_, h), context, arity, ...} :: rest : inst list) =
+        | try ((i as {head = T.IsIn (_, h), context, arity, ...}) :: rest : inst list) =
             let val slots = Array.array (arity, NONE)
             in
-              if T.matchGen (slots, h, t) then
+              if !inScope i andalso T.matchGen (slots, h, t) then
                 let val ts = Vector.tabulate (arity, fn i => case Array.sub (slots, i) of SOME u => u | NONE => T.newTVar T.Star)
                 in SOME (List.map (T.instPred ts) context) end
               else try rest

@@ -31,9 +31,9 @@ struct
   val dir = "tests/hs/iface"
   fun rhc () = fromRoot "bin/rhc"
 
-  val compareOne = HsWorldJobs.compareWith {family = "hs/iface/units", way = "by interface", flags = ["--by-interface"]}
+  val compareOne = HsSnapshotJobs.compareWith {family = "hs/iface/units", way = "by interface", flags = ["--by-interface"]}
 
-  fun compareShard (kind, k, n) = List.app (fn p => compareOne (kind, p)) (HsWorldJobs.shardOf (kind, k, n))
+  fun compareShard (kind, k, n) = List.app (fn p => compareOne (kind, p)) (HsSnapshotJobs.shardOf (kind, k, n))
 
   (* ---- fingerprints ---- *)
 
@@ -107,7 +107,7 @@ struct
       else if accepting then write (expected, read file)
       else if read file = read expected then ()
       else fail ("hs/iface/usages/" ^ name ^ ": the reads differ from " ^ dir ^ "/usages/" ^ name ^ ".usages: " ^
-                 HsWorldJobs.firstDifferenceBy "now" (read file, read expected))
+                 HsSnapshotJobs.firstDifferenceBy "now" (read file, read expected))
     end
 
   (* ---- the tree ---- *)
@@ -119,22 +119,22 @@ struct
   fun tree () =
     let
       val cmd = "\"$RUNE_TEST_ROOT\"/bin/rune-test "
-      val job = HsWorldJobs.job
+      val job = HsSnapshotJobs.job
       fun shardJobs kind =
-        List.tabulate (HsWorldJobs.shards, fn i =>
-                                 let val k = Int.toString (i + 1) ^ "-of-" ^ Int.toString HsWorldJobs.shards
+        List.tabulate (HsSnapshotJobs.shards, fn i =>
+                                 let val k = Int.toString (i + 1) ^ "-of-" ^ Int.toString HsSnapshotJobs.shards
                                  in Test.tag "nightly"
                                       (job ("units/" ^ kind ^ "/" ^ k, cmd ^ "hs-iface-shard " ^ kind ^ " " ^ k, 3600)) end)
     in
       Test.describe "hs/iface"
-        [HsWorldJobs.tagged (["hs"] @ covers)
+        [HsSnapshotJobs.tagged (["hs"] @ covers)
            (Test.requires ["rhc"]
               (Test.describe ""
                  (List.map (fn c => Test.tag "check" (job ("fingerprints/" ^ c, cmd ^ "hs-iface-fingerprints " ^ quote c, 600)))
                      (fingerprintCases ())
                   @ List.map (fn c => Test.tag "check" (job ("usages/" ^ c, cmd ^ "hs-iface-usages " ^ quote c, 600)))
                       (usageCases ())
-                  @ List.concat (List.map shardJobs HsWorldJobs.kinds))))]
+                  @ List.concat (List.map shardJobs HsSnapshotJobs.kinds))))]
     end
 
   fun command args =

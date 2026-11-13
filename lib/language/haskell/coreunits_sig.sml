@@ -2,7 +2,9 @@
    each a Core program that names what it takes of the others, a value by
    an import (`(import x TYPE)`) and a type by a copy of its declaration,
    joined into one program, which Core's interpreter runs and a compile
-   whole takes. *)
+   whole takes.
+
+   Area: Languages *)
 signature CORE_UNITS =
 sig
   (* what makes units that do not join: a type two units declare apart, or
@@ -37,6 +39,24 @@ sig
      reached is kept, as a whole program has none (the haskell98 roadmap's
      M21: units joined and compiled whole, what main reaches). *)
   val reach : Core.program * string list -> Core.program
+
+  (* `index p` is the unit `p` as an index and its declarations' texts.
+
+     The index says of each declaration, by its number, what it is, its
+     name, what it makes and what it names, so that `reachIndexed` reads
+     only the texts of the declarations a program reaches. *)
+  val index : Core.program -> string * string list
+
+  (* A unit's Core as the reach is given it: by its index and a function
+     from a declaration's number to its text, or in hand. *)
+  datatype unitCore = Indexed of string * (int -> string) | InHand of Core.program
+
+  (* `reachIndexed (units, roots)` is `reach (join ps, roots)` where `ps` is
+     the units' programs, a declaration read only where it is reached.
+
+     A type is the first unit's that declares it, as `join` keeps it.
+     Raises `Error` where an index is no index. *)
+  val reachIndexed : unitCore list * string list -> Core.program
 
   (* `interface (p, exports)` is what a client of the unit p needs of the
      names it exports, as Core: each type it mentions declared, and each

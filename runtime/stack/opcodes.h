@@ -47,9 +47,9 @@ enum Opcode {
   OP_CONN = 39,  /* Pop n values (first pushed is field 0) and push constructor t made of them: one object of n fields, for a constructor whose argument is a tuple of n (middle-end M11). */
   OP_FIELD = 40,  /* Pop a constructor value that CONN made, of tag t, and push its field i; runevm-stack --checked stops where the tag is another. */
   OP_FORCE = 41,  /* Where the top of stack is no unevaluated suspension, replace it by its value -- what an indirection holds, else itself -- and jump to o; else leave it for the ENTER after. */
-  OP_ENTER = 42,  /* Pop argument, pop a suspension, and enter it as CALL enters a closure; one under evaluation is a loop, a fatal error. */
+  OP_ENTER = 42,  /* Pop argument, pop a suspension, and enter it as CALL enters a closure; one under evaluation is a loop: the exception Loop is raised. */
   OP_BLACKHOLE = 43,  /* The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows. */
-  OP_UPDATE = 44,  /* Pop a value; the suspension running becomes an indirection to it. */
+  OP_UPDATE = 44,  /* Pop a value; the suspension running becomes an indirection to it; one that is an indirection already, lazy ML's that a force from inside it updated first, holds it now. */
   OP__COUNT
 };
 

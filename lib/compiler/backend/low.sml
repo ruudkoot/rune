@@ -182,16 +182,25 @@ struct
   (* Whether a function is a suspension's code (docs/ir.md, Suspensions):
      one that says thunk_blackhole in its entry block, where it goes under
      evaluation. *)
+  (* a suspension's code: Haskell's says thunk_blackhole at its entry; lazy
+     ML's never goes under evaluation, and says thunk_self_update, after
+     which its closure may be an indirection already, which a force from
+     inside it made (D57, M26) *)
   fun suspensionCode (f : func) : bool =
     case #blocks f of
-      {instrs, ...} :: _ => List.exists (fn Def (_, Prim ("thunk_blackhole", _)) => true | _ => false) instrs
+      {instrs, ...} :: _ =>
+        List.exists (fn Def (_, Prim ("thunk_blackhole", _)) => true | _ => false) instrs
+        orelse List.exists (fn ({instrs, ...} : block) =>
+                              List.exists (fn Def (_, Prim ("thunk_self_update", _)) => true | _ => false) instrs) (#blocks f)
     | [] => false
 
   (* A suspension's code with what it captured read at its entry, before it
      goes under evaluation, after which the collector follows none of its
-     closure's fields (BLACKHOLE): each slot read once, by the first read of
-     it, moved to the entry block's start, and every other read of the slot
-     that variable. Any other function as it is. *)
+     closure's fields (BLACKHOLE), or before a lazy ML one's closure may have
+     become an indirection, of which it follows the first alone: each slot
+     read once, by the first read of it, moved to the entry block's start,
+     and every other read of the slot that variable. Any other function as
+     it is. *)
   fun hoistEnv (f : func) : func =
     if not (suspensionCode f) then f
     else

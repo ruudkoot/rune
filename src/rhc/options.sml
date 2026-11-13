@@ -31,11 +31,14 @@ struct
     \       rhc --dump-names [NAME OPTION...] FILE.hs...\n\
     \       rhc --dump-types | --dump-evidence | --dump-derived [NAME OPTION...] FILE.hs\n\
     \       rhc --dump-hslint [NAME OPTION...] FILE.hs\n\
-    \rhc is the Haskell 98 compiler of the haskell98 roadmap. It reads Core,\n\
-    \its typed lazy intermediate language, checks it and runs it on Core's\n\
-    \interpreter, or with -o compiles it; and it reads a program of Haskell,\n\
-    \a file and the modules it imports, checks it, desugars it to Core and\n\
-    \runs or compiles that.\n\
+    \       rhc --units [--store DIR] [--layer DIR] [--show-units] FILE.hs -o OUT\n\
+    \       rhc --prune-store DIR | --identity | --hslint-rules | --lint-rules\n\
+    \rhc is the Haskell 98 compiler of the haskell98 roadmap (docs/rhc.md). It\n\
+    \reads a program of Haskell, a file and the modules it imports, checks it,\n\
+    \desugars it to Core, its typed lazy intermediate language, and runs that\n\
+    \on Core's interpreter or with -o compiles it to Rune's bytecode, the\n\
+    \library's units taken from the snapshot bin/rhc names; and it reads Core\n\
+    \text, checks it and runs or compiles it.\n\
     \\n\
     \  --parse-only          read FILE.hs (or .lhs, a literate file) and stop\n\
     \  --print               print it with every block in braces\n\
@@ -73,8 +76,10 @@ struct
     \  --read-core FILE      read FILE as Core text; given again, the files make one program\n\
     \  --typecheck-only      read and check, and run nothing: on a program of Haskell, its\n\
     \                        names, fixity, kinds, types and classes\n\
-    \  --whole               read and check the library too, not from the saved world that\n\
-    \                        bin/rhc restores (bin/rhc.img, D45); --world says which\n\
+    \  --whole               read, check and desugar the library too, not take its units\n\
+    \                        from the snapshot bin/rhc names (bin/rhc.layer, D45)\n\
+    \  --snapshot DIR        a store the library's units are taken from, read only, by a\n\
+    \                        check and a compile of Haskell (bin/rhc gives it)\n\
     \  --lint[=N]            the level of the checks: off, 0 to 3 (a bare --lint is 2);\n\
     \                        2 runs HsLint on a program of Haskell, 3 reads Core's text\n\
     \                        back after every stage (RUNE_LINT too)\n\
@@ -88,10 +93,14 @@ struct
     \  -o FILE               compile to bytecode, through Mid, in place of running\n\
     \  -- ARG...             the arguments of the program, where rhc runs it on Core's\n\
     \                        interpreter (getArgs), as runevm takes them after its file\n\
-    \  --units               with -o, each --read-core file a unit, after rhc's runtime's,\n\
-    \                        compiled apart and linked\n\
+    \  --units               with -o, a program of Haskell compiled a unit at a time, each\n\
+    \                        group of its module graph, kept in the store and taken from\n\
+    \                        it (M21); of Core, each --read-core file a unit, after rhc's\n\
+    \                        runtime's, compiled apart and linked\n\
     \  --store DIR           with --units, keep each unit in the store DIR and take it\n\
     \                        from there where what it read is as it was\n\
+    \  --prune-store DIR     drop from the store DIR every configuration another rhc made,\n\
+    \                        which make does to bin/rhc.layer after each build of rhc\n\
     \  --layer DIR           a store a unit is taken from and never kept in\n\
     \  --show-units          say of each unit whether it was compiled or taken\n\
     \  --link=whole|units    with --units, join the units' Core and compile what main\n\
@@ -114,6 +123,7 @@ struct
     \  --lint-rules          print the name of each rule of CoreLint, one a line\n\
     \  --generate-core=SEED  print a well-typed Core program made from SEED (D55)\n\
     \  --version             print the version and the identity of rhc\n\
+    \  --identity            print rhc's identity alone (a digest of its sources)\n\
     \  --help                print this\n"
 
   (* N of --NAME=N, a count of at least `least` *)

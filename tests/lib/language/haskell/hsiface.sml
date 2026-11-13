@@ -4,8 +4,9 @@
    and a type variable linked (written as what they are linked to), types,
    schemes with contexts, a synonym, a class, an instance, a constructor, a
    field, a method, a definition with its parent, a fixity; and a string
-   with spaces and colons in it. What is read writes the same text again,
-   and stands for what a client reads alike (HsModIface.canonical). *)
+   with spaces and colons in it. What is read writes the same bytes again,
+   and stands for what a client reads alike (HsModIface.canonical); a
+   string named twice is in the table once. *)
 structure HsIfaceTests =
 struct
   structure T = HsTypes
@@ -44,22 +45,30 @@ struct
     let
       val text = HsIface.encodeModule iface
       val back = HsIface.decodeModule text
-      val () = need (HsIface.encodeModule back = text, "what is read writes the same text again")
+      val () = need (HsIface.encodeModule back = text, "what is read writes the same bytes again")
       val () = need (HsModIface.canonical back = HsModIface.canonical iface, "and stands for what the interface stood for")
       val () = need (#exports back = #exports iface andalso #defs back = #defs iface andalso #fixities back = #fixities iface,
                      "its exports, definitions and fixities as they were")
-      val whole = {modules = [iface, back], desugar = "the desugaring's part\nof two lines", unfoldings = []}
+      val whole = {modules = [iface, back], unfoldings = ["an unfolding\nof two lines"]}
       val again = HsIface.decode (HsIface.encode whole)
-      val () = need (HsIface.encode again = HsIface.encode whole andalso #desugar again = #desugar whole
+      val () = need (HsIface.encode again = HsIface.encode whole andalso #unfoldings again = #unfoldings whole
                      andalso length (#modules again) = 2, "a unit's interface read back as written")
+      (* "t M T" is named by a type, a constructor's tycon, a field's and an
+         instance's, in both modules, and written once, its length first *)
+      fun count (s, sub) =
+        let fun go (i, n) = if i + size sub > size s then n
+                            else if String.substring (s, i, size sub) = sub then go (i + 1, n + 1) else go (i + 1, n)
+        in go (0, 0) end
+      val () = need (count (HsIface.encode whole, "\005t M T") = 1, "a string named many times is written once")
     in () end
 
   fun refused () =
     let
       fun refuses s = (ignore (HsIface.decode s); false) handle HsIface.Bad _ => true
-      val text = HsIface.encode {modules = [iface], desugar = "", unfoldings = []}
-      val () = need (refuses (String.substring (text, 0, size text - 3)), "a text cut short is refused")
-      val () = need (refuses ("9:NotIfaces 1 0 0: 0 "), "a text of another mark is refused")
+      val text = HsIface.encode {modules = [iface], unfoldings = []}
+      val () = need (refuses (String.substring (text, 0, size text - 3)), "bytes cut short are refused")
+      val () = need (refuses ("\009NotIfaces" ^ String.extract (text, 8, NONE)), "bytes of another mark are refused")
+      val () = need (refuses (text ^ "\000"), "bytes past the end are refused")
       val unsolved = {id = "M", exports = [], defs = [], fixities = [],
                       checked = {values = [("v M h", {vars = 0, ctx = [], ty = T.TMeta (ref (T.Free {id = 7, level = 0, home = "M"}))})],
                                  tycons = [], classes = [], instances = [], cons = [], fields = [], methods = []}}

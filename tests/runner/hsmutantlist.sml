@@ -16,6 +16,10 @@ struct
   val h = "lib/language/haskell/"
   fun one (id, stage, note, file, old, new, caughtBy) : mutant =
     {id = id, stage = stage, note = note, edits = [{file = h ^ file, old = old, new = new}], caughtBy = caughtBy}
+  (* one of rhc's own sources, src/rhc *)
+  fun rhc (id, stage, note, file, old, new, caughtBy) : mutant =
+    {id = id, stage = stage, note = note, edits = [{file = "src/rhc/" ^ file, old = old, new = new}], caughtBy = caughtBy}
+  val holes = "hs/units/holes/"
 
   val mutants : mutant list =
     [one ("HL01", "lexer", "{- inside a block comment no longer nests: the first -} ends it (2.3)",
@@ -68,7 +72,7 @@ struct
           "infer.sml", "simplify (dataCtx @ List.concat", "simplify (List.concat",
           ["hs/types/derive/module"]),
      one ("HD02", "deriving", "a derived instance's context too wide: each parameter's, not the fields' types' (10.1)",
-          "infer.sml", "reduce {cls = cls, ty = f}) fields)", "reduce {cls = cls, ty = f}) (fields @ List.tabulate (vars, T.TGen)))",
+          "infer.sml", "reduce h {cls = cls, ty = f}) fields)", "reduce h {cls = cls, ty = f}) (fields @ List.tabulate (vars, T.TGen)))",
           ["hs/types/derive/module"]),
      (* the roadmap's seeds for types and classes (M16), in F's checker, each
         seen by HsLint's second inference or its replay, as M16's done-when
@@ -112,5 +116,44 @@ struct
           "                                  fn occ' => pattern (env, occ', hd ps, success, failure))",
           "              SOME rep => C.atom (C.cast ((Core.Atom a, t), rep),\n" ^
           "                                  fn occ' => C.force ((Core.Atom (#1 occ'), #2 occ'), fn (v, vt) => pattern (env, (Core.Var v, vt), hd ps, success, failure)))",
-          ["hs/desugar/report/newtype"])]
+          ["hs/desugar/report/newtype"]),
+     (* E13's holes H1 to H9 (the haskell98 roadmap's section What a cache
+        hit must satisfy), each a usage or a key of rhc's units dropped: each
+        caught by its case of tests/hs/units/holes, the units' compile
+        against the whole one (M21) *)
+     one ("HU01", "units", "H1: a name looked up is no read: a name an import comes to give, or to clash with, is not seen (5.5.2)",
+          "rename.sml", "case (HsUsage.read (HsUsage.Name {within = !home, space = spaceText space, qual = qual, name = name});",
+          "case ((); ", [holes ^ "h1-name"]),
+     one ("HU02", "units", "H2: an instance looked up is no read: one absent, then present two imports away, moves no default (4.3.4)",
+          "classes.sml", "(HsUsage.read (HsUsage.Instance {cls = cls, tycon = tycon}); M.find (instances, instanceId (cls, tycon)))",
+          "(M.find (instances, instanceId (cls, tycon)))", [holes ^ "h2-default", holes ^ "h5-context"]),
+     rhc ("HU03", "units", "H3: what a unit sees taken from its entry: a usage stands whatever the units before give now",
+          "store.sml", "case List.find (fn (k, v) => current k <> v) usages of", "case List.find (fn (k, v) => false) usages of",
+          [holes ^ "h1-name", holes ^ "h2-default"]),
+     rhc ("HU04", "units", "H4: a unit's key without its members' texts, the default declaration's among them",
+          "driver.sml", "(#id f, #hash f)) found)", "(#id f, \"\")) found)", [holes ^ "h2-default"]),
+     one ("HU05", "units", "H5: an instance's fingerprint without its context: a context moved from one variable to another, " ^
+                   "naming the same classes, is not seen, and a derived instance keeps the old one",
+          "modiface.sml", "context (#ctx i) ^ (if #derived i", "\"\" ^ (if #derived i", [holes ^ "h5-context"]),
+     one ("HU06", "units", "H6: an entity's fingerprint without its fixity",
+          "modiface.sml", "fun fixOf k = fixityText (M.find (fix, k))", "fun fixOf k = \"\"", [holes ^ "h6-fixity"]),
+     one ("HU07", "units", "H7: `module M` in an export list reads none of M's exports: a module that re-exports one stays as it was",
+          "modules.sml", "then HsUsage.read (HsUsage.Exports target)", "then ()", [holes ^ "h7-reexport"]),
+     rhc ("HU08", "units", "H8: a cycle's key over its first member alone",
+          "driver.sml", "(#id f, #hash f)) found)", "(#id f, #hash f)) [hd found])", [holes ^ "h8-cycle"]),
+     rhc ("HU09", "units", "H9: the Prelude's names the translations ask for are no reads",
+          "names.sml", "HsUsage.read (HsUsage.Standard {space = space, name = name});", "();",
+          ["hs/iface/usages/reads"]),
+     rhc ("HU10", "units",
+          "equivalent: a unit taken keeps its fingerprints without asking whether what they asked of the units before is " ^
+          "what it was. Not seen by any program: the fingerprints a unit asked of another are of what its interface mentions, " ^
+          "which its compile read, so a usage of it refuses the entry first wherever an answer moved (M21's fingerprint reuse)",
+          "driver.sml", "if List.all (fn (k, v) => M.find (prints, k) = v) (#asked kept) then kept else printsFor (modules, prints)",
+          "kept", []),
+     rhc ("HU11", "units", "H8: a unit's fingerprints module by module, not by recursive group over its members: a type " ^
+                   "group that spans a cycle's modules hashed apart, so a client of one of its types does not see an edit " ^
+                   "of another",
+          "driver.sml", "HsModIface.fingerprints Pickle.hash (mods, external)",
+          "List.concat (List.map (fn i => HsModIface.fingerprints Pickle.hash ([i], external)) mods)",
+          [holes ^ "h8-group"])]
 end

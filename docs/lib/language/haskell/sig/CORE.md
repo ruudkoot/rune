@@ -308,7 +308,12 @@ val builtinTypes : (string * kind) list
 
 [`builtinTypes`](#val-builtintypes) is each type constructor built in with its kind: [`Int`](../../../basis/str/Int.md),
 `Integer`, [`Char`](../../../basis/str/Char.md), `Double`, `Float`, `Str`, `Exn`, [`Bool`](../../../basis/str/Bool.md), `World`,
-`Ref` and `Arr`.
+`Ref`, `Arr` and `->`.
+
+`->` is the function type's constructor, which a type holds given
+fewer than two arguments (Haskell's `(->)` in an instance's head, 4.3.2);
+given both it is the function type, [`TFun`](#con-tfun), which [`apply`](#val-apply) and
+[`substTy`](#val-substty) make it.
 
 ### <a name="val-builtindata"></a>`builtinData`
 

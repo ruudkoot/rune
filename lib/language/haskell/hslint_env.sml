@@ -61,9 +61,16 @@ struct
   val prelude = ref ""
   val programModules : bool M.map ref = ref M.empty
 
+  (* each module's imports, the Prelude's implicit one among them, and the
+     module of each file: 5.4's scope of instances (R26) *)
+  val imports : string list M.map ref = ref M.empty
+  val fileModule : string M.map ref = ref M.empty
+  val closures : unit M.map M.map ref = ref M.empty
+
   fun reset () =
     (tydefs := M.empty; cons := M.empty; fields := M.empty; methods := M.empty; classKinds := M.empty;
      defaults := M.empty; instances := []; classDecls := []; prelude := ""; programModules := M.empty;
+     imports := M.empty; fileModule := M.empty; closures := M.empty;
      C.reset ())
 
   fun refuse (span, msg) = raise T.Refuse (span, msg)
@@ -83,6 +90,27 @@ struct
     if M.member (!programModules, "haskell98:" ^ m) then SOME ("haskell98:" ^ m)
     else if M.member (!programModules, m) then SOME m
     else NONE
+
+  (* 5.4: whether a chain of imports leads from module `m` to `n`, `m`
+     among those it reaches; and the module of an instance, by its file,
+     HsLint's own of no file the Prelude's *)
+  fun reaches (m : string, n : string) : bool =
+    m = n orelse
+    M.member (case M.find (!closures, m) of
+                SOME c => c
+              | NONE =>
+                  let
+                    fun go ([], seen) = seen
+                      | go (x :: rest, seen) =
+                          if M.member (seen, x) then go (rest, seen)
+                          else go (getOpt (M.find (!imports, x), []) @ rest, M.insert (seen, x, ()))
+                    val c = go ([m], M.empty)
+                  in
+                    closures := M.insert (!closures, m, c); c
+                  end,
+              n)
+  fun moduleOfInst ({span = {file, ...}, ...} : C.inst) =
+    if file = "" then !prelude else getOpt (M.find (!fileModule, file), !prelude)
 
   fun tyconKind (q : T.id) : T.kind option =
     if #qual q = "" then
@@ -881,11 +909,13 @@ struct
 
   (* ---- every instance's superclasses (4.3.2, cls.inst.super) ---- *)
 
-  fun superclasses () =
+  fun superclasses (checked : C.inst -> bool) =
     M.foldl
       (fn (_, is, ()) =>
          List.app
-           (fn {head = T.IsIn (cls, h), context, arity, span, derived} =>
+           (fn i as {head = T.IsIn (cls, h), context, arity, span, derived} =>
+              if not (checked i) then ()
+              else
               let
                 val kinds = case headTycon (T.IsIn (cls, h)) of
                               SOME tc => (List.take (argKinds (getOpt (tyconKind tc, T.Star)), arity) handle Subscript => [])
@@ -935,15 +965,112 @@ struct
 
   (* ---- the program's declarations ---- *)
 
+  (* What the environment holds, with its classes and instances: kept
+     with the inference of the library's modules for the programs of a
+     saved world (`more`) *)
+  type saved = {tydefs : tydef M.map, cons : con M.map, fields : field M.map, methods : method M.map,
+                classKinds : T.kind M.map, defaults : T.ty list M.map, instances : instance list,
+                classDecls : classDecl list, prelude : string, programModules : bool M.map,
+                classes : C.class M.map, insts : C.inst list M.map, numId : T.id option,
+                imports : string list M.map, fileModule : string M.map}
+
+  fun save () : saved =
+    {tydefs = !tydefs, cons = !cons, fields = !fields, methods = !methods, classKinds = !classKinds,
+     defaults = !defaults, instances = !instances, classDecls = !classDecls, prelude = !prelude,
+     programModules = !programModules, classes = !C.classes, insts = !C.insts, numId = !C.numId,
+     imports = !imports, fileModule = !fileModule}
+
+  fun restore (s : saved) =
+    (tydefs := #tydefs s; cons := #cons s; fields := #fields s; methods := #methods s; classKinds := #classKinds s;
+     defaults := #defaults s; instances := #instances s; classDecls := #classDecls s; prelude := #prelude s;
+     programModules := #programModules s; C.classes := #classes s; C.insts := #insts s; C.numId := #numId s;
+     imports := #imports s; fileModule := #fileModule s; closures := M.empty)
+
+  (* the module of a key, `QUAL NAME` *)
+  fun qualOf (k : string) = case CharVector.findi (fn (_, c) => c = #" ") k of SOME (i, _) => String.substring (k, 0, i)
+                                                                          | NONE => ""
+
+  (* `part (ids, files, fromNothing)`: what the environment holds of the
+     modules `ids`, whose files are `files`: a unit's own, beside the units
+     before it; the unit built from nothing also has the Prelude's identity
+     and HsLint's own instances, of no file *)
+  fun part (ids : string list, files : string list, fromNothing : bool) : saved =
+    let
+      fun mine q = List.exists (fn i => i = q) ids
+      fun filteri f m = M.foldl (fn (k, v, acc) => if f k then M.insert (acc, k, v) else acc) M.empty m
+      fun keyed m = filteri (fn k => mine (qualOf k)) m
+      fun ofFile ({span = {file, ...}, ...} : C.inst) =
+        if file = "" then fromNothing else List.exists (fn f => f = file) files
+    in
+      {tydefs = keyed (!tydefs), cons = keyed (!cons), fields = keyed (!fields), methods = keyed (!methods),
+       classKinds = keyed (!classKinds), defaults = filteri mine (!defaults),
+       instances = List.filter (fn {module, ...} : instance => mine module) (!instances),
+       classDecls = List.filter (fn {module, ...} : classDecl => mine module) (!classDecls),
+       prelude = if fromNothing then !prelude else "",
+       programModules = filteri mine (!programModules),
+       classes = keyed (!C.classes),
+       insts = M.foldl (fn (k, is, acc) => case List.filter ofFile is of [] => acc | xs => M.insert (acc, k, xs))
+                 M.empty (!C.insts),
+       numId = if fromNothing then !C.numId else NONE,
+       imports = filteri mine (!imports), fileModule = M.foldl (fn (f, m, acc) => if mine m then M.insert (acc, f, m) else acc)
+                                                               M.empty (!fileModule)}
+    end
+
+  (* parts put together, in order: a key of a later part wins, lists are
+     appended, the instances of one class the earlier part's first *)
+  fun join (parts : saved list) : saved =
+    let
+      fun union f = List.foldl (fn (p, m) => M.foldl (fn (k, v, m) => M.insert (m, k, v)) m (f p)) M.empty parts
+      val insts = List.foldl (fn (p, m) => M.foldl (fn (k, is, m) => M.insert (m, k, getOpt (M.find (m, k), []) @ is))
+                                             m (#insts p))
+                    M.empty parts
+      val classes = union #classes
+      val prelude = case List.find (fn p => #prelude p <> "") parts of SOME p => #prelude p | NONE => ""
+    in
+      {tydefs = union #tydefs, cons = union #cons, fields = union #fields, methods = union #methods,
+       classKinds = union #classKinds, defaults = union #defaults,
+       instances = List.concat (List.map #instances parts), classDecls = List.concat (List.map #classDecls parts),
+       prelude = prelude, programModules = union #programModules, classes = classes, insts = insts,
+       imports = union #imports, fileModule = union #fileModule,
+       numId = let val num = {qual = if prelude = "" then "haskell98:Prelude" else prelude, name = "Num"} : T.id
+               in if M.member (classes, T.idKey num) then SOME num else NONE end}
+    end
+
+  (* `build modules` is the environment of `modules`, from nothing;
+     `more modules`, of `modules` beside what the environment holds, the
+     modules they import among it *)
   fun build (modules : module list) =
     let
       val () = reset ()
-      val () = List.app (fn {id, ...} => programModules := M.insert (!programModules, id, true)) modules
       val () =
         prelude :=
           (case List.find (fn {id, ...} => HsModules.moduleName id = "Prelude") modules of
              SOME {id, ...} => id
            | NONE => "haskell98:Prelude")
+    in
+      extend (modules, true)
+    end
+
+  and more (modules : module list) = extend (modules, false)
+
+  and extend (modules : module list, whole : bool) =
+    let
+      val () = List.app (fn {id, ...} => programModules := M.insert (!programModules, id, true)) modules
+      (* the modules each imports, by the names it writes, the Prelude's
+         implicit import with them, and each module's file *)
+      val () =
+        List.app
+          (fn {id, ast = A.Module ({span, ...}, {imports = is, ...}), ...} : module =>
+             let
+               val named = List.map (fn A.Import (_, {module = A.Name (_, {name, ...}), ...}) => name) is
+               val ids = List.mapPartial moduleId named
+               val implicit = HsModules.moduleName id <> "Prelude" andalso not (List.exists (fn n => n = "Prelude") named)
+             in
+               imports := M.insert (!imports, id, if implicit then ids @ [!prelude] else ids);
+               closures := M.empty;
+               fileModule := M.insert (!fileModule, #file span, id)
+             end)
+          modules
       val ds = collect modules
       val () = inferKinds (Vector.fromList ds)
       val () = synonyms ds
@@ -953,7 +1080,11 @@ struct
       val () = written modules
       val () = tuples ()
       val () = derived ds
-      val () = superclasses ()
+      (* the instances of these modules: those of the modules before them
+         were checked with them *)
+      val files = List.map (fn {ast = A.Module ({span, ...}, _), ...} : module => #file span) modules
+      val () = superclasses (fn {span = {file, ...}, ...} : C.inst =>
+                               if file = "" then whole else List.exists (fn f => f = file) files)
     in
       defaultDecls modules
     end

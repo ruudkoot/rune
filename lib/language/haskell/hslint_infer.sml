@@ -97,6 +97,36 @@ struct
   fun reset () = (preds := []; tops := M.empty; topMono := []; current := ""; inLibrary := false; chosen := [];
                   bindings := []; T.ruleTwo := "")
 
+  (* What the inference of some modules leaves for the modules after them:
+     the types of the top level, its monomorphic variables, the defaults
+     chosen and the bindings found *)
+  type saved = {tops : T.scheme M.map, topMono : T.ty list, chosen : default list, bindings : binding list}
+
+  fun save () : saved = {tops = !tops, topMono = !topMono, chosen = !chosen, bindings = !bindings}
+
+  fun restore (s : saved) =
+    (reset (); tops := #tops s; topMono := #topMono s; chosen := #chosen s; bindings := #bindings s)
+
+  (* what the inference found of the modules `ids` alone: their types of
+     the top level, defaults and bindings; their monomorphic variables
+     their modules' Rule 2 has resolved, and not kept *)
+  fun part (ids : string list) : saved =
+    let
+      fun mine m = List.exists (fn i => i = m) ids
+      fun qualOf k = case CharVector.findi (fn (_, c) => c = #" ") k of SOME (i, _) => String.substring (k, 0, i)
+                                                                    | NONE => ""
+    in
+      {tops = M.foldl (fn (k, v, acc) => if mine (qualOf k) then M.insert (acc, k, v) else acc) M.empty (!tops),
+       topMono = [],
+       chosen = List.filter (fn {module, ...} : default => mine module) (!chosen),
+       bindings = List.filter (fn {module, ...} : binding => mine module) (!bindings)}
+    end
+
+  fun join (parts : saved list) : saved =
+    {tops = List.foldl (fn (p, m) => M.foldl (fn (k, v, m) => M.insert (m, k, v)) m (#tops p)) M.empty parts,
+     topMono = List.concat (List.map #topMono parts), chosen = List.concat (List.map #chosen parts),
+     bindings = List.concat (List.map #bindings parts)}
+
   (* an environment of locals: their schemes, and the types of those that
      are monomorphic, whose variables are fixed (`tv (apply s as)`) *)
   type env = {vals : T.scheme M.map, mono : T.ty list}
@@ -888,6 +918,9 @@ struct
   fun modules {group : E.module list, main : string option, cycleDefault : bool,
                derived : (string * string * A.decl list) list} =
     let
+      (* 5.4: an instance in scope where the inference is, by the imports
+         of the module it infers (R26) *)
+      val () = C.inScope := (fn i => !current = "" orelse E.reaches (!current, E.moduleOfInst i))
       val mods = Vector.fromList group
       (* the bindings of the top level, each with its module *)
       val tagged =

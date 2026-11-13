@@ -113,6 +113,12 @@ typedef struct Program {
     LineEntry *lines;
     uint32_t ninlines;
     Inlined *inlines;
+    /* whether a function of it says UPDATE and not BLACKHOLE: a suspension
+       in lazy ML's reading, which a force from inside its own code runs
+       again while it runs (D57); the collector pins what such a frame runs
+       (gc_pin_running). One that says BLACKHOLE, at its entry as Haskell's
+       do, is not run again while it runs */
+    int reruns;
 } Program;
 /* the representations section freed with the program (runtime/loader.c) */
 void program_free_meta(Program *p);
@@ -401,6 +407,12 @@ typedef struct VM {
     size_t hp, handlers_cap;
 
     Obj *builtin_exns[NUM_BUILTIN_EXNS];
+    /* Loop, the exception ENTER raises of a suspension under evaluation (a
+       loop: docs/bytecode.md, ENTER; the haskell98 roadmap's D12 and ruling
+       58), which rhc's top level takes for NonTermination: a constructor of
+       the VM's own, of no SML name, made at the first loop (vm_raise_loop)
+       and a root from then on; no image keeps it */
+    Obj *loop_exn;
 
     GcState gc;              /* the collector's own */
 #ifdef RUNE_CENSUS
@@ -807,6 +819,7 @@ void vm_frames_to_interpreter(VM *vm);
 VM_NORETURN void vm_exit(VM *vm, int status);
 int vm_raise(VM *vm, Value exn);            /* unwinds; returns 1 (never returns on uncaught) */
 int vm_raise_builtin(VM *vm, int k);
+int vm_raise_loop(VM *vm);
 int vm_interrupt(VM *vm);                   /* the interrupt waiting raised, the VM exact (VM.interrupt) */
 /* whether a poll raises the interrupt: one waits, and the mask lets it */
 static inline int vm_interrupted(const VM *vm) { return (vm->interrupt & 1) && !vm->interrupt_mask; }

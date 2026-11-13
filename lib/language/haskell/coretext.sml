@@ -249,13 +249,17 @@ struct
   (* a type, in the scope of the type variables `scope` *)
   fun tyOf scope f =
     case f of
-      FWord _ => let val x = nameOf f in if member (x, scope) then TVar x else TCon x end
+      FWord ("->", _) => TCon "->"
+    | FWord _ => let val x = nameOf f in if member (x, scope) then TVar x else TCon x end
     | FName (x, _) => if member (x, scope) then TVar x else TCon x
     | FBang (t, _) => TEval (tyOf scope t)
-    | FList (FWord ("->", l) :: ts, _) =>
-        if length ts < 2 then fail (l, "a function type is (-> TYPE TYPE ...)")
-        else let val ts = List.map (tyOf scope) ts
-             in List.foldr TFun (List.last ts) (List.take (ts, length ts - 1)) end
+    | FList ([FWord ("->", _)], _) => TCon "->"
+    | FList ([FWord ("->", _), t], _) => TApp (TCon "->", tyOf scope t)
+    | FList (FWord ("->", _) :: ts, _) =>
+        (* the function type; `->` given fewer than two types, its
+           constructor (Haskell's `(->)`) *)
+        let val ts = List.map (tyOf scope) ts
+        in List.foldr TFun (List.last ts) (List.take (ts, length ts - 1)) end
     | FList ([FWord ("forall", _), FList (ps, _), body], _) =>
         let val ps = List.map typaram ps
         in List.foldr (fn ((a, k), t) => TForall (a, k, t)) (tyOf (List.map #1 ps @ scope) body) ps end
@@ -396,6 +400,7 @@ struct
   fun tyForm t =
     case t of
       TVar a => name a
+    | TCon "->" => w "->"
     | TCon c => name c
     | TApp _ => let val (h, args) = spine t in list (tyForm h :: List.map tyForm args) end
     | TFun _ =>
@@ -473,37 +478,67 @@ struct
       "\\" => 2 | "case" => 3 | "val" => 3 | "import" => 3 | "data" => 3 | "newtype" => 3 | "con" => 2 | "prim" => 2
     | "cast" => 2 | _ => 1
 
-  (* f at column col, broken over lines where it does not fit *)
-  fun layout (f, col) =
-    let val s = flat f
-    in
-      if col + size s <= width then s
-      else
+  (* the size of f on one line where it is at most `room`, else `room + 1`,
+     found without making its text: a form is measured at each level of
+     `layout`, so making its text there would cost its size times its
+     depth (a long list of literals in a let chain) *)
+  fun flatSize (f, room) =
+    let
+      exception Over
+      val n = ref 0
+      fun add k = (n := !n + k; if !n > room then raise Over else ())
+      fun go f =
         case f of
-          FList (FWord ("let", _) :: [binding, body], _) =>
-            "(let " ^ layout (binding, col + 5) ^ "\n" ^ spaces col ^ layout (body, col) ^ ")"
-        | FList (FWord ("letrec", _) :: [FList (bs, _), body], _) =>
-            "(letrec ("
-            ^ String.concatWith ("\n" ^ spaces (col + 9)) (List.map (fn b => layout (b, col + 9)) bs) ^ ")\n"
-            ^ spaces col ^ layout (body, col) ^ ")"
-        | FList (fs as FWord (h, _) :: _, _) =>
-            let
-              fun firstOf k = String.concatWith " " (List.map flat (List.take (fs, k)))
-              val k = Int.min (inline h, length fs)
-              (* the items that stay, if they fit; the head alone if not *)
-              val k = if k > 1 andalso col + 1 + size (firstOf k) > width then 1 else k
-              val first = firstOf k
-              val rest = List.drop (fs, k)
-            in
-              "(" ^ first
-              ^ String.concat (List.map (fn x => "\n" ^ spaces (col + 2) ^ layout (x, col + 2)) rest) ^ ")"
-            end
-        | FList (x :: rest, _) =>
-            "(" ^ layout (x, col + 1)
-            ^ String.concat (List.map (fn y => "\n" ^ spaces (col + 2) ^ layout (y, col + 2)) rest) ^ ")"
-        | FAt (g, _) => "@" ^ layout (g, col + 1)
-        | FBang (g, _) => "!" ^ layout (g, col + 1)
-        | _ => s
+          FList (fs, _) => (add 2; ignore (List.foldl (fn (x, first) => (if first then () else add 1; go x; false)) true fs))
+        | FWord (s, _) => add (size s)
+        | FName (s, _) => add (size s)
+        | FStr (s, _) => add (size (showLit (LStr s)))
+        | FChar (c, _) => add (size (showLit (LChar c)))
+        | FAt (f, _) => (add 1; go f)
+        | FBang (f, _) => (add 1; go f)
+    in
+      (go f; !n) handle Over => room + 1
+    end
+
+  fun fits (f, room) = flatSize (f, room) <= room
+
+  (* f at column col, broken over lines where it does not fit, its pieces
+     joined once *)
+  fun layout (f, col) =
+    let
+      val out : string list ref = ref []
+      fun emit s = out := s :: !out
+      fun lines (xs, col) = List.app (fn x => (emit "\n"; emit (spaces col); go (x, col))) xs
+      and go (f, col) =
+        if fits (f, width - col) then emit (flat f)
+        else
+          case f of
+            FList (FWord ("let", _) :: [binding, body], _) =>
+              (emit "(let "; go (binding, col + 5); emit "\n"; emit (spaces col); go (body, col); emit ")")
+          | FList (FWord ("letrec", _) :: [FList (bs, _), body], _) =>
+              (emit "(letrec (";
+               (case bs of
+                  b :: more => (go (b, col + 9); lines (more, col + 9))
+                | [] => ());
+               emit ")\n"; emit (spaces col); go (body, col); emit ")")
+          | FList (fs as FWord (h, _) :: _, _) =>
+              let
+                val k = Int.min (inline h, length fs)
+                (* the items that stay, if they fit; the head alone if not *)
+                val room = width - col - 1
+                val firstSize =
+                  List.foldl (fn (x, n) => if n > room then n else n + flatSize (x, room)) (k - 1) (List.take (fs, k))
+                val k = if k > 1 andalso firstSize > room then 1 else k
+              in
+                emit "("; emit (String.concatWith " " (List.map flat (List.take (fs, k))));
+                lines (List.drop (fs, k), col + 2); emit ")"
+              end
+          | FList (x :: rest, _) => (emit "("; go (x, col + 1); lines (rest, col + 2); emit ")")
+          | FAt (g, _) => (emit "@"; go (g, col + 1))
+          | FBang (g, _) => (emit "!"; go (g, col + 1))
+          | _ => emit (flat f)
+    in
+      go (f, col); String.concat (List.rev (!out))
     end
 
   fun show program = String.concat (List.map (fn d => layout (declForm d, 0) ^ "\n") program)

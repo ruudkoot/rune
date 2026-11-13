@@ -613,7 +613,8 @@ CASE(ENTER) {
     POLL(9);
     Value arg = R(b);
     Obj *c = EXPECT(R(a), K_THUNK, "suspension");
-    if (obj_contag(c) == THUNK_BLACKHOLE) FATAL("<<loop>>: a suspension forced while it is evaluated");
+    /* a loop (D12): Loop raised, from here, as RAISE raises */
+    if (obj_contag(c) == THUNK_BLACKHOLE) { SYNC(); vm_raise_loop(vm); RELOAD(); RAISED(); }
     int64_t fidx = val_imm(obj_field(c, 0));
     if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
@@ -644,7 +645,7 @@ CASE(UPDATE) {
     pc += 5;
     count++;
     Value cv = CLOSURE();
-    if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_THUNK) FATAL("UPDATE outside a suspension");
+    if (!val_is_ptr(cv) || (obj_kind(val_ptr(cv)) != K_THUNK && obj_kind(val_ptr(cv)) != K_IND)) FATAL("UPDATE outside a suspension");
     obj_become_ind(vm, val_ptr(cv), R(a));
     NEXT;
 }

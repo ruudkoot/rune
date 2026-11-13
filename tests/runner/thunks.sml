@@ -18,7 +18,8 @@
    build counts the same instructions, bytes and objects; and the two
    bytecodes at -O1 allocate the same.
 
-   Beside that: reenter stops with <<loop>> on each engine; image saves
+   Beside that: reenter ends with Loop uncaught, status 1, on each engine,
+   and loopcatch's handler takes Loop at every force; image saves
    from inside a suspension and goes on there when restored; last and leak
    keep nothing an element, the most live with a collection at every
    allocation the same at n = 1000 and 2000 on the register VM, interpreted
@@ -32,13 +33,23 @@
    the lint refuses it at -O2; results' suspensions, read back from where
    a function's results return a datatype, are forced at every level; and
    castin's values cast into suspensions and forced in a suspension's code,
-   cast there or where the closure is made, pass RegVerify at every level. *)
+   cast there or where the closure is made, pass RegVerify at every level.
+
+   And the kernels of lazy ML's reading (the haskell98 roadmap's D57, M26),
+   whose suspension never goes under evaluation: k_outlive, k_outlive_int,
+   k_outlive_raise, k_outlive_three and outlive_nullary, a body that outlives
+   its own update, which the collector's pin keeps written (gc_pin_running),
+   and k_nested, a suspension of a suspension, which its guard keeps apart
+   (ind_may_shortcut); ordinary kernels, every build and every way. *)
 structure Thunks =
 struct
   open Sh
 
   val kernels = ["chain", "tailchain", "knot", "share", "reenter", "barrier", "image", "last", "leak", "wrongslot", "cast", "forget",
-                 "results", "castin"]
+                 "results", "castin", "loopcatch",
+                 (* lazy ML's reading (D57, M26): a body that outlives its own
+                    update, and a suspension of a suspension *)
+                 "k_outlive", "k_outlive_int", "k_outlive_raise", "k_outlive_three", "outlive_nullary", "k_nested"]
   fun source k = "tests/thunks/" ^ k ^ ".sml"
   fun args k = words (fromRoot ("tests/thunks/" ^ k ^ ".args"))
 
@@ -131,6 +142,12 @@ struct
 
   (* a run that must stop with a fatal error saying `what`, its standard
      output `out` before it *)
+  (* a run that ends as an uncaught exception ends it: status 1, what err says *)
+  fun uncaught (k, w, (code, out, err), what, printed) =
+    if code <> 1 then fail (k, w ^ ": exit " ^ Int.toString code ^ " where an uncaught exception's 1 is wanted")
+    else if not (String.isSubstring what (read err)) then fail (k, w ^ ": ends otherwise: " ^ firstNonEmpty err)
+    else if read out <> printed then fail (k, w ^ ": prints " ^ String.toString (read out) ^ " before it ends")
+    else ()
   fun stops (k, w, (code, out, err), what, printed) =
     if code <> 2 then fail (k, w ^ ": exit " ^ Int.toString code ^ " where a fatal error is wanted")
     else if not (String.isSubstring what (read err)) then fail (k, w ^ ": stops otherwise: " ^ firstNonEmpty err)
@@ -145,8 +162,8 @@ struct
       fun build ws bs =
         List.app (fn b => case compile (k, dir, b, true) of
                             SOME rbc => List.app (fn (w, vm, opts) =>
-                                                    stops (k, #1 b ^ " " ^ w, runIn (dir, #1 b ^ "-" ^ w, vm, opts, rbc, []),
-                                                           "<<loop>>: a suspension forced while it is evaluated", read (fromRoot "tests/thunks/reenter.expected")))
+                                                    uncaught (k, #1 b ^ " " ^ w, runIn (dir, #1 b ^ "-" ^ w, vm, opts, rbc, []),
+                                                              "uncaught exception Loop", read (fromRoot "tests/thunks/reenter.expected")))
                                                  ws
                           | NONE => ()) bs
     in build registerWays registerBuilds; build stackWays stackBuilds end

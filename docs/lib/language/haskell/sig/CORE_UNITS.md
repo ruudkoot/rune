@@ -1,12 +1,12 @@
 # signature CORE_UNITS
 
-[Haskell 98 front end](../README.md) &rsaquo; **CORE_UNITS**
+[Haskell 98 front end](../README.md) &rsaquo; Languages &rsaquo; **CORE_UNITS**
 
 |  |  |
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 7 of 7 entries documented |
+| Documentation | 10 of 10 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/coreunits\_sig.sml](../../../../../lib/language/haskell/coreunits_sig.sml) |
 
@@ -37,6 +37,9 @@ sig
   val <a href="#val-unresolved">unresolved</a> : Core.program -&gt; string list
   val <a href="#val-uses">uses</a> : Core.decl -&gt; {<a href="#fld-uses.values">values</a> : string list, <a href="#fld-uses.types">types</a> : string list, <a href="#fld-uses.cons">cons</a> : string list}
   val <a href="#val-reach">reach</a> : Core.program * string list -&gt; Core.program
+  val <a href="#val-index">index</a> : Core.program -&gt; string * string list
+  datatype <a href="#type-unitcore">unitCore</a> = <a href="#con-indexed">Indexed</a> of string * (int -&gt; string) | <a href="#con-inhand">InHand</a> of Core.program
+  val <a href="#val-reachindexed">reachIndexed</a> : unitCore list * string list -&gt; Core.program
   val <a href="#val-interface">interface</a> : Core.program * string list -&gt; Core.program
   val <a href="#val-fingerprints">fingerprints</a> : (string -&gt; string) -&gt; Core.program -&gt; (string * string) list
 end
@@ -105,6 +108,44 @@ A value reaches the values, types and constructors it names, a
 constructor its type, and a type the types of its fields; an import
 reached is kept, as a whole program has none (the haskell98 roadmap's
 M21: units joined and compiled whole, what main reaches).
+
+### <a name="val-index"></a>`index`
+
+```sml
+val index : Core.program -> string * string list
+```
+
+`index p` is the unit `p` as an index and its declarations' texts.
+
+The index says of each declaration, by its number, what it is, its
+name, what it makes and what it names, so that [`reachIndexed`](#val-reachindexed) reads
+only the texts of the declarations a program reaches.
+
+### <a name="type-unitcore"></a>`unitCore`
+
+```sml
+datatype unitCore = Indexed of string * (int -> string) | InHand of Core.program
+```
+
+A unit's Core as the reach is given it: by its index and a function
+from a declaration's number to its text, or in hand.
+
+| Constructor | Argument | Description |
+| --- | --- | --- |
+| <a name="con-indexed"></a>`Indexed` | `string * (int -> string)` |  |
+| <a name="con-inhand"></a>`InHand` | `Core.program` |  |
+
+### <a name="val-reachindexed"></a>`reachIndexed`
+
+```sml
+val reachIndexed : unitCore list * string list -> Core.program
+```
+
+`reachIndexed (units, roots)` is `reach (join ps, roots)` where `ps` is
+the units' programs, a declaration read only where it is reached.
+
+A type is the first unit's that declares it, as [`join`](#val-join) keeps it.
+Raises [`Error`](#exn-error) where an index is no index.
 
 ### <a name="val-interface"></a>`interface`
 

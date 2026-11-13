@@ -47,7 +47,11 @@
    and -O2, interpreted and at tier 2 (E2's last and leak, D12); a line
    `; budget: SIZE1 SIZE2` holds the instructions --count gives at the
    second to at most 2.2 times those at the first, so that a lost share,
-   which grows exponentially, is caught (D6; rhc's policy). *)
+   which grows exponentially, is caught (D6; rhc's policy).
+
+   And `hs/docs/help`, of rhc's manual: every option `bin/rhc --help` lists
+   is named in docs/rhc.md, in code; in make check, where bin/rhc is built,
+   and skipped where it is not. *)
 structure HsCore =
 struct
   open Sh
@@ -406,9 +410,38 @@ struct
        NONE => ()
      | SOME why => fail ("hs.core.@silent: a right run failed: " ^ why))
 
+  (* every option `bin/rhc --help` names is in docs/rhc.md, in code: the
+     manual says what rhc takes (docs/rhc.md, Options) *)
+  fun help () =
+    let
+      val out = run ^ "/hs-docs"
+      val () = mkdirs out
+      val file = out ^ "/help.out"
+      val status = exec {cmd = [fromRoot "bin/rhc", "--help"], dir = SOME root, stdin = "", stdout = file, stderr = file,
+                         timeout = 60}
+      val doc = read (fromRoot "docs/rhc.md")
+      (* an option's name, of a line of the list: up to its =, [ or , *)
+      fun option l =
+        if not (String.isPrefix "  -" l) then NONE
+        else
+          case String.tokens Char.isSpace l of
+            w :: _ => (case String.tokens (fn c => c = #"=" orelse c = #"[" orelse c = #",") w of
+                         n :: _ => SOME n
+                       | [] => NONE)
+          | [] => NONE
+      val names = List.mapPartial option (lines (read file))
+    in
+      if status <> 0 then fail ("hs.docs.help: bin/rhc --help ends with status " ^ Int.toString status)
+      else if null names then fail "hs.docs.help: bin/rhc --help names no option"
+      else List.app (fn n => if String.isSubstring ("`" ^ n) doc then ()
+                             else fail ("hs.docs.help: docs/rhc.md does not name " ^ n ^ ", which bin/rhc --help does"))
+             names
+    end
+
   fun command args =
     case args of
-      ["hs-core-one", src] => SOME (fn () => one src)
+      ["hs-docs-help"] => SOME help
+    | ["hs-core-one", src] => SOME (fn () => one src)
     | ["hs-core-vm", src] => SOME (fn () => vmCheck src)
     | ["hs-core-vm-rest", src] => SOME (fn () => vmRest src)
     | ["hs-core-vm45", src] => SOME (fn () => vmOne (src, "vm45", e1Ways))
@@ -453,5 +486,7 @@ struct
                             (glob (dir, ".core"))
           @ [Tools.job ("@rules", ["hs-core-rules"], [], 100, 120),
              Tools.job ("@generated", ["hs-core-generated", "32"], [], 300, 1200),
-             Tools.job ("@silent", ["hs-core-silent"], [], 100, 60)]))]
+             Tools.job ("@silent", ["hs-core-silent"], [], 100, 60)])),
+      tagged (["check", "test-rhc", "covers:src/rhc/options.sml", "covers:docs/rhc.md", "covers:tests/runner/hscore.sml"])
+        (Test.requires ["rhc"] (Test.describe "hs/docs" [Tools.job ("help", ["hs-docs-help"], [], 100, 120)]))]
 end

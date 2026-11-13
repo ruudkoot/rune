@@ -81,7 +81,11 @@ order -- and writes it into the generated tables; a VM refuses a file of
 another instruction set with "bytecode of another instruction set", and an
 image of one (whose magic carries the fingerprint) as not an image of this
 `runevm`. So an opcode or a primitive may be added, removed or moved: a file
-made before is refused rather than read with another meaning.
+made before is refused rather than read with another meaning. The
+instructions of suspensions (`FORCE`, `ENTER`, `BLACKHOLE`, `UPDATE`) and
+the primitives of `IntInf.int` are in both sets' fingerprints, which
+`runtime/stack/opcodes.def` and `runtime/register/regs.def` say at their
+head, so a file made before them is refused.
 
 **The line table** says where each instruction came from, which is what
 `--disasm` prints beside it and what a stack trace reads. Its entries are in
@@ -436,7 +440,20 @@ exponent allows it -- or a pointer to a heap object. Heap objects:
 | REAL | 8 raw bytes | a real that has no immediate: zero, a subnormal, an infinity, NaN, or a number outside 2^-511 to 2^513 |
 | BOX | 8 raw bytes | an `Int64.int` or a `Word64.word` that needs its 64th bit |
 | THUNK | function index, captured fields; its state in the tag | a suspension of a lazy front end ([ir.md](ir.md), *Suspensions*): unevaluated (0), or under evaluation (1) once its code has said `BLACKHOLE`, when the collector follows none of its fields |
-| IND | its value, then dead fields | a suspension that has its value, made in place by `UPDATE`; a force reads it, and the collector gives what points to one its value |
+| IND | its value, then dead fields | a suspension that has its value, made in place by `UPDATE`; a force reads it, and the collector gives what points to one its value, but where a frame runs it (lazy ML's, pinned: contag `IND_RUNNING`) or its value is a suspension or an indirection itself ([ir.md](ir.md), *Suspensions*) |
+
+A `THUNK` is the closure `thunk_make` was given, its kind changed in place
+(a copy of one that captures nothing, which may be shared), and `UPDATE`
+makes it an `IND`. As it loads a program the VM notes whether any function
+says `UPDATE` and not `BLACKHOLE` (`Program`'s `reruns`, in
+`runtime/register/isa_regs.c` and `runtime/stack/isa_stack.c`): a
+suspension in lazy ML's reading, which a force from inside its own code
+runs again while it runs. Only then does the collector pin the indirections
+a frame still runs (`gc_pin_running`, `IND_RUNNING`) and guard its shortcut
+of an indirection (`ind_may_shortcut`); a program of SML's or Haskell's,
+whose suspensions say `BLACKHOLE` at their entry, never pays for either
+([ir.md](ir.md), *Suspensions*; D57 and M26 of
+[plans/language/haskell98.md](plans/language/haskell98.md)).
 
 Booleans are `CON0 0` (`false`) and `CON0 1` (`true`). Records store their
 fields sorted by label (numeric labels first, in numeric order, then
@@ -456,7 +473,10 @@ is more than half full after a full collection, or the share `runevm-stack
 * frame stack: `{function, return pc, base, closure}`; local `l` is `stack[base + l]`,
 * handler stack: `{handler pc, saved sp, saved frame}`,
 * globals, constants, and eight builtin exception constructors:
-  `0 Match, 1 Bind, 2 Overflow, 3 Div, 4 Subscript, 5 Size, 6 Chr, 7 Domain`.
+  `0 Match, 1 Bind, 2 Overflow, 3 Div, 4 Subscript, 5 Size, 6 Chr, 7 Domain`;
+  and `Loop`, a constructor of the VM's own that no program names, made at the first
+  loop, which `ENTER` raises of a suspension under evaluation ([ir.md](ir.md),
+  *Suspensions*).
 
 Calling convention: push the closure, push the argument, `CALL`. The callee's
 frame has the argument in local 0 and the remaining locals initialised to
@@ -516,9 +536,9 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `EXNCON` / `EXNARG` | | Pop an exception value, push its constructor / payload. |
 | `PRIM p` | primitive | Invoke primitive `p`: pops its arguments (first pushed is the first argument) and pushes the result, or raises. |
 | `FORCE o` | offset | Where the top of stack is no unevaluated suspension, replace it by its value -- what an indirection holds, else itself -- and jump to `o`; else leave it for the `ENTER` after ([ir.md](ir.md), *Suspensions*). |
-| `ENTER` | | Pop argument, pop a suspension, and enter it as `CALL` enters a closure; one under evaluation is a loop, a fatal error (`<<loop>>`). |
+| `ENTER` | | Pop argument, pop a suspension, and enter it as `CALL` enters a closure; one under evaluation is a loop, and the exception `Loop` is raised from here. |
 | `BLACKHOLE` | | The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows. |
-| `UPDATE` | | Pop a value; the suspension running becomes an indirection to it. |
+| `UPDATE` | | Pop a value; the suspension running becomes an indirection to it; one that is an indirection already, lazy ML's that a force from inside it updated first, holds it now. |
 
 ## The register bytecode (runtime/register)
 
@@ -655,8 +675,8 @@ refuses the other's file and image.
 | `CATCH d` | register | `d :=` the exception a raise left for the handler this begins. |
 | `RAISE s` | register | Raise the exception in `s`. |
 | `FORCE d s o` | registers, offset | Where `s` holds no unevaluated suspension, `d :=` its value -- what an indirection holds, else what `s` holds -- and jump to `o`; else on to the `ENTER` after it ([ir.md](ir.md), *Suspensions*). |
-| `ENTER f x` | registers | Enter the suspension in `f`, as `CALL` enters a closure, with `x`; `RESULT` takes its value. One under evaluation is a loop, a fatal error (`<<loop>>`). |
-| `BLACKHOLE` / `UPDATE s` | register | The suspension running goes under evaluation, its captures read and no longer followed by the collector / becomes an indirection to `s`. |
+| `ENTER f x` | registers | Enter the suspension in `f`, as `CALL` enters a closure, with `x`; `RESULT` takes its value. One under evaluation is a loop, and the exception `Loop` is raised from here. |
+| `BLACKHOLE` / `UPDATE s` | register | The suspension running goes under evaluation, its captures read and no longer followed by the collector / becomes an indirection to `s`, or holds `s` now where it is one already (lazy ML's). |
 
 ## Primitives
 

@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 19 of 19 entries documented |
+| Documentation | 24 of 24 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/hslint\_sig.sml](../../../../../lib/language/haskell/hslint_sig.sml) |
 
@@ -55,10 +55,16 @@ sig
   val <a href="#val-compare">compare</a> : report * claims * (HsSource.span -&gt; string) * string -&gt; unit
   val <a href="#val-replayrules">replayRules</a> : (string * string) list
   type <a href="#type-target">target</a>
+  type <a href="#type-library">library</a>
   val <a href="#val-check">check</a> : {<a href="#fld-check.groups">groups</a> : module list list, <a href="#fld-check.main">main</a> : string option, <a href="#fld-check.cycledefault">cycleDefault</a> : bool,
                <a href="#fld-check.records">records</a> : {table : HsEvidence.table, env : HsInfer.env,
                           derived : (string * string * HsAst.decl list) list} option,
-               <a href="#fld-check.claims">claims</a> : claims option, <a href="#fld-check.where_">where_</a> : HsSource.span -&gt; string, <a href="#fld-check.fault">fault</a> : string} -&gt; report * target
+               <a href="#fld-check.claims">claims</a> : claims option, <a href="#fld-check.where_">where_</a> : HsSource.span -&gt; string, <a href="#fld-check.fault">fault</a> : string, <a href="#fld-check.library">library</a> : library option}
+              -&gt; {report : report, target : target, part : library}
+  val <a href="#val-join">join</a> : library list -&gt; library
+  exception <a href="#exn-decode">Decode</a> of string
+  val <a href="#val-encode">encode</a> : library -&gt; string
+  val <a href="#val-decode">decode</a> : string -&gt; library
   val <a href="#val-targetrules">targetRules</a> : (string * string) list
   val <a href="#val-target">target</a> : target * Core.program * string -&gt; unit
   val <a href="#val-dump">dump</a> : report * (HsSource.span -&gt; string) * bool -&gt; string
@@ -285,20 +291,40 @@ They are the types of the top level, the selectors and default
 methods, the classes' dictionaries and the instances' dictionary
 functions, as Core's types.
 
+### <a name="type-library"></a>`library`
+
+```sml
+type library
+```
+
+HsLint's part of a unit: what one check inferred alone.
+
+It is the environment's entries of the modules it inferred, what their
+inference found and the target check's data of them: a saved world's
+library, or a unit's in the store, from which the modules after it are
+inferred alone (D45).
+
 ### <a name="val-check"></a>`check`
 
 ```sml
 val check : {groups : module list list, main : string option, cycleDefault : bool,
              records : {table : HsEvidence.table, env : HsInfer.env,
                         derived : (string * string * HsAst.decl list) list} option,
-             claims : claims option, where_ : HsSource.span -> string, fault : string} -> report * target
+             claims : claims option, where_ : HsSource.span -> string, fault : string, library : library option}
+            -> {report : report, target : target, part : library}
 ```
 
-`check {groups, main, cycleDefault, records, claims, where_, fault}`
-is [`infer`](#val-infer)'s report, with the checker's records replayed and compared.
+`check {groups, main, cycleDefault, records, claims, where_, fault, library}` is [`infer`](#val-infer)'s report, with the checker's records replayed and
+compared.
 
-It gives what the target check reads with the report. With `records`, the checker's evidence records and environment
-(HsEvidence, HsInfer) and the derived instances it made as trees
+With `library`, the groups of its modules are not inferred again: the
+rest are inferred after its environment and findings, and only the
+records of those modules are replayed, the library's having been
+replayed where it was inferred. The report is of the modules inferred,
+and `part` what was inferred of them alone, for the units after them.
+
+It gives what the target check reads with the report. With `records`,
+the checker's evidence records and environment (HsEvidence, HsInfer) and the derived instances it made as trees
 (HsDerive: each one's module, identity and methods), the second
 inference checks those instances' methods as any instance's, each
 record is replayed by Faxén's rules and rhc's ([`replayRules`](#val-replayrules)), the
@@ -317,6 +343,42 @@ inference as claims ([`compare`](#val-compare)); with `claims`, those are too.
 | <a name="fld-check.claims"></a>`claims` | `claims option` |  |
 | <a name="fld-check.where_"></a>`where_` | `HsSource.span -> string` |  |
 | <a name="fld-check.fault"></a>`fault` | `string` |  |
+| <a name="fld-check.library"></a>`library` | `library option` |  |
+
+### <a name="val-join"></a>`join`
+
+```sml
+val join : library list -> library
+```
+
+`join parts` is the parts of units put together, in order: a later
+part's entry of a name wins, and the rest are appended.
+
+### <a name="exn-decode"></a>`Decode`
+
+```sml
+exception Decode of string
+```
+
+Bytes that are no part of a unit, and why.
+
+### <a name="val-encode"></a>`encode`
+
+```sml
+val encode : library -> string
+```
+
+`encode part` is `part` as bytes, in Pickle's form.
+
+### <a name="val-decode"></a>`decode`
+
+```sml
+val decode : string -> library
+```
+
+`decode bytes` is the part `bytes` are, as [`encode`](#val-encode) wrote it.
+
+**Raises** [`Decode`](#exn-decode) where the bytes are no part.
 
 ### <a name="val-targetrules"></a>`targetRules`
 
@@ -359,7 +421,9 @@ The lines are `KIND MODULE NAME :: KIND` for a type constructor or a
 class, `DERIVED MODULE INSTANCE`, `TYPE MODULE NAME :: TYPE` for a
 binding, `SIGNED` for one with a signature, and `DEFAULT MODULE WHERE PREDS -> TYPE`, where `where_` gives a span's place: of the program's
 modules, and of the library's too where `library` is set, but its
-signed bindings.
+signed bindings, and its defaults at no place, `*`. The lines of each
+kind are sorted by module, then name, instance or place, so that only
+a change of what one says moves the dump.
 
 ---
 

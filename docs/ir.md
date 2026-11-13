@@ -681,7 +681,16 @@ forms that SML's elaborator never makes, for a front end whose types say
 more: `App`, a type variable applied to types (Haskell's `m a`, in the
 text `'a 'm`), whose variable stands for a type name given fewer arguments
 than its datatype has parameters (`list`, of `'a list`), so that its
-instance at `list` and `int` is `int list`; and `Forall`, the polymorphic
+instance at `list` and `int` is `int list` -- or for the arrow given fewer
+than two (Haskell's `(->)`, which an instance head may name: ruling 60),
+in the text `(->)` and `int (->)`, so that `int 'm` at `int (->)` is `int ->
+int`, the arrow given both being the function type itself (`Ty.arrowName`,
+`Ty.arrowStamp`; MidLint holds it to two, as a type name to its
+parameters), and for the lazy arrow `(~>)` (ruling 65), which given both is
+`a susp -> b`, so that a front end whose function types take a suspension
+(rhc's Core) gives it where Haskell's `(->)` is given (`Ty.lazyArrowName`); a
+type variable applied matches a function type at `(~>)` where its argument
+is a suspension, at `(->)` otherwise; and `Forall`, the polymorphic
 type of a field (a dictionary's method; in the text `(forall ['b] 'b ->
 'b)`), which binds its own variables. A forall is the same type as one that
 differs from it only in the names it binds (`Ty.equal`), and a
@@ -866,8 +875,38 @@ its own, and forcing one is one step.
   given, made a `K_THUNK` in place (or a copy of one that captures nothing, which may
   be shared); `UPDATE` makes it an indirection to its value (`K_IND`), which a force
   reads and the collector shortcuts. A suspension forced while its code runs is a loop,
-  a fatal error (`<<loop>>`), and so is one that code left by a raise: Haskell 98's
-  errors end the program (the roadmap's D12).
+  and so is one that code left by a raise: `ENTER` raises the builtin exception `Loop`
+  on every engine, which a program may handle, and which rhc's top level takes for an
+  uncaught `NonTermination` (`<<loop>>`): status 1, the handles flushed (chapter 23;
+  the roadmap's ruling 58). Haskell 98's errors end the program (the roadmap's D12),
+  so no suspension is put back.
+* **Lazy ML's reading** (the roadmap's D57, M26; E2's `CmX`): a suspension whose code
+  says `thunk_self_update v` and never `thunk_blackhole` does not go under evaluation,
+  since a lazy ML body may run again: a force of it from inside its own code runs it
+  again, a raise leaves it to run again, and a body may outlive its own update -- the
+  inner run updates it and returns, and the outer run goes on with its frame's closure
+  an indirection, and updates it again, its value the one that stands. So `UPDATE` of a
+  closure that is an indirection already writes it again; `Low.hoistEnv` reads what
+  such code captured at its entry too, since after the inner run's update the collector
+  follows the closure's first field alone; and where a function of the program says
+  `UPDATE` and not `BLACKHOLE` (`Program`'s `reruns`, so never in SML's or Haskell's),
+  the collector gives what points to an indirection its value neither where a frame
+  runs that indirection (it is pinned, `IND_RUNNING`, by `gc_pin_running` before each
+  collection that shortcuts) nor where the value is a suspension or an indirection
+  itself, looked at through its forwarding pointer (`ind_may_shortcut`: a field that
+  held the outer of an `'a susp susp` must not come to hold the inner, whose force
+  would run it). `tests/thunks`' kernels `k_outlive`, `k_outlive_int`,
+  `k_outlive_raise`, `k_outlive_three`, `outlive_nullary` and `k_nested` hold each on
+  every engine.
+* **What holds it** (the roadmap's D57, M26, whose checklist of six this is):
+  the pin and the shortcut's guard, by those kernels; the rules `MidLint` adds,
+  above; force on both targets, `tests/ir/susp.sml` at `-O2` on the register
+  target and `susp-stack.sml` at `-O0` on the stack target, each a dump of every
+  stage; a program with no primitive of suspensions keeps its bytes, `susp`
+  bound only where `--allow-prim` names it; and this section. The rest of
+  `tests/thunks`, run by `tests/runner/thunks.sml` on every engine and tier, are
+  E2's kernels under `--allow-prim` (`knot`, `chain`, `cast`, `image` with
+  suspensions in a saved image, and the rest).
 
 ### Mid as text
 
@@ -952,6 +991,25 @@ which primitives make, are numbered as `runtime/value.h` numbers them.
 `MidPipeline.midStage`, which makes Mid with the lint at the boundary;
 `MidPipeline.lowOfMid` with its list of passes; `MidPipeline.targetStage`;
 and `Emit.writeFileAs` with `MidPipeline.fingerprint ()`.
+
+**rhc's Core**, the language above Mid of the second front end that uses
+this layer ([rhc.md](rhc.md); D1 and D2 of
+[plans/language/haskell98.md](plans/language/haskell98.md)), is rhc's own,
+in `lib/language/haskell` and documented with that library: what it is
+([CORE](lib/language/haskell/sig/CORE.md): System F with a type variable
+applied, lazy `let` and `letrec`, and `case` the one place a value is
+forced), its text ([CORE_TEXT](lib/language/haskell/sig/CORE_TEXT.md)),
+its lint's rules ([CORE_LINT](lib/language/haskell/sig/CORE_LINT.md)), its
+interpreter ([CORE_INTERP](lib/language/haskell/sig/CORE_INTERP.md)), its
+units ([CORE_UNITS](lib/language/haskell/sig/CORE_UNITS.md)) and Core to
+Mid ([CORE_TO_MID](lib/language/haskell/sig/CORE_TO_MID.md)), which writes
+Mid's text, which rhc reads with `MidText.parse` and hands to
+`MidPipeline.midStage`. Its stages are `read` or `desugar` (Core,
+CoreLint at every level, and its text read back at level 3) and
+`coretomid` (Mid's text), names `--dump-after` takes as it takes Mid's
+passes'. What rhc's Mid has that SML's does not -- suspensions, `Case`
+from every match, a type variable applied and the arrows as type names, a
+forall in a dictionary's field -- is in *Mid* and *Suspensions* above.
 
 ## Matches
 

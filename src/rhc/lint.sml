@@ -82,21 +82,24 @@ struct
      is desugared *)
   val kept : HsLint.target option ref = ref NONE
 
-  (* the check at level 2: a refusal is a bug of the compile's; where claims
-     are given, each held to what the inference found, and
-     RHC_HSLINT_FAULT=RULE reads the first claim RULE checks corrupted *)
+  (* the check at level 2 of a program read whole, the library's modules
+     inferred with it: a refusal is a bug of the compile's; where claims are
+     given, each held to what the inference found, and RHC_HSLINT_FAULT=RULE
+     reads the first claim RULE checks corrupted. A program compiled
+     against bin/rhc's snapshot is checked a unit at a time, the library's
+     inference its units' parts (RhcDriver, ruling 67) *)
   fun check (g : G.graph, r : RhcNames.result, cycleDefault : bool) =
     Pass.checkAt ("hslint", 2)
       (fn () =>
          let
-           val (_, t) =
+           val {target, ...} =
              HsLint.check {groups = groups (g, r), main = mainOf g, cycleDefault = cycleDefault,
                            records = Option.map (fn env => {table = #evidence r, env = env, derived = #derived r}) (#types r),
                            claims = Option.map (HsLint.claims o readFile) (!claims),
-                           where_ = fn sp => getOpt (lineColumn sp, "0:0"), fault = fault ()}
+                           where_ = fn sp => getOpt (lineColumn sp, "0:0"), fault = fault (), library = NONE}
              handle HsLint.Refused (span, msg) => raise Error.Bug (place span ^ ": " ^ msg)
          in
-           kept := SOME t
+           kept := SOME target
          end)
       ()
 

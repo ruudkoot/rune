@@ -793,24 +793,29 @@ src/rhc/config.sml: FORCE | $(VERSIONGEN)
 bin/rhc.rbc: $(RUNE) rhc.build $(SOURCES_RHC) src/main/rhc-main.sml
 	@mkdir -p bin
 	$(RUNE) --build rhc.build -o $@
-# rhc's saved world (the roadmap's D45, its B; src/rhc/world.sml): rhc with
-# its library read, named and checked, saved as a VM image as
-# bin/rune-repl.img is, made again when rhc, the VM or a file of share/rhc
-# changes, with bin/rhc.img.identity beside it, the identity of the rhc
-# that made it (Config, a digest of rhc.plan's closure). bin/rhc restores it
-# where that is bin/rhc.rbc's (bin/rhc.identity), and reads and checks
-# only a program's own modules; `bin/rhc --whole`, or a library or --share
-# other than the image's, goes the whole way. The directory it names is
-# the one bin/rhc gives, $(CURDIR)/bin/../share/rhc. It is made at
-# RUNE_LINT=2, so that HsLint replays every record of the library once,
-# which a program from the world replays only for the modules it reaches.
+# rhc's snapshot (D45's A, rulings 66 and 67; docs/units.md, rhc's units):
+# the library of share/rhc compiled once into a store, which bin/rhc names
+# as a layer, read only (--snapshot), so that a check or a compile takes
+# the library's units from it and reads, checks and desugars a program's
+# own modules alone. Made from a Main that imports every module of the
+# library, at RUNE_LINT=2, so that its entries, HsLint's part of each unit
+# among them, stand for a compile at any level; a unit's entry holds no
+# code, so one snapshot serves every target. The directory it names is the
+# one bin/rhc gives, $(CURDIR)/bin/../share/rhc. The store is kept between
+# makes, an entry keyed by rhc's configuration and the library's texts,
+# and after each make holds the configurations of the rhc that made it
+# alone (--prune-store drops the others, file by file as the store's trim
+# drops what it drops).
 RHC_SHARE := $(shell find share/rhc -type f 2>/dev/null)
-bin/rhc.identity: bin/rhc.rbc bin/runevm
-	bin/runevm bin/rhc.rbc --identity > $@
-bin/rhc.img: bin/rhc.rbc bin/runevm $(RHC_SHARE)
-	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --make-world $@ < /dev/null
-bin/rhc: bin/rhc.rbc bin/rhc.identity bin/rhc.img bin/runevm Makefile
-	printf '#!/bin/sh\nd=$$(cd "$$(dirname "$$0")" && pwd -P)\na=; b=\n[ -f "$$d/rhc.identity" ] && read -r a < "$$d/rhc.identity"\n[ -f "$$d/rhc.img.identity" ] && read -r b < "$$d/rhc.img.identity"\nif [ -n "$$a" ] && [ "$$a" = "$$b" ] && [ -f "$$d/rhc.img" ]; then exec "$$d/runevm" --restore "$$d/rhc.img" -- --share "$$d/../share/rhc" "$$@"; fi\nexec "$$d/runevm" "$$d/rhc.rbc" --share "$$d/../share/rhc" "$$@"\n' > $@
+RHC_LIBRARY_MODULES := Array Char Complex CPUTime Directory IO Ix List Locale Maybe Monad Numeric Random Ratio System Time
+bin/rhc.layer: bin/rhc.rbc bin/runevm $(RHC_SHARE)
+	mkdir -p build/rhc-layer
+	{ for m in $(RHC_LIBRARY_MODULES); do echo "import $$m"; done; printf 'main :: IO ()\nmain = return ()\n'; } > build/rhc-layer/Main.hs
+	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --units --store $@ build/rhc-layer/Main.hs -o build/rhc-layer/main.rbc < /dev/null
+	bin/runevm bin/rhc.rbc --prune-store $@
+	touch $@
+bin/rhc: bin/rhc.rbc bin/rhc.layer bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(cd "$$(dirname "$$0")" && pwd -P)\nl=; [ -d "$$d/rhc.layer" ] && l="--snapshot $$d/rhc.layer"\nexec "$$d/runevm" "$$d/rhc.rbc" --share "$$d/../share/rhc" $$l "$$@"\n' > $@
 	chmod +x $@
 check-tools: bin/rhc
 
@@ -2209,7 +2214,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/hsconformance.sml tests/runner/hslang.sml tests/runner/hsroundtrip.sml \
                tests/runner/hssyntax.sml tests/runner/hsnames.sml tests/runner/hslibrary.sml tests/runner/hsmutantlist.sml tests/runner/hsmutants.sml \
                tests/runner/hsmeta.sml tests/runner/hsgen.sml tests/runner/hsreduce.sml tests/runner/hsinterp.sml tests/runner/hsdesugar.sml tests/runner/hsperf.sml tests/runner/hslint.sml tests/runner/hssource.sml tests/runner/hscorpus.sml \
-               tests/runner/hsoracles.sml tests/runner/hsrhccorpus.sml tests/runner/hslazyports.sml tests/runner/hscorpusrun.sml tests/runner/hsworld.sml tests/runner/hsiface.sml tests/runner/hschecks.sml tests/runner/hsunits.sml \
+               tests/runner/hsoracles.sml tests/runner/hsrhccorpus.sml tests/runner/hslazyports.sml tests/runner/hscorpusrun.sml tests/runner/hssnapshot.sml tests/runner/hsiface.sml tests/runner/hschecks.sml tests/runner/hsunits.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) FORCE \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)

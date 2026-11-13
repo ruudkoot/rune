@@ -19,21 +19,23 @@ structure HsIface :> HS_IFACE
 
 | Implementation |  | Source |
 | --- | --- | --- |
-| [`HsIface`](../str/HsIface.md) | HsIface: a unit's interface written as text and read back. Words apart by spaces: a number as its digits, a string as its length, a colon and its bytes, a list as its length and its items, a choice as a letter. | [lib/language/haskell/hsiface.sml](../../../../../lib/language/haskell/hsiface.sml) |
+| [`HsIface`](../str/HsIface.md) | HsIface: a unit's interface written as bytes and read back. A number is a varint, seven bits a byte, the least first, a whole number zigzagged; a string is the number of its place in the table of strings the text begins with, each written once, in the order the interface first names it, so that the keys and names an interface repeats cost a number each to write and to read, and are one string each once read; a list is its length and its items; a choice is a byte. | [lib/language/haskell/hsiface.sml](../../../../../lib/language/haskell/hsiface.sml) |
 
 HsIface, rhc's interface of a unit (the haskell98 roadmap's M21, D44):
 what a store keeps of a unit for a client, written and read back. Each
 of its modules' interfaces as the renamer and the checker make them
-(HsModIface), and the desugaring's part, its Core among it, as text the
-desugaring gives. The unfoldings section is in the format from the
-start and empty until M23 (D44's C).
+(HsModIface). The unfoldings section is in the format from the start
+and empty until M23 (D44's C). The desugaring's part, its Core among
+it, is the desugaring's own text, which a client keeps beside this one:
+rhc's driver keeps it as a section of its own, read only where a unit
+is desugared after it.
 
 ## Interface
 
 <pre>
 signature HS_IFACE =
 sig
-  type <a href="#type-t">t</a> = {<a href="#fld-t.modules">modules</a> : HsModIface.t list, <a href="#fld-t.desugar">desugar</a> : string, <a href="#fld-t.unfoldings">unfoldings</a> : string list}
+  type <a href="#type-t">t</a> = {<a href="#fld-t.modules">modules</a> : HsModIface.t list, <a href="#fld-t.unfoldings">unfoldings</a> : string list}
   exception <a href="#exn-bad">Bad</a> of string
   val <a href="#val-encode">encode</a> : t -&gt; string
   val <a href="#val-decode">decode</a> : string -&gt; t
@@ -45,16 +47,14 @@ end
 ### <a name="type-t"></a>`t`
 
 ```sml
-type t = {modules : HsModIface.t list, desugar : string, unfoldings : string list}
+type t = {modules : HsModIface.t list, unfoldings : string list}
 ```
 
-A unit's interface: its modules', the desugaring's part, and the
-unfoldings, none yet.
+A unit's interface: its modules', and the unfoldings, none yet.
 
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-t.modules"></a>`modules` | `HsModIface.t list` |  |
-| <a name="fld-t.desugar"></a>`desugar` | `string` |  |
 | <a name="fld-t.unfoldings"></a>`unfoldings` | `string list` |  |
 
 ### <a name="exn-bad"></a>`Bad`
@@ -63,7 +63,7 @@ unfoldings, none yet.
 exception Bad of string
 ```
 
-What makes text no interface: where, and what.
+What makes bytes no interface: where, and what.
 
 ### <a name="val-encode"></a>`encode`
 
@@ -71,7 +71,8 @@ What makes text no interface: where, and what.
 val encode : t -> string
 ```
 
-`encode t` is `t` as text, which [`decode`](#val-decode) reads back.
+`encode t` is `t` as bytes, which [`decode`](#val-decode) reads back: each string
+once, in a table, and every place it is named a number.
 
 A kind or a type variable linked is written as what it is linked to;
 one left unsolved, which no interface's generalized types hold, raises
@@ -85,7 +86,7 @@ val decode : string -> t
 
 `decode s` is the interface [`encode`](#val-encode) wrote as `s`.
 
-**Raises** [`Bad`](#exn-bad) where `s` is not such text.
+**Raises** [`Bad`](#exn-bad) where `s` is not such bytes.
 
 ### <a name="val-encodemodule"></a><a name="val-decodemodule"></a>`encodeModule`, `decodeModule`
 
@@ -94,8 +95,8 @@ val encodeModule : HsModIface.t -> string
 val decodeModule : string -> HsModIface.t
 ```
 
-`encodeModule m` and `decodeModule s` are one module's interface's
-part of the text, for its tests.
+`encodeModule m` and `decodeModule s` are one module's interface
+alone, for its tests.
 
 ---
 

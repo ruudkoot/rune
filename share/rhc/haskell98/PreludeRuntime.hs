@@ -245,7 +245,8 @@ ioErrorFile e     =  case primUnpackString (exn_io_file e) of
 
 -- the handle an IOError is about, among those the program has opened
 ioErrorHandle     :: IOError -> Maybe Handle
-ioErrorHandle e   =  case [h | h <- unsafe_perform_io (ref_get handles), handleId h == n] of
+ioErrorHandle e   =  case [h | h <- unsafe_perform_io (ref_get handles) ++ unsafe_perform_io (ref_get opened),
+                               handleId h == n] of
                        (h:_) -> Just h
                        []    -> Nothing
   where n = exn_io_handle e
@@ -301,8 +302,10 @@ handleBytes  (Handle _ _ _ _ _ _ _ _ _ _ b _ _) = b
 handleIndex  (Handle _ _ _ _ _ _ _ _ _ _ _ i _) = i
 handleHeld   (Handle _ _ _ _ _ _ _ _ _ _ _ _ k) = k
 
--- every handle the program has opened, the standard ones first made, the
--- newest first, and the number of the next
+-- the handles open, holds among them, and the standard ones, open or not,
+-- the newest first, which a lock looks through (21.2.3): one closed leaves
+-- it when the next is opened (`live`), so that a program that opens many
+-- files in turn pays for those open alone; and the number of the next
 handles           :: Ref [Handle]
 handles           =  unsafe_perform_io (mapM make [(2, "<stderr>", False, True, 0),
                                                    (1, "<stdout>", False, True, 1),
@@ -312,6 +315,20 @@ handles           =  unsafe_perform_io (mapM make [(2, "<stderr>", False, True, 
 
 handleCount       :: Ref Int
 handleCount       =  unsafe_perform_io (ref_new 3)
+
+-- every handle openFile has made, closed or not, the newest first: the
+-- handle an IOError about one is about (ioeGetHandle), however long ago it
+-- was closed
+opened            :: Ref [Handle]
+opened            =  unsafe_perform_io (ref_new [])
+
+-- the handles of `hs` not closed, and the standard ones
+live              :: [Handle] -> IO [Handle]
+live []           =  return []
+live (h:hs)       = do
+    st <- ref_get (handleState h)
+    rest <- live hs
+    return (if st /= 2 || handleId h <= 2 then h : rest else rest)
 
 newHandle         :: Int -> Int -> String -> Bool -> Bool -> Bool -> Int -> IO Handle
 newHandle n fd name r w s mode = do
@@ -684,7 +701,7 @@ primHFileSize h   = do
 primOpenFile      :: FilePath -> Int -> IO Handle
 primOpenFile f mode = do
     locked f mode
-    hs <- ref_get handles
+    hs <- ref_get handles >>= live
     fd <- h_open (primPackString f) mode
     if fd < 0 then h_errno >>= primFailWith ("openFile: " ++ f) Nothing (Just f)
       else do
@@ -692,6 +709,8 @@ primOpenFile f mode = do
         ref_set handleCount (n + 1)
         h <- newHandle n fd f (mode == 0 || mode == 3) (mode /= 0) (mode /= 2) 2   -- AppendMode's writes go to the end
         ref_set handles (h : hs)
+        os <- ref_get opened
+        ref_set opened (h : os)
         return h
 
 -- readFile, writeFile and appendFile (7.1), under the locks of 21.2.3.
@@ -732,7 +751,7 @@ hold f mode       = do
     n <- ref_get handleCount
     ref_set handleCount (n + 1)
     h <- newHandle n (-1) f (mode == 0) (mode /= 0) False 2
-    hs <- ref_get handles
+    hs <- ref_get handles >>= live
     ref_set handles (h : hs)
     return h
 

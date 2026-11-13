@@ -267,17 +267,17 @@ struct
                 let val c = RhcUnits.checked (name, p')
                 in
                   if name = "rhc-runtime" then ()
-                  else keep (key, usages, {iface = RhcUnits.ifaceText c, code = CoreText.show p'});
+                  else keep (key, usages, {iface = RhcUnits.ifaceText c, parts = fn _ => CoreText.show p', count = 1});
                   say (name, "checked" ^ why); (c, p')
                 end
               else
                 let val c = RhcUnits.compile {name = name, earlier = done, fault = #fault opts} p'
-                in keep (key, usages, {iface = RhcUnits.ifaceText c, code = RhcUnits.codeBytes c}); say (name, "compiled" ^ why); (c, p') end
+                in keep (key, usages, {iface = RhcUnits.ifaceText c, parts = fn _ => RhcUnits.codeBytes c, count = 1}); say (name, "compiled" ^ why); (c, p') end
             end
           fun taken' (sections : RhcStore.sections) =
             (say (name, "taken");
              if whole then
-               let val p' = CoreText.parse (#code sections)
+               let val p' = CoreText.parse (#parts sections 0)
                             handle CoreText.Error (_, msg) => raise RhcUnits.Error ("the entry of " ^ name ^ ": " ^ msg)
                in ({name = name, code = NONE, abi = [], exports = List.mapPartial (fn Core.Val (x, _, _) => SOME x | _ => NONE) p',
                     newtypes = [], iface = RhcUnits.ifaceOf (name, #iface sections)}, p')
@@ -312,11 +312,11 @@ struct
           fun said what = if #showUnits opts then eprint ("rhc: link: " ^ what ^ "\n") else ()
         in
           case lookup key (RhcStore.holds {level = RhcStoreConfig.level (), current = fn _ => "?"}) of
-            SOME (UnitStore.Found ({sections, ...}, _)) => (said "taken"; write (out, #code sections); 0)
+            SOME (UnitStore.Found ({sections, ...}, _)) => (said "taken"; write (out, #parts sections 0); 0)
           | _ =>
               let val status = compile (opts, reached, out)
               in
-                if status = 0 then (keep (key, [], {iface = "", code = bytesOf out}); said "compiled") else ();
+                if status = 0 then (keep (key, [], {iface = "", parts = fn _ => bytesOf out, count = 1}); said "compiled") else ();
                 status
               end
         end
@@ -373,44 +373,46 @@ struct
     handle RhcOptions.Usage msg => (eprint ("rhc: " ^ msg ^ "\n" ^ "rhc --help says what rhc takes\n"); 1)
          | Failed => 1
 
-  (* --share DIR, where rhc's library is, which the wrapper bin/rhc gives *)
+  (* the snapshot (D45's A, rulings 66 and 67): the store of the library
+     compiled once, which the wrapper bin/rhc names, a layer of every check
+     and compile, after those --layer names in units *)
+  val snapshot : string option ref = ref NONE
+
+  (* --share DIR, where rhc's library is, and --snapshot DIR, which the
+     wrapper bin/rhc gives *)
   fun share args =
     case args of
       "--share" :: d :: rest => (RhcLibrary.share := SOME d; share rest)
+    | "--snapshot" :: d :: rest => (snapshot := SOME d; share rest)
     | ["--share"] => raise RhcOptions.Usage "--share takes a directory"
     | a :: rest => a :: share rest
     | [] => []
 
-  (* --whole, a program read and checked whole without the saved world;
-     --world, what of it there is (RhcWorld); --identity, rhc's own
-     (Config), which the Makefile writes to bin/rhc.identity *)
-  fun world args =
+  (* --whole, a program read and checked whole, the library's modules
+     too, not against the snapshot *)
+  fun whole args =
     case args of
-      "--whole" :: rest => (RhcWorld.whole := true; world rest)
-    | a :: rest => a :: world rest
+      "--whole" :: rest => (RhcSyntax.whole := true; whole rest)
+    | a :: rest => a :: whole rest
     | [] => []
-
-  (* the library replayed by HsLint, at level 2, when its world is made;
-     what the check keeps for the target check is a program's, not the
-     library's, so the saved image holds none *)
-  val () = RhcWorld.checkLibrary := (fn (g, r) => (RhcLint.check (g, r, false); RhcLint.kept := NONE))
 
   fun run (args : string list) : int =
     let
       val (args, ownArgs) = splitArgs args
       val () = programArgs := ownArgs
-      val args = world (share args)
+      val args = whole (share args)
+      val () = RhcSyntax.layers := (case !snapshot of SOME d => [d] | NONE => [])
     in
     case args of
-      ["--make-world", image] =>
-        (* the saved world, made: the world that saves it stops here, and
-           one bin/rhc restores goes on with its own command line *)
-        (case RhcWorld.make image of
-           Runtime.Saved => 0
-         | Runtime.Restored => run (CommandLine.arguments ()))
-    | ["--world"] => (print (RhcWorld.describe () ^ "\n"); 0)
-    | ["--identity"] => (print (Config.identity ^ "\n"); 0)
+      ["--identity"] => (print (Config.identity ^ "\n"); 0)
+      (* the store DIR with the configurations of rhc's own identity alone:
+         make's for bin/rhc.layer, after a build of rhc *)
+    | ["--prune-store", dir] =>
+        (print ("rhc: " ^ Int.toString (RhcStore.dropOthers (dir, Config.identity)) ^ " other configurations dropped from " ^
+                dir ^ "\n");
+         0)
     | _ =>
+    if List.exists (fn a => a = "--units") args andalso List.exists isHaskell args then haskellUnits args else
     case RhcSyntax.command args of
       SOME syntax =>
         let
@@ -463,8 +465,43 @@ struct
     end
     end
 
+  (* With RHC_INSTRUCTIONS set, the bytecode instructions a command took
+     (Pass.instructions), on standard error *)
+  and counted (args : string list) : int =
+    let
+      val i0 = !Pass.instructions ()
+      val status = run args
+    in
+      (case OS.Process.getEnv "RHC_INSTRUCTIONS" of
+         SOME _ => eprint ("rhc: " ^ Int.toString (!Pass.instructions () - i0) ^ " instructions\n")
+       | NONE => ());
+      status
+    end
+
+  and isHaskell a = String.isSuffix ".hs" a orelse String.isSuffix ".lhs" a
+
+  (* a program of Haskell in units (M21f): its files, and rhc's options for
+     the rest; each group of its graph a unit, kept in --store and taken
+     from there, the link the roadmap's C (RhcDriver) *)
+  and haskellUnits (args : string list) : int =
+    let
+      val (roots, rest) = List.partition isHaskell args
+      (* --hslint-claims=FILE: claims HsLint's check of each unit made at
+         level 2 is held to, as a whole compile's *)
+      val (claimed, rest) = List.partition (String.isPrefix "--hslint-claims=") rest
+      val () = List.app (fn a => RhcLint.claims := SOME (String.extract (a, size "--hslint-claims=", NONE))) claimed
+      val opts = RhcOptions.parse rest
+      val out = case #output opts of SOME f => f | NONE => raise RhcOptions.Usage "--units compiles: give -o FILE"
+      val () = Pass.startup ()
+      val status =
+        RhcDriver.compile {roots = roots, out = out, store = #store opts,
+                           layers = #layers opts @ (case !snapshot of SOME d => [d] | NONE => []), show = #showUnits opts,
+                           strings = #strings opts, fault = #fault opts, compile = fn (p, f) => compile (opts, p, f)}
+        handle RhcDriver.Failed msg => (eprint ("rhc: error: " ^ msg ^ "\n"); 1)
+    in Pass.finish (); status end
+
   fun main (_ : string, args : string list) : int =
-    run args
+    counted args
     handle RhcOptions.Usage msg => (eprint ("rhc: " ^ msg ^ "\n" ^ "rhc --help says what rhc takes\n"); 1)
          | Failed => 1
          | Error.Bug msg => (eprint ("rhc: " ^ msg ^ "\n"); 1)

@@ -271,9 +271,27 @@ struct
                                       then List.map (fn A.D ({span, ...}, _) => #file span) decls
                                       else [])
                             derived))
+      (* whether a node's key, `KIND@FILE:START-STOP`, is of one of those
+         files: read in place, since a world's table holds some 16,000
+         nodes of which a program's are a few *)
+      val fileList = M.foldl (fn (f, (), acc) => f :: acc) [] files
       fun given key =
         case CharVector.findi (fn (_, c) => c = #"@") key of
-          SOME (i, _) => M.member (files, #file (spanOfKey (String.extract (key, i + 1, NONE))))
+          SOME (i, _) =>
+            let
+              val n = size key
+              fun digits j = j >= n orelse ((Char.isDigit (String.sub (key, j)) orelse String.sub (key, j) = #"-")
+                                            andalso digits (j + 1))
+              fun at f =
+                let
+                  val m = size f
+                  fun same j = j >= m orelse (String.sub (key, i + 1 + j) = String.sub (f, j) andalso same (j + 1))
+                in
+                  i + 1 + m < n andalso String.sub (key, i + 1 + m) = #":" andalso same 0 andalso digits (i + 2 + m)
+                end
+            in
+              List.exists at fileList
+            end
         | NONE => false
       val all = List.filter (fn (key, _) => given key) (V.all records)
       (* a derived instance's methods, made as a user's would be (D54): its
@@ -714,7 +732,10 @@ struct
       List.app group (List.rev (!(#decls src)));
       List.app sccGroups groups;
       List.app methods (List.rev (!(#instances src)));
-      List.app slots (!E.classDecls);
+      (* the classes of the modules replayed: a unit's before it were
+         replayed with it *)
+      List.app slots (List.filter (fn {module, ...} : E.classDecl => List.exists (fn {id, ...} : E.module => id = module) modules)
+                        (!E.classDecls));
       fault := ""
     end
 

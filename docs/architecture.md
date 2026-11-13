@@ -291,6 +291,86 @@ requires alone, and a program sees what it names: `BasisManifest.scopes` says
 what each scope sees, `select` chooses by it, and `LibraryScope`'s walk puts
 each file in its scope, for each of the compiler's ways through the libraries.
 
+## rhc
+
+rhc, the Haskell 98 compiler ([rhc.md](rhc.md) for its use), is a second
+front end on the same compiler, built by Rune alone (`rhc.build`, D42 of
+[plans/language/haskell98.md](plans/language/haskell98.md)):
+
+```
+FILE.hs ──► RhcGraph ──► HsLexer, HsLayout ──► HsRename, ──► HsKinds, HsInfer, ──► HsDesugar, ──► Core ──► CoreToMid ──► Mid ──► MidPipeline
+            modules       HsParser            HsFixity      HsClasses, HsDerive    HsMatch                                       (Rune's passes,
+            and groups    AST                 names         evidence (HsEvidence)                                                Lower, a target)
+                                                             │
+                                               HsLint: a second inference, the evidence replayed, the Core held to the source types
+```
+
+**Where it joins.** rhc meets Rune's compiler at Mid (D1): everything from
+Mid down is shared, nothing above it. `lib/compiler/mid.build` is that
+layer, Mid and its text, codecs and lints, Rune's optional passes,
+`Lower`, the targets, `Emit`, the linker and the store, with no lexer,
+parser, elaborator, `Translate` or `ToMid` of SML's (D41); rhc's build is a
+friend of the compiler's library and uses it alone, with a `Config` of its
+own (`src/rhc/config.sml`, rhc's identity, over `rhc.plan`). A front end
+gives Mid what [ir.md](ir.md), *What a front end gives Mid*, says, and runs
+`MidPipeline.lowOfMid` with the passes it chooses. Mid took two things for
+a lazy language: a suspension type `susp` with forcing as one primitive
+node (form C, D3; [ir.md](ir.md), *Suspensions*), and types a variable
+heads, Haskell's `m a` and `(->)`, with a forall in fields (D4).
+
+**The front end** is `lib/language/haskell`, in layers that each name only
+those before it (`library.build`): the syntax (`syntax.build`: the
+lexer, the layout algorithm of 9.3, the parser and its printers), names
+(`names.build`: modules and their exports, the renamer, fixity
+resolution after renaming, and `HsUsage`, what a compile reads of other
+units), types (`types.build`: kinds, the checker by dependency group,
+classes and instances, evidence records for every overloaded use, deriving,
+and a module's interface), Core (`core.build`), HsLint (`hslint.build`)
+and desugaring (`desugar.build`: the Report's translations and its order
+of matching). `src/rhc` is the driver: the module graph and its strongly
+connected groups (`RhcGraph`), names and checking over the graph
+(`RhcNames`), units (`RhcDriver`), the options (`RhcOptions`) and `main`.
+
+**Core** (D2) is rhc's own typed lazy language: System F with a type
+variable applied, lazy `let` and `letrec`, and `case` as the one place a
+value is forced, with a text form that reads back to the same program
+(`CoreText`). Desugaring makes it; `CoreLint` checks it at every level;
+`CoreInterp` runs it, the reference the compiled program is held to; and
+`CoreRuntime` and `CorePrim` are the primitives the Report leaves to an
+implementation, which the library's `PreludeRuntime` names. `CoreToMid`
+lowers it: a lazy slot to a `susp`, a forcing `case` to Mid's force and
+its `Case`, and Core's types to Mid's, a type variable applied among them
+([ir.md](ir.md), *Mid*).
+
+**The checks.** Beside CoreLint and Mid's lints, HsLint (D54) checks a
+program a second time at level 2: an inference of its own, a
+transliteration of Typing Haskell in Haskell that shares nothing with the
+checker but the renamer, the checker's evidence records replayed by
+Faxén's rules and held to it, and the Core desugaring made held to the
+translation of the source types (the target check). A program the checker
+accepts and HsLint refuses is a bug of rhc's.
+
+**Units and the store** (D43 to D45). Each strongly connected group of the
+module graph is a unit, checked from the interfaces of the units before it
+(`HsModIface`, by entity, with fingerprints by recursive group) and
+desugared alone; its entry in the store, Rune's `UnitStore` with a format,
+head and key of rhc's (`RhcStore`), keeps its interfaces (`HsIface`), its
+desugaring's interface, HsLint's part of it and its Core, and is taken
+again where every read its compile made (`HsUsage`) gives what it gave.
+The link joins the units' Core and compiles what `main` reaches whole,
+behind a memo of its own. The library is compiled once by make into a
+store, the snapshot `bin/rhc.layer`, from which every check and compile of
+`bin/rhc` takes the library's units, so that a program's compile reads its
+own modules alone (`RhcDriver.front`); `--whole` reads the library too, the
+reference. [units.md](units.md), *rhc's units*, has the store's details
+and what a compile costs.
+
+**Tests** are `tests/hs` and the `hs*` families of `tests/runner`
+([testing.md](testing.md), *rhc's tests*): the Report's statements as rows
+of `tests/hs/conformance.tsv`, each held by tests, the corpus against the
+oracles, and the snapshot, the units and the interpreter against the whole
+compile.
+
 ## Adding a language feature (checklist)
 
 1. Lexer/parser/AST as needed; elaboration (types + annotations); translation

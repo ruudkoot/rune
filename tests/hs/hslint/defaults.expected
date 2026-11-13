@@ -1,9 +1,9 @@
+SIGNED	Main	main :: IO ()
 TYPE	Main	x :: Double
 TYPE	Main	y :: Int
 TYPE	Main	z :: Int
-SIGNED	Main	main :: IO ()
-DEFAULT	Main	9:1	Integral a -> Int
-DEFAULT	Main	13:1	Num a -> Int
 DEFAULT	Main	8:1	Floating a -> Double
+DEFAULT	Main	9:1	Integral a -> Int
 DEFAULT	Main	9:1	Num a -> Int
 DEFAULT	Main	10:1	Num a -> Int
+DEFAULT	Main	13:1	Num a -> Int
