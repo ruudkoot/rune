@@ -30,6 +30,19 @@ struct
 
   fun enabled () = List.exists (fn (n, _) => Pass.enabled (n, level)) (CoreSimplify.passes ())
 
+  (* the unfoldings a unit gives its clients at -O2, HsIface's section (D44's
+     C, M21): the unit's Core through the passes as a unit, not whole, and
+     each unfolding the text of Core of its one declaration; none below -O2,
+     where nothing reads them *)
+  fun unfoldingsOf (p : Core.program) : string list =
+    if not (enabled ()) then []
+    else
+      let
+        val opts = {spend = fn () => true, whole = false, eta = !RhcOptions.eta}
+        val p' = List.foldl (fn ((_, pass), p) => pass opts p) p (CoreSimplify.passes ())
+      in List.map (fn d => CoreText.show [d]) (CoreSimplify.unfoldings p') end
+      handle Fail msg => raise Error.Bug ("rhc's simplifier fails on a unit, a bug of rhc's: " ^ msg)
+
   (* the Core p, a program of the files named, through the passes; whole
      where p is the program whole, so that a value main does not reach may
      go *)

@@ -228,7 +228,9 @@ struct
               (* the first unit reads its own source and rhc's leaves alone,
                  which its key and the configuration hold *)
               val usages = if null done then [] else List.map (fn r => (HsUsage.key r, answerIn (now ()) r)) reads
-              val iface = HsIface.encode {modules = mods, desugar = desugarText desugar, unfoldings = []}
+              (* at -O2, what a client may inline or specialise of it (M23) *)
+              val iface = HsIface.encode {modules = mods, desugar = desugarText desugar,
+                                          unfoldings = RhcSimplify.unfoldingsOf core}
               (* its Core by its declarations, so that a link reads only what
                  it reaches (CoreUnits.indexText) *)
               val (index, texts) = CoreUnits.index core
