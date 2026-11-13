@@ -77,7 +77,7 @@ struct
      recorded in the results and judged by nothing *)
   (* a program in `ways` from `targets`, its outcome by `label`; the run of
      make check is runOne, D56's three ways in the Report's order of matches *)
-  fun runWith (id, label, ways, targets, want) =
+  fun runWith (id, label, ways, targets, want, judge) =
     let
       val row = case List.find (fn r => HsCorpus.field r "id" = id) (HsCorpus.rows "run.tsv") of
                   SOME r => r | NONE => raise HsOracles.Failed ("no run of " ^ id)
@@ -150,13 +150,13 @@ struct
       val fails = List.mapPartial way ways'
       val () = rmTree work
       val outcome = {id = id, label = label, got = case fails of [] => label | (g, _) :: _ => g,
-                     said = String.concatWith "; " (List.map #2 fails), passed = null fails, judged = judgesAgree row,
+                     said = String.concatWith "; " (List.map #2 fails), passed = null fails, judged = judge row,
                      want = want} : HsRhcCorpus.outcome
     in HsRhcCorpus.report (label ^ "-" ^ String.translate (fn #"/" => "_" | ch => str ch) id, [outcome]) end
     handle HsOracles.Failed msg => say ("FAIL hs-corpus-run " ^ id ^ ": " ^ msg ^ "\n")
          | HsCorpus.Bad msg => say ("FAIL hs-corpus-run " ^ id ^ ": " ^ msg ^ "\n")
 
-  fun runOne id = runWith (id, "run", ways, targets, "E8's output and status 0 in D56's three ways")
+  fun runOne id = runWith (id, "run", ways, targets, "E8's output and status 0 in D56's three ways", judgesAgree)
 
   (* the lead's ruling 59 (tr.case.obligation, R86): a program compiled with
      its matches as Sestoft's decision trees (`--match=sestoft`) and run on
@@ -166,7 +166,23 @@ struct
      rhc-corpus.txt (`ID::run`) explains *)
   fun sestoftOne id =
     runWith (id, "sestoft", [("sestoft", "register", [fromRoot "bin/runevm"])], [("register", ["--match=sestoft"])],
-             "E8's output and status 0 with Sestoft's decision trees, as in the Report's order")
+             "E8's output and status 0 with Sestoft's decision trees, as in the Report's order", judgesAgree)
+  (* G2's line "the clean nofib programs match at -O0 and at the top level":
+     each program of the run set's nofib trees that GHC -O0 ran right (E8:
+     the nhc98 copy's 56, the 2019 nofib's 82, 19 of them through D22's
+     compat hash), compiled at rhc's -O0 and at its top level, -O2, and run on
+     the register VM, against E8's output; judged where GHC ran it right,
+     whatever Hugs did, its label `levels`. Nightly *)
+  fun ghcRight row = List.exists (fn v => v = HsCorpus.field row "ghc_out") ["same", "close", "same-ws"]
+  fun levelsOne id =
+    runWith (id, "levels", [("O0", "register-O0", [fromRoot "bin/runevm"]), ("O2", "register-O2", [fromRoot "bin/runevm"])],
+             [("register-O0", ["-O0"]), ("register-O2", ["-O2"])],
+             "E8's output and status 0 at rhc's -O0 and -O2", ghcRight)
+  fun levelsIds () =
+    List.map (fn r => HsCorpus.field r "id")
+             (List.filter (fn r => List.exists (fn s => s = HsCorpus.field r "set") ["nhc98-nofib", "nofib-2019"] andalso ghcRight r)
+                          (HsCorpus.rows "run.tsv"))
+
   fun runRight () =
     let val ls = Expectations.read (HsRhcCorpus.expectations ())
     in fn id => not (isSome (Expectations.find (ls, {way = "rhc", path = id, label = SOME "run"}))) end
@@ -200,6 +216,8 @@ struct
 
   fun command ["hs-corpus-run", id] =
         SOME (fn () => if isVendored id then fromVendored (fn () => runOne id) else runOne id)
+    | command ["hs-corpus-levels", id] =
+        SOME (fn () => if isVendored id then fromVendored (fn () => levelsOne id) else levelsOne id)
     | command ["hs-corpus-run-sestoft", id] =
         SOME (fn () => if isVendored id then fromVendored (fn () => sestoftOne id) else sestoftOne id)
     | command ["hs-rhc-corpus-vendored"] = SOME (namesVendored ("vendored", fn _ => true))
@@ -230,6 +248,8 @@ struct
       val trees = List.filter (fn r => HsCorpus.field r "vendor" = "vendored" andalso right (HsCorpus.field r "id")) rows
       fun sestoftJob r = hold (HsOracles.job ("sestoft/" ^ HsCorpus.field r "id", ["hs-corpus-run-sestoft", HsCorpus.field r "id"],
                                               [], 3600, 2000))
+      val levels = levelsIds () handle HsCorpus.Bad _ => []
+      fun levelsJob id = hold (Test.requires ["hs-corpus"] (HsOracles.job ("levels/" ^ id, ["hs-corpus-levels", id], [], 3600, 2000)))
     in
       List.foldl (fn (c, t) => Test.tag c t)
         (Test.requires ["rhc"]
@@ -244,6 +264,7 @@ struct
                                                               else Test.requires ["hs-corpus"] (job (HsCorpus.field r "id"))))
                                                outside
                                       @ List.map sestoftJob trees
+                                      @ List.map levelsJob levels
                                       @ [hold (HsOracles.job ("@stale-nightly", ["hs-rhc-corpus", "stale"],
                                                               List.map (fn r => "hs-corpus-run/" ^ HsCorpus.field r "id") outside
                                                               @ List.map (fn r => "hs-corpus-run/sestoft/" ^ HsCorpus.field r "id") trees,
