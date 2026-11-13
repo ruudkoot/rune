@@ -134,11 +134,17 @@ uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t err
     if (first > 0 && p->funcs[first - 1].code_end != base) { fail(err, errlen, "function does not end where the next begins"); return NULL; }
     uint8_t *starts = calloc(p->code_len - base + 1, 1);
     if (!starts) { fail(err, errlen, "out of memory"); return NULL; }
-    if (first == 0) p->has_update = 0;
+    if (first == 0) p->reruns = 0;
     uint32_t fi = first;
     uint32_t pc = base;
+    /* whether the function fi says UPDATE, and BLACKHOLE (Program's reruns) */
+    int updates = 0, holes = 0;
     while (pc < p->code_len) {
-        while (fi + 1 < p->nfuncs && pc >= p->funcs[fi + 1].code_offset) fi++;
+        while (fi + 1 < p->nfuncs && pc >= p->funcs[fi + 1].code_offset) {
+            if (updates && !holes) p->reruns = 1;
+            updates = holes = 0;
+            fi++;
+        }
         uint8_t op = p->code[pc];
         int len = instr_length(op);
         if (len == 0) { free(starts); snprintf(err, errlen, "invalid opcode %u at %u", op, pc); return NULL; }
@@ -169,10 +175,12 @@ uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t err
         }
         /* a known call gives no more arguments than its function has locals */
         if ((op == OP_CALLK || op == OP_TAILCALLK) && !bad) bad = (uint32_t)b > p->funcs[a].nlocals;
-        if (op == OP_UPDATE) p->has_update = 1;
+        if (op == OP_UPDATE) updates = 1;
+        if (op == OP_BLACKHOLE) holes = 1;
         if (bad) { free(starts); snprintf(err, errlen, "bad operand for %s at %u", op_names[op], pc); return NULL; }
         pc += len;
     }
+    if (updates && !holes) p->reruns = 1;
     /* jump targets and function entries must be instruction boundaries; a
        SWITCH's table is JUMPs of its own function, which the code goes on
        after */

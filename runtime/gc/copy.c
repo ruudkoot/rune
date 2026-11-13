@@ -216,10 +216,12 @@ static void collect_into(VM *vm, size_t new_size) {
    pinned: no field is given what it holds, the frame's own closure slot
    among them, so the second update writes it and every holder sees it.
    Frames below low have not run since the last minor collection, which
-   pinned what they ran; a full collection starts from 0. Nothing where the
-   program says no UPDATE, as no program of SML does. */
+   pinned what they ran; a full collection starts from 0. Nothing where no
+   function of the program says UPDATE and not BLACKHOLE (Program's reruns):
+   no program of SML, and none of Haskell's, whose suspensions say BLACKHOLE
+   at their entry and so are not run again while they run. */
 void gc_pin_running(VM *vm, size_t low) {
-    if (!vm->prog.has_update) return;
+    if (!vm->prog.reruns) return;
     FrameRef *fr = NULL;
     size_t nf = vm_frames_from(vm, low, &fr);
     for (size_t k = 0; k < nf; k++) {

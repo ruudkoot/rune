@@ -68,11 +68,17 @@ uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t err
     uint8_t *starts = calloc(p->code_len - base + 1, 1);
     if (!starts) { fail(err, errlen, "out of memory"); return NULL; }
     for (uint32_t i = first; i < p->nfuncs; i++) { p->funcs[i].maxstack = 1; p->funcs[i].reads_closure = 0; }
-    if (first == 0) p->has_update = 0;
+    if (first == 0) p->reruns = 0;
     uint32_t fi = first;
     uint32_t pc = base;
+    /* whether the function fi says UPDATE, and BLACKHOLE (Program's reruns) */
+    int updates = 0, holes = 0;
     while (pc < p->code_len) {
-        while (fi + 1 < p->nfuncs && pc >= p->funcs[fi + 1].code_offset) fi++;
+        while (fi + 1 < p->nfuncs && pc >= p->funcs[fi + 1].code_offset) {
+            if (updates && !holes) p->reruns = 1;
+            updates = holes = 0;
+            fi++;
+        }
         const uint8_t *at = p->code + pc;
         uint8_t op = at[0];
         if (op >= ROP__COUNT) { free(starts); snprintf(err, errlen, "invalid opcode %u at %u", op, pc); return NULL; }
@@ -95,10 +101,12 @@ uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t err
            its captures, itself, or the suspension a suspension's code makes
            under evaluation and updates */
         if (op == ROP_ENV || op == ROP_SELF || op == ROP_BLACKHOLE || op == ROP_UPDATE) p->funcs[fi].reads_closure = 1;
-        if (op == ROP_UPDATE) p->has_update = 1;
+        if (op == ROP_UPDATE) updates = 1;
+        if (op == ROP_BLACKHOLE) holes = 1;
         starts[pc - base] = 1;
         pc += len;
     }
+    if (updates && !holes) p->reruns = 1;
     /* jump targets and function entries must be instruction boundaries,
        and a jump stays in its function; a SWITCH's table is JUMPs of its
        own function, which the code goes on after */
