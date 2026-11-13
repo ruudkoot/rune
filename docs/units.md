@@ -1147,9 +1147,14 @@ the state of the units before with the unit's modules named
 (`RhcIface.answer`), an entity of another unit with its fingerprint. The
 first unit, the library's, reads only its own source and rhc's leaves, so
 it keeps none. A unit's fingerprints (`HsModIface.fingerprints`, which its
-importers' usages name) are kept with it, with each fingerprint of another
-unit's they were made from: a unit taken reuses them where those are still
-what they were, else makes them again. A unit's Core is kept by its declarations
+importers' usages name) are by recursive group over all its modules, so that
+a group of types that spans the members of a cycle hashes as one (H8, M22);
+they are kept with it, with each fingerprint of another unit's they were
+made from: a unit taken reuses them where those are still what they were,
+else makes them again. A usage names no unit: under the link of C a client's
+Core names another unit's entities by their modules, so a cycle split in two
+units of new names takes its clients where what they read is as it was
+(`tests/hs/units/holes/h8-split`). A unit's Core is kept by its declarations
 (`CoreUnits.index`): an index of what each is, makes and names, and each
 declaration's text a section of its own, which the store reads and holds
 to its hash only where it is asked for. The link memo is keyed by the
