@@ -735,6 +735,8 @@ void vm_safepoints_restore(VM *vm, const NativeSafepoints *saved) {
    says k in its contag, 0 for one. */
 
 static void apply_stats(void);
+static int apply_sites_on;
+static void apply_site(VM *vm, uint32_t caller, uint32_t callee, uint32_t n, uint32_t kind);
 
 /* <apply K R>: register 0 the closure, 1 to K its arguments, K + 1 to K + R
    the rest, K + R + 1 what the first call returns, which the rest are given
@@ -806,7 +808,8 @@ int vm_isa_after_load(VM *vm, char *err, size_t errlen) {
         if (op == ROP_SWITCH) l += 5 * (uint32_t)read_i32(at + 5);
         pc += l;
     }
-    { static int once; const char *e = getenv("RUNE_APPLY_STATS"); if (e && *e == '1' && !once) { once = 1; atexit(apply_stats); } }
+    { static int once; const char *e = getenv("RUNE_APPLY_STATS");
+      if (e && (*e == '1' || *e == '2') && !once) { once = 1; apply_sites_on = *e == '2'; atexit(apply_stats); } }
     if (!any) return 1;
     for (uint32_t f = 0; f < p->nfuncs; f++)
         if (p->funcs[f].name && strncmp(p->funcs[f].name, "<apply ", 7) == 0) return 1;   /* there already (an image's program) */
@@ -855,7 +858,48 @@ static void apply_enter(VM *vm, uint32_t f, Value cv, size_t t, size_t from, uin
 }
 
 uint64_t reg_apply_counts[4];   /* the general path's: saturated, partial, over-applied, a partial application's */
+
+/* with RUNE_APPLY_STATS=2, the general path's uses by site as well: the
+   calling function, the function of the closure applied (a partial
+   application's own), the arguments it is given (with a partial
+   application's) and the case, the names kept as they are first seen
+   (the program is gone at exit); the most used printed at exit */
+enum { APPLY_SITES = 1 << 14 };
+typedef struct { uint32_t caller, callee, n, kind; uint64_t count; char *in, *of; } ApplySite;
+static ApplySite apply_sites[APPLY_SITES];
+static char *apply_name(VM *vm, uint32_t f) {
+    const char *s = f < vm->prog.nfuncs && vm->prog.funcs[f].name ? vm->prog.funcs[f].name : "?";
+    char *c = malloc(strlen(s) + 1);
+    if (c) memcpy(c, s, strlen(s) + 1);
+    return c;
+}
+static void apply_site(VM *vm, uint32_t caller, uint32_t callee, uint32_t n, uint32_t kind) {
+    uint32_t h = (caller * 2654435761u ^ callee * 40503u ^ n * 97u ^ kind) & (APPLY_SITES - 1);
+    for (uint32_t i = 0; i < APPLY_SITES; i++, h = (h + 1) & (APPLY_SITES - 1)) {
+        ApplySite *s = &apply_sites[h];
+        if (s->count && (s->caller != caller || s->callee != callee || s->n != n || s->kind != kind)) continue;
+        if (!s->count) {
+            s->caller = caller; s->callee = callee; s->n = n; s->kind = kind;
+            s->in = apply_name(vm, caller); s->of = apply_name(vm, callee);
+        }
+        s->count++;
+        return;
+    }
+}
+static int apply_site_order(const void *a, const void *b) {
+    uint64_t x = ((const ApplySite *)a)->count, y = ((const ApplySite *)b)->count;
+    return x < y ? 1 : x > y ? -1 : 0;
+}
 static void apply_stats(void) {
+    if (apply_sites_on) {
+        static const char *kinds[] = { "saturated", "partial", "over-applied" };
+        qsort(apply_sites, APPLY_SITES, sizeof apply_sites[0], apply_site_order);
+        for (int i = 0; i < 40 && apply_sites[i].count; i++) {
+            const ApplySite *s = &apply_sites[i];
+            fprintf(stderr, "runevm: apply site %llu %s, %u arguments, in %s, of %s\n", (unsigned long long)s->count,
+                    kinds[s->kind], s->n, s->in ? s->in : "?", s->of ? s->of : "?");
+        }
+    }
     fprintf(stderr, "runevm: apply: general %llu saturated, %llu partial, %llu over-applied, %llu partial applications applied\n",
             (unsigned long long)reg_apply_counts[0], (unsigned long long)reg_apply_counts[1],
             (unsigned long long)reg_apply_counts[2], (unsigned long long)reg_apply_counts[3]);
@@ -885,6 +929,7 @@ int reg_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc) {
         uint32_t arity = obj_contag(c) ? obj_contag(c) : 1;
         if (n == arity) {
             reg_apply_counts[0]++;
+            if (apply_sites_on) apply_site(vm, vm->func, (uint32_t)fidx, n, 0);
             apply_enter(vm, (uint32_t)fidx, fv, t, t + 1, n, tail, ret_pc);
             return REG_APPLY_ENTERED;
         }
@@ -892,6 +937,7 @@ int reg_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc) {
             /* a partial application, made with the closure and the
                arguments where the collector sees them */
             reg_apply_counts[1]++;
+            if (apply_sites_on) apply_site(vm, vm->func, (uint32_t)fidx, n, 1);
             Obj *pap = vm_alloc_fields(vm, K_CLOSURE, (uint16_t)(arity - n), n + 2);
             Value *fs = obj_fields(pap);
             fs[0] = mk_int(REG_PAP);
@@ -909,6 +955,7 @@ int reg_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc) {
         /* over-applied: <apply K R> given the closure and every argument,
            which enters it with its K and gives what it returns the rest */
         reg_apply_counts[2]++;
+        if (apply_sites_on) apply_site(vm, vm->func, (uint32_t)fidx, n, 2);
         uint32_t k = arity, r = n - arity;
         apply_table(vm);
         uint32_t stub = k <= vm->apply_kmax && r <= vm->apply_rmax && vm->apply_stubs ? vm->apply_stubs[(size_t)(k - 1) * vm->apply_rmax + (r - 1)] : UINT32_MAX;
