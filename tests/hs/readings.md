@@ -247,8 +247,9 @@ until M17 states the encoding of I/O (R5 covers the source alone). Rows: `io.int
 **Ruling.** `-O0`'s literal rules against decision trees over the corpus and generated programs. Since rhc compiles
 them: `hs/desugar/orders` holds the Report's order against Sestoft's trees on every program of `tests/hs/lang`
 (`lang/tr.case.obligation_held` among them), `hs/generated/@orders` (nightly) the generated programs compiled with
-Sestoft's trees against the Report's meaning, and `hs/interp-vm` the literal translation against the compiled form;
-the corpus's differential is not built, so the row is held, the lead's to decide. Rows: `tr.case.obligation`.
+Sestoft's trees against the Report's meaning, `hs-corpus-run/sestoft/ID` (nightly) the corpus's 178 programs that
+run on Sestoft's trees against E8's output, and `hs/interp-vm` the literal translation against the compiled form (the
+lead's ruling 59). Rows: `tr.case.obligation`.
 
 
 ## The lead's rulings on T's M19h list (impl/rulings.md, 2026-11-10, items 14 to 27)
