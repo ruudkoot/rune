@@ -408,10 +408,22 @@ primHPutStr h s   =  mapM_ (primHPutChar h) s
 primHFlush        :: Handle -> IO ()
 primHFlush h      =  checkOpen h "hFlush" handleWrites >> h_flush (handleFd h)
 
+-- A change to NoBuffering flushes a writable handle, and discards what a
+-- handle that is not writable has read ahead and not given (21.6, R158,
+-- the lead's ruling 61: the text over the oracles, which keep it); a file's
+-- under NoBuffering is then read a byte at a time, so nothing is ahead.
 primHSetBuffering :: Handle -> Int -> Int -> IO ()
 primHSetBuffering h mode size = do
     usable h "hSetBuffering"
     if handleWrites h then h_flush (handleFd h) else return ()
+    old <- ref_get (handleMode h)
+    if mode == 0 && old /= 0 && not (handleWrites h)
+      then do
+        ref_set (handleAhead h) []
+        s <- ref_get (handleBytes h)
+        ref_set (handleBytes h) (str_extract s 0 0)
+        ref_set (handleIndex h) 0
+      else return ()
     ref_set (handleMode h) mode
     ref_set (handleSize h) size
 
@@ -436,15 +448,16 @@ readChar h        = do
                   then catch (getChar >>= return . Just) (\_ -> return Nothing)
                   else fileChar h
 
--- the next byte of a file, from the handle's bytes, read 4096 at a time;
--- -1 at the end
+-- the next byte of a file, from the handle's bytes, read 4096 at a time,
+-- or one at a time under NoBuffering; -1 at the end
 fileByte          :: Handle -> IO Int
 fileByte h        = do
     s <- ref_get (handleBytes h)
     i <- ref_get (handleIndex h)
     if i < str_size s then ref_set (handleIndex h) (i + 1) >> return (str_byte s i)
       else do
-        t <- catch (h_read (handleFd h) 4096) (\_ -> return (str_extract s 0 0))
+        mode <- ref_get (handleMode h)
+        t <- catch (h_read (handleFd h) (if mode == 0 then 1 else 4096)) (\_ -> return (str_extract s 0 0))
         ref_set (handleBytes h) t
         ref_set (handleIndex h) 0
         if str_size t == 0 then return (-1) else fileByte h

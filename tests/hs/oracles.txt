@@ -424,6 +424,10 @@ mhs | hs/lang/lib.r.io.handle.readable_handles::run | HOST-BUG | reject: MicroHs
 hugs | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | diff: Hugs's hReady at end of file is False, where 21.9.1 makes it fail with isEOFError
 nhc98 | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | exit: nhc98's IO has no hLookAhead (21.9.3)
 mhs | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | reject: MicroHs's IO has no hIsEOF (21.5)
+ghc | hs/lang/lib.r.io.hsetbuffering.discard_lost::run | HOST-BUG | diff: R158: GHC keeps the input a handle has read ahead when it changes to NoBuffering, where 21.6 discards the buffer of a handle that is not writable
+hugs | hs/lang/lib.r.io.hsetbuffering.discard_lost::run | HOST-BUG | diff: R158: Hugs keeps the input a handle has read ahead when it changes to NoBuffering, where 21.6 discards the buffer of a handle that is not writable
+nhc98 | hs/lang/lib.r.io.hsetbuffering.discard_lost::run | HOST-BUG | diff: R158: nhc98 keeps the input a handle has read ahead when it changes to NoBuffering, where 21.6 discards the buffer of a handle that is not writable
+mhs | hs/lang/lib.r.io.hsetbuffering.discard_lost::run | HOST-BUG | diff: R158: MicroHs keeps the input a handle has read ahead when it changes to NoBuffering, where 21.6 discards the buffer of a handle that is not writable
 ghc | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | diff: GHC's hSeek sets a position beyond the end of a file, as POSIX lseek does, where 21.7.2 says it cannot be set
 nhc98 | hs/lang/lib.r.io.iseof_stdin::run | HOST-BUG | exit: R46: nhc98's getLine is the Prelude's getChar loop, so a last line with no newline fails, where 21.9.2 returns it
 mhs | hs/lang/lib.r.io.iseof_stdin::run | HOST-BUG | reject: MicroHs's IO has no isEOF (21.5)
