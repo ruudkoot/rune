@@ -13,7 +13,9 @@
    the mutant's (links but for bin/rhc.rbc, bin/rhc.img and tests/out, so
    that the mutant goes the whole way, RhcWorld): one of them failing
    is CAUGHT; none, UNCAUGHT, or UNEXERCISED where no output differs; a
-   mutant that does not build is STILLBORN. Each but CAUGHT fails its job,
+   mutant that does not build is STILLBORN; one that names no job, its note
+   arguing that no program tells it from rhc (`equivalent: ...`), is
+   EQUIVALENT once it builds. Each but CAUGHT fails its job,
    and a job named that does not run (no such job, or one held while its
    rows are Planned) fails it too: an UNCAUGHT mutant is a missing test or a
    redundant line of code, settled as one or the other.
@@ -123,7 +125,8 @@ struct
     in
       List.app (fn (m : mutant) =>
                   (need (length (List.filter (fn (n : mutant) => #id n = #id m) ms) = 1, #id m ^ " is twice");
-                   need (not (null (#caughtBy m)), #id m ^ " names no job to catch it");
+                   need (not (null (#caughtBy m)) orelse String.isPrefix "equivalent: " (#note m),
+                         #id m ^ " names no job to catch it, and its note argues no equivalence");
                    List.app (fn {file, old, ...} =>
                                (need (List.exists (fn s => s = file) srcs, #id m ^ ": " ^ file ^ " is no file of rhc.plan");
                                 need (length (CompilerMutants.places (read (fromRoot file), old)) = 1,
@@ -157,6 +160,8 @@ struct
       case rbc of
         NONE => (verdict ("STILLBORN " ^ what ^ ": " ^ status); raise Failed (id ^ " no longer compiles: " ^ status))
       | SOME rbc =>
+          if null (#caughtBy m) then verdict ("EQUIVALENT " ^ what)
+          else
           let
             val goodLines = lines (read (dirOf "good.tsv"))
             val mine = outputs (rbc, d ^ "/scratch")

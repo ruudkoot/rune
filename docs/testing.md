@@ -857,7 +857,8 @@ differ from the good rhc's, and runs the jobs it names in a tree of links to
 the root in which `bin/rhc.rbc` is the mutant's: `CAUGHT` by the first that
 fails, else `UNCAUGHT`, or `UNEXERCISED` where no output differs, or
 `STILLBORN`, each but the first a failure, as is a named job that does not
-run. `make check` holds the list to the sources (`hs-mutants/prepare`, and
+run. A mutant that names no job is `EQUIVALENT` once it builds, its note
+arguing, after `equivalent:`, that no program tells it from rhc. `make check` holds the list to the sources (`hs-mutants/prepare`, and
 the first mutant's `built-ID`, a canary); `make test-rhc-mutants`, nightly,
 builds the others and judges them
 (`HS_MUTANTS=HL01,HP02` for some; `bin/rune-test hs-mutant-tree ID` builds a
@@ -1114,7 +1115,20 @@ step with the library's unit, Lib's, Main's and the link compiled or taken
 as it should, what it prints, and its program byte for byte `rhc Main.hs`'s
 whole compile; a body's edit of Lib takes Main by its reads' fingerprints,
 an export Main does not read takes Main too, and a type's edit of a value
-Main reads compiles Main. Core in
+Main reads compiles Main; and a step that takes the library's unit parses
+none of its modules. `hs/units/holes/CASE` holds E13's holes (H1 to H8,
+the roadmap's *What a cache hit must satisfy*), each case of
+`tests/hs/units/holes` a program and its steps, each step's modules written
+over the last's with `want`, what it prints or `refused`: at each step the
+units' compile through one store and the whole compile both give it, and
+where they compile, the same program byte for byte. A name an import comes
+to clash with (H1), an instance two imports away that moves a default (H2,
+H4) and a default declaration edited, a derived instance's context grown
+(H5), a fixity changed (H6), a module's exports grown under `module M`
+(H7), a cycle's second member edited (H8); E13's two GHC cases are among
+them. Each hole is a mutant of rhc's (`HU01` to `HU09`, H9's the
+Prelude's names of `hs/iface/usages`), caught by its case; `HU10`, a unit
+taken keeping its fingerprints unasked, is `EQUIVALENT`. Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an
