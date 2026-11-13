@@ -1976,49 +1976,49 @@
    ]
   },
   "HS_IFACE": {
-   "doc": "HsIface, rhc's interface of a unit (the haskell98 roadmap's M21, D44):\nwhat a store keeps of a unit for a client, written and read back. Each\nof its modules' interfaces as the renamer and the checker make them\n(HsModIface), and the desugaring's part, its Core among it, as text the\ndesugaring gives. The unfoldings section is in the format from the\nstart and empty until M23 (D44's C).\n\n",
+   "doc": "HsIface, rhc's interface of a unit (the haskell98 roadmap's M21, D44):\nwhat a store keeps of a unit for a client, written and read back. Each\nof its modules' interfaces as the renamer and the checker make them\n(HsModIface). The unfoldings section is in the format from the start\nand empty until M23 (D44's C). The desugaring's part, its Core among\nit, is the desugaring's own text, which a client keeps beside this one:\nrhc's driver keeps it as a section of its own, read only where a unit\nis desugared after it.\n\n",
    "page": "sig/HS_IFACE.md",
    "members": [
     {
      "kind": "type",
      "name": "t",
-     "spec": "type t = {modules : HsModIface.t list, desugar : string, unfoldings : string list}",
-     "doc": "A unit's interface: its modules', the desugaring's part, and the\nunfoldings, none yet.\n\n",
+     "spec": "type t = {modules : HsModIface.t list, unfoldings : string list}",
+     "doc": "A unit's interface: its modules', and the unfoldings, none yet.\n\n",
      "page": "sig/HS_IFACE.md#type-t"
     },
     {
      "kind": "exception",
      "name": "Bad",
      "spec": "exception Bad of string",
-     "doc": "What makes text no interface: where, and what.\n\n",
+     "doc": "What makes bytes no interface: where, and what.\n\n",
      "page": "sig/HS_IFACE.md#exn-bad"
     },
     {
      "kind": "val",
      "name": "encode",
      "spec": "val encode : t -> string",
-     "doc": "`encode t` is `t` as text, which `decode` reads back.\n\nA kind or a type variable linked is written as what it is linked to;\none left unsolved, which no interface's generalized types hold, raises\n`Bad`.\n\n",
+     "doc": "`encode t` is `t` as bytes, which `decode` reads back: each string\nonce, in a table, and every place it is named a number.\n\nA kind or a type variable linked is written as what it is linked to;\none left unsolved, which no interface's generalized types hold, raises\n`Bad`.\n\n",
      "page": "sig/HS_IFACE.md#val-encode"
     },
     {
      "kind": "val",
      "name": "decode",
      "spec": "val decode : string -> t",
-     "doc": "`decode s` is the interface `encode` wrote as `s`.\n\n**Raises** `Bad` where `s` is not such text.\n\n",
+     "doc": "`decode s` is the interface `encode` wrote as `s`.\n\n**Raises** `Bad` where `s` is not such bytes.\n\n",
      "page": "sig/HS_IFACE.md#val-decode"
     },
     {
      "kind": "val",
      "name": "encodeModule",
      "spec": "val encodeModule : HsModIface.t -> string",
-     "doc": "`encodeModule m` and `decodeModule s` are one module's interface's\npart of the text, for its tests.\n\n",
+     "doc": "`encodeModule m` and `decodeModule s` are one module's interface\nalone, for its tests.\n\n",
      "page": "sig/HS_IFACE.md#val-encodemodule"
     },
     {
      "kind": "val",
      "name": "decodeModule",
      "spec": "val decodeModule : string -> HsModIface.t",
-     "doc": "`encodeModule m` and `decodeModule s` are one module's interface's\npart of the text, for its tests.\n\n",
+     "doc": "`encodeModule m` and `decodeModule s` are one module's interface\nalone, for its tests.\n\n",
      "page": "sig/HS_IFACE.md#val-decodemodule"
     }
    ]
@@ -2079,7 +2079,7 @@
     {
      "kind": "type",
      "name": "part",
-     "spec": "type part = {values : (string * HsTypes.scheme) list, tycons : HsKinds.tycon list, classes : HsClasses.class list,\n             instances : HsClasses.instance list,\n             cons : (string * {tycon : string, arity : int, fields : string list}) list,\n             fields : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,\n             methods : (string * {cls : string, scheme : HsTypes.scheme}) list}",
+     "spec": "type part = {values : (string * HsTypes.scheme) list, tycons : HsKinds.tycon list, classes : HsClasses.class list,\n             instances : HsClasses.instance list,\n             cons : (string * {tycon : string, arity : int, fields : string list, strict : bool list}) list,\n             fields : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,\n             methods : (string * {cls : string, scheme : HsTypes.scheme}) list}",
      "doc": "What the environment holds of one module's entities, by key.\n\nThat is its values' types (its constructors', fields' and methods'\namong them), its type constructors and synonyms, its classes, the\ninstances it declares or derives, and what the checker keeps of its\nconstructors, fields and methods. A unit's interface holds its\nmodules' parts (HsModIface, the haskell98 roadmap's M21).\n\n",
      "page": "sig/HS_INFER.md#type-part"
     },
@@ -2096,6 +2096,13 @@
      "spec": "val extend : env * part -> env",
      "doc": "`extend (env, p)` is `env` with the part `p`, as a client checks\nagainst a module it has only the interface of.\n\n",
      "page": "sig/HS_INFER.md#val-extend"
+    },
+    {
+     "kind": "val",
+     "name": "setReaches",
+     "spec": "val setReaches : (string * string -> bool) -> unit",
+     "doc": "`setReaches f` makes `f (m, n)` the checker's answer to 5.4's scope.\n\n`f (m, n)` is whether a chain of imports leads from the module `m` to\n`n`, `m` among those it reaches: an instance is in scope in a module\nonly where it reaches the instance's (R26). The driver sets it from\nthe program's graph; until it does, every instance is in scope\neverywhere.\n\n",
+     "page": "sig/HS_INFER.md#val-setreaches"
     },
     {
      "kind": "val",
@@ -2426,15 +2433,43 @@
      "kind": "type",
      "name": "library",
      "spec": "type library",
-     "doc": "HsLint's inference of a library's modules, as a saved world keeps it.\n\nIt is their environment and what their inference found, from which a\nprogram's own modules are inferred alone (D45).\n\n",
+     "doc": "HsLint's part of a unit: what one check inferred alone.\n\nIt is the environment's entries of the modules it inferred, what their\ninference found and the target check's data of them: a saved world's\nlibrary, or a unit's in the store, from which the modules after it are\ninferred alone (D45).\n\n",
      "page": "sig/HS_LINT.md#type-library"
     },
     {
      "kind": "val",
      "name": "check",
-     "spec": "val check : {groups : module list list, main : string option, cycleDefault : bool,\n             records : {table : HsEvidence.table, env : HsInfer.env,\n                        derived : (string * string * HsAst.decl list) list} option,\n             claims : claims option, where_ : HsSource.span -> string, fault : string, library : library option}\n            -> {report : report, target : target, library : library option}",
-     "doc": "`check {groups, main, cycleDefault, records, claims, where_, fault, library}` is `infer`'s report, with the checker's records replayed and\ncompared.\n\nWith `library`, the groups of its modules are not inferred again: the\nrest are inferred after its environment and findings, and only the\nrecords of those modules are replayed, the library's having been\nreplayed where the library was inferred. The report is of the modules\ninferred. Where every module of `groups` is the library's, the result\nholds their inference, for a saved world; NONE otherwise.\n\nIt gives what the target check reads with the report. With `records`,\nthe checker's evidence records and environment (HsEvidence, HsInfer) and the derived instances it made as trees\n(HsDerive: each one's module, identity and methods), the second\ninference checks those instances' methods as any instance's, each\nrecord is replayed by Faxén's rules and rhc's (`replayRules`), the\nderived methods' records too, and the records are then held to the\ninference as claims (`compare`); with `claims`, those are too.\n`fault` is as `compare`'s, for every rule.\n\n**Raises** `Refused` at the first breach.\n\n",
+     "spec": "val check : {groups : module list list, main : string option, cycleDefault : bool,\n             records : {table : HsEvidence.table, env : HsInfer.env,\n                        derived : (string * string * HsAst.decl list) list} option,\n             claims : claims option, where_ : HsSource.span -> string, fault : string, library : library option}\n            -> {report : report, target : target, part : library}",
+     "doc": "`check {groups, main, cycleDefault, records, claims, where_, fault, library}` is `infer`'s report, with the checker's records replayed and\ncompared.\n\nWith `library`, the groups of its modules are not inferred again: the\nrest are inferred after its environment and findings, and only the\nrecords of those modules are replayed, the library's having been\nreplayed where it was inferred. The report is of the modules inferred,\nand `part` what was inferred of them alone, for the units after them.\n\nIt gives what the target check reads with the report. With `records`,\nthe checker's evidence records and environment (HsEvidence, HsInfer) and the derived instances it made as trees\n(HsDerive: each one's module, identity and methods), the second\ninference checks those instances' methods as any instance's, each\nrecord is replayed by Faxén's rules and rhc's (`replayRules`), the\nderived methods' records too, and the records are then held to the\ninference as claims (`compare`); with `claims`, those are too.\n`fault` is as `compare`'s, for every rule.\n\n**Raises** `Refused` at the first breach.\n\n",
      "page": "sig/HS_LINT.md#val-check"
+    },
+    {
+     "kind": "val",
+     "name": "join",
+     "spec": "val join : library list -> library",
+     "doc": "`join parts` is the parts of units put together, in order: a later\npart's entry of a name wins, and the rest are appended.\n\n",
+     "page": "sig/HS_LINT.md#val-join"
+    },
+    {
+     "kind": "exception",
+     "name": "Decode",
+     "spec": "exception Decode of string",
+     "doc": "Bytes that are no part of a unit, and why.\n\n",
+     "page": "sig/HS_LINT.md#exn-decode"
+    },
+    {
+     "kind": "val",
+     "name": "encode",
+     "spec": "val encode : library -> string",
+     "doc": "`encode part` is `part` as bytes, in Pickle's form.\n\n",
+     "page": "sig/HS_LINT.md#val-encode"
+    },
+    {
+     "kind": "val",
+     "name": "decode",
+     "spec": "val decode : string -> library",
+     "doc": "`decode bytes` is the part `bytes` are, as `encode` wrote it.\n\n**Raises** `Decode` where the bytes are no part.\n\n",
+     "page": "sig/HS_LINT.md#val-decode"
     },
     {
      "kind": "val",
@@ -2454,7 +2489,7 @@
      "kind": "val",
      "name": "dump",
      "spec": "val dump : report * (HsSource.span -> string) * bool -> string",
-     "doc": "`dump (report, where_, library)` is the report as text, a line each.\n\nThe lines are `KIND MODULE NAME :: KIND` for a type constructor or a\nclass, `DERIVED MODULE INSTANCE`, `TYPE MODULE NAME :: TYPE` for a\nbinding, `SIGNED` for one with a signature, and `DEFAULT MODULE WHERE PREDS -> TYPE`, where `where_` gives a span's place: of the program's\nmodules, and of the library's too where `library` is set, but its\nsigned bindings.\n\n",
+     "doc": "`dump (report, where_, library)` is the report as text, a line each.\n\nThe lines are `KIND MODULE NAME :: KIND` for a type constructor or a\nclass, `DERIVED MODULE INSTANCE`, `TYPE MODULE NAME :: TYPE` for a\nbinding, `SIGNED` for one with a signature, and `DEFAULT MODULE WHERE PREDS -> TYPE`, where `where_` gives a span's place: of the program's\nmodules, and of the library's too where `library` is set, but its\nsigned bindings, and its defaults at no place, `*`. The lines of each\nkind are sorted by module, then name, instance or place, so that only\na change of what one says moves the dump.\n\n",
      "page": "sig/HS_LINT.md#val-dump"
     }
    ]
@@ -2673,8 +2708,8 @@
     {
      "kind": "val",
      "name": "fingerprints",
-     "spec": "val fingerprints : (string -> string) -> t * (string -> string option) -> (string * string) list",
-     "doc": "`fingerprints hash (t, external)` is the fingerprint of each entity\nand instance of `t`, by its key or identity.\n\nA type's constructors and fields and a class's methods have their\nparent's.\n\nItems are taken in recursive groups (one mentions another, through a\ntype, a class, a superclass, an instance's class, type or context): a\ngroup's fingerprint is `hash` of its members' canonical text and of\nthe fingerprints of the entities outside the module they mention,\n`external key` (the key itself where that is NONE: a built-in type),\nso that it moves where what a client reads of it moves, and with what\nit mentions.\n\n",
+     "spec": "val fingerprints : (string -> string) -> t list * (string -> string option) -> (string * string) list",
+     "doc": "`fingerprints hash (ts, external)` is the fingerprint of each entity\nand instance of the modules `ts`, by its key or identity.\n\nThe modules are those of one unit, an SCC of the module graph, taken\ntogether. A type's constructors and fields and a class's methods have their\nparent's.\n\nItems are taken in recursive groups (one mentions another, through a\ntype, a class, a superclass, an instance's class, type or context),\nover all of `ts`, so that a group that spans the modules of a cycle is\none (H8): a group's fingerprint is `hash` of its members' canonical\ntext and of the fingerprints of the entities outside `ts` they\nmention, `external key` (the key itself where that is NONE: a\nbuilt-in type), so that it moves where what a client reads of it\nmoves, and with what it mentions.\n\n",
      "page": "sig/HS_MOD_IFACE.md#val-fingerprints"
     }
    ]

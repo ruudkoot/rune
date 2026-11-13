@@ -17,6 +17,7 @@ files
   hslint_claims.sml
   hslint_replay.sml
   hslint_target.sml
+  hslint_codec.sml
   hslint_sig.sml
   hslint.sml
 end

@@ -265,13 +265,35 @@ struct
     "no instance of `" ^ T.nameOfKey cls ^ "` for `" ^ (case readable [T.zonk ty] of [t] => T.show t | _ => T.show ty) ^ "`" ^
     (if origin = "" then "" else ", which " ^ origin ^ " needs") ^ (if binding = "" then "" else " in `" ^ binding ^ "`")
 
+  (* 5.4: an instance is in scope in a module only where a chain of
+     imports leads from it to the module that declares the instance (R26).
+     `reaches (m, n)` is whether one leads from `m` to `n`, `m` itself
+     among them; the driver sets it from the graph of the program's
+     modules, every instance in scope everywhere where it does not *)
+  val reaches : (string * string -> bool) ref = ref (fn _ => true)
+  fun setReaches f = reaches := f
+
+  (* an instance at a module: NONE where there is none, or where the
+     module's imports do not reach the one that declares it *)
+  fun instanceAt (h, cls, tc) =
+    case C.findInstance (#classes (!genv), cls, tc) of
+      SOME i => if h = "" orelse !reaches (h, #home i) then SOME i else NONE
+    | NONE => NONE
+
+  fun outOfScope (h, cls, tc) =
+    case C.findInstance (#classes (!genv), cls, tc) of
+      SOME i => if h = "" orelse !reaches (h, #home i) then ""
+                else ": the instance " ^ Mo.moduleName (#home i) ^ " declares is not in scope in " ^ Mo.moduleName h ^
+                     ", from which no chain of imports leads to it (5.4, R26)"
+    | NONE => ""
+
   (* `byInstance (p, span)`: the instance's dictionary for p, its
      context's predicates as new wanted ones, or NONE where p's type is
      headed by no constructor *)
   fun byInstance ({cls, ty} : T.pred, span, h, origin, binding) : (idict * wanted list) option =
     case T.spine ty of
       (T.TCon tc, args) =>
-        (case C.findInstance (#classes (!genv), cls, tc) of
+        (case instanceAt (h, cls, tc) of
            SOME {id, vars, ctx, ...} =>
              if vars <> length args then raise Fail (span, noInstance ({cls = cls, ty = ty}, origin, binding))
              else
@@ -281,7 +303,7 @@ struct
                in
                  SOME (IInst (id, args, List.map #cell subs), subs)
                end
-         | NONE => raise Fail (span, noInstance ({cls = cls, ty = ty}, origin, binding)))
+         | NONE => raise Fail (span, noInstance ({cls = cls, ty = ty}, origin, binding) ^ outOfScope (h, cls, tc)))
     | _ => NONE
 
   (* Solving: what can be solved now by instances and givens is; the rest,
@@ -319,13 +341,14 @@ struct
     let val num = preludeClass "Num"
     in cls = num orelse List.exists (fn s => s = num) (C.superclasses (#classes (!genv), cls)) end
 
-  (* whether every predicate holds at t, by instances alone *)
-  fun holdsAt (preds : T.pred list, t) =
+  (* whether every predicate holds at t, by instances alone, those in
+     scope in the module `h` *)
+  fun holdsAt (h, preds : T.pred list, t) =
     let
       fun holds {cls, ty} =
         case T.spine ty of
           (T.TCon tc, args) =>
-            (case C.findInstance (#classes (!genv), cls, tc) of
+            (case instanceAt (h, cls, tc) of
                SOME {vars, ctx, ...} =>
                  vars = length args andalso List.all (fn {cls, ty} => holds {cls = cls, ty = T.substGen (args, ty)}) ctx
              | NONE => false)
@@ -367,7 +390,7 @@ struct
                     (case !cycle of PerGroup => ": under --cycle-default=scc a cycle has one default" | PerModule => ""));
          true)
       else
-        case List.find (fn t => holdsAt (preds, t)) (defaultsFor m) of
+        case List.find (fn t => holdsAt (m, preds, t)) (defaultsFor m) of
           NONE => false
         | SOME t =>
             let
@@ -1742,14 +1765,15 @@ struct
   fun deriveContexts derived =
     let
       exception NoInstance of T.pred
-      fun reduce (p as {cls, ty} : T.pred) : T.pred list =
+      (* the instances in scope in the module `h` that derives *)
+      fun reduce h (p as {cls, ty} : T.pred) : T.pred list =
         case T.spine ty of
           (T.TGen _, []) => [p]
         | (T.TGen _, _) => raise NoInstance p
         | (T.TCon tc, args) =>
-            (case C.findInstance (#classes (!genv), cls, tc) of
+            (case instanceAt (h, cls, tc) of
                SOME {ctx, vars, ...} =>
-                 if vars = length args then List.concat (List.map (fn {cls, ty} => reduce {cls = cls, ty = T.substGen (args, ty)}) ctx)
+                 if vars = length args then List.concat (List.map (fn {cls, ty} => reduce h {cls = cls, ty = T.substGen (args, ty)}) ctx)
                  else raise NoInstance p
              | NONE => raise NoInstance p)
         | _ => raise NoInstance p
@@ -1767,11 +1791,11 @@ struct
             let
               val changed =
                 List.foldl
-                  (fn ({id, cls, vars, fields, span, dataCtx, ...}, changed) =>
+                  (fn ({id, cls, vars, fields, span, dataCtx, home = h, ...}, changed) =>
                      if List.exists (fn f => f = id) (!failed) then changed
                      else
                        let
-                         val ctx = simplify (dataCtx @ List.concat (List.map (fn f => reduce {cls = cls, ty = f}) fields))
+                         val ctx = simplify (dataCtx @ List.concat (List.map (fn f => reduce h {cls = cls, ty = f}) fields))
                                    handle NoInstance p =>
                                      (failed := id :: !failed;
                                       err (span, "`" ^ T.nameOfKey cls ^ "` cannot be derived: no instance for `" ^
@@ -1920,7 +1944,7 @@ struct
                     handle HsSource.Error e => (err e; []) | Fail e => (err e; [])
           val num = preludeClass "Num"
         in
-          List.app (fn t => if holdsAt ([{cls = num, ty = t}], t) then () else
+          List.app (fn t => if holdsAt ("", [{cls = num, ty = t}], t) then () else
                               err (span, "the default type `" ^ T.show t ^ "` is not an instance of `Num` (4.3.4)")) tys;
           if M.member (!defaultsOf, h) then err (span, "two `default` declarations in one module (4.3.4)")
           else defaultsOf := M.insert (!defaultsOf, h, (tys, true))

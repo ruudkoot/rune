@@ -421,9 +421,16 @@ struct
         | TForall _ => let val (ms, env', body) = forallOf (env, t) in "(forall [" ^ ms ^ "] " ^ valTy env' body ^ ")" end
         | t =>
             case spine t of
-              (* `->` given fewer than two types, which Mid takes when its Ty
-                 does (ruling 60, the lead's (a)); until then, refused *)
-              (TCon "->", _) => raise Unsupported ("the function type's constructor, ->, given fewer than two types")
+              (* `->` given fewer than two types: Mid's lazy arrow as a type
+                 name, `(~>)`, written after the types it is given as every
+                 type name is, which given both is `a susp -> b`, as TFun's
+                 is (rulings 60 and 65); its argument the value's type, the
+                 name adding the suspension. Given both, the function type
+                 itself. *)
+              (TCon "->", []) => "(~>)"
+            | (TCon "->", [a]) => "(" ^ valTy env a ^ ") (~>)"
+            | (TCon "->", [a, r]) => valTy env (TFun (a, r))
+            | (TCon "->", _) => raise Fail "CoreToMid: the function type's constructor given more than two types"
             | (TCon "Ref", [a]) => "(" ^ slotTy env a ^ " ref)"
             | (TCon "Arr", [a]) => "(" ^ slotTy env a ^ " array)"
             | (TCon c, args) =>

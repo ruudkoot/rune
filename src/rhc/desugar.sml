@@ -4,11 +4,10 @@
    the graph's strongly connected groups in order (M21), with what of
    rhc's runtime (CoreRuntime) it reaches linked after it.
 
-   A saved world (RhcWorld, D45's B) may hold the library's units, made
-   once (`library`), and desugar each program's own after them
-   (`programOn`); a driver over units (M21f) may desugar one group at a
-   time after the interfaces of those before it (`unit`). The Core is the
-   same as `program`'s, the whole way. *)
+   A driver over units (M21f; bin/rhc's compile against its snapshot,
+   RhcDriver) desugars one group at a time after the interfaces of those
+   before it (`unit`), the library's taken from the snapshot: what main
+   reaches of them is the Core `program` gives, the whole way. *)
 structure RhcDesugar =
 struct
   structure M = HsStringMap
@@ -66,34 +65,6 @@ struct
            {modules = modules, groups = groupsOf g, infer = infer, evidence = evidence, derived = derived,
             prelude = prelude, entity = entity, runtime = CoreRuntime.program strings, leaves = leaves (),
             main = mainOf (g, r)})
-    end
-
-  (* `library (g, r)` is the library's units of the graph `g` checked as
-     `r`, the library alone (a saved world's), every body made; the
-     runtime's declarations it is written against are those of either way
-     of unpacking strings, which declare the same *)
-  fun library (g : RhcGraph.graph, r : RhcNames.result) : HsDesugar.library =
-    let
-      val {modules, infer, evidence, derived, prelude, entity} = given r
-      val lib =
-        HsDesugar.library
-          {modules = modules, groups = groupsOf g, infer = infer, evidence = evidence, derived = derived,
-           prelude = prelude, entity = entity, runtime = CoreRuntime.program CoreRuntime.Lazy, leaves = leaves ()}
-    in
-      HsDesugar.prepare lib; lib
-    end
-
-  (* `programOn (lib, g, r, strings)` is `program (g, r, strings)`, the
-     library's units `lib`'s *)
-  fun programOn (lib : HsDesugar.library, g : RhcGraph.graph, r : RhcNames.result, strings : CoreRuntime.strings)
-      : Core.program =
-    let
-      val {modules, infer, evidence, derived, prelude, entity} = given r
-    in
-      CoreRuntime.link strings
-        (HsDesugar.programOn
-           (lib, {modules = modules, groups = groupsOf g, infer = infer, evidence = evidence, derived = derived,
-                  prelude = prelude, entity = entity, main = mainOf (g, r)}))
     end
 
   (* `unit (interfaces, group, g, r)` is the Core of the unit of the modules

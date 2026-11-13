@@ -537,9 +537,10 @@ struct
            "if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_THUNK) FATAL(\"BLACKHOLE outside a suspension\");",
            "vm_blackhole(vm, val_ptr(cv));"]),
      implicitly [ReadsClosure]
-       (rinst ("UPDATE", [("s", Reads any)], Next, "The suspension running becomes an indirection to register s.")
+       (rinst ("UPDATE", [("s", Reads any)], Next,
+               "The suspension running becomes an indirection to register s; one that is an indirection already, lazy ML's that a force from inside it updated first, holds register s now.")
           ["Value cv = CLOSURE();",
-           "if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_THUNK) FATAL(\"UPDATE outside a suspension\");",
+           "if (!val_is_ptr(cv) || (obj_kind(val_ptr(cv)) != K_THUNK && obj_kind(val_ptr(cv)) != K_IND)) FATAL(\"UPDATE outside a suspension\");",
            "obj_become_ind(vm, val_ptr(cv), R(a));"])]
 
   (* ---- questions about the description ---- *)

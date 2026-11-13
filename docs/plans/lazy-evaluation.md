@@ -43,6 +43,7 @@ Checked against GHC's runtime under `/home/ruud/reference/ghc` (the paths below 
     - `unsafePerformIO` runs `noDuplicate#` first (`libraries/ghc-internal/src/GHC/Internal/IO/Unsafe.hs:127`).
     - That calls `threadPaused` to claim every thunk under evaluation on the thread's stack: a stack walk and a compare-and-swap per thunk, skipped when only one core runs (`rts/PrimOps.cmm`, `stg_noDuplicatezh`).
     - `unsafeDupablePerformIO` omits this. It warns that the action "may be performed multiple times (on a multiprocessor)" and may even be run partially.
+- **On one thread, as Rune has it (the haskell98 roadmap's M26, 2026-11):** lazy ML's suspension never goes under evaluation, so a duplicated or re-entered run is a second run of the body, effects and all, as the extension's rules say; what the engines needed for it -- `UPDATE` of an indirection, the collector's pin of what a frame runs and its guard on a suspension's value -- landed with the kernels that show it (`docs/ir.md`, *Suspensions*).
 - **For a lazy ML extension whose suspensions may have effects,** one of these must hold:
     - Lazy code is effect-free, checked by the type system or an effect analysis, so duplication stays harmless.
     - Suspensions with effects are claimed at entry by a compare-and-swap. That is the cost GHC avoids for pure thunks, paid on every force of such a suspension when it is shared.

@@ -284,7 +284,8 @@ struct
              else say ("FAIL hs.units.drive: " ^ label ^ ": the program is not the whole compile's\n"))
         end
     in
-      step ("cold", [("library", "compiled"), ("Lib", "compiled"), ("Main", "compiled"), ("link", "compiled")], "hello\n42\n");
+      (* the library's unit from bin/rhc's snapshot (bin/rhc.layer) *)
+      step ("cold", [("library", "taken"), ("Lib", "compiled"), ("Main", "compiled"), ("link", "compiled")], "hello\n42\n");
       step ("again", [("library", "taken"), ("Lib", "taken"), ("Main", "taken"), ("link", "taken")], "hello\n42\n");
       edit ("Lib.hs", "double x = x + x", "double x = 2 * x");
       step ("body", [("library", "taken"), ("Lib", "compiled"), ("Main", "taken"), ("link", "compiled")], "hello\n42\n");
@@ -294,9 +295,197 @@ struct
       step ("type", [("library", "taken"), ("Lib", "compiled"), ("Main", "compiled"), ("link", "compiled")], "hello\n42\n")
     end
 
+  (* E13's holes (the haskell98 roadmap's *What a cache hit must satisfy*,
+     H1 to H8; E13's two GHC cases among them): each case of
+     tests/hs/units/holes a program and its steps, each step a directory of
+     modules written over the last step's and `want`, what the program
+     prints or `refused`, and `units`, if there, what the units' compile
+     must say of a unit, a line each: `NAME compiled` or `NAME taken`
+     (`link` the link). At each step the units' compile through one store
+     (`--units --store`) and the whole compile of the same files both give
+     what is wanted, and where they compile, the same program byte for
+     byte. A hole planted (tests/runner/hsmutantlist.sml, HU01 to HU09,
+     HU11) takes a unit whose compile would now refuse or make another
+     program, or one a step's `units` says is compiled, and its case
+     fails. M22's SCC keys: h8-group (a type group across a cycle's
+     members hashed as one; a body edited in a cycle compiles no client)
+     and h8-split (a cycle split, its client taken: a usage names no unit
+     under the link of C) *)
+  val holesDir = "tests/hs/units/holes"
+  fun holeCases () = sort (List.filter (fn n => isDir (fromRoot (holesDir ^ "/" ^ n))) (entries (fromRoot holesDir)))
+
+  (* a case's states: the k-th its steps 1 to k's modules, the later a
+     module's text the one it has, the k-th step's want, and what its
+     `units` says of the units, a line each, `NAME compiled` or `NAME
+     taken` (`link` the link), which holds in the order of the steps *)
+  fun statesOf name : (string * (string * string) list * string * string list) list =
+    let
+      val src = fromRoot (holesDir ^ "/" ^ name)
+      val steps = sort (List.filter (fn n => isDir (src ^ "/" ^ n)) (entries src))
+      fun go ([], _, acc) = List.rev acc
+        | go (s :: rest, files, acc) =
+            let
+              val mine = List.map (fn p => (OS.Path.file p, read p)) (glob (src ^ "/" ^ s, ".hs"))
+              val files' = mine @ List.filter (fn (n, _) => not (List.exists (fn (m, _) => m = n) mine)) files
+            in go (rest, files', (s, files', read (src ^ "/" ^ s ^ "/want"), lines (read (src ^ "/" ^ s ^ "/units"))) :: acc) end
+    in go (steps, [], []) end
+
+  (* one state in d, through the store d/st: the units' compile and the
+     whole compile give its want, a refusal for the same reason, and where
+     they compile, the same program byte for byte; false where they do
+     not, said *)
+  fun stateHolds (family, d, label, files, want, units) =
+    let
+      fun f x = d ^ "/" ^ x
+      val () = List.app (fn n => if String.isSuffix ".hs" n andalso not (List.exists (fn (m, _) => m = n) files)
+                                 then OS.FileSys.remove (f n) else ()) (entries d)
+      val () = List.app (fn (n, text) => write (f n, text)) files
+      fun bytes p = (let val i = BinIO.openIn p in Byte.bytesToString (BinIO.inputAll i) before BinIO.closeIn i end)
+                    handle IO.Io _ => ""
+      fun compiles (cmd, log) = exec {cmd = cmd, dir = SOME d, stdin = "", stdout = f log, stderr = f log, timeout = 900} = 0
+      val warm = compiles ([fromRoot "bin/rhc", "--units", "--store", "st", "--show-units", "Main.hs", "-o", "w.rbc"], "warm.log")
+      val whole = compiles ([fromRoot "bin/rhc", "Main.hs", "-o", "j.rbc"], "whole.log")
+      fun units' () = String.concatWith "; " (List.filter (fn l => String.isPrefix "rhc: unit" l orelse String.isPrefix "rhc: link" l)
+                                                         (lines (read (f "warm.log"))))
+      (* a line of a step's `units`: NAME and what its log says of it *)
+      fun says (u, log) =
+        case String.tokens Char.isSpace u of
+          ["link", what] => String.isSubstring ("rhc: link: " ^ what) log
+        | [name, what] => String.isSubstring ("rhc: unit " ^ name ^ ": " ^ what) log
+        | _ => false
+      fun no why = (say ("FAIL " ^ family ^ ": " ^ label ^ ": " ^ why ^ "\n"); false)
+      (* the units' refusal, which the whole compile's must say too: a unit
+         taken that should not be may make a link that does not check *)
+      fun refusal () =
+        case List.find (String.isPrefix "rhc: error: ") (lines (read (f "warm.log"))) of
+          SOME l => String.extract (l, size "rhc: error: ", NONE)
+        | NONE => firstLine (f "warm.log")
+    in
+      if want = "refused\n" then
+        if warm then no ("the units' compile takes what the whole compile "
+                         ^ (if whole then "takes too, where a refusal is wanted" else "refuses: " ^ firstLine (f "whole.log"))
+                         ^ " (" ^ units' () ^ ")")
+        else if whole then no "the whole compile takes it, where a refusal is wanted"
+        else if String.isSubstring (refusal ()) (read (f "whole.log")) then true
+        else no ("the units' compile refuses it otherwise than the whole compile: " ^ refusal () ^ " (" ^ units' () ^ ")")
+      else if not whole then no ("the whole compile refuses it: " ^ firstLine (f "whole.log"))
+      else if not warm then no ("the units' compile refuses it: " ^ firstLine (f "warm.log"))
+      else
+        let
+          val w = bytes (f "w.rbc")
+          val j = bytes (f "j.rbc")
+          val () = ignore (exec {cmd = [fromRoot "bin/runevm", f "w.rbc"], dir = SOME d, stdin = "", stdout = f "w.out",
+                                 stderr = f "w.out", timeout = 300})
+          val printed = read (f "w.out")
+        in
+          if not (size w > 12 andalso String.extract (w, 12, NONE) = String.extract (j, 12, NONE)) then
+            no ("the units' program is not the whole compile's (" ^ units' () ^ ")")
+          else if printed <> want then no ("printed " ^ firstLine (f "w.out") ^ ", where " ^ firstLine' want ^ " is wanted")
+          else
+            case List.filter (fn u => not (says (u, read (f "warm.log")))) units of
+              [] => true
+            | u :: _ => no ("the units' compile does not say " ^ u ^ " (" ^ units' () ^ ")")
+        end
+    end
+  and firstLine' s = case String.fields (fn c => c = #"\n") s of l :: _ => l | [] => ""
+
+  (* a case of E13's holes, its steps in order through one store, as
+     holesDir's comment says *)
+  fun hole name () =
+    let
+      val d = out ^ "/holes/" ^ name
+      val () = (rmTree d; mkdirs d)
+    in
+      List.app (fn (s, files, want, units) => ignore (stateHolds ("hs.units.holes", d, name ^ " step " ^ s, files, want, units)))
+        (statesOf name)
+    end
+
+  (* warm equals --whole over random edits (M21's standing tier, nightly,
+     unitsOne's comparison of tests/runner/oracles.sml): of each case of
+     tests/hs/units/holes, a walk of its states drawn at random through one
+     store, each state's modules written over the last's, so that a unit's
+     entry meets every edit and its undoing in any order. The seed is
+     RHC_UNITS_SEED, else the day's, and the log says it and the walk *)
+  val walk = 12
+  fun random name () =
+    let
+      val d = out ^ "/random/" ^ name
+      val () = (rmTree d; mkdirs d)
+      val seed = case Int.fromString (env ("RHC_UNITS_SEED", "")) of
+                   SOME n => n
+                 | NONE => LargeInt.toInt (LargeInt.div (Time.toSeconds (Time.now ()), 86400))
+      val states = Vector.fromList (statesOf name)
+      val r = ref (seed mod 2147483647 + 1)
+      fun next n = (r := (!r * 48271) mod 2147483647; !r mod n)
+      val picks = List.tabulate (walk, fn _ => next (Vector.length states))
+      val () = say ("hs.units.random: " ^ name ^ ", seed " ^ Int.toString seed ^ ", states "
+                    ^ String.concatWith " " (List.map (fn i => #1 (Vector.sub (states, i))) picks) ^ "\n")
+      fun go (_, []) = ()
+        | go (k, i :: rest) =
+            let val (s, files, want, _) = Vector.sub (states, i)
+            in
+              if stateHolds ("hs.units.random", d, name ^ " seed " ^ Int.toString seed ^ ", walk " ^ Int.toString k
+                                                   ^ ", state " ^ s, files, want, [])
+              then go (k + 1, rest) else ()
+            end
+    in
+      go (1, picks)
+    end
+
+  (* hello against the snapshot (M21's done-when, D45): a store made by one
+     compile is a layer, read only, the library's unit frozen in it; hello
+     compiled against it, with an overlay of its own, takes the library's
+     unit from the layer, parses none of its modules and compiles Main and
+     the link alone, its program byte for byte the whole compile's of the
+     same file; and the layer is not written *)
+  fun snapshot () =
+    let
+      val d = out ^ "/snapshot"
+      val () = (rmTree d; mkdirs (d ^ "/make"); mkdirs (d ^ "/hello"))
+      fun f x = d ^ "/" ^ x
+      fun bytes p = (let val i = BinIO.openIn p in Byte.bytesToString (BinIO.inputAll i) before BinIO.closeIn i end)
+                    handle IO.Io _ => ""
+      fun rhc (dir, args, log) =
+        exec {cmd = [fromRoot "bin/rhc"] @ args, dir = SOME (f dir), stdin = "", stdout = f log, stderr = f log, timeout = 900} = 0
+      (* the layer's files, each with its size *)
+      fun listing dir =
+        let
+          fun walk p = if isDir p then List.concat (List.map (fn n => walk (p ^ "/" ^ n)) (sort (entries p)))
+                       else [p ^ " " ^ Int.toString (size (bytes p))]
+        in walk dir end
+      val () = write (f "make/Main.hs", "main :: IO ()\nmain = putStrLn \"made\"\n")
+      val () = write (f "hello/Main.hs", "main :: IO ()\nmain = putStrLn \"hello\"\n")
+      val made = rhc ("make", ["--units", "--store", f "layer", "Main.hs", "-o", "m.rbc"], "make.log")
+      val unwritten = listing (f "layer")
+      val warm = rhc ("hello", ["--units", "--layer", f "layer", "--store", f "overlay", "--show-units", "Main.hs", "-o", "w.rbc"],
+                      "hello.log")
+      val whole = rhc ("hello", ["Main.hs", "-o", "j.rbc"], "whole.log")
+      val text = read (f "hello.log")
+      fun has s = String.isSubstring s text
+      val w = bytes (f "hello/w.rbc")
+      val j = bytes (f "hello/j.rbc")
+      fun no why = say ("FAIL hs.units.snapshot: " ^ why ^ "\n")
+    in
+      if not made then no ("the snapshot is not made: " ^ firstLine (f "make.log"))
+      else if not warm then no ("hello does not compile against it: " ^ firstLine (f "hello.log"))
+      else if not whole then no ("hello does not compile whole: " ^ firstLine (f "whole.log"))
+      else
+        (if List.exists (fn l => String.isPrefix "rhc: unit haskell98:" l andalso String.isSubstring ": taken" l) (lines text) then ()
+         else no "the library's unit is not taken from the snapshot";
+         if has "rhc: unit Main: compiled" then () else no "Main is not compiled";
+         if List.exists (fn l => String.isPrefix "rhc: parsed 1 of " l andalso String.isSuffix " Main" l) (lines text) then ()
+         else no ("a module of the library is parsed: " ^ getOpt (List.find (String.isPrefix "rhc: parsed") (lines text), "?"));
+         if size w > 12 andalso String.extract (w, 12, NONE) = String.extract (j, 12, NONE) then ()
+         else no "the program is not the whole compile's";
+         if listing (f "layer") = unwritten then () else no "the snapshot is written")
+    end
+
   fun command args =
     case args of
       ["hs-units-drive"] => SOME drive
+    | ["hs-units-hole", c] => SOME (hole c)
+    | ["hs-units-snapshot"] => SOME snapshot
+    | ["hs-units-random", c] => SOME (random c)
     | ["hs-units-abi"] => SOME abi
     | ["hs-units-warm-whole"] => SOME warmWhole
     | ["hs-units-warm"] => SOME warm
@@ -310,11 +499,18 @@ struct
                 "covers:tests/hs/units/*",
                 "covers:tests/runner/hsunits.sml"]
   fun tree () =
-    List.foldl (fn (tag, t) => Test.tag tag t)
-      (Test.describe "hs/units"
-         ([Tools.job ("store", ["hs-units-store"], [], 300, 600), Tools.job ("named", ["hs-units-named"], [], 500, 1200),
-           Tools.job ("warm", ["hs-units-warm"], [], 500, 1800), Tools.job ("abi", ["hs-units-abi"], [], 300, 600),
-           Tools.job ("warm-whole", ["hs-units-warm-whole"], [], 500, 1800), Tools.job ("drive", ["hs-units-drive"], [], 600, 3600)]
-          @ List.map (fn s => Tools.job ("core/" ^ HsCore.nameOf s, ["hs-units-core", s], [], 500, 1200)) (coreTests ())))
-      (["check", "test-rhc"] @ covers)
+    let
+      fun tagged tags t = List.foldl (fn (tag, t) => Test.tag tag t) t tags
+      val checks =
+        [Tools.job ("store", ["hs-units-store"], [], 300, 600), Tools.job ("named", ["hs-units-named"], [], 500, 1200),
+         Tools.job ("warm", ["hs-units-warm"], [], 500, 1800), Tools.job ("abi", ["hs-units-abi"], [], 300, 600),
+         Tools.job ("warm-whole", ["hs-units-warm-whole"], [], 500, 1800), Tools.job ("drive", ["hs-units-drive"], [], 600, 3600),
+         Tools.job ("snapshot", ["hs-units-snapshot"], [], 600, 2400)]
+        @ List.map (fn c => Tools.job ("holes/" ^ c, ["hs-units-hole", c], [], 600, 3600)) (holeCases ())
+        @ List.map (fn s => Tools.job ("core/" ^ HsCore.nameOf s, ["hs-units-core", s], [], 500, 1200)) (coreTests ())
+      val nightly = List.map (fn c => Tools.job ("random/" ^ c, ["hs-units-random", c], [], 900, 3600)) (holeCases ())
+    in
+      tagged covers
+        (Test.describe "hs/units" (List.map (tagged ["check", "test-rhc"]) checks @ List.map (tagged ["nightly", "test-rhc"]) nightly))
+    end
 end

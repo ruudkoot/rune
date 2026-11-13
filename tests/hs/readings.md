@@ -364,10 +364,21 @@ no clause gives it a value. **GHC**, **Hugs**, **nhc98** and **MicroHs** all ref
 **rhc's choice.** R8's seed: an escape above `maxBound :: Char`, 0x10FFFF, is a static error, as **GHC** and **Hugs**
 refuse it; **nhc98** accepts it. Rows: `lex.esc.range` (`errors/lex.esc.range`).
 
+### R1. `do` against a non-associative operator, and the parse-error rule
+**rhc's choice.** 9.3 gives `do a == b == c` the single parse `(do { a == b }) == c`, and concedes it: "The
+parse-error rule is hard to implement in its full generality, because doing so involves fixities ... Programmers are
+therefore advised to avoid writing code that requires the parser to insert a closing brace in such situations". rhc
+closes blocks by the grammar with operators flat (D27), and fixity resolution refuses the block, as all four oracles
+do: a deviation conceded by the Report (D38's ground, the owner's decision of 2026-11-13), pinned. Rows:
+`lay.parseerror.fixity` (`errors/lay.parseerror.fixity_refused`).
+
 ### R9. `let` against a non-associative operator
 **rhc's choice.** As R1 for `do` (D27, D38): the parser takes the meta-rule, the `let` extending as far right as it
 can, with operators flat, and fixity resolution refuses `x == x == True`; the parse 3 states, `(let x = True in (x ==
-x)) == True`, needs fixities while parsing, so it cannot be implemented as written: a deviation, pinned. **GHC**,
+x)) == True`, needs fixities while parsing, and chapter 3 concedes it ("implementations may well use a post-parsing
+pass to deal with fixities ... Programmers are advised to avoid constructs whose parsing involves an interaction of
+(lack of) associativity with the let/lambda meta-rule"): a deviation conceded by the Report (D38's ground, the
+owner's decision of 2026-11-13), pinned. **GHC**,
 **Hugs**, **nhc98** and **MicroHs** all refuse it. Rows: `exp.parse.letnonassoc` (`errors/exp.parse.letnonassoc_refused`).
 
 ### R14. The kernel's literals, and the translations' claim
@@ -381,6 +392,19 @@ Rows: `exp.trans.preserve` (`lang/tr.lit.int`, which pins R14 for the literals' 
 so a monomorphic variable is closed at the end of its own module, and a use at another type in a module of its cycle
 is refused; `--cycle-default=scc`, an extension off by default, closes it at the end of the cycle. No oracle compiles
 a cycle as written (R94). Rows: `mr.rule2.mutual` (`errors/mr.rule2.mutual`), `mod.sep.sigs` (`accept/mod.sep.sigs`).
+
+### R26. An instance that no chain of imports reaches
+> Thus, an instance declaration is in scope if and only if a chain of import declarations leads to the module
+> containing the instance declaration. (5.4)
+
+**rhc's choice.** The text: an instance solves a predicate, or holds a default, in a module only where that module's
+imports lead, at some depth, to the module declaring the instance; a module of a cycle reaches every module of it.
+So a module of the program that uses an instance its imports do not reach is refused, though another module brings the
+instance into the program. Both of rhc's judges hold it, the checker by the program's graph and HsLint by its own
+reading of each module's imports. **GHC** refuses the program at the use (its instances are visible by the
+modules a module imports, transitively); **Hugs** runs it, its instances global to what it has loaded: Hugs departs
+from 5.4 here. Rows: `mod.inst.nochain` (`errors/mod.inst.nochain`: Main imports Orphan, which declares `Show (a -> b)`,
+and Used, which shows a function and imports nothing that leads to Orphan).
 
 ### R29. Separate compilation of a cycle
 **rhc's choice.** R29's seed: rhc compiles a cycle of modules whole, with no annotation, and needs no signature for

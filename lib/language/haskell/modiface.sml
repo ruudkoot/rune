@@ -140,11 +140,11 @@ struct
       List.foldl insert [] xs
     end
 
-  fun fingerprints hash (t, external) =
+  fun fingerprints hash (ts, external) =
     let
-      val its = items t
+      val its = List.concat (List.map items ts)
       val byKey = List.foldl (fn (i : item, m) => M.insert (m, #key i, i)) M.empty its
-      (* each key of the module to the item that holds it *)
+      (* each key of the modules to the item that holds it *)
       val owner = List.foldl (fn ({key, members, ...} : item, s) => List.foldl (fn (m, s) => M.insert (s, m, key)) (M.insert (s, key, key)) members)
                     M.empty its
       fun local_ k = M.find (owner, k)

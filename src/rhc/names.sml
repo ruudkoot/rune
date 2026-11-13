@@ -37,8 +37,7 @@ struct
 
   (* What the groups of a graph leave for the groups after them: the
      tables of every module's entities and fixities, whether a file is the
-     library's, and what names and the checker have found so far. The
-     saved world (RhcWorld) is the state the library's groups leave. *)
+     library's, and what names and the checker have found so far. *)
   type state = {defs : Mo.def M.map, universe : Mo.entity list, fixities : (A.fixity * int) M.map,
                 library : bool M.map, exports : Mo.entity list M.map, scopes : Mo.scope M.map, diags : G.diag list,
                 modules : (G.node * A.module) list, derived : (string * string * A.decl list) list,
@@ -104,15 +103,16 @@ struct
 
   (* The first number a program's fresh type variables and kinds take, past
      any the library's checking takes, so that they are numbered alike
-     whether the library was checked now or restored (RhcWorld), or its
-     groups by interface (RhcIface); the program's units go on from it, so
-     that no two dictionaries of a program have one name *)
+     whether the library was checked now or taken from bin/rhc's
+     snapshot (RhcDriver), or its groups by interface (RhcIface); the
+     program's units go on from it, so that no two dictionaries of a
+     program have one name *)
   val unitCounters = 100000000
 
   (* The first number a unit of the library's fresh variables take: a range
      of its own, a million wide, by the place of its first module among the
      library's files, so that each of its units is numbered alike whether
-     the saved world checks them all or a whole program the ones it
+     the snapshot's compile checks them all or a whole program the ones it
      reaches; and the names of dictionaries apart *)
   val libraryOrder : string list option ref = ref NONE
   fun librarySlot (members : G.node list) =
@@ -193,6 +193,8 @@ struct
                 val () = if List.all #library members then HsInfer.numberFrom (librarySlot members)
                          else HsInfer.renumber unitCounters
                 val resolved = List.filter (fn (n, _) => List.exists (fn (m : G.node) => #id m = #id n) members) (!out)
+                (* 5.4: an instance in scope where imports reach it *)
+                val () = HsInfer.setReaches RhcGraph.reaches
                 val {env, errors, derived} =
                   HsInfer.check {env = !types, cycleDefault = cycleDefault, prelude = prelude, evidence = evidence,
                                  fixity = fn k => M.find (fixTable, k),

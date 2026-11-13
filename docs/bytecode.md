@@ -436,7 +436,7 @@ exponent allows it -- or a pointer to a heap object. Heap objects:
 | REAL | 8 raw bytes | a real that has no immediate: zero, a subnormal, an infinity, NaN, or a number outside 2^-511 to 2^513 |
 | BOX | 8 raw bytes | an `Int64.int` or a `Word64.word` that needs its 64th bit |
 | THUNK | function index, captured fields; its state in the tag | a suspension of a lazy front end ([ir.md](ir.md), *Suspensions*): unevaluated (0), or under evaluation (1) once its code has said `BLACKHOLE`, when the collector follows none of its fields |
-| IND | its value, then dead fields | a suspension that has its value, made in place by `UPDATE`; a force reads it, and the collector gives what points to one its value |
+| IND | its value, then dead fields | a suspension that has its value, made in place by `UPDATE`; a force reads it, and the collector gives what points to one its value, but where a frame runs it (lazy ML's, pinned: contag `IND_RUNNING`) or its value is a suspension or an indirection itself ([ir.md](ir.md), *Suspensions*) |
 
 Booleans are `CON0 0` (`false`) and `CON0 1` (`true`). Records store their
 fields sorted by label (numeric labels first, in numeric order, then
@@ -521,7 +521,7 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `FORCE o` | offset | Where the top of stack is no unevaluated suspension, replace it by its value -- what an indirection holds, else itself -- and jump to `o`; else leave it for the `ENTER` after ([ir.md](ir.md), *Suspensions*). |
 | `ENTER` | | Pop argument, pop a suspension, and enter it as `CALL` enters a closure; one under evaluation is a loop, and the exception `Loop` is raised from here. |
 | `BLACKHOLE` | | The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows. |
-| `UPDATE` | | Pop a value; the suspension running becomes an indirection to it. |
+| `UPDATE` | | Pop a value; the suspension running becomes an indirection to it; one that is an indirection already, lazy ML's that a force from inside it updated first, holds it now. |
 
 ## The register bytecode (runtime/register)
 
@@ -659,7 +659,7 @@ refuses the other's file and image.
 | `RAISE s` | register | Raise the exception in `s`. |
 | `FORCE d s o` | registers, offset | Where `s` holds no unevaluated suspension, `d :=` its value -- what an indirection holds, else what `s` holds -- and jump to `o`; else on to the `ENTER` after it ([ir.md](ir.md), *Suspensions*). |
 | `ENTER f x` | registers | Enter the suspension in `f`, as `CALL` enters a closure, with `x`; `RESULT` takes its value. One under evaluation is a loop, and the exception `Loop` is raised from here. |
-| `BLACKHOLE` / `UPDATE s` | register | The suspension running goes under evaluation, its captures read and no longer followed by the collector / becomes an indirection to `s`. |
+| `BLACKHOLE` / `UPDATE s` | register | The suspension running goes under evaluation, its captures read and no longer followed by the collector / becomes an indirection to `s`, or holds `s` now where it is one already (lazy ML's). |
 
 ## Primitives
 
