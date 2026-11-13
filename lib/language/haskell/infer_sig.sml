@@ -88,7 +88,7 @@ sig
      modules' parts (HsModIface, the haskell98 roadmap's M21). *)
   type part = {values : (string * HsTypes.scheme) list, tycons : HsKinds.tycon list, classes : HsClasses.class list,
                instances : HsClasses.instance list,
-               cons : (string * {tycon : string, arity : int, fields : string list}) list,
+               cons : (string * {tycon : string, arity : int, fields : string list, strict : bool list}) list,
                fields : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,
                methods : (string * {cls : string, scheme : HsTypes.scheme}) list}
 

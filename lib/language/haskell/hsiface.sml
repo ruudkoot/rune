@@ -12,7 +12,7 @@ struct
   exception Bad of string
 
   val magic = "HsIface"
-  val version = 1
+  val version = 2
 
   (* ---- writing ---- *)
 
@@ -61,7 +61,9 @@ struct
      list (fn (w, {id, cls, tycon, vars, ctx, derived, home}) =>
              (str (w, id); str (w, cls); str (w, tycon); int (w, vars); list pred (w, ctx); bool (w, derived); str (w, home)))
           (w, instances);
-     list (fn (w, (k, {tycon, arity, fields})) => (str (w, k); str (w, tycon); int (w, arity); list str (w, fields))) (w, cons);
+     list (fn (w, (k, {tycon, arity, fields, strict})) =>
+             (str (w, k); str (w, tycon); int (w, arity); list str (w, fields); list bool (w, strict)))
+          (w, cons);
      list (fn (w, (k, {tycon, ty = t, cons})) =>
              (str (w, k); str (w, tycon); ty (w, t); list (fn (w, (c, i)) => (str (w, c); int (w, i))) (w, cons)))
           (w, fields);
@@ -150,8 +152,8 @@ struct
                                          val ctx = rlist rpred r val derived = rbool r
                                      in {id = id, cls = cls, tycon = tycon, vars = vars, ctx = ctx, derived = derived,
                                          home = rstr r} end) r
-      val cons = rlist (fn r => let val k = rstr r val tycon = rstr r val arity = rint r
-                                in (k, {tycon = tycon, arity = arity, fields = rlist rstr r}) end) r
+      val cons = rlist (fn r => let val k = rstr r val tycon = rstr r val arity = rint r val fields = rlist rstr r
+                                in (k, {tycon = tycon, arity = arity, fields = fields, strict = rlist rbool r}) end) r
       val fields = rlist (fn r => let val k = rstr r val tycon = rstr r val t = rty r
                                   in (k, {tycon = tycon, ty = t, cons = rlist (fn r => let val c = rstr r in (c, rint r) end) r})
                                   end) r

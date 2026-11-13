@@ -561,9 +561,9 @@ exp.field.con.pos	3.15.2	Components are specified by name, not position	dynamic	
 exp.field.con.notown	3.15.2	Only field labels declared with the specified constructor may be mentioned	static	reject	C1 {f3 = 'a'}	hand	Supported		
 exp.field.con.twice	3.15.2	A field label may not be mentioned more than once	static	reject	C1 {f1 = 1, f1 = 2}	hand	Supported		
 exp.field.con.missing	3.15.2	Fields not mentioned are initialised to ⊥	dynamic	run	untouched field unused is fine; demanded it terminates as error does	hand	Supported		
-exp.field.con.strict	3.15.2	A compile-time error occurs when a strict field is omitted during construction	static	reject	data S = S {a :: !Int, b :: Int}; S {b = 1}	hand	Planned		
+exp.field.con.strict	3.15.2	A compile-time error occurs when a strict field is omitted during construction	static	reject	data S = S {a :: !Int, b :: Int}; S {b = 1}	hand	Supported		
 exp.field.con.empty	3.15.2	F {} is legal whether or not F was declared with record syntax	dynamic	run	data T = F Int Int; F {} compiles; case F {} of F _ _ -> 1	hand	Supported		
-exp.field.con.empty.strict	3.15.2	provided F has no strict fields	static	reject	data T = F !Int; F {}	hand	Planned		
+exp.field.con.empty.strict	3.15.2	provided F has no strict fields	static	reject	data T = F !Int; F {}	hand	Supported		
 exp.field.con.empty.value	3.15.2	F {} denotes F ⊥1 ... ⊥n, n the arity of F	dynamic	run	components are ⊥ individually	hand	Supported		
 tr.field.con	3.15.2	C { bs } = C (pickC1 bs undefined) ...(pickCk bs undefined), k the arity of C	dynamic	run	literal translation differenced	hand	Supported		
 tr.field.pick	3.15.2	pickCi bs d is v if component i of C has label f and f=v is in bs, else d	dynamic	run	exercised by tr.field.con and tr.field.upd	hand	Supported		
@@ -573,8 +573,8 @@ exp.field.upd.chain	3.15.3	An update's aexp may itself be an update	syntax	run	r
 exp.field.upd.tight	3.15.3	An update binds tighter than application, as it is an aexp	syntax	run	f r {a = 1} is f (r {a = 1})	hand	Supported		
 exp.field.upd.nondestructive	3.15.3	Update creates a new value; the old is unchanged	dynamic	run	both used afterwards	hand	Supported		
 exp.field.upd.onetype	3.15.3	All labels must be taken from the same datatype	static	reject	r {a = 1, b = 2} with a and b of two types	hand	Supported		
-exp.field.upd.onecon	3.15.3	At least one constructor must define all the labels mentioned	static	reject	x {f2 = 1, f3 = 'x'}, the Report's example	hand	Planned		
-exp.field.upd.twice	3.15.3	No label may be mentioned more than once	static	reject	r {a = 1, a = 2}	hand	Planned		
+exp.field.upd.onecon	3.15.3	At least one constructor must define all the labels mentioned	static	reject	x {f2 = 1, f3 = 'x'}, the Report's example	hand	Supported		
+exp.field.upd.twice	3.15.3	No label may be mentioned more than once	static	reject	r {a = 1, a = 2}	hand	Supported		
 exp.field.upd.runtime	3.15.3	An execution error occurs when the value lacks a specified label	dynamic	run	(C1 1 2) {f3 = 'a'} terminates as error does	hand	Supported		
 exp.field.upd.strictval	3.15.3	Update on ⊥ is ⊥, by the case of the translation	dynamic	run	seq (undefined {f1 = 1}) () terminates	hand	Supported		
 exp.field.upd.strictfield	3.15.3	An updated strict field is forced, by 4.2.1's replacement of K in the translation	dynamic	run	r {s = undefined} seq'd terminates	hand	Supported		
@@ -905,14 +905,14 @@ cls.method.clash.top	4.3.1	a method may not have the name of a top-level definit
 cls.method.clash.field	4.3.1	a method may not have the name of a field	static	reject	a method x and a field x in one module	hand	Supported		
 cls.method.clash.method	4.3.1	a method may not have the name of another method	static	reject	x in two classes of one module, and x twice in one class	hand	Supported		
 cls.method.type	4.3.1	the top-level type of vi is forall u,w. (C u, cxi) => ti	static	accept	for `class Foo a where op :: Num b => a -> b -> a`, a signature at `(Foo a, Num b) => a -> b -> a` is accepted	hand	Supported		
-cls.method.mentions	4.3.1	ti must mention u	static	reject	`class C a where m :: Int` is refused	hand	Planned		
+cls.method.mentions	4.3.1	ti must mention u	static	reject	`class C a where m :: Int` is refused	hand	Supported		
 cls.method.othervars	4.3.1	ti may mention other variables, in which the method is polymorphic	static	accept	a method used at two types of w	hand	Supported		
 cls.method.ctx.w	4.3.1	cxi may constrain w	static	accept	the example's `op :: Num b => a -> b -> a`	hand	Supported		
 cls.method.ctx.notu	4.3.1	cxi may not constrain u	static	reject	`class C a where m :: Eq a => a -> a` is refused	hand	Supported	R73	
 cls.fixity.inclass	4.3.1	cdecls may hold a fixity declaration for a method	static	run	an infix method's parse shown by evaluation	hand	Supported		
-cls.fixity.nonmethod	4.3.1	cdecls may hold a fixity declaration for no other value	static	reject	a fixity declaration of a top-level function inside a class is refused	hand	Planned		
+cls.fixity.nonmethod	4.3.1	cdecls may hold a fixity declaration for no other value	static	reject	a fixity declaration of a top-level function inside a class is refused	hand	Supported		
 cls.fixity.toplevel	4.3.1	a method's fixity declaration may instead appear at top level	static	run	the same test with the declaration outside the class	hand	Supported		
-cls.fixity.both	4.3.1	the two places count as one: at most one fixity declaration for an operator (4.4.2)	static	reject	one in the class and one at top level are refused	hand	Planned		
+cls.fixity.both	4.3.1	the two places count as one: at most one fixity declaration for an operator (4.4.2)	static	reject	one in the class and one at top level are refused	hand	Supported		
 cls.default.use	4.3.1	a default method is used if an instance gives no binding	dynamic	run	an instance without the method runs the default	hand	Supported		
 cls.default.override	4.3.1	an instance's binding replaces the default	dynamic	run	an instance with the method runs its own	hand	Supported		
 cls.default.mutual	4.3.1	defaults may refer to each other and to the class's other methods	dynamic	run	Eq-like mutual defaults, with one method defined	hand	Supported		
@@ -942,7 +942,7 @@ cls.inst.reject.synonymctx	4.3.2	that holds for a synonym which would expand to 
 cls.inst.ctx.simple	4.3.2	the instance context is an scontext: assertions on bare variables	syntax	reject	`instance Eq (f a) => C (T f a)` is refused	hand	Supported		
 cls.inst.ctx.qualifiedclass	4.3.2	the class of an instance head may be qualified	static	accept	`instance Ix.Ix T where ...`	hand	Supported		
 cls.inst.body.methodsonly	4.3.2	the declarations may hold bindings only for methods of C	static	reject	a binding of another variable, and of a method of another class, are refused	hand	Supported		
-cls.inst.body.notinscope	4.3.2	it is illegal to bind a method that is not in scope	static	reject	`import M (C)` without the method, then a binding of the method, is refused	hand	Planned	R76	
+cls.inst.body.notinscope	4.3.2	it is illegal to bind a method that is not in scope	static	reject	`import M (C)` without the method, then a binding of the method, is refused	hand	Supported	R76	
 cls.inst.body.anyname	4.3.2	the name under which the method is in scope is immaterial	static	accept	`import qualified Ix; instance Ix.Ix T where range = ...` is legal	hand	Supported		
 cls.inst.body.lhsunqualified	4.3.2	the binding names the method unqualified, whatever the name in scope	syntax	reject	`Ix.range = ...` in an instance is refused	hand	Supported		
 cls.inst.body.ambiguous	4.3.2	the binding resolves through the class, so a clash in the unqualified name does not matter	static	accept	a method binding where the name also has another import	hand	Supported		
@@ -1284,7 +1284,7 @@ mod.exp.con.bare	5.2	A data constructor cannot be named except as a subordinate 
 mod.exp.con.sametype	5.2	T in an export list names the type even where a constructor is also T	module	reject	data T = T; module M (T); importer uses constructor T: refused	hand	Supported		
 mod.exp.synonym	5.2	A type synonym is named by the form T	module	accept	module M (S) where type S = Int	hand	Supported		
 mod.exp.synonym.scope	5.2	The synonym must be in scope	module	reject	an unknown S: refused	hand	Supported		
-mod.exp.synonym.dotdot	5.2	Only the form T is given for a synonym, though the grammar allows S(..)	module	reject	module M (S(..)) where type S = Int; see readings.md	hand	Planned	R34	
+mod.exp.synonym.dotdot	5.2	Only the form T is given for a synonym, though the grammar allows S(..)	module	reject	module M (S(..)) where type S = Int; see readings.md	hand	Supported	R34	
 mod.exp.class.abs	5.2	The form C names the class but not its methods	module	reject	importer calls a method: refused	hand	Supported		
 mod.exp.class.abs.ok	5.2	The form C makes the class name available	module	accept	importer writes a context with C	hand	Supported		
 mod.exp.class.some	5.2	The form C(f1,...,fn) names the class and some or all of its methods	module	accept	importer calls a listed method	hand	Supported		
