@@ -10,6 +10,8 @@ Each program here, a file `NAME.hs` or a directory `NAME` whose `Main.hs` import
 `bin/rhc --dump-hslint` in `NAME.expected`, of `--dump-hslint --cycle-default=scc` in `NAME.scc.expected`, and of
 `--dump-hslint=library` in `NAME.library.expected`, where those are. The dump's lines are those `src/rhc/lint.sml`
 describes: `KIND`, `DERIVED`, `TYPE`, `SIGNED`, `DEFAULT`, or `REFUSED` and why. Each file was reviewed line by line.
+The lines of each kind are sorted by module, then name, instance or place, and a default of the library's is at no
+place (`*`), so that an edit of the library that moves a definition and changes no type moves no line.
 Its job then compiles it at level 2 as far as Core (`bin/rhc --desugar-only --lint=2`), where HsLint replays the
 checker's evidence records and holds them, and the Core desugaring makes (its target check), to its own inference: the
 compile accepts what the dump infers and refuses what the dump refuses, so that a bug seeded in the checker (rhc's

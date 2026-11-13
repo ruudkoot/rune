@@ -2419,15 +2419,43 @@
      "kind": "type",
      "name": "library",
      "spec": "type library",
-     "doc": "HsLint's inference of a library's modules, as a saved world keeps it.\n\nIt is their environment and what their inference found, from which a\nprogram's own modules are inferred alone (D45).\n\n",
+     "doc": "HsLint's part of a unit: what one check inferred alone.\n\nIt is the environment's entries of the modules it inferred, what their\ninference found and the target check's data of them: a saved world's\nlibrary, or a unit's in the store, from which the modules after it are\ninferred alone (D45).\n\n",
      "page": "sig/HS_LINT.md#type-library"
     },
     {
      "kind": "val",
      "name": "check",
-     "spec": "val check : {groups : module list list, main : string option, cycleDefault : bool,\n             records : {table : HsEvidence.table, env : HsInfer.env,\n                        derived : (string * string * HsAst.decl list) list} option,\n             claims : claims option, where_ : HsSource.span -> string, fault : string, library : library option}\n            -> {report : report, target : target, library : library option}",
-     "doc": "`check {groups, main, cycleDefault, records, claims, where_, fault, library}` is `infer`'s report, with the checker's records replayed and\ncompared.\n\nWith `library`, the groups of its modules are not inferred again: the\nrest are inferred after its environment and findings, and only the\nrecords of those modules are replayed, the library's having been\nreplayed where the library was inferred. The report is of the modules\ninferred. Where every module of `groups` is the library's, the result\nholds their inference, for a saved world; NONE otherwise.\n\nIt gives what the target check reads with the report. With `records`,\nthe checker's evidence records and environment (HsEvidence, HsInfer) and the derived instances it made as trees\n(HsDerive: each one's module, identity and methods), the second\ninference checks those instances' methods as any instance's, each\nrecord is replayed by Faxén's rules and rhc's (`replayRules`), the\nderived methods' records too, and the records are then held to the\ninference as claims (`compare`); with `claims`, those are too.\n`fault` is as `compare`'s, for every rule.\n\n**Raises** `Refused` at the first breach.\n\n",
+     "spec": "val check : {groups : module list list, main : string option, cycleDefault : bool,\n             records : {table : HsEvidence.table, env : HsInfer.env,\n                        derived : (string * string * HsAst.decl list) list} option,\n             claims : claims option, where_ : HsSource.span -> string, fault : string, library : library option}\n            -> {report : report, target : target, part : library}",
+     "doc": "`check {groups, main, cycleDefault, records, claims, where_, fault, library}` is `infer`'s report, with the checker's records replayed and\ncompared.\n\nWith `library`, the groups of its modules are not inferred again: the\nrest are inferred after its environment and findings, and only the\nrecords of those modules are replayed, the library's having been\nreplayed where it was inferred. The report is of the modules inferred,\nand `part` what was inferred of them alone, for the units after them.\n\nIt gives what the target check reads with the report. With `records`,\nthe checker's evidence records and environment (HsEvidence, HsInfer) and the derived instances it made as trees\n(HsDerive: each one's module, identity and methods), the second\ninference checks those instances' methods as any instance's, each\nrecord is replayed by Faxén's rules and rhc's (`replayRules`), the\nderived methods' records too, and the records are then held to the\ninference as claims (`compare`); with `claims`, those are too.\n`fault` is as `compare`'s, for every rule.\n\n**Raises** `Refused` at the first breach.\n\n",
      "page": "sig/HS_LINT.md#val-check"
+    },
+    {
+     "kind": "val",
+     "name": "join",
+     "spec": "val join : library list -> library",
+     "doc": "`join parts` is the parts of units put together, in order: a later\npart's entry of a name wins, and the rest are appended.\n\n",
+     "page": "sig/HS_LINT.md#val-join"
+    },
+    {
+     "kind": "exception",
+     "name": "Decode",
+     "spec": "exception Decode of string",
+     "doc": "Bytes that are no part of a unit, and why.\n\n",
+     "page": "sig/HS_LINT.md#exn-decode"
+    },
+    {
+     "kind": "val",
+     "name": "encode",
+     "spec": "val encode : library -> string",
+     "doc": "`encode part` is `part` as bytes, in Pickle's form.\n\n",
+     "page": "sig/HS_LINT.md#val-encode"
+    },
+    {
+     "kind": "val",
+     "name": "decode",
+     "spec": "val decode : string -> library",
+     "doc": "`decode bytes` is the part `bytes` are, as `encode` wrote it.\n\n**Raises** `Decode` where the bytes are no part.\n\n",
+     "page": "sig/HS_LINT.md#val-decode"
     },
     {
      "kind": "val",
@@ -2447,7 +2475,7 @@
      "kind": "val",
      "name": "dump",
      "spec": "val dump : report * (HsSource.span -> string) * bool -> string",
-     "doc": "`dump (report, where_, library)` is the report as text, a line each.\n\nThe lines are `KIND MODULE NAME :: KIND` for a type constructor or a\nclass, `DERIVED MODULE INSTANCE`, `TYPE MODULE NAME :: TYPE` for a\nbinding, `SIGNED` for one with a signature, and `DEFAULT MODULE WHERE PREDS -> TYPE`, where `where_` gives a span's place: of the program's\nmodules, and of the library's too where `library` is set, but its\nsigned bindings.\n\n",
+     "doc": "`dump (report, where_, library)` is the report as text, a line each.\n\nThe lines are `KIND MODULE NAME :: KIND` for a type constructor or a\nclass, `DERIVED MODULE INSTANCE`, `TYPE MODULE NAME :: TYPE` for a\nbinding, `SIGNED` for one with a signature, and `DEFAULT MODULE WHERE PREDS -> TYPE`, where `where_` gives a span's place: of the program's\nmodules, and of the library's too where `library` is set, but its\nsigned bindings, and its defaults at no place, `*`. The lines of each\nkind are sorted by module, then name, instance or place, so that only\na change of what one says moves the dump.\n\n",
      "page": "sig/HS_LINT.md#val-dump"
     }
    ]

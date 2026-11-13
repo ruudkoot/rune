@@ -2,7 +2,7 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) **j** [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
-- `join` (val): [CORE_UNITS](../sig/CORE_UNITS.md#val-join), [HS_SOURCE](../sig/HS_SOURCE.md#val-join)
+- `join` (val): [CORE_UNITS](../sig/CORE_UNITS.md#val-join), [HS_LINT](../sig/HS_LINT.md#val-join), [HS_SOURCE](../sig/HS_SOURCE.md#val-join)
 
 ---
 
