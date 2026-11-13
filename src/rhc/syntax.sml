@@ -28,9 +28,13 @@
    its names, fixity, kinds, types and classes (M13); `rhc FILE.hs` checks
    as much, desugars it to Core (RhcDesugar, M15) and hands that to
    `compile`, which RhcMain sets: it runs it on Core's interpreter, or with
-   `-o OUT` compiles it. An error of the program's is a diagnostic,
-   `FILE:LINE:COL: error: MESSAGE`, on standard error, each in the order
-   of the source, and status 1. The options of names: `--names=least` or
+   `-o OUT` compiles it. Both take the library's units from bin/rhc's
+   snapshot (`--snapshot DIR`, RhcDriver.front: D45's A, ruling 67) and
+   read, check and desugar the program's own modules a unit at a time;
+   `--whole` reads the library too, as do the options that shape its
+   reading, and the views read whole. An error of the program's is a
+   diagnostic, `FILE:LINE:COL: error: MESSAGE`, on standard error, each in
+   the order of the source, and status 1. The options of names: `--names=least` or
    `greatest` (D29), `--cycle-default=module` or `scc` (D30, which M13
    reads), `--dotted-names` (D35). At `--lint=2` (or `RUNE_LINT=2`) a
    program whose names resolve is checked by HsLint too (RhcLint, M16), held
@@ -71,6 +75,15 @@ struct
   val cycleDefault = ref PerModule
   val dotted = ref false
 
+  (* bin/rhc's snapshot, the layers a check or a compile takes the
+     library's units from (RhcMain sets it from --snapshot); --whole, a
+     program read and checked whole, the library's modules too, the
+     reference the snapshot is held to; and the strings' form, which a
+     snapshot's units are made of (--strings=) *)
+  val layers : string list ref = ref []
+  val whole = ref false
+  val strings = ref CoreRuntime.Lazy
+
   (* what a program that checks becomes, given the options of the command
      line that are not this structure's and its desugaring at a way of
      making string literals: RhcMain's, which runs or compiles it *)
@@ -103,18 +116,30 @@ struct
         | DumpBinders => NONE
         | DumpHsLint _ => NONE
         | _ => SOME (case !cycleDefault of PerModule => HsInfer.PerModule | PerGroup => HsInfer.PerGroup)
-      (* a check or a compile from the saved world where it can (RhcWorld,
-         D45's B), or with --by-interface each group from the interfaces
-         before it (RhcIface, M21); the views, whole *)
+      (* a check or a compile against bin/rhc's snapshot, each group a unit
+         from the interfaces of those before, the library's units taken
+         from the snapshot (RhcDriver.front, D45's A, ruling 67), but with
+         --whole and with the options that shape the library's reading
+         (--names=greatest, --cycle-default=scc), which go whole; with
+         --by-interface each group from the interfaces before it, the
+         library read (RhcIface, M21); the views, whole *)
+      val front =
+        if (mode = Check andalso not (!RhcIface.byInterface) orelse mode = Compile) andalso not (!whole)
+           andalso !fixpoint = HsModules.Least andalso check = SOME HsInfer.PerModule
+        then SOME (RhcDriver.front {roots = files, dotted = !dotted, fixpoint = !fixpoint, check = check, layers = !layers,
+                                    strings = !strings, show = false})
+        else NONE
       val (g, r) =
-        if mode = Check andalso !RhcIface.byInterface then
-          let val g = RhcGraph.load {roots = files, dotted = !dotted}
-          in (g, RhcIface.program (g, !fixpoint, check)) end
-        else if mode = Check orelse mode = Compile then
-          RhcWorld.program {roots = files, dotted = !dotted, fixpoint = !fixpoint, check = check}
-        else
-          let val g = RhcGraph.load {roots = files, dotted = !dotted}
-          in (g, RhcNames.run (g, !fixpoint, check)) end
+        case front of
+          SOME f => (#graph f, {modules = [], exports = #exports f, diags = #diags f, types = NONE,
+                                evidence = HsEvidence.empty (), derived = []})
+        | NONE =>
+            if mode = Check andalso !RhcIface.byInterface then
+              let val g = RhcGraph.load {roots = files, dotted = !dotted}
+              in (g, RhcIface.program (g, !fixpoint, check)) end
+            else
+              let val g = RhcGraph.load {roots = files, dotted = !dotted}
+              in (g, RhcNames.run (g, !fixpoint, check)) end
       val fileOrder =
         #2 (List.foldl (fn ({file, ...} : RhcGraph.node, (k, m)) => (k + 1, HsStringMap.insert (m, file, k)))
               (0, HsStringMap.empty) (List.concat (#groups g)))
@@ -159,18 +184,20 @@ struct
               SOME m => (eprint (m ^ "\n"); OS.Process.failure)
             | NONE =>
                 (* HsLint's second inference, at --lint=2, on what the
-                   checker accepted (RhcLint; its records are #evidence r) *)
-                (RhcLint.check (g, r, perGroup);
+                   checker accepted: a unit at a time against the snapshot,
+                   whole otherwise (RhcLint; its records are #evidence r) *)
+                ((case front of SOME f => #lint f () | NONE => RhcLint.check (g, r, perGroup));
                  if mode = Check then OS.Process.success
-                 else (!compile) (rest, fn strings =>
-                                   (* the library's desugaring of the world the program went
-                                      from, made in the Report's order of matching, where the
-                                      program is desugared in it (D45's B) *)
-                                   case (!RhcWorld.desugared, !HsMatch.order) of
-                                     (SOME lib, HsMatch.Report) => RhcDesugar.programOn (lib, g, r, strings)
-                                   | _ => RhcDesugar.program (g, r, strings)))
+                 else (!compile) (rest, fn strings' =>
+                                   case front of
+                                     (* what main reaches of the units, the program's
+                                        Core (its strings' form the snapshot's) *)
+                                     SOME f => if strings' = !strings then #link f () handle RhcDriver.Failed msg => raise Error.Bug msg
+                                               else raise Error.Bug "rhc's strings' form is not the one its units are of"
+                                   | NONE => RhcDesugar.program (g, r, strings')))
     end
     handle HsSource.Error (span, msg) => (eprint (message (hd files, span, msg) ^ "\n"); OS.Process.failure)
+         | RhcDriver.Failed msg => (eprint ("rhc: error: " ^ msg ^ "\n"); OS.Process.failure)
 
   fun go (mode, spans, file, rest) =
     let
@@ -253,6 +280,11 @@ struct
               | check ("-o" :: _ :: rest) = check rest
               | check (a :: rest) = if known a then check rest else raise RhcOptions.Usage ("unknown option or argument: " ^ a)
             val () = check args
+            (* what a snapshot's units are made of, known before they are
+               taken: the strings' form and the match's order, which the
+               compile's own options set again *)
+            val () = if List.exists (fn a => a = "--strings=whole") args then strings := CoreRuntime.Whole else ()
+            val () = if List.exists (fn a => a = "--match=sestoft") args then HsMatch.order := HsMatch.Sestoft else ()
             (* what is the compile's: the options not of the syntax and names *)
             fun own a =
               isSource a orelse isSome (modeOf a) orelse a = "--no-spans" orelse a = "--typecheck-only"

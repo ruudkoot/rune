@@ -373,9 +373,9 @@ struct
     handle RhcOptions.Usage msg => (eprint ("rhc: " ^ msg ^ "\n" ^ "rhc --help says what rhc takes\n"); 1)
          | Failed => 1
 
-  (* the snapshot (D45's A, ruling 66): the store of the library compiled
-     once, which the wrapper bin/rhc names, a layer of every compile in
-     units after those --layer names *)
+  (* the snapshot (D45's A, rulings 66 and 67): the store of the library
+     compiled once, which the wrapper bin/rhc names, a layer of every check
+     and compile, after those --layer names in units *)
   val snapshot : string option ref = ref NONE
 
   (* --share DIR, where rhc's library is, and --snapshot DIR, which the
@@ -388,37 +388,29 @@ struct
     | a :: rest => a :: share rest
     | [] => []
 
-  (* --whole, a program read and checked whole without the saved world;
-     --world, what of it there is (RhcWorld); --identity, rhc's own
-     (Config), which the Makefile writes to bin/rhc.identity *)
-  fun world args =
+  (* --whole, a program read and checked whole, the library's modules
+     too, not against the snapshot *)
+  fun whole args =
     case args of
-      "--whole" :: rest => (RhcWorld.whole := true; world rest)
-    | a :: rest => a :: world rest
+      "--whole" :: rest => (RhcSyntax.whole := true; whole rest)
+    | a :: rest => a :: whole rest
     | [] => []
-
-  (* the library replayed by HsLint, at level 2, when its world is made;
-     what the check keeps for the target check is a program's, not the
-     library's, so the saved image holds none *)
-  val () = RhcWorld.checkLibrary := (fn (g, r) => (RhcLint.check (g, r, false); RhcLint.kept := NONE))
-  (* and desugared, its every body made, in the Report's order of matching *)
-  val () = RhcWorld.desugarLibrary := (fn (g, r) => SOME (RhcDesugar.library (g, r)))
 
   fun run (args : string list) : int =
     let
       val (args, ownArgs) = splitArgs args
       val () = programArgs := ownArgs
-      val args = world (share args)
+      val args = whole (share args)
+      val () = RhcSyntax.layers := (case !snapshot of SOME d => [d] | NONE => [])
     in
     case args of
-      ["--make-world", image] =>
-        (* the saved world, made: the world that saves it stops here, and
-           one bin/rhc restores goes on with its own command line *)
-        (case RhcWorld.make image of
-           Runtime.Saved => 0
-         | Runtime.Restored => counted (CommandLine.arguments ()))
-    | ["--world"] => (print (RhcWorld.describe () ^ "\n"); 0)
-    | ["--identity"] => (print (Config.identity ^ "\n"); 0)
+      ["--identity"] => (print (Config.identity ^ "\n"); 0)
+      (* the store DIR with the configurations of rhc's own identity alone:
+         make's for bin/rhc.layer, after a build of rhc *)
+    | ["--prune-store", dir] =>
+        (print ("rhc: " ^ Int.toString (RhcStore.dropOthers (dir, Config.identity)) ^ " other configurations dropped from " ^
+                dir ^ "\n");
+         0)
     | _ =>
     if List.exists (fn a => a = "--units") args andalso List.exists isHaskell args then haskellUnits args else
     case RhcSyntax.command args of
@@ -474,17 +466,15 @@ struct
     end
 
   (* With RHC_INSTRUCTIONS set, the bytecode instructions a command took
-     (Pass.instructions), on standard error: from the saved world, those of
-     the command alone, the world's own made before it (D45's B, measured) *)
+     (Pass.instructions), on standard error *)
   and counted (args : string list) : int =
     let
       val i0 = !Pass.instructions ()
       val status = run args
     in
-      (case (OS.Process.getEnv "RHC_INSTRUCTIONS", args) of
-         (SOME _, [_, _, "--make-world", _]) => ()
-       | (SOME _, _) => eprint ("rhc: " ^ Int.toString (!Pass.instructions () - i0) ^ " instructions\n")
-       | (NONE, _) => ());
+      (case OS.Process.getEnv "RHC_INSTRUCTIONS" of
+         SOME _ => eprint ("rhc: " ^ Int.toString (!Pass.instructions () - i0) ^ " instructions\n")
+       | NONE => ());
       status
     end
 

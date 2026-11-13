@@ -1169,10 +1169,21 @@ hello, in VM instructions: whole 145M; through the units, with nothing
 edited about 9M (the graph read 1M, the library taken 4.5M, Main taken
 2.3M, the link taken), with hello edited about 41M (Main compiled 20M, the
 link's reach 6M and its compile 9M), the program byte for byte the whole
-one. bin/rhc names a snapshot of its own (D45's A, ruling 66):
+one. bin/rhc names a snapshot of its own (D45's A, rulings 66 and 67):
 `bin/rhc.layer`, the library compiled once at make time from a Main that
-imports every module of it, at `RUNE_LINT=2`, which a compile in units reads
-after any `--layer` (`--snapshot`, which the wrapper gives). At level 2 a
+imports every module of it, at `RUNE_LINT=2`, which every check and compile
+reads (`--snapshot`, which the wrapper gives), after any `--layer` in units.
+`bin/rhc FILE.hs`, with `-o`, `--typecheck-only` or neither (a run on Core's
+interpreter), takes the library's units from it and reads, names, checks
+and desugars the program's own modules a unit at a time, keeping nothing
+(`RhcDriver.front`); `--units --store DIR` keeps them too; `--whole` reads
+the library as well, the reference. A unit's entry is kept in a
+configuration with no setting of the back end (the instruction set, the
+level, the width of int), since it holds no code, so one snapshot serves the
+stack machine and the register machine; the link's entry keeps them. A
+module's header is kept by the name it is read for and its text's hash, not
+its file, and `make` drops from the snapshot every configuration of another
+rhc (`rhc --prune-store`). At level 2 a
 unit made is checked by HsLint (`HsLint.check`) after what it found of the
 units before it, each unit's part of its entry joined (`HsLint.join`): its
 own modules inferred, their records replayed, its Core held to the
