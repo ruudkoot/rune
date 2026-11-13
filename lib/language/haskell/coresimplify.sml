@@ -48,8 +48,12 @@ struct
 
   fun simplify2 (opts : options) (p : program) : program = (setup opts; rounds (p, maxRounds))
 
+  (* strictness (M24): workers and wrappers, which the next round inlines *)
+  fun strict (opts : options) (p : program) : program = (setup opts; CoreStrict.program (#spend opts, p))
+
   fun passes () =
-    [("core-simplify", simplify), ("core-specialise", specialise), ("core-eta", eta), ("core-simplify-2", simplify2)]
+    [("core-simplify", simplify), ("core-specialise", specialise), ("core-eta", eta), ("core-strict", strict),
+     ("core-simplify-2", simplify2)]
 
   fun counts () = List.map (fn (w, r) => (w, !r)) (!B.counts)
   fun resetCounts () = B.counts := []

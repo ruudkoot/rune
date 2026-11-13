@@ -106,10 +106,12 @@ struct
     \                        default)\n\
     \  -O0, -O1, -O2         the level of Mid's optional passes (default: 1); at -O2 the\n\
     \                        Core simplifier too: core-simplify, core-specialise,\n\
-    \                        core-eta, core-simplify-2 (M23)\n\
+    \                        core-eta, core-strict, core-simplify-2 (M23, M24)\n\
     \  --eta=E               the Core simplifier's eta-expansion: pedantic, where the\n\
     \                        expression is a value already (default), or ghc, GHC's\n\
     \                        default, through a case and IO, for D48's measurement\n\
+    \  --strictness=S        at -O2, on (default): workers and wrappers of the strict\n\
+    \                        parameters (M24); off, for E3's L2 step measured\n\
     \  --simplify-stats      the Core simplifier's rewrites, by kind, on standard error\n\
     \  --fuel=N              make no more than N rewrites of the passes, Core's and Mid's\n\
     \  --target=T            the bytecode: registers (default) or stack\n\
@@ -187,6 +189,8 @@ struct
         | go ("--fault=force-behind-cast" :: rest) = (fault := SOME CoreToMid.ForceBehindCast; go rest)
         | go ("--eta=pedantic" :: rest) = (eta := CoreSimplify.Pedantic; go rest)
         | go ("--eta=ghc" :: rest) = (eta := CoreSimplify.Ghc; go rest)
+        | go ("--strictness=on" :: rest) = (CoreStrict.enabled := true; go rest)
+        | go ("--strictness=off" :: rest) = (CoreStrict.enabled := false; go rest)
         | go ("--simplify-stats" :: rest) = (simplifyStats := true; go rest)
         | go ("--fault=susp-type-arg" :: rest) = (fault := SOME CoreToMid.SuspTypeArg; go rest)
         | go ("--strings=lazy" :: rest) = (strings := CoreRuntime.Lazy; go rest)

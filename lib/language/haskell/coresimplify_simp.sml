@@ -170,7 +170,11 @@ struct
         List.foldl (fn (g, m) =>
                       case g of
                         [x] => if List.exists (fn y => y = x) (edges x) then CoreMap.insert (m, x, true) else m
-                      | _ => List.foldl (fn (x, m) => if isFun x then CoreMap.insert (m, x, true) else m) m g)
+                      (* a wrapper strictness made (M24) is no breaker where its
+                         worker is in the group: the worker breaks every cycle
+                         through it, as the wrapper calls the worker alone *)
+                      | _ => List.foldl (fn (x, m) => if isFun x andalso not (List.exists (fn y => y = "%w:" ^ x) g)
+                                                       then CoreMap.insert (m, x, true) else m) m g)
                    CoreMap.empty groups
       val () =
         globals := List.foldl (fn ((x, t, e), m) =>

@@ -20,6 +20,9 @@
    at -O2 held to them, a value of that name there or not, what the
    simplifier must have made of it, which no run shows
    (hs/simplify/dump/NAME).
+   A program with a line `-- also: FLAGS` runs at -O2 with FLAGS too, on
+   the interpreter and the VM, as the rest of run/NAME (M24's strictness
+   under GHC's eta rule, which sees through IO to its state token).
 
    Over the run programs of tests/hs/lang (nightly, held while their rows
    are Planned): what the VM prints at -O2 it printed at -O0, and both end
@@ -96,7 +99,21 @@ struct
       val oks = [judge (what ^ " (interpreter, -O0)", p, w, interpret (p, ["-O0"], w, "interp.O0", stdin)),
                  judge (what ^ " (interpreter, -O2)", p, w, interpret (p, ["-O2"], w, "interp.O2", stdin)),
                  vm "O0", vm "O2"]
-    in if List.all (fn b => b) oks then rmTree w else () end
+      (* `-- also: FLAGS`: -O2 with FLAGS too, each line a way *)
+      fun also (i, line) =
+        let
+          val flags = "-O2" :: String.tokens Char.isSpace line
+          val tag = "also" ^ Int.toString i
+          val how = " (" ^ String.concatWith " " flags ^ ")"
+        in
+          [judge (what ^ " (interpreter" ^ how ^ ")", p, w, interpret (p, flags, w, "interp." ^ tag, stdin)),
+           case onVm (p, flags, [], w, "vm." ^ tag, stdin) of
+             SOME r => judge (what ^ " (VM" ^ how ^ ")", p, w, r)
+           | NONE => (fail (what ^ ": rhc does not compile it" ^ how ^ ": " ^ firstNonEmpty (w ^ "/vm." ^ tag ^ ".c.err")); false)]
+        end
+      val alsos = List.concat (ListPair.map also (List.tabulate (length (marked (fromRoot (#src p), "also")), fn i => i),
+                                                  marked (fromRoot (#src p), "also")))
+    in if List.all (fn b => b) (oks @ alsos) then rmTree w else () end
 
   (* the counts of rewrites a program is stopped after *)
   val fuels = [0, 1, 3, 10, 40, 150, 600, 2500]
