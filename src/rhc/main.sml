@@ -267,17 +267,17 @@ struct
                 let val c = RhcUnits.checked (name, p')
                 in
                   if name = "rhc-runtime" then ()
-                  else keep (key, usages, {iface = RhcUnits.ifaceText c, code = CoreText.show p'});
+                  else keep (key, usages, {iface = RhcUnits.ifaceText c, code = fn () => CoreText.show p'});
                   say (name, "checked" ^ why); (c, p')
                 end
               else
                 let val c = RhcUnits.compile {name = name, earlier = done, fault = #fault opts} p'
-                in keep (key, usages, {iface = RhcUnits.ifaceText c, code = RhcUnits.codeBytes c}); say (name, "compiled" ^ why); (c, p') end
+                in keep (key, usages, {iface = RhcUnits.ifaceText c, code = fn () => RhcUnits.codeBytes c}); say (name, "compiled" ^ why); (c, p') end
             end
           fun taken' (sections : RhcStore.sections) =
             (say (name, "taken");
              if whole then
-               let val p' = CoreText.parse (#code sections)
+               let val p' = CoreText.parse (#code sections ())
                             handle CoreText.Error (_, msg) => raise RhcUnits.Error ("the entry of " ^ name ^ ": " ^ msg)
                in ({name = name, code = NONE, abi = [], exports = List.mapPartial (fn Core.Val (x, _, _) => SOME x | _ => NONE) p',
                     newtypes = [], iface = RhcUnits.ifaceOf (name, #iface sections)}, p')
@@ -312,11 +312,11 @@ struct
           fun said what = if #showUnits opts then eprint ("rhc: link: " ^ what ^ "\n") else ()
         in
           case lookup key (RhcStore.holds {level = RhcStoreConfig.level (), current = fn _ => "?"}) of
-            SOME (UnitStore.Found ({sections, ...}, _)) => (said "taken"; write (out, #code sections); 0)
+            SOME (UnitStore.Found ({sections, ...}, _)) => (said "taken"; write (out, #code sections ()); 0)
           | _ =>
               let val status = compile (opts, reached, out)
               in
-                if status = 0 then (keep (key, [], {iface = "", code = bytesOf out}); said "compiled") else ();
+                if status = 0 then (keep (key, [], {iface = "", code = fn () => bytesOf out}); said "compiled") else ();
                 status
               end
         end

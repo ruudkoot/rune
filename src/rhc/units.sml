@@ -157,7 +157,7 @@ struct
   fun codeBytes ({code, ...} : compiled) : string = String.concat (UnitFile.chunks (MidPipeline.fingerprint (), valOf code))
 
   (* the unit an entry keeps, named name *)
-  fun fromEntry (name : string, {iface, code} : RhcStore.sections) : compiled =
+  fun fromEntry (name : string, {iface, code = codeOf} : RhcStore.sections) : compiled =
     let
       fun split (s, i) =
         if i + 5 > String.size s then raise Error ("the entry of " ^ name ^ " has no interface")
@@ -172,7 +172,7 @@ struct
       val newtypes = List.mapPartial (fn ["newtype", b, t] => SOME (t, b = "box") | _ => NONE) facts
       val program = CoreText.parse core
                     handle CoreText.Error (_, msg) => raise Error ("the entry of " ^ name ^ ": " ^ msg)
-      val (fp, u) = UnitFile.read code handle UnitFile.Bad msg => raise Error ("the entry of " ^ name ^ ": " ^ msg)
+      val (fp, u) = UnitFile.read (codeOf ()) handle UnitFile.Bad msg => raise Error ("the entry of " ^ name ^ ": " ^ msg)
       val () = if fp = MidPipeline.fingerprint () then ()
                else raise Error ("the entry of " ^ name ^ " is of another instruction set")
     in {name = name, code = SOME u, abi = abi, exports = List.map #1 abi, iface = program, newtypes = newtypes} end

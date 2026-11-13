@@ -71,7 +71,7 @@ struct
   (* a unit made or taken: its name, its members, its modules' interfaces,
      its desugaring's interface, and its Core *)
   type unit_ = {name : string, ids : string list, mods : HsModIface.t list, desugar : unit -> HsDesugar.interface,
-                coreText : string, sum : string, core : unit -> Core.program}
+                sum : string, core : unit -> Core.program}
 
   (* f's value, made once and where it is first asked for *)
   fun once (f : unit -> 'a) : unit -> 'a =
@@ -123,7 +123,7 @@ struct
                             entry = {head = {usages = usages, exports = Pickle.hash (#iface sections),
                                              level = RhcStoreConfig.level ()},
                                      sections = sections}}
-        | NONE => Pickle.hash (#iface sections ^ "\000" ^ #code sections)
+        | NONE => Pickle.hash (#iface sections ^ "\000" ^ #code sections ())
       (* a state with the interfaces of the units before, as F's turns *)
       fun start (ifaces : HsModIface.t list) : N.state =
         let val s = N.install (N.initial leaves, ifaces)
@@ -171,21 +171,19 @@ struct
               val usages = if null done then [] else List.map (fn r => (HsUsage.key r, answerIn (now ()) r)) reads
               val iface = HsIface.encode {modules = mods, desugar = desugarText desugar, unfoldings = []}
               val coreText = CoreText.show core
-              val sum = keep (key, usages, {iface = iface, code = coreText})
+              val sum = keep (key, usages, {iface = iface, code = fn () => coreText})
             in
               say (name, "compiled" ^ why);
-              {name = name, ids = ids, mods = mods, desugar = fn () => desugar, coreText = coreText, sum = sum,
-               core = fn () => core}
+              {name = name, ids = ids, mods = mods, desugar = fn () => desugar, sum = sum, core = fn () => core}
             end
           fun taken ({iface, code} : RhcStore.sections, sum) =
             let
               val {modules, desugar, ...} = HsIface.decode iface handle HsIface.Bad msg => raise Failed ("the entry of " ^ name ^ ": " ^ msg)
               (* its Core read only where the link is compiled *)
-              fun core () = CoreText.parse code handle CoreText.Error (_, msg) => raise Failed ("the entry of " ^ name ^ ": " ^ msg)
+              fun core () = CoreText.parse (code ()) handle CoreText.Error (_, msg) => raise Failed ("the entry of " ^ name ^ ": " ^ msg)
             in
               say (name, "taken");
-              {name = name, ids = ids, mods = modules, desugar = once (fn () => desugarOf desugar), coreText = code, sum = sum,
-               core = core}
+              {name = name, ids = ids, mods = modules, desugar = once (fn () => desugarOf desugar), sum = sum, core = core}
             end
         in
           done @ [case lookup (key, holds) of
@@ -214,11 +212,11 @@ struct
       fun said what = if #show opts then TextIO.output (TextIO.stdErr, "rhc: link: " ^ counted what ^ "\n") else ()
     in
       case lookup (linkKey, RhcStore.holds {level = RhcStoreConfig.level (), current = fn _ => "?"}) of
-        SOME (UnitStore.Found ({sections, ...}, _)) => (said "taken"; write (#out opts, #code sections); 0)
+        SOME (UnitStore.Found ({sections, ...}, _)) => (said "taken"; write (#out opts, #code sections ()); 0)
       | _ =>
           let val status = #compile opts (reached (), #out opts)
           in
-            if status = 0 then (ignore (keep (linkKey, [], {iface = "", code = bytesOf (#out opts)})); said "compiled") else ();
+            if status = 0 then (ignore (keep (linkKey, [], {iface = "", code = fn () => bytesOf (#out opts)})); said "compiled") else ();
             status
           end
     end
