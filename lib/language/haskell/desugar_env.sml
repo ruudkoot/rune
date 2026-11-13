@@ -115,7 +115,7 @@ struct
           if k = T.arrowCon then
             (case cargs of
                [a, b] => Core.TFun (a, b)
-             | _ => raise Fail "HsDsEnv: the function type constructor applied to other than two types")
+             | _ => Core.apply (Core.TCon "->", cargs))
           else applied (Core.TCon (tyconName k))
       | T.TRigid {name, ...} =>
           if M.member (#tyvars env, name) then applied (Core.TVar name)

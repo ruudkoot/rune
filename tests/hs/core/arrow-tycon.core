@@ -1,5 +1,4 @@
 ; run: --read-core tests/hs/core/lib/base.core
-; vm: no: Core to Mid refuses -> given fewer than two types: Core's at (a, b) is Mid's (a susp) -> b, and Mid's (->) given a and b is the plain a -> b (ruling 60)
 ; The function type's constructor, ->, given fewer than two types (Haskell's
 ; (->), 4.3.2), as GHC's tcrun001 has it:
 ;   class Flob k where twice :: k a a -> k a a
