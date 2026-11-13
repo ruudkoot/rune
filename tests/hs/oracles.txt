@@ -424,6 +424,10 @@ mhs | hs/lang/lib.r.io.handle.readable_handles::run | HOST-BUG | reject: MicroHs
 hugs | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | diff: Hugs's hReady at end of file is False, where 21.9.1 makes it fail with isEOFError
 nhc98 | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | exit: nhc98's IO has no hLookAhead (21.9.3)
 mhs | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | reject: MicroHs's IO has no hIsEOF (21.5)
+ghc | hs/lang/lib.r.io.hsetbuffering.discard_lost::run | HOST-BUG | diff: R158: GHC keeps the input a handle has read ahead when it changes to NoBuffering, where 21.6 discards the buffer of a handle that is not writable
+hugs | hs/lang/lib.r.io.hsetbuffering.discard_lost::run | HOST-BUG | diff: R158: Hugs keeps the input a handle has read ahead when it changes to NoBuffering, where 21.6 discards the buffer of a handle that is not writable
+nhc98 | hs/lang/lib.r.io.hsetbuffering.discard_lost::run | HOST-BUG | diff: R158: nhc98 keeps the input a handle has read ahead when it changes to NoBuffering, where 21.6 discards the buffer of a handle that is not writable
+mhs | hs/lang/lib.r.io.hsetbuffering.discard_lost::run | HOST-BUG | diff: R158: MicroHs keeps the input a handle has read ahead when it changes to NoBuffering, where 21.6 discards the buffer of a handle that is not writable
 ghc | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | diff: GHC's hSeek sets a position beyond the end of a file, as POSIX lseek does, where 21.7.2 says it cannot be set
 nhc98 | hs/lang/lib.r.io.iseof_stdin::run | HOST-BUG | exit: R46: nhc98's getLine is the Prelude's getChar loop, so a last line with no newline fails, where 21.9.2 returns it
 mhs | hs/lang/lib.r.io.iseof_stdin::run | HOST-BUG | reject: MicroHs's IO has no isEOF (21.5)
@@ -449,3 +453,49 @@ hugs | hs/errors/lay.first.empty_nomain::judge | HOST-BUG | accept: R4: Hugs loa
 ghc | hs/errors/pat.m.npk.positive::judge | SPEC-AMBIGUOUS | accept: R15: GHC takes the grammar's integer for k and accepts n+0; the owner's call refuses it by 3.17.2's "positive integer literal", as Hugs does
 nhc98 | hs/errors/pat.m.npk.positive::judge | SPEC-AMBIGUOUS | accept: R15: nhc98 takes the grammar's integer for k and accepts n+0; the owner's call refuses it by 3.17.2's "positive integer literal", as Hugs does
 mhs | hs/lang/lit.example.factorial::run | HOST-BUG | reject: MicroHs does not read 9.4's bird tracks after a block of commentary (Main.lhs:6:4: syntax error), where GHC, Hugs and nhc98 run it
+
+# T's programs for the rows of test none (ruling 49) and ExitFailure 0 (ruling 57), 2026-11-11
+ghc | hs/lang/lex.unicode.encoding::run | SPEC-AMBIGUOUS | reject: R5: GHC 9.4's Unicode 14.0 has no Garay (16.0), so its letter is a lexical error; rhc follows Unicode 18.0.0
+hugs | hs/lang/lex.unicode.encoding::run | SPEC-AMBIGUOUS | diff: R5: Hugs's Char tables predate Garay, so isUpper and isLower of its letters are False; rhc follows Unicode 18.0.0
+nhc98 | hs/lang/lex.unicode.encoding::run | HOST-BUG | reject: R5: nhc98's 8-bit Char reads no character above 255
+nhc98 | hs/errors/lex.esc.range::judge | SPEC-AMBIGUOUS | accept: R8: nhc98 accepts a numeric escape above 0x10FFFF; R8's seed refuses it, as GHC and Hugs do
+ghc | hs/errors/dec.gen.sig.identical_where::judge | SPEC-AMBIGUOUS | accept: R21: GHC takes Haskell 2010's declaration groups, which a signature cuts; Haskell 98's 4.5.1 makes f and g one group (ruling 55)
+hugs | hs/errors/dec.gen.sig.identical_where::judge | SPEC-AMBIGUOUS | accept: R21: Hugs takes Haskell 2010's declaration groups, which a signature cuts; Haskell 98's 4.5.1 makes f and g one group (ruling 55)
+nhc98 | hs/errors/dec.gen.sig.identical_where::judge | SPEC-AMBIGUOUS | accept: R21: nhc98 does not hold the group's signatures to identical contexts (4.5.2; ruling 55)
+mhs | hs/errors/dec.gen.sig.identical_where::judge | SPEC-AMBIGUOUS | accept: R21: MicroHs takes Haskell 2010's declaration groups (ruling 55)
+nhc98 | hs/lang/std.arith.zero::run | SPEC-AMBIGUOUS | diff: R45: nhc98 gives -1 for an Integer division by zero, where R45's seed is an error, as GHC and Hugs give
+hugs | hs/lang/std.pow.undefined::run | SPEC-AMBIGUOUS | diff: R45: Hugs errs ("argument out of range") at 0 ** y for a negative y, where rhc takes IEEE's pow, an infinity, as GHC does
+nhc98 | hs/lang/std.pow.undefined::run | SPEC-AMBIGUOUS | diff: R45: nhc98 gives the largest finite number for 0 ** y at a negative y, not IEEE's infinity
+ghc | hs/lang/std.coerce.nan::run | SPEC-AMBIGUOUS | diff: R45: GHC gives a number for round of a NaN, where the Report's code leaves it undefined and rhc errs, as Hugs does
+nhc98 | hs/lang/std.coerce.nan::run | SPEC-AMBIGUOUS | diff: R45: nhc98 gives a number for round of a NaN, where rhc errs, as Hugs does
+nhc98 | hs/lang/io.binary::run | HOST-BUG | diff: R38: nhc98's 8-bit Char writes Latin-1, not UTF-8
+hugs | hs/errors/lit.latex.unterminated::judge | SPEC-AMBIGUOUS | accept: R53: Hugs reads an unclosed \begin{code} to the end of the file; R53's seed refuses it, as GHC does
+nhc98 | hs/errors/lit.latex.unterminated::judge | SPEC-AMBIGUOUS | accept: R53: nhc98 reads an unclosed \begin{code} to the end of the file; R53's seed refuses it, as GHC does
+ghc | hs/lang/lib.r.system.exitcode.prohibited::run | SPEC-AMBIGUOUS | diff: R37: GHC's exitWith (ExitFailure 0) raises InvalidArgument, which isIllegalOperation does not answer True; rhc raises an illegal operation (ruling 57); both end with status 1 uncaught
+hugs | hs/lang/lib.r.system.exitcode.prohibited::run | SPEC-AMBIGUOUS | diff: R37: Hugs stops on exitWith (ExitFailure 0) with a pattern-match failure, which try does not catch; rhc raises an IOError (ruling 57)
+nhc98 | hs/lang/lib.r.system.exitcode.prohibited::run | SPEC-AMBIGUOUS | diff: R37: nhc98 exits 0 on exitWith (ExitFailure 0); rhc prohibits 0 (ruling 57)
+mhs | hs/lang/lib.r.system.exitcode.prohibited::run | SPEC-AMBIGUOUS | diff: R37: MicroHs exits 0 on exitWith (ExitFailure 0); rhc prohibits 0 (ruling 57)
+
+# O's programs for chapter 21's last rows and chapter 22's renameFile (M19-O12, 2026-11-11)
+ghc | hs/lang/lib.r.io.buffer.line_shown::run | HOST-BUG | diff: GHC does not flush a block buffer when the handle is changed to NoBuffering, which 21.6 flushes as hFlush; it gives it at the next write
+hugs | hs/lang/lib.r.io.buffer.line_shown::run | SPEC-AMBIGUOUS | diff: Hugs's block buffering gives part of a short line before the buffer is full, which 21.6 allows (an implementation may flush more often, never less); rhc holds it
+mhs | hs/lang/lib.r.io.buffer.line_shown::run | HOST-BUG | diff: MicroHs's line buffering does not give a line at its newline, and changing to NoBuffering flushes nothing (21.6)
+ghc | hs/lang/lib.r.io.hgetcontents.lazy::run | HOST-BUG | exit: GHC makes a read of hGetContents's list after hClose an error ("delayed read on closed handle"), where 21.2.2 fixes the list
+nhc98 | hs/lang/lib.r.io.hgetcontents.lazy::run | HOST-BUG | exit: nhc98 stops with a segmentation fault reading hGetContents's list after hClose (21.2.2)
+mhs | hs/lang/lib.r.io.hgetcontents.lazy::run | HOST-BUG | exit: MicroHs raises "Bad Handle mode" reading hGetContents's list after hClose (21.2.2)
+nhc98 | hs/lang/lib.r.io.buffer.input.none::run | HOST-BUG | exit: nhc98's IO has no hLookAhead (21.7.3)
+mhs | hs/lang/lib.r.io.buffer.input.none::run | HOST-BUG | reject: MicroHs's IO has no hIsEOF (21.5)
+nhc98 | hs/lang/lib.r.io.hseek.bytes::run | HOST-BUG | diff: R38: nhc98's 8-bit Char writes '\233' as one byte, and its hSeek back to the start reads on from its buffer
+mhs | hs/lang/lib.r.io.hseek.bytes::run | HOST-BUG | reject: MicroHs's IO has no hSeek (21.7.2)
+hugs | hs/lang/lib.r.io.hwaitforinput::run | HOST-BUG | diff: Hugs's hWaitForInput at the end of a file is False, where 21.9.1 makes it fail with isEOFError
+nhc98 | hs/lang/lib.r.io.hwaitforinput::run | HOST-BUG | exit: nhc98's IO has no hWaitForInput (21.9.1)
+mhs | hs/lang/lib.r.io.hwaitforinput::run | HOST-BUG | reject: MicroHs's IO has no hWaitForInput (21.9.1)
+nhc98 | hs/lang/lib.r.io.filename_utf8::run | HOST-BUG | diff: R38: nhc98's 8-bit Char gives a file's name as Latin-1 bytes, not UTF-8
+mhs | hs/lang/lib.r.io.filename_utf8::run | HOST-BUG | reject: MicroHs's Directory does not export removeDirectory (22)
+ghc | hs/lang/lib.r.io.encoding_utf8::run | SPEC-AMBIGUOUS | exit: R5: GHC's decoding refuses a byte that begins no UTF-8 sequence ("cannot decode byte sequence"), which rhc reads as the character of its value
+hugs | hs/lang/lib.r.io.encoding_utf8::run | SPEC-AMBIGUOUS | exit: R5: Hugs refuses the byte 255 as non-character data, which rhc reads as the character of its value
+mhs | hs/lang/lib.r.io.encoding_utf8::run | SPEC-AMBIGUOUS | exit: R5: MicroHs refuses the byte 255, which rhc reads as the character of its value
+nhc98 | hs/lang/lib.r.io.encoding_utf8::run | HOST-BUG | diff: R5: nhc98's 8-bit Char writes nothing of "\256\8364"
+ghc | hs/lang/lib.r.directory.renamefile.nodir::run | HOST-BUG | diff: GHC's renameFile of a directory fails with an inappropriate type, which isPermissionError does not hold of (22)
+nhc98 | hs/lang/lib.r.directory.renamefile.nodir::run | HOST-BUG | exit: nhc98's renameFile of a directory is no permission error, and its getPermissions fails (22)
+mhs | hs/lang/lib.r.directory.renamefile.nodir::run | HOST-BUG | reject: MicroHs's Directory does not export removeDirectory (22)

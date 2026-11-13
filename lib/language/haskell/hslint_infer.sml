@@ -97,6 +97,16 @@ struct
   fun reset () = (preds := []; tops := M.empty; topMono := []; current := ""; inLibrary := false; chosen := [];
                   bindings := []; T.ruleTwo := "")
 
+  (* What the inference of some modules leaves for the modules after them:
+     the types of the top level, its monomorphic variables, the defaults
+     chosen and the bindings found *)
+  type saved = {tops : T.scheme M.map, topMono : T.ty list, chosen : default list, bindings : binding list}
+
+  fun save () : saved = {tops = !tops, topMono = !topMono, chosen = !chosen, bindings = !bindings}
+
+  fun restore (s : saved) =
+    (reset (); tops := #tops s; topMono := #topMono s; chosen := #chosen s; bindings := #bindings s)
+
   (* an environment of locals: their schemes, and the types of those that
      are monomorphic, whose variables are fixed (`tv (apply s as)`) *)
   type env = {vals : T.scheme M.map, mono : T.ty list}

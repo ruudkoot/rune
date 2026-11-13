@@ -247,8 +247,9 @@ until M17 states the encoding of I/O (R5 covers the source alone). Rows: `io.int
 **Ruling.** `-O0`'s literal rules against decision trees over the corpus and generated programs. Since rhc compiles
 them: `hs/desugar/orders` holds the Report's order against Sestoft's trees on every program of `tests/hs/lang`
 (`lang/tr.case.obligation_held` among them), `hs/generated/@orders` (nightly) the generated programs compiled with
-Sestoft's trees against the Report's meaning, and `hs/interp-vm` the literal translation against the compiled form;
-the corpus's differential is not built, so the row is held, the lead's to decide. Rows: `tr.case.obligation`.
+Sestoft's trees against the Report's meaning, `hs-corpus-run/sestoft/ID` (nightly) the corpus's 178 programs that
+run on Sestoft's trees against E8's output, and `hs/interp-vm` the literal translation against the compiled form (the
+lead's ruling 59). Rows: `tr.case.obligation`.
 
 
 ## The lead's rulings on T's M19h list (impl/rulings.md, 2026-11-10, items 14 to 27)
@@ -531,3 +532,16 @@ printed code stands (the lead's ruling, on L's finding). **GHC** and **MicroHs**
 (`1.1805916207174113e21`, `1.1805916e21`); **nhc98** keeps the Report's line. Expected output written from GHC at
 such numbers differs from rhc's: a program's expected `show` of a power of two from `2^p` up comes from the code.
 **rhc** follows the code. Rows: `lib.r.numeric.floattodigits.shortest`.
+
+### R158. Changing an input handle to NoBuffering discards the input it has read ahead
+> If the buffer mode is changed from BlockBuffering or LineBuffering to NoBuffering, then if hdl is writable, the
+> buffer is flushed as for hFlush; if hdl is not writable, the contents of the buffer is discarded. (21.6)
+
+**What the text says.** The characters an input handle has read ahead of the program and not yet given are lost at
+the change, so that the next read skips them (E9's `how`). **GHC**, **Hugs**, **nhc98** and **MicroHs** all keep
+them: after one `hGetChar` of "abcdef" and the change, `hGetContents` gives "bcdef" (oracles.txt). **rhc** follows
+the text, the lead's ruling 61 (D38: the text is clear and implementable, and unanimity is no ground): the change
+discards what a file's handle has read ahead (its bytes and any character `hLookAhead` or `hIsEOF` put back), and
+under NoBuffering such a handle reads a byte at a time, so that nothing is ahead; the runtime's buffer of the
+standard input, which `getChar` and `getContents` share, is the runtime's and not discarded. On the owner's list
+(15). Rows: `lib.r.io.hsetbuffering.discard` (`lang/lib.r.io.hsetbuffering.discard_lost`).

@@ -1518,9 +1518,12 @@ static void call_object(Jit *j, uint32_t pc, int32_t a, int32_t b, int kind) {
     ms_role(M, MR_CLOS);
     closure_function(j, a, R_S2, kind);
     if (kind == K_THUNK) {
+        /* a loop: Loop raised, out of line (compile.c, SLOW_LOOP) */
+        Slow *s = ms_slow(M, SLOW_LOOP, j->next);
+        if (!s) { as_label_free(&after); return; }
         ms_load_contag(M, R_S3, R_S2);
         as_cmp_ri(A, R_S3, THUNK_BLACKHOLE);
-        as_jcc(A, CC_E, jit_fatal(j, FATAL_LOOP, 0, 0, 0));
+        as_jcc(A, CC_E, &s->here);
     }
     called(j, pc);
     ms_role(M, MR_ROOM);

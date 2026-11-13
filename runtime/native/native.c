@@ -86,13 +86,16 @@ const void *native_tailcall(VM *vm) {
     return enter(vm, f, arg);
 }
 
+const void *native_handler(VM *vm);
 /* ENTER (docs/ir.md, Suspensions): CALL of a suspension, which is a loop
-   where its code has said BLACKHOLE, as runtime/stack/interp_cases.h has it */
+   where its code has said BLACKHOLE, as runtime/stack/interp_cases.h has it:
+   Loop raised, and on in the handler's code */
 const void *native_enter(VM *vm, void *back) {
     Value arg = vm_pop(vm);
     Value tv = vm_pop(vm);
     Obj *c = vm_expect_obj(vm, tv, K_THUNK, "suspension");
-    if (obj_contag(c) == THUNK_BLACKHOLE) vm_fatal(vm, "<<loop>>: a suspension forced while it is evaluated");
+    /* a loop (D12): Loop raised, and on in the handler's code */
+    if (obj_contag(c) == THUNK_BLACKHOLE) { vm_raise_loop(vm); return native_handler(vm); }
     uint32_t f = callee(vm, c);
     vm_push_frame(vm, f, c, vm->pc, vm->sp);
     vm->frames[vm->fp].native_ret = back;

@@ -1136,6 +1136,32 @@ is an entry keyed by the hash of the reached Core's text, which is all the
 back end reads, holding the program's bytecode. No change to Rune's Link
 is needed for it, where a Shake over linked bytecode would be one.
 
+**A program of Haskell.** `rhc --units FILE.hs` (`src/rhc/driver.sml`)
+takes each group of the module graph as a unit: named and checked from the
+interfaces of the units before it (`RhcIface`), desugared alone
+(`RhcDesugar.unit`), its interface (`HsIface`: each module's `HsModIface`
+and the desugaring's part) and its Core kept; its usages are the reads the
+naming, the checking and the desugaring made (`HsUsage`), each answered on
+the state of the units before with the unit's modules named
+(`RhcIface.answer`), an entity of another unit with its fingerprint. The
+first unit, the library's, reads only its own source and rhc's leaves, so
+it keeps none. A unit's Core is kept by its declarations
+(`CoreUnits.index`): an index of what each is, makes and names, and each
+declaration's text a section of its own, which the store reads and holds
+to its hash only where it is asked for. The link memo is keyed by the
+units' entries' sums, so a link taken reads no Core, and a link compiled
+reads only the declarations main reaches (`CoreUnits.reachIndexed`).
+The graph is read by its modules' headers (`RhcGraph.scan`): a module's
+name and the modules its imports name, kept in the store by the hash of its
+text, which the stat memo gives (`UnitStore.hashBy`), so that a module is
+parsed only where its unit is made or its usages are asked, and the
+library's, whose unit keeps none, never once it is taken. Measured on
+hello, in VM instructions: whole 145M; through the units, with nothing
+edited about 22M (the graph read 1M, the library taken 11M, Main taken
+10M, the link taken), with hello edited about 54M (Main compiled 26M, the
+link's reach 6M and its compile 9M), the program byte for byte the whole
+one.
+
 ## The graph
 
 `rune --deps FILE...` puts files in an order where each comes after the

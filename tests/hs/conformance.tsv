@@ -704,7 +704,7 @@ pat.guard.after	3.17.2	A guard is evaluated only after all arguments have matche
 pat.guard.true	3.17.2	It must be true for the overall match to succeed	dynamic	run	False guard falls to the next clause	hand	Supported		
 pat.guard.env	3.17.2	The guard's environment is that of the right-hand side	static	run	guard uses the where bindings and the pattern variables	hand	Supported		
 pat.guard.strict	3.17.2	An otherwise irrefutable pattern may be evaluated because of a guard	dynamic	run	f ~(x,y,z) [a] | (a == y) = 1 evaluates a and y: f undefined [1] terminates as error does, the Report's example	hand	Supported		
-tr.case.obligation	3.17.3	Any implementation should behave so that these identities hold, and need not use them directly	dynamic	run	-O0 as the literal rules differenced against decision trees, over the corpus and generated programs	hand	Planned	R86	
+tr.case.obligation	3.17.3	Any implementation should behave so that these identities hold, and need not use them directly	dynamic	run	-O0 as the literal rules differenced against decision trees, over the corpus and generated programs. Held by four jobs (ruling 59): hs/desugar/orders, the Report's rules against Sestoft's trees on every program of tests/hs/lang; hs/generated/@orders, the generated programs on Sestoft's trees against the Report's meaning; hs-corpus-run/sestoft, the corpus on Sestoft's trees against E8's output (nightly); and hs/interp-vm, the literal translation against the compiled form.	hand	Supported	R86	
 tr.case.base	3.17.3	All pattern-matching constructs other than case are defined by identities to case, and case by a series of identities	dynamic	none	a statement of method; the rules' completeness is in translations.md. Met by construction (ruling 49): HsMatch compiles case by 3.17.3's identities, in the Report's order by default (D34 A), and HsDesugar takes every other matching construct to it, function clauses, lambdas, pattern bindings, do and comprehensions (desugar.sml's HsMatch.clauses and HsMatch.pattern); the tr.case.* rows' programs and tests/hs/desugar's hs/desugar/report jobs run them	hand	Supported		
 tr.case.a	3.17.3	(a) case e of { alts } = (\v -> case v of { alts }) e, v new	dynamic	run	literal rule differenced; e evaluated at most once, sharing kept by the lambda	hand	Supported		
 tr.case.b	3.17.3	(b) case v of { p1 match1; ... ; pn matchn } = case v of { p1 match1 ; _ -> ... case v of { pn matchn ; _ -> error "No match" }...}	dynamic	run	literal rule differenced, for one to many alternatives	hand	Supported		
@@ -1823,7 +1823,7 @@ io.exc.handlerraises	7.3	An exception in a handler goes to the next outer handle
 io.exc.error.notcaught	7.3	error is no IOError, so catch does not see it	dynamic	run	catch (error "x") h ends the program, by 1.3, 3.1 and 7.3 together: see readings.md	hand	Supported	R36	
 io.exc.uncaught	7.3	An exception leaving the main program makes the system print the IOError and exit	dynamic	run	stderr has the error's text; 23 gives the status: see readings.md	hand	Supported	R37	
 io.exc.fail	7.3	fail of IO's Monad instance raises a userError: fail s = ioError (userError s)	dynamic	run	isUserError true, the string is s	hand	Supported		
-io.exc.ch21	7.3	The exceptions raised by the Prelude's I/O functions are those of chapter 21	dynamic	run	chapter 21's rows, through the Prelude's names	hand	Planned		
+io.exc.ch21	7.3	The exceptions raised by the Prelude's I/O functions are those of chapter 21	dynamic	run	chapter 21's rows, through the Prelude's names	hand	Supported		
 pre.r.spec	8	The chapter constitutes a specification for the Prelude	prelude	none	tested through the generated pre.* rows. Met through named rows' programs (ruling 49): the pre.* rows hold each entity to the chapter's code.	hand	Supported		
 pre.r.notasis	8	It is not required that the specification be implemented as shown	prelude	none	a permission; rhc's overlay is the list of its uses of it. Met by construction (ruling 49): rhc's library departs from the code as printed where share/rhc/haskell98/overlay.tsv says, each entry with its reason, and is the code elsewhere.	hand	Supported		
 pre.r.default.method	8	A default method definition specifies only the default method, not the method in all instances	prelude	none	a limit on what the code means: no instance's method is tested against a default unless it uses it. Nothing to meet (ruling 49): a limit on what the code means, which asks nothing of rhc.	hand	Supported		
@@ -3574,16 +3574,16 @@ lib.r.io.iserror.illegal	21.1	isIllegalOperation: the operation is not possible	
 lib.r.io.iserror.perm	21.1	isPermissionError: insufficient privilege	library	run	a file without read permission, skipped as root	hand	Supported		
 lib.r.io.iserror.user	21.1	isUserError: a programmer-defined error raised with fail	library	run	`fail "x"` caught	hand	Supported		
 lib.r.io.iserror.bool	21.1	Each predicate is True of its kind and False otherwise	library	run	each predicate on each kind of error	hand	Supported		
-lib.r.io.illegal.any	21.1	Any computation returning an IO result may fail with isIllegalOperation	library	none	a licence to the implementation	hand	Planned		
-lib.r.io.illegal.fallback	21.1	When causes cannot be distinguished an implementation should return isIllegalOperation	library	none	a licence to the implementation	hand	Planned		
+lib.r.io.illegal.any	21.1	Any computation returning an IO result may fail with isIllegalOperation	library	none	nothing to meet, a licence to the implementation; rhc takes it where a handle cannot do the operation (closed, semi-closed, or not opened for it: checkOpen) and for a system error of no other kind	hand	Supported		
+lib.r.io.illegal.fallback	21.1	When causes cannot be distinguished an implementation should return isIllegalOperation	library	none	by construction: a system error of no kind the Report names is isIllegalOperation (PreludeRuntime.primErrnoKind's last case)	hand	Supported		
 lib.r.io.ioegethandle	21.1	ioeGetHandle gives Just hdl if the error refers to hdl, otherwise Nothing	library	run	hGetChar at EOF; a file-name error	hand	Supported		
 lib.r.io.ioegetfilename	21.1	ioeGetFileName gives Just name if the error refers to name, otherwise Nothing	library	run	openFile of a missing file	hand	Supported		
 lib.r.io.ioegeterrorstring.user	21.1	For user errors ioeGetErrorString returns the argument passed to fail	library	run	exact	hand	Supported		
-lib.r.io.ioegeterrorstring.other	21.1	For other errors the string is implementation-dependent	library	none	implementation-defined	hand	Planned		
+lib.r.io.ioegeterrorstring.other	21.1	For other errors the string is implementation-dependent	library	none	nothing to meet: rhc's string is the operation and the system's message (PreludeRuntime.primFailWith)	hand	Supported		
 lib.r.io.try	21.1	try returns an error explicitly in Either	library	run	Left on failure, Right on success	hand	Supported		
 lib.r.io.bracket	21.1	bracket runs the deallocation even on an error during computation	library	run	`after` runs, then the error propagates	hand	Supported		
-lib.r.io.filename	21.2	File and directory names are Strings of operating-system dependent meaning	library	none	implementation-defined; rhc must pick an encoding: see readings.md	hand	Planned	R38	
-lib.r.io.handle.props	21.2	A handle has at least: input/output, open/closed/semi-closed, seekable, buffering, a buffer	library	none	a description, tested through hIs* and hGetBuffering	hand	Planned		
+lib.r.io.filename	21.2	File and directory names are Strings of operating-system dependent meaning	library	run	a run since ruling 49, E9's column none: rhc's choice (R38), a name's characters its UTF-8 bytes, shown by the system's ls	hand	Supported	R38	
+lib.r.io.handle.props	21.2	A handle has at least: input/output, open/closed/semi-closed, seekable, buffering, a buffer	library	none	through named rows: lib.r.io.handle.open, .closed, .readable, lib.r.io.hisopen, .hisclosed, .hisreadable, lib.r.io.hgetbuffering, and R156's semi-closed state	hand	Supported		
 lib.r.io.handle.readable	21.2	A handle is readable if it manages input, writable if it manages output	library	run	each IOMode with hIsReadable and hIsWritable	hand	Supported		
 lib.r.io.handle.open	21.2	A handle is open when first allocated	library	run	hIsOpen after openFile	hand	Supported		
 lib.r.io.handle.closed	21.2	Once closed a handle can no longer be used for input or output	library	run	hGetChar and hPutChar fail after hClose	hand	Supported		
@@ -3596,21 +3596,21 @@ lib.r.io.semi.fails	21.2.2	Any operation that fails on a closed handle fails on 
 lib.r.io.semi.hclose	21.2.2	hClose is the one exception	library	run	hClose of a semi-closed handle succeeds	hand	Supported		
 lib.r.io.semi.close.hclose	21.2.2	A semi-closed handle becomes closed if hClose is applied	library	run	hIsClosed after it	hand	Supported		
 lib.r.io.semi.close.end	21.2.2	It becomes closed once the entire contents have been read	library	run	hIsClosed after forcing the list	hand	Supported		
-lib.r.io.semi.close.error	21.2.2	It becomes closed if an I/O error occurs reading an item	library	none	needs an injected read error	hand	Planned		
+lib.r.io.semi.close.error	21.2.2	It becomes closed if an I/O error occurs reading an item	library	none	by construction: a read that fails ends hGetContents's list, which closes the handle at its end (PreludeRuntime.fileByte's catch, primHGetContents)	hand	Supported		
 lib.r.io.semi.fixed	21.2.2	Once closed the list's contents are fixed, holding at least what was evaluated before	library	run	hClose then force: the evaluated prefix is present, the rest may be cut	hand	Supported		
-lib.r.io.semi.discard	21.2.2	I/O errors while semi-closed are simply discarded	library	none	needs an injected read error	hand	Planned		
-lib.r.io.hgetcontents.lazy	21.2.2	Items are read on demand	library	run	an interactive pipe answers before the input ends	hand	Planned		
+lib.r.io.semi.discard	21.2.2	I/O errors while semi-closed are simply discarded	library	none	by construction: a failed read's IOError is caught where the semi-closed handle reads (PreludeRuntime.fileByte) and raised by nothing	hand	Supported		
+lib.r.io.hgetcontents.lazy	21.2.2	Items are read on demand	library	run	an interactive pipe answers before the input ends	hand	Supported		
 lib.r.io.lock.writer	21.2.3	If a handle manages a file for output no new handle can be allocated for it	library	run	second openFile fails with isAlreadyInUseError	hand	Supported		
 lib.r.io.lock.reader	21.2.3	If a handle manages a file for input new handles may only manage input	library	run	a second reader succeeds, a writer fails	hand	Supported		
 lib.r.io.lock.semi	21.2.3	The rule counts open and semi-closed handles	library	run	openFile for output after hGetContents fails	hand	Supported		
 lib.r.io.lock.readfile	21.2.3	readFile holds a semi-closed handle until the contents are consumed; writeFile usually fails with isAlreadyInUseError	library	run	lazily read then write the same file	hand	Supported		
-lib.r.io.lock.same	21.2.3	Whether two files are the same is implementation-dependent	library	none	implementation-defined	hand	Planned		
+lib.r.io.lock.same	21.2.3	Whether two files are the same is implementation-dependent	library	none	nothing to meet: rhc takes two files as the same where their names are the same String (PreludeRuntime.locked)	hand	Supported		
 lib.r.io.openfile.mode	21.3.1	openFile manages input in ReadMode, output in WriteMode and AppendMode, both in ReadWriteMode	library	run	hIsReadable, hIsWritable	hand	Supported		
 lib.r.io.openfile.create	21.3.1	A missing file opened for output is created	library	run	doesFileExist afterwards	hand	Supported		
 lib.r.io.openfile.truncate	21.3.1	WriteMode truncates an existing file to zero length	library	run	size afterwards	hand	Supported		
 lib.r.io.openfile.append	21.3.1	AppendMode positions at the end of the file	library	run	contents after a write	hand	Supported		
 lib.r.io.openfile.start	21.3.1	Other modes position at the beginning	library	run	first character read	hand	Supported		
-lib.r.io.openfile.buffer	21.3.1	The initial buffer mode is implementation-dependent	library	none	implementation-defined	hand	Planned		
+lib.r.io.openfile.buffer	21.3.1	The initial buffer mode is implementation-dependent	library	none	nothing to meet: rhc's choice is block buffering for a file openFile opens, by line for stdin and stdout, none for stderr	hand	Supported		
 lib.r.io.openfile.err.inuse	21.3.1	openFile may fail with isAlreadyInUseError if already open and not reopenable	library	run	as lib.r.io.lock.writer	hand	Supported		
 lib.r.io.openfile.err.notexist	21.3.1	openFile may fail with isDoesNotExistError	library	run	ReadMode on a missing file	hand	Supported		
 lib.r.io.openfile.err.perm	21.3.1	openFile may fail with isPermissionError	library	run	a file without permission, skipped as root	hand	Supported		
@@ -3621,38 +3621,38 @@ lib.r.io.hclose.failed	21.3.2	After hClose fails, further operations fail as if 
 lib.r.io.hfilesize	21.4	hFileSize returns the file's size in 8-bit bytes	library	run	exact, for a file with non-ASCII text too	hand	Supported		
 lib.r.io.hiseof	21.5	hIsEOF is True when no further input can be taken: position equals length	library	run	before and after the last character	hand	Supported		
 lib.r.io.iseof	21.5	isEOF is hIsEOF on stdin	library	run	with a piped input	hand	Supported		
-lib.r.io.buffer.line	21.6	Line buffering flushes on newline, overflow, hFlush and close	library	run	a second process observes the output, or a strace-free pipe test	hand	Planned		
-lib.r.io.buffer.block	21.6	Block buffering flushes on overflow, hFlush and close	library	run	as above	hand	Planned		
-lib.r.io.buffer.none	21.6	No buffering writes immediately	library	run	as above	hand	Planned		
-lib.r.io.buffer.more	21.6	An implementation may flush more often than specified, never less	library	none	the licence half; the bound is tested by the rows above	hand	Planned		
-lib.r.io.buffer.input.line	21.6	Line-buffered input reads until a newline or a full buffer	library	none	observable only by timing on a terminal or pipe	hand	Planned		
-lib.r.io.buffer.input.block	21.6	Block-buffered input reads the next block when the buffer empties	library	none	observable only by timing	hand	Planned		
-lib.r.io.buffer.input.none	21.6	No buffering returns the next input item	library	run	an interactive pipe answers character by character	hand	Planned		
+lib.r.io.buffer.line	21.6	Line buffering flushes on newline, overflow, hFlush and close	library	run	a second process observes the output, or a strace-free pipe test	hand	Supported		
+lib.r.io.buffer.block	21.6	Block buffering flushes on overflow, hFlush and close	library	run	as above. Planned by ruling 64: rhc flushes on hFlush and close, and on overflow only of the runtime's own buffer: BlockBuffering (Just n)'s n is stored by PreludeRuntime.primHSetBuffering and used by nothing, so at BlockBuffering (Just 4) ten characters written leave the file empty, where 21.6 has written eight (lib.r.io.buffer.more's case); L's fix to come, then a program that shows the flushes.	hand	Planned		
+lib.r.io.buffer.none	21.6	No buffering writes immediately	library	run	as above	hand	Supported		
+lib.r.io.buffer.more	21.6	An implementation may flush more often than specified, never less	library	none	a licence to flush more often, and a bound: never less often. rhc flushes no more often than 21.6 says (lang/lib.r.io.buffer.line_shown), but less often for BlockBuffering (Just n): the size is kept (PreludeRuntime.primHSetBuffering) and not used, the writes held in the runtime's own buffer, so a handle at BlockBuffering (Just 4) has written nothing after ten characters, where 21.6 has written eight; Planned until it does	hand	Planned		
+lib.r.io.buffer.input.line	21.6	Line-buffered input reads until a newline or a full buffer	library	none	by construction: a read gives what the system has, up to 4096 bytes (PreludeRuntime.fileByte): a terminal gives a line at a time, and a file a block, more than a line, which no program of its own can tell from a line	hand	Supported		
+lib.r.io.buffer.input.block	21.6	Block-buffered input reads the next block when the buffer empties	library	none	by construction: the next 4096 bytes are read when the handle's are used up (PreludeRuntime.fileByte)	hand	Supported		
+lib.r.io.buffer.input.none	21.6	No buffering returns the next input item	library	run	an interactive pipe answers character by character	hand	Supported		
 lib.r.io.hsetbuffering	21.6	hSetBuffering sets the mode for subsequent reads and writes	library	run	read back by hGetBuffering	hand	Supported		
 lib.r.io.hsetbuffering.size	21.6	BlockBuffering (Just n) gives n items, Nothing an implementation-dependent size	library	run	read back	hand	Supported		
-lib.r.io.hsetbuffering.toflush	21.6	Changing to NoBuffering flushes a writable handle	library	run	output appears at the change	hand	Planned		
-lib.r.io.hsetbuffering.discard	21.6	Changing to NoBuffering discards a non-writable handle's buffer	library	run	the next read skips what was buffered; order of reads shows it	hand	Planned		
-lib.r.io.hsetbuffering.err	21.6	hSetBuffering may fail with isPermissionError if the handle has been used	library	none	a licence to the implementation	hand	Planned		
+lib.r.io.hsetbuffering.toflush	21.6	Changing to NoBuffering flushes a writable handle	library	run	output appears at the change	hand	Supported		
+lib.r.io.hsetbuffering.discard	21.6	Changing to NoBuffering discards a non-writable handle's buffer	library	run	the next read skips what was buffered; order of reads shows it	hand	Supported	R158	
+lib.r.io.hsetbuffering.err	21.6	hSetBuffering may fail with isPermissionError if the handle has been used	library	none	nothing to meet, a licence: rhc changes a handle's buffering whenever it is open (PreludeRuntime.primHSetBuffering)	hand	Supported		
 lib.r.io.hgetbuffering	21.6	hGetBuffering returns the current mode	library	run	after each hSetBuffering	hand	Supported		
-lib.r.io.hflush	21.6.1	hFlush sends buffered items to the operating system at once	library	run	another handle reads them	hand	Planned		
+lib.r.io.hflush	21.6.1	hFlush sends buffered items to the operating system at once	library	run	another handle reads them	hand	Supported		
 lib.r.io.hflush.err	21.6.1	hFlush may fail with isFullError or isPermissionError; the buffer's fate is unspecified	library	none	needs a full device	hand	Planned		
 lib.r.io.hgetposn	21.7.1	hSetPosn p restores the position hGetPosn gave	library	run	reads repeat	hand	Supported		
-lib.r.io.hsetposn.err	21.7.1	hSetPosn may fail with isPermissionError on a resource limit	library	none	needs an injected limit	hand	Planned		
+lib.r.io.hsetposn.err	21.7.1	hSetPosn may fail with isPermissionError on a resource limit	library	none	nothing to meet, a licence: rhc raises the system's error of a seek that fails, by its kind (PreludeRuntime.primHSeek)	hand	Supported		
 lib.r.io.hseek.absolute	21.7.2	AbsoluteSeek sets the position to i	library	run	next character read	hand	Supported		
 lib.r.io.hseek.relative	21.7.2	RelativeSeek sets it to offset i from the current position	library	run	next character read	hand	Supported		
 lib.r.io.hseek.end	21.7.2	SeekFromEnd sets it to offset i from the end	library	run	next character read	hand	Supported		
-lib.r.io.hseek.bytes	21.7.2	The offset is in 8-bit bytes	library	run	on a file with multi-byte text: a Char is not a byte here	hand	Planned		
+lib.r.io.hseek.bytes	21.7.2	The offset is in 8-bit bytes	library	run	on a file with multi-byte text: a Char is not a byte here	hand	Supported		
 lib.r.io.hseek.buffer	21.7.2	Seeking outside the buffer writes the output buffer and discards the input buffer	library	run	write, seek, read back	hand	Supported		
 lib.r.io.hseek.negative	21.7.2	A negative I/O position cannot be set	library	run	fails	hand	Supported		
 lib.r.io.hseek.beyond	21.7.2	For a physical file a position beyond end of file cannot be set	library	run	fails; POSIX lseek allows it, so rhc must check	hand	Supported		
-lib.r.io.hseek.err	21.7.2	hSeek may fail with isPermissionError on a resource limit	library	none	needs an injected limit	hand	Planned		
+lib.r.io.hseek.err	21.7.2	hSeek may fail with isPermissionError on a resource limit	library	none	nothing to meet, a licence: rhc raises the system's error of a seek that fails, by its kind (PreludeRuntime.primHSeek)	hand	Supported		
 lib.r.io.hisopen	21.8	hIsOpen is True of an open handle	library	run	across its life	hand	Supported		
 lib.r.io.hisclosed	21.8	hIsClosed is True of a closed handle	library	run	across its life	hand	Supported		
 lib.r.io.hisreadable	21.8	hIsReadable is True of a readable handle	library	run	each mode	hand	Supported		
 lib.r.io.hiswritable	21.8	hIsWritable is True of a writable handle	library	run	each mode	hand	Supported		
 lib.r.io.hisseekable	21.8	hIsSeekable is True of a seekable handle	library	run	a file and a pipe	hand	Supported		
-lib.r.io.encoding	21.9	The Report does not say how a Char above 255 is written to or read from a file	library	none	a decision for rhc: see readings.md	hand	Planned	R5	
-lib.r.io.hwaitforinput	21.9.1	hWaitForInput returns True as soon as input is available, False if none within t milliseconds	library	run	a pipe with and without data	hand	Planned		
+lib.r.io.encoding	21.9	The Report does not say how a Char above 255 is written to or read from a file	library	run	a run since ruling 49, E9's column none: rhc's choice (R5), UTF-8 on every host, a byte that begins no sequence read as its own value	hand	Supported	R5	
+lib.r.io.hwaitforinput	21.9.1	hWaitForInput returns True as soon as input is available, False if none within t milliseconds	library	run	a pipe with and without data	hand	Supported		
 lib.r.io.hready	21.9.1	hReady says whether at least one item is available	library	run	a file not at its end	hand	Supported		
 lib.r.io.hready.eof	21.9.1	hWaitForInput and hReady fail with isEOFError at end of file	library	run	on a file at its end	hand	Supported		
 lib.r.io.hgetchar	21.9.2	hGetChar reads a character	library	run	exact	hand	Supported		
@@ -3688,7 +3688,7 @@ lib.r.directory.remove.err.notexist	22	They may fail with isDoesNotExistError	li
 lib.r.directory.renamedir	22	renameDirectory changes an existing directory's name; an existing target is atomically replaced	library	run	with and without a target	hand	Supported		
 lib.r.directory.renamedir.partial	22	A conformant implementation need not support all cases, but the constraints must be documented	library	none	a documentation duty on rhc. Met by construction (ruling 49): rhc's renameDirectory is POSIX rename(2) of two directory names on every host (the runtime's sys_rename, emulated on Windows), so it supports what rename supports and fails as it fails, across file systems among them; that is rhc's statement of its constraints.	hand	Supported		
 lib.r.directory.renamefile	22	renameFile changes an existing object's name; an existing target is atomically replaced	library	run	with and without a target	hand	Supported		
-lib.r.directory.renamefile.nodir	22	Neither path of renameFile may refer to an existing directory	library	run	fails with isPermissionError	hand	Planned		
+lib.r.directory.renamefile.nodir	22	Neither path of renameFile may refer to an existing directory	library	run	fails with isPermissionError	hand	Supported		
 lib.r.directory.rename.err.perm	22	Renames may fail with isPermissionError	library	run	skipped as root	hand	Supported		
 lib.r.directory.rename.err.notexist	22	Renames may fail with isDoesNotExistError	library	run	a missing source	hand	Supported		
 lib.r.directory.contents	22	getDirectoryContents lists all entries, "." and ".." included under POSIX	library	run	both appear	hand	Supported		
@@ -3699,8 +3699,8 @@ lib.r.directory.contents.err	22	They may fail with isPermissionError or isDoesNo
 lib.r.directory.setcurrent	22	setCurrentDirectory changes the process's current directory	library	run	getCurrentDirectory afterwards	hand	Supported		
 lib.r.directory.setcurrent.err	22	It may fail with isPermissionError or isDoesNotExistError	library	run	a missing directory	hand	Supported		
 lib.r.directory.permissions	22	getPermissions and setPermissions get and set Permissions	library	run	a round trip on a file	hand	Supported		
-lib.r.directory.permissions.exec	22	For directories executable is False	library	run	on a directory	hand	Planned		
-lib.r.directory.permissions.search	22	For files searchable is False	library	run	on a file	hand	Planned		
+lib.r.directory.permissions.exec	22	For directories executable is False	library	run	on a directory	hand	Supported		
+lib.r.directory.permissions.search	22	For files searchable is False	library	run	on a file	hand	Supported		
 lib.r.directory.permissions.example	22	Example: makeReadable updates one field with record update	library	run	Permissions' fields are exported	hand	Supported		
 lib.r.directory.doesdirectoryexist	22	doesDirectoryExist is True if the file exists and is a directory	library	run	a file, a directory, nothing	hand	Supported		
 lib.r.directory.doesfileexist	22	doesFileExist is True if the file exists and is not a directory	library	run	a file, a directory, nothing	hand	Supported		
@@ -3742,7 +3742,7 @@ lib.r.system.illegal	23	Any System operation could raise isIllegalOperation, and
 lib.r.system.exitcode	23	ExitSuccess is successful termination, ExitFailure code is failure with value code	library	run	the process's status	hand	Supported		
 lib.r.system.exitcode.prohibited	23	Some codes may be prohibited, e.g. 0 on POSIX	library	run	the Report does not say what exitWith (ExitFailure 0) does: see readings.md. E9's test was none; ruling 49 makes it a run (tests/hs/lang/lib.r.system.exitcode.prohibited): by ruling 57, rhc prohibits 0, exitWith (ExitFailure 0) raising an IOError, an illegal operation, a failure of status 1 uncaught (R37 in readings.md).	hand	Supported	R37	
 lib.r.system.getargs	23	getArgs returns the command line arguments, without the program name	library	run	exact	hand	Supported		
-lib.r.system.getprogname	23	getProgName returns the program's name as invoked	library	run	exact	hand	Planned		
+lib.r.system.getprogname	23	getProgName returns the program's name as invoked	library	run	exact	hand	Supported		
 lib.r.system.getenv	23	getEnv var returns the variable's value	library	run	exact	hand	Supported		
 lib.r.system.getenv.err	23	An undefined variable raises isDoesNotExistError	library	run	caught and tested	hand	Supported		
 lib.r.system.system	23	system cmd returns the exit code of the command	library	run	`true` and `false`	hand	Supported		
@@ -3751,7 +3751,7 @@ lib.r.system.exitwith.close	23	Before termination open and semi-closed handles a
 lib.r.system.exitfailure	23	exitFailure = exitWith (ExitFailure exitfail), exitfail implementation-dependent	library	run	a non-zero status	hand	Supported		
 lib.r.system.exitwith.nocatch	23	exitWith bypasses the I/O monad's error handling and cannot be intercepted by catch	library	run	`catch (exitWith ExitSuccess) h`: h does not run	hand	Supported		
 lib.r.system.term.error	23	A program ending by error, or with value _|_, is treated identically to exitFailure	library	run	non-zero status and handles closed, against 3.1's "immediate": see readings.md	hand	Supported	R37	
-lib.r.system.term.loop	23	A value "otherwise determined to be _|_" includes non-termination, detected or not	library	run	only a detected loop or stack exhaustion can be tested. E9's test was none; ruling 49 makes it a run and ruling 58 its test (tests/hs/lang/lib.r.system.term.loop): a loop rhc determines, the re-entry of a blackholed suspension, ends with status 1 on the interpreter and the VM; the stack's exhaustion is D18's limit, outside the clause.	hand	Planned	R95	
+lib.r.system.term.loop	23	A value "otherwise determined to be _|_" includes non-termination, detected or not	library	run	only a detected loop or stack exhaustion can be tested. E9's test was none; ruling 49 makes it a run and ruling 58 its test (tests/hs/lang/lib.r.system.term.loop): a loop rhc determines, the re-entry of a blackholed suspension, ends with status 1 on the interpreter and the VM; the stack's exhaustion is D18's limit, outside the clause.	hand	Supported	R95	
 lib.r.system.term.normal	23	A program p ending without exitWith is treated as (p >> exitWith ExitSuccess) `catch` \ _ -> exitFailure	library	run	status 0 on success	hand	Supported		
 lib.r.system.term.ioerror	23	An uncaught IOError gives exitFailure	library	run	non-zero status, and 7.3's printed value on stderr	hand	Supported		
 lib.system.data.exitcode	23	type ExitCode is declared as the Report gives it	library	accept	constructors, deriving and kinds used by a test program	generated	Supported		

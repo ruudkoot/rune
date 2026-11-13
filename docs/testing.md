@@ -413,16 +413,18 @@ rhc goes through the same corpus (`tests/runner/hsrhccorpus.sml`, `hslazyports.s
   beside the logs (`LOG.times`). A program both judges ran right (GHC's and Hugs's outputs E8's) that rhc refuses
   (`compile`), ends otherwise (`exit`) or prints otherwise (`diff`) is a finding, and fails its job unless a line of
   `tests/hs/rhc-corpus.txt` gives its cause (`rhc | ID::run | CATEGORY | OUTCOME: ...`); what it does where the
-  judges do not both run it right is kept in the results. `hs-corpus-run/@stale` (and `@stale-nightly`) fails a line
-  that explains no failure of a job that ran. `hs-rhc-corpus/vendored-SET`, in `check`, a job a set, puts the 45
-  under a `LICENSE` through `--typecheck-only` as the nightly jobs above put the whole corpus, and
-  `hs-rhc-corpus/provenance-SET`, nightly, the 143 under a `PROVENANCE` (ruling 46: D56 puts the 188's runs in
-  `check`, not a names job, and the nightly jobs above check the 143 too). `hs-corpus/vendored` (nightly, with the
-  trees) holds `tests/hs/corpus/vendored/` to the trees' bytes at their commits, and `hs-corpus/data` to the
-  vendored programs' files and notices and nothing more: it refuses a file with no `LICENSE` or `PROVENANCE` beside
-  it or above it, or under another notice than its row of `licences.tsv` names, and a `PROVENANCE` that does not
-  name its tree's upstream and commit or quote the owner's rule. `bin/rune-test hs-corpus-vendor` makes it again
-  from the trees, leaving each `PROVENANCE` as written.
+  judges do not both run it right is kept in the results. Nightly, `hs-corpus-run/sestoft/ID` compiles each program
+  whose run in the Report's order no line explains with its matches as Sestoft's decision trees (`--match=sestoft`),
+  runs it on the register VM and holds it to the same judge, its label `sestoft` (the lead's ruling 59,
+  `tr.case.obligation`). `hs-corpus-run/@stale` (and `@stale-nightly`) fails a line that explains no failure of a
+  job that ran. `hs-rhc-corpus/vendored-SET`, in `check`, a job a set, puts the 45 under a `LICENSE` through
+  `--typecheck-only` as the nightly jobs above put the whole corpus, and `hs-rhc-corpus/provenance-SET`, nightly,
+  the 143 under a `PROVENANCE` (ruling 46: D56 puts the 188's runs in `check`, not a names job, and the nightly jobs
+  above check the 143 too). `hs-corpus/vendored` (nightly, with the trees) holds `tests/hs/corpus/vendored/` to the
+  trees' bytes at their commits, and `hs-corpus/data` to the vendored programs' files and notices and nothing more:
+  it refuses a file with no `LICENSE` or `PROVENANCE` beside it or above it, or under another notice than its row of
+  `licences.tsv` names, and a `PROVENANCE` that does not name its tree's upstream and commit or quote the owner's
+  rule. `bin/rune-test hs-corpus-vendor` makes it again from the trees, leaving each `PROVENANCE` as written.
 - `hs-corpus/faults` holds the first to a fake rhc. Commands: `bin/rune-test hs-rhc-corpus m13 ghc-legacy`,
   `hs-rhc-corpus stale`, `hs-lazy-ports calendar-lazy`; `RUNE_HS_RHC`, `RUNE_HS_RUNEVM`, `RUNE_HS_RHC_TXT` and
   `RUNE_HS_LAZY_PORTS` stand in other tools and files.
@@ -820,7 +822,11 @@ superclass is right. `faults` holds each rule to refusing its fault, as
 `astlintFaults` holds AstLint's: `tests/hs/hslint/faults.hs`, desugared,
 with its records, its Core and its own expected dump, is accepted, and with
 `RHC_HSLINT_FAULT=RULE`, which reads the first claim, record or Core type
-RULE checks corrupted, refused with `[RULE]`. `levels` builds each fixture
+RULE checks corrupted, refused with `[RULE]`, both from the saved world and
+`--whole`. A program compiled from the saved world is checked with HsLint's
+inference of the library taken from the world, made once when the world is
+(`--make-world`, at level 2, D45): HsLint infers the program's own modules
+alone and replays only their records. `levels` builds each fixture
 the dump infers at level 2 and at level 0, which must be the same bytes, as
 `levelsOne` holds Rune's builds: no check changes what rhc makes.
 
@@ -875,11 +881,18 @@ added (`hs/meta/import`, 5.3.1); and the pairs written by hand in
 `tests/hs/meta`, `NAME.hs` and `NAME.pair.hs`, the relation first in NAME:
 `rename` (bound variables renamed, 3.3, 3.12) and `reorder` (declarations
 reordered, 4.5.1 and the top level). Two more are made from each program:
-`hs/meta/reorder`, its top-level blocks (runs of lines between blank ones) in
-the reverse order, and `hs/meta/split`, the program split into a module
+`hs/meta/reorder`, its top-level blocks in the reverse order, and
+`hs/meta/split`, the program split into a module
 `Lib` holding every block but `main`'s and a `Main` that imports it (5, the
 multi-module form of a joined program; none is made where a `default`
-declaration or a name qualified by `Main` would change the program). A pair
+declaration or a name qualified by `Main` would change the program). A block
+is a run of lines that a blank line ends only before a line at column 1, so
+that a class's, an instance's or a `where`'s lines stay together, and the
+blocks that define one name, a function's clauses or a signature and its
+binding, are one; the header, the module line and the imports with their
+comments and continuation lines, ends at the first declaration, the comments
+right above it going with it, and `Lib` takes the header's imports. Their own
+texts, no rhc needed, are `hs/meta/@self` (`check`). A pair
 is held while its program's rows, or the rows its relation cites, are
 `Planned`; what runs today is rhc's names on both programs of the two new
 relations, on an even sample of 30 (`hs/meta/names/*`; `reorder` in `check`, the others
@@ -1072,7 +1085,8 @@ against what is given now, an absent name present now refuses it (H1, H2);
 one checked at a lower level of the lint is refused; a key is over every
 member and its text (H8); the overlay is read before the layers, a layer is
 read and never written, one configuration's entries are not another's; a
-damaged entry is a miss; a head is read back as it was written.
+damaged code section is refused where it is read, which is only where it
+is asked for; a head is read back as it was written.
 `hs/units/named` builds `tests/hs/units/named.build` on Mid's layer of the
 compiler, as rhc is built, and runs it: a unit's Mid text names another
 unit's global, which `MidText.parseWith`'s `named` gives the other's stamp,
@@ -1097,7 +1111,14 @@ is `hs/units/warm` with `--link=whole`, the roadmap's C (*rhc's units* in
 [units.md](units.md)): each unit is checked or taken, its Core kept, and the
 link joins the units' Core, keeps what `main` reaches and compiles it whole
 or takes it from the link memo; each step's program is also byte for byte
-what a whole compile of the same files gives. Core in
+what a whole compile of the same files gives. `hs/units/drive` is rhc's
+driver over a program of Haskell (`rhc --units FILE.hs --store DIR
+--show-units`): `tests/hs/units/drive`'s Main and Lib, copies edited, each
+step with the library's unit, Lib's, Main's and the link compiled or taken
+as it should, what it prints, and its program byte for byte `rhc Main.hs`'s
+whole compile; a body's edit of Lib takes Main by its reads' fingerprints,
+an export Main does not read takes Main too, and a type's edit of a value
+Main reads compiles Main. Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an

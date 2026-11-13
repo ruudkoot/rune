@@ -23,6 +23,7 @@ files
   src/rhc/store.sml
   src/rhc/storeconfig.sml
   src/rhc/units.sml
+  src/rhc/driver.sml
   src/rhc/main.sml
 end
 src/main/rhc-main.sml

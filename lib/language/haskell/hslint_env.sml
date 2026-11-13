@@ -881,11 +881,13 @@ struct
 
   (* ---- every instance's superclasses (4.3.2, cls.inst.super) ---- *)
 
-  fun superclasses () =
+  fun superclasses (checked : C.inst -> bool) =
     M.foldl
       (fn (_, is, ()) =>
          List.app
-           (fn {head = T.IsIn (cls, h), context, arity, span, derived} =>
+           (fn i as {head = T.IsIn (cls, h), context, arity, span, derived} =>
+              if not (checked i) then ()
+              else
               let
                 val kinds = case headTycon (T.IsIn (cls, h)) of
                               SOME tc => (List.take (argKinds (getOpt (tyconKind tc, T.Star)), arity) handle Subscript => [])
@@ -935,15 +937,44 @@ struct
 
   (* ---- the program's declarations ---- *)
 
+  (* What the environment holds, with its classes and instances: kept
+     with the inference of the library's modules for the programs of a
+     saved world (`more`) *)
+  type saved = {tydefs : tydef M.map, cons : con M.map, fields : field M.map, methods : method M.map,
+                classKinds : T.kind M.map, defaults : T.ty list M.map, instances : instance list,
+                classDecls : classDecl list, prelude : string, programModules : bool M.map,
+                classes : C.class M.map, insts : C.inst list M.map, numId : T.id option}
+
+  fun save () : saved =
+    {tydefs = !tydefs, cons = !cons, fields = !fields, methods = !methods, classKinds = !classKinds,
+     defaults = !defaults, instances = !instances, classDecls = !classDecls, prelude = !prelude,
+     programModules = !programModules, classes = !C.classes, insts = !C.insts, numId = !C.numId}
+
+  fun restore (s : saved) =
+    (tydefs := #tydefs s; cons := #cons s; fields := #fields s; methods := #methods s; classKinds := #classKinds s;
+     defaults := #defaults s; instances := #instances s; classDecls := #classDecls s; prelude := #prelude s;
+     programModules := #programModules s; C.classes := #classes s; C.insts := #insts s; C.numId := #numId s)
+
+  (* `build modules` is the environment of `modules`, from nothing;
+     `more modules`, of `modules` beside what the environment holds, the
+     modules they import among it *)
   fun build (modules : module list) =
     let
       val () = reset ()
-      val () = List.app (fn {id, ...} => programModules := M.insert (!programModules, id, true)) modules
       val () =
         prelude :=
           (case List.find (fn {id, ...} => HsModules.moduleName id = "Prelude") modules of
              SOME {id, ...} => id
            | NONE => "haskell98:Prelude")
+    in
+      extend (modules, true)
+    end
+
+  and more (modules : module list) = extend (modules, false)
+
+  and extend (modules : module list, whole : bool) =
+    let
+      val () = List.app (fn {id, ...} => programModules := M.insert (!programModules, id, true)) modules
       val ds = collect modules
       val () = inferKinds (Vector.fromList ds)
       val () = synonyms ds
@@ -953,7 +984,11 @@ struct
       val () = written modules
       val () = tuples ()
       val () = derived ds
-      val () = superclasses ()
+      (* the instances of these modules: those of the modules before them
+         were checked with them *)
+      val files = List.map (fn {ast = A.Module ({span, ...}, _), ...} : module => #file span) modules
+      val () = superclasses (fn {span = {file, ...}, ...} : C.inst =>
+                               if file = "" then whole else List.exists (fn f => f = file) files)
     in
       defaultDecls modules
     end

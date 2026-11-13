@@ -267,17 +267,17 @@ struct
                 let val c = RhcUnits.checked (name, p')
                 in
                   if name = "rhc-runtime" then ()
-                  else keep (key, usages, {iface = RhcUnits.ifaceText c, code = CoreText.show p'});
+                  else keep (key, usages, {iface = RhcUnits.ifaceText c, parts = fn _ => CoreText.show p', count = 1});
                   say (name, "checked" ^ why); (c, p')
                 end
               else
                 let val c = RhcUnits.compile {name = name, earlier = done, fault = #fault opts} p'
-                in keep (key, usages, {iface = RhcUnits.ifaceText c, code = RhcUnits.codeBytes c}); say (name, "compiled" ^ why); (c, p') end
+                in keep (key, usages, {iface = RhcUnits.ifaceText c, parts = fn _ => RhcUnits.codeBytes c, count = 1}); say (name, "compiled" ^ why); (c, p') end
             end
           fun taken' (sections : RhcStore.sections) =
             (say (name, "taken");
              if whole then
-               let val p' = CoreText.parse (#code sections)
+               let val p' = CoreText.parse (#parts sections 0)
                             handle CoreText.Error (_, msg) => raise RhcUnits.Error ("the entry of " ^ name ^ ": " ^ msg)
                in ({name = name, code = NONE, abi = [], exports = List.mapPartial (fn Core.Val (x, _, _) => SOME x | _ => NONE) p',
                     newtypes = [], iface = RhcUnits.ifaceOf (name, #iface sections)}, p')
@@ -312,11 +312,11 @@ struct
           fun said what = if #showUnits opts then eprint ("rhc: link: " ^ what ^ "\n") else ()
         in
           case lookup key (RhcStore.holds {level = RhcStoreConfig.level (), current = fn _ => "?"}) of
-            SOME (UnitStore.Found ({sections, ...}, _)) => (said "taken"; write (out, #code sections); 0)
+            SOME (UnitStore.Found ({sections, ...}, _)) => (said "taken"; write (out, #parts sections 0); 0)
           | _ =>
               let val status = compile (opts, reached, out)
               in
-                if status = 0 then (keep (key, [], {iface = "", code = bytesOf out}); said "compiled") else ();
+                if status = 0 then (keep (key, [], {iface = "", parts = fn _ => bytesOf out, count = 1}); said "compiled") else ();
                 status
               end
         end
@@ -413,6 +413,7 @@ struct
     | ["--world"] => (print (RhcWorld.describe () ^ "\n"); 0)
     | ["--identity"] => (print (Config.identity ^ "\n"); 0)
     | _ =>
+    if List.exists (fn a => a = "--units") args andalso List.exists isHaskell args then haskellUnits args else
     case RhcSyntax.command args of
       SOME syntax =>
         let
@@ -479,6 +480,23 @@ struct
        | (NONE, _) => ());
       status
     end
+
+  and isHaskell a = String.isSuffix ".hs" a orelse String.isSuffix ".lhs" a
+
+  (* a program of Haskell in units (M21f): its files, and rhc's options for
+     the rest; each group of its graph a unit, kept in --store and taken
+     from there, the link the roadmap's C (RhcDriver) *)
+  and haskellUnits (args : string list) : int =
+    let
+      val (roots, rest) = List.partition isHaskell args
+      val opts = RhcOptions.parse rest
+      val out = case #output opts of SOME f => f | NONE => raise RhcOptions.Usage "--units compiles: give -o FILE"
+      val () = Pass.startup ()
+      val status =
+        RhcDriver.compile {roots = roots, out = out, store = #store opts, layers = #layers opts, show = #showUnits opts,
+                           strings = #strings opts, fault = #fault opts, compile = fn (p, f) => compile (opts, p, f)}
+        handle RhcDriver.Failed msg => (eprint ("rhc: error: " ^ msg ^ "\n"); 1)
+    in Pass.finish (); status end
 
   fun main (_ : string, args : string list) : int =
     counted args

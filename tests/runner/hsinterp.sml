@@ -11,21 +11,27 @@
    the interpreter alone can run says so on a line `-- vm: no: REASON`
    (hs/core's `; vm: no:`): one whose exception passes a suspension the
    interpreter puts back and form C leaves under evaluation (impl/progress/b.md,
-   D12). A program is held while every row it tests is Planned, as the
+   D12). One whose output is the runtime's and not Core's says so on a line
+   `-- interp: no: REASON`: Core's interpreter writes a file at once, with no
+   buffer, so a program that shows a handle's buffering is the VM's alone
+   (lang/lib.r.io.buffer.line_shown). A program is held while every row it tests is Planned, as the
    suite's own jobs are (HsConformance). *)
 structure HsInterpVm =
 struct
   open Sh
 
   val rhc = "bin/rhc"
-  (* the reason a program is the interpreter's alone, if its text gives one *)
-  fun interpreterOnly src =
+  (* the reason the text gives on a line `MARK REASON`, if it has one *)
+  fun marked mark src =
     let val text = if exists (src ^ "/Main.hs") then read (src ^ "/Main.hs") else read src
     in
-      case List.find (String.isPrefix "-- vm: no: ") (String.fields (fn c => c = #"\n") text) of
-        SOME l => SOME (String.extract (l, size "-- vm: no: ", NONE))
+      case List.find (String.isPrefix mark) (String.fields (fn c => c = #"\n") text) of
+        SOME l => SOME (String.extract (l, size mark, NONE))
       | NONE => NONE
     end
+  (* the reason a program is the interpreter's alone, or the VM's alone *)
+  val interpreterOnly = marked "-- vm: no: "
+  val vmOnly = marked "-- interp: no: "
   fun stdinOf (p : Lang.program) = if exists (#base p ^ ".stdin") then fromRoot (#base p ^ ".stdin") else ""
   (* the VM's options, the program's .vmargs (Lang's header) *)
   fun vmargsOf (p : Lang.program) =
@@ -38,9 +44,10 @@ struct
     in BinIO.output (out, v); BinIO.closeOut out end
 
   fun one (p : Lang.program) () =
-    case interpreterOnly (fromRoot (#src p)) of
-      SOME why => say ("PASS " ^ #name p ^ ": the interpreter's alone: " ^ why ^ "\n")
-    | NONE =>
+    case (interpreterOnly (fromRoot (#src p)), vmOnly (fromRoot (#src p))) of
+      (SOME why, _) => say ("PASS " ^ #name p ^ ": the interpreter's alone: " ^ why ^ "\n")
+    | (NONE, SOME why) => say ("PASS " ^ #name p ^ ": the VM's alone: " ^ why ^ "\n")
+    | (NONE, NONE) =>
         let
           val work = run ^ "/hs-interp-vm/" ^ #name p
           val () = (rmTree work; mkdirs work)

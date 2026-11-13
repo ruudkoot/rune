@@ -10,9 +10,9 @@ data T a = T a deriving (Eq, Show)
 newtype N = N Int deriving (Eq, Show)
 
 instance Num N where
+  negate (N a) = N (negate a)
   N a + N b = N (a + b)
   N a * N b = N (a * b)
-  negate (N a) = N (negate a)
   abs k = k
   signum k = k
   fromInteger k = N (fromInteger k)

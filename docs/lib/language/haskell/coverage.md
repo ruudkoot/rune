@@ -15,7 +15,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`CORE_RUNTIME`](sig/CORE_RUNTIME.md) | 6 | 6 | 100% | 4 | 4 |
 | [`CORE_TEXT`](sig/CORE_TEXT.md) | 9 | 9 | 100% | 8 | 8 |
 | [`CORE_TO_MID`](sig/CORE_TO_MID.md) | 8 | 8 | 100% | 2 | 2 |
-| [`CORE_UNITS`](sig/CORE_UNITS.md) | 7 | 7 | 100% | 6 | 6 |
+| [`CORE_UNITS`](sig/CORE_UNITS.md) | 10 | 10 | 100% | 8 | 8 |
 | [`HS_AST`](sig/HS_AST.md) | 44 | 44 | 100% | 8 | 8 |
 | [`HS_CHAR`](sig/HS_CHAR.md) | 4 | 4 | 100% | 3 | 3 |
 | [`HS_CLASSES`](sig/HS_CLASSES.md) | 15 | 15 | 100% | 11 | 11 |
@@ -31,7 +31,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_KINDS`](sig/HS_KINDS.md) | 10 | 10 | 100% | 8 | 8 |
 | [`HS_LAYOUT`](sig/HS_LAYOUT.md) | 13 | 13 | 100% | 11 | 11 |
 | [`HS_LEXER`](sig/HS_LEXER.md) | 3 | 3 | 100% | 1 | 1 |
-| [`HS_LINT`](sig/HS_LINT.md) | 19 | 19 | 100% | 6 | 6 |
+| [`HS_LINT`](sig/HS_LINT.md) | 20 | 20 | 100% | 6 | 6 |
 | [`HS_LITERATE`](sig/HS_LITERATE.md) | 2 | 2 | 100% | 2 | 2 |
 | [`HS_MATCH`](sig/HS_MATCH.md) | 8 | 8 | 100% | 4 | 4 |
 | [`HS_MODULES`](sig/HS_MODULES.md) | 14 | 14 | 100% | 6 | 6 |
@@ -45,7 +45,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_TOKEN`](sig/HS_TOKEN.md) | 9 | 9 | 100% | 5 | 5 |
 | [`HS_TYPES`](sig/HS_TYPES.md) | 43 | 43 | 100% | 29 | 29 |
 | [`HS_USAGE`](sig/HS_USAGE.md) | 5 | 5 | 100% | 4 | 4 |
-| **all** | 446 | 446 | 100% | 282 | 282 |
+| **all** | 450 | 450 | 100% | 284 | 284 |
 
 ## Members a signature describes
 
@@ -54,7 +54,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-39 structures have a page, with 446 members, of which 446 (100%) are described by a signature.
+39 structures have a page, with 450 members, of which 450 (100%) are described by a signature.
 
 ## Examples that are run
 

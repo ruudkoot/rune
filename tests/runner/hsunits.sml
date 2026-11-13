@@ -216,9 +216,88 @@ struct
                    ^ firstLine (out ^ "/abi.err") ^ "\n"))
     end
 
+  (* rhc's driver over a program of Haskell in units (M21f): Main and Lib
+     of tests/hs/units/drive, copies edited, each step with the library's
+     unit, Lib's, Main's and the link compiled or taken as it should, what
+     it prints, and its program byte for byte the whole compile's of the
+     same files (`rhc Main.hs`): nothing edited takes everything; a body's
+     edit of Lib compiles Lib and the link alone, Main taken by its reads'
+     fingerprints; an export added to Lib that Main does not read compiles
+     Lib alone too; a type's edit of a value Main reads compiles Main. A
+     step that takes the library's unit parses none of its modules (the
+     log's "rhc: parsed" line, RhcGraph.scan) *)
+  fun drive () =
+    let
+      val d = out ^ "/drive"
+      val () = (rmTree d; mkdirs d)
+      fun f x = d ^ "/" ^ x
+      val () = (write (f "Lib.hs", read (fromRoot "tests/hs/units/drive/Lib.hs"));
+                write (f "Main.hs", read (fromRoot "tests/hs/units/drive/Main.hs")))
+      fun edit (file, old, new) =
+        let
+          val t = read (f file)
+          fun go i = if i + size old > size t then NONE
+                     else if String.substring (t, i, size old) = old then SOME i else go (i + 1)
+        in
+          case go 0 of
+            SOME i => write (f file, String.substring (t, 0, i) ^ new ^ String.extract (t, i + size old, NONE))
+          | NONE => say ("FAIL hs.units.drive: the edit of " ^ file ^ " finds no " ^ old ^ "\n")
+        end
+      fun bytes p = (let val i = BinIO.openIn p in Byte.bytesToString (BinIO.inputAll i) before BinIO.closeIn i end)
+                    handle IO.Io _ => ""
+      fun has (l, s) = String.isSubstring s l
+      fun step (label, want : (string * string) list, prints) =
+        let
+          val log = f (label ^ ".log")
+          val ok = exec {cmd = [fromRoot "bin/rhc", "--lint=2", "--units", "--store", "st", "--show-units", "Main.hs", "-o", "w.rbc"],
+                         dir = SOME d, stdin = "", stdout = log, stderr = log, timeout = 900} = 0
+          val whole = exec {cmd = [fromRoot "bin/rhc", "--lint=2", "Main.hs", "-o", "j.rbc"], dir = SOME d, stdin = "",
+                            stdout = f (label ^ ".whole"), stderr = f (label ^ ".whole"), timeout = 900} = 0
+          val text = read log
+          (* what the log says of a unit: "unit NAME: compiled" or "taken" *)
+          fun says (unit, what) =
+            if unit = "link" then has (text, "rhc: link: " ^ what)
+            else if unit = "library" then has (text, "rhc: unit haskell98:") andalso
+                                          List.exists (fn l => has (l, "rhc: unit haskell98:") andalso has (l, ": " ^ what))
+                                                      (lines text)
+            else has (text, "rhc: unit " ^ unit ^ ": " ^ what)
+          val _ = exec {cmd = [fromRoot "bin/runevm", f "w.rbc"], dir = SOME d, stdin = "", stdout = f (label ^ ".out"),
+                        stderr = f (label ^ ".err"), timeout = 300}
+          val w = bytes (f "w.rbc")
+          val j = bytes (f "j.rbc")
+          val parsed = List.find (fn l => String.isPrefix "rhc: parsed " l) (lines text)
+        in
+          if not ok then say ("FAIL hs.units.drive: " ^ label ^ ": does not compile: " ^ firstLine log ^ "\n")
+          else if not whole then say ("FAIL hs.units.drive: " ^ label ^ ": does not compile whole\n")
+          else
+            (List.app (fn (u, what) => if says (u, what) then ()
+                                       else say ("FAIL hs.units.drive: " ^ label ^ ": " ^ u ^ " not " ^ what ^ "\n")) want;
+             if read (f (label ^ ".out")) = prints then ()
+             else say ("FAIL hs.units.drive: " ^ label ^ ": printed " ^ firstLine (f (label ^ ".out")) ^ "\n");
+             if not (List.exists (fn w => w = ("library", "taken")) want) then ()
+             else (case parsed of
+                     NONE => say ("FAIL hs.units.drive: " ^ label ^ ": the log says nothing of what was parsed\n")
+                   | SOME l => if has (l, " haskell98:") then
+                                 say ("FAIL hs.units.drive: " ^ label ^ ": the library's unit is taken, its modules parsed: " ^ l ^ "\n")
+                               else ());
+             if size w > 12 andalso String.extract (w, 12, NONE) = String.extract (j, 12, NONE) then ()
+             else say ("FAIL hs.units.drive: " ^ label ^ ": the program is not the whole compile's\n"))
+        end
+    in
+      step ("cold", [("library", "compiled"), ("Lib", "compiled"), ("Main", "compiled"), ("link", "compiled")], "hello\n42\n");
+      step ("again", [("library", "taken"), ("Lib", "taken"), ("Main", "taken"), ("link", "taken")], "hello\n42\n");
+      edit ("Lib.hs", "double x = x + x", "double x = 2 * x");
+      step ("body", [("library", "taken"), ("Lib", "compiled"), ("Main", "taken"), ("link", "compiled")], "hello\n42\n");
+      edit ("Lib.hs", "module Lib (double, greeting) where", "module Lib (double, greeting, triple) where\n\ntriple :: Int -> Int\ntriple x = 3 * x");
+      step ("export", [("library", "taken"), ("Lib", "compiled"), ("Main", "taken")], "hello\n42\n");
+      edit ("Lib.hs", "double :: Int -> Int", "double :: Integer -> Integer");
+      step ("type", [("library", "taken"), ("Lib", "compiled"), ("Main", "compiled"), ("link", "compiled")], "hello\n42\n")
+    end
+
   fun command args =
     case args of
-      ["hs-units-abi"] => SOME abi
+      ["hs-units-drive"] => SOME drive
+    | ["hs-units-abi"] => SOME abi
     | ["hs-units-warm-whole"] => SOME warmWhole
     | ["hs-units-warm"] => SOME warm
     | ["hs-units-store"] => SOME store
@@ -226,7 +305,7 @@ struct
     | ["hs-units-core", src] => SOME (fn () => coreOne src)
     | _ => NONE
 
-  val covers = ["covers:src/rhc/store.sml", "covers:src/rhc/units.sml", "covers:lib/compiler/driver/unitstore.sml",
+  val covers = ["covers:src/rhc/store.sml", "covers:src/rhc/units.sml", "covers:src/rhc/driver.sml", "covers:lib/compiler/driver/unitstore.sml",
                 "covers:lib/compiler/core/midtext.sml", "covers:lib/language/haskell/coretomid.sml",
                 "covers:tests/hs/units/*",
                 "covers:tests/runner/hsunits.sml"]
@@ -235,7 +314,7 @@ struct
       (Test.describe "hs/units"
          ([Tools.job ("store", ["hs-units-store"], [], 300, 600), Tools.job ("named", ["hs-units-named"], [], 500, 1200),
            Tools.job ("warm", ["hs-units-warm"], [], 500, 1800), Tools.job ("abi", ["hs-units-abi"], [], 300, 600),
-           Tools.job ("warm-whole", ["hs-units-warm-whole"], [], 500, 1800)]
+           Tools.job ("warm-whole", ["hs-units-warm-whole"], [], 500, 1800), Tools.job ("drive", ["hs-units-drive"], [], 600, 3600)]
           @ List.map (fn s => Tools.job ("core/" ^ HsCore.nameOf s, ["hs-units-core", s], [], 500, 1200)) (coreTests ())))
       (["check", "test-rhc"] @ covers)
 end
