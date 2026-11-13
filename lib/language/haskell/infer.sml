@@ -229,6 +229,12 @@ struct
 
   (* ---- types equal, and the dictionary of a predicate ---- *)
 
+  (* the names of `ns` that stand twice, by `keyOf`, each at its second place *)
+  fun twice keyOf ns =
+    #2 (List.foldl (fn (n, (seen, dups)) => let val k = keyOf n
+                                            in if List.exists (fn x => x = k) seen then (seen, dups @ [n]) else (k :: seen, dups) end)
+          ([], []) ns)
+
   fun eqTy (a, b) =
     case (T.repr a, T.repr b) of
       (T.TCon x, T.TCon y) => x = y
@@ -655,6 +661,10 @@ struct
            val ct = lookupValue c
            val (args, res) = arrows ct
            val info = conInfo c
+           (* 3.17.1: a record pattern names each field once *)
+           val () = List.app (fn f => err (nameSpan f, "the pattern of `" ^ nameText c ^ "` names the field `" ^ nameText f ^
+                                                       "` twice (3.17.1)"))
+                      (twice nameKey (List.map #1 fs))
          in
            List.app
              (fn (f, fp) =>
@@ -967,6 +977,10 @@ struct
                   | NONE => ()
                 end)
              fs;
+           (* 3.15.2: a construction names each field once *)
+           List.app (fn f => err (nameSpan f, "the construction of `" ^ nameText c ^ "` names the field `" ^ nameText f ^
+                                              "` twice (3.15.2)"))
+             (twice nameKey (List.map #1 fs));
            (* 3.15.2: a strict field left out of a construction is an error *)
            (case info of
               SOME {fields, strict, ...} =>
@@ -1524,6 +1538,30 @@ struct
 
   fun typeVarNames vs = List.map (fn A.Name (_, {name, ...}) => name) vs
 
+
+  (* 4.2.1, 4.2.2, 4.2.3: a declaration's type variables are distinct, a
+     constructor's fields distinct, a field shared by constructors of one
+     type at one type *)
+  fun declWellFormed (A.D (_, x)) =
+    let
+      fun params (c, vs) =
+        List.app (fn v => err (nameSpan v, "the type variable `" ^ nameText v ^ "` is a parameter of `" ^ nameText c ^
+                                           "` twice, where they must be distinct (4.2.1)"))
+          (twice nameText vs)
+      fun fieldsOnce (A.C (_, A.CRec (k, fs))) =
+            List.app (fn f => err (nameSpan f, "the field `" ^ nameText f ^ "` stands twice in the constructor `" ^ nameText k ^
+                                               "`, where a constructor's fields are distinct (4.2.1)"))
+              (twice nameText (List.concat (List.map (fn A.Field (_, vs, _, _) => vs) fs)))
+        | fieldsOnce _ = ()
+    in
+      case x of
+        A.DData (_, c, vs, cs, _) => (params (c, vs); List.app fieldsOnce cs)
+      | A.DNewtype (_, c, vs, k, _) => (params (c, vs); fieldsOnce k)
+      | A.DType (c, vs, _) => params (c, vs)
+      | _ => ()
+    end
+
+
   fun varIndex names n =
     case List.find (fn (m, _) => m = n) (ListPair.zip (names, List.tabulate (length names, fn i => i))) of
       SOME (_, i) => T.TGen i
@@ -1573,7 +1611,12 @@ struct
                     let val fk = nameKey f
                     in
                       case M.find (m, fk) of
-                        SOME {tycon, ty, cons} => M.insert (m, fk, {tycon = tycon, ty = ty, cons = cons @ [(ckey, 0)]})
+                        SOME {tycon, ty, cons} =>
+                          (if eqTy (ty, ft) then ()
+                           else err (nameSpan f, "the field `" ^ nameText f ^ "` has two types in the constructors of `" ^
+                                                 nameText c ^ "`, `" ^ T.show ty ^ "` and `" ^ T.show ft ^
+                                                 "`, where a field shared by constructors has one (4.2.1)");
+                           M.insert (m, fk, {tycon = tycon, ty = ty, cons = cons @ [(ckey, 0)]}))
                       | NONE => M.insert (m, fk, {tycon = tycon, ty = ft, cons = [(ckey, 0)]})
                     end
                 | (NONE, _, m) => m)
@@ -1973,7 +2016,34 @@ struct
       val () = List.app err kerrs
       val () = let val {values, classes, cons, fields, methods, ...} = !genv
                in genv := {values = values, tycons = tenv, classes = classes, cons = cons, fields = fields, methods = methods} end
+      val () = List.app (fn (_, d) => declWellFormed d) decls
       val () = List.app (fn d => (classDecl (#1 d, #2 d, classKinds) handle Fail e => err e | HsSource.Error e => err e)) decls
+      (* 4.3.1: the superclass relation is acyclic; a class of a cycle loses
+         its superclasses, so that nothing after loops *)
+      val () =
+        List.app
+          (fn (_, A.D ({span, ...}, A.DClass (_, c, _, _))) =>
+                let
+                  val key = K.keyOf c
+                  fun supersOf k = case C.findClass (#classes (!genv), k) of SOME {supers, ...} => supers | NONE => []
+                  fun reaches (k, seen) =
+                    List.exists (fn s => s = key orelse (not (List.exists (fn x => x = s) seen) andalso reaches (s, s :: seen)))
+                      (supersOf k)
+                in
+                  if reaches (key, [key]) then
+                    (err (nameSpan c, "the class `" ^ nameText c ^ "` is its own superclass, where the superclass relation " ^
+                                      "must not be cyclic (4.3.1)");
+                     case C.findClass (#classes (!genv), key) of
+                       SOME {key, methods, kind, ...} =>
+                         let val {values, tycons, classes, cons, fields, methods = ms} = !genv
+                         in genv := {values = values, tycons = tycons, cons = cons, fields = fields, methods = ms,
+                                     classes = C.addClass (classes, {key = key, supers = [], methods = methods, kind = kind})}
+                         end
+                     | NONE => ())
+                  else ()
+                end
+            | _ => ())
+          decls
       val () = List.app (fn (h, d as A.D (_, x)) => case x of
                                                       A.DData _ => (dataDecl (h, d) handle Fail e => err e | HsSource.Error e => err e)
                                                     | A.DNewtype _ => (dataDecl (h, d) handle Fail e => err e | HsSource.Error e => err e)

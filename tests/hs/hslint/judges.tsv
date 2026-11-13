@@ -1,11 +1,1 @@
 program	why
-errors/cls.class.super.acyclic_self	the checker accepts what the row refuses, which HsLint refuses: the class `C` is its own superclass: the superclass relation is cyclic (cls.class.super.acyclic); for F
-errors/cls.class.super.acyclic_two	the checker accepts what the row refuses, which HsLint refuses: the class `C` is its own superclass: the superclass relation is cyclic (cls.class.super.acyclic); for F
-errors/dec.data.vars.distinct	the checker accepts what the row refuses, which HsLint refuses: the type variable `a` is a parameter twice (dec.data.vars.distinct); for F
-errors/dec.field.shared.differ	the checker accepts what the row refuses, which HsLint refuses: the field `y` has two types in the constructors of `T` (dec.field.shared.differ); for F
-errors/dec.newtype.vars_distinct	the checker accepts what the row refuses, which HsLint refuses: the type variable `a` is a parameter twice (dec.data.vars.distinct); for F
-errors/dec.type.vars.distinct	the checker accepts what the row refuses, which HsLint refuses: the type variable `a` is a parameter twice (dec.type.vars.distinct); for F
-errors/exp.field.con.twice	the checker accepts what the row refuses, which HsLint refuses: the field `f1` given twice (exp.field.con.twice); for F
-errors/exp.field.manycons.bad	the checker accepts what the row refuses, which HsLint refuses: the field `y` has two types in the constructors of `T` (dec.field.shared.differ); for F
-errors/exp.field.once	the checker accepts what the row refuses, which HsLint refuses: the field `x` twice in the constructor `A` (exp.field.once); for F
-errors/pat.m.label.twice	the checker accepts what the row refuses, which HsLint refuses: the field `f1` twice in a pattern (pat.m.label.twice); for F
