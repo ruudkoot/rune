@@ -711,9 +711,9 @@ struct
      it is written out, so flushOut and closeOut raise Io ("raises the
      exception Io if ... the flushing fails"; IMPERATIVE_IO, STREAM_IO). *)
   val () = T.raises ("BinIO.flushOut/Io-device-full", isIo,
-                     fn () => let val out = BinIO.openOut "/dev/full" in BinIO.output (out, (Word8Vector.fromList [0wx78])); BinIO.flushOut out end)
+                     fn () => let val out = BinIO.openOut "/dev/full" in BinIO.output (out, vec [120]); BinIO.flushOut out end)
   val () = T.raises ("BinIO.closeOut/Io-device-full", isIo,
-                     fn () => let val out = BinIO.openOut "/dev/full" in BinIO.output (out, (Word8Vector.fromList [0wx78])); BinIO.closeOut out end)
+                     fn () => let val out = BinIO.openOut "/dev/full" in BinIO.output (out, vec [120]); BinIO.closeOut out end)
   (*>> full-device *)
 
   (* A stream that is still open when the program ends: "All streams created
