@@ -820,7 +820,11 @@ superclass is right. `faults` holds each rule to refusing its fault, as
 `astlintFaults` holds AstLint's: `tests/hs/hslint/faults.hs`, desugared,
 with its records, its Core and its own expected dump, is accepted, and with
 `RHC_HSLINT_FAULT=RULE`, which reads the first claim, record or Core type
-RULE checks corrupted, refused with `[RULE]`. `levels` builds each fixture
+RULE checks corrupted, refused with `[RULE]`, both from the saved world and
+`--whole`. A program compiled from the saved world is checked with HsLint's
+inference of the library taken from the world, made once when the world is
+(`--make-world`, at level 2, D45): HsLint infers the program's own modules
+alone and replays only their records. `levels` builds each fixture
 the dump infers at level 2 and at level 0, which must be the same bytes, as
 `levelsOne` holds Rune's builds: no check changes what rhc makes.
 

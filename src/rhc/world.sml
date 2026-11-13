@@ -113,9 +113,14 @@ struct
   (* `program {roots, dotted, fixpoint, check}` is the graph of the program
      of `roots` and what names (and with `check` the checker) found of it,
      from the saved world where it can, else whole (RhcNames.run) *)
+  (* whether the last program went from the saved world, its library
+     modules the world's (HsLint then takes the world's inference of them,
+     RhcLint) *)
+  val fromWorld = ref false
+
   fun program {roots : string list, dotted : bool, fixpoint : HsModules.fixpoint,
                check : HsInfer.cycleDefault option} : G.graph * RhcNames.result =
-    case usable (fixpoint, check) of
+    case (fromWorld := isSome (usable (fixpoint, check)); usable (fixpoint, check)) of
       NONE =>
         let val g = G.load {roots = roots, dotted = dotted}
         in (g, RhcNames.run (g, fixpoint, check)) end

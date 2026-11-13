@@ -2395,10 +2395,17 @@
      "page": "sig/HS_LINT.md#type-target"
     },
     {
+     "kind": "type",
+     "name": "library",
+     "spec": "type library",
+     "doc": "HsLint's inference of a library's modules, as a saved world keeps it.\n\nIt is their environment and what their inference found, from which a\nprogram's own modules are inferred alone (D45).\n\n",
+     "page": "sig/HS_LINT.md#type-library"
+    },
+    {
      "kind": "val",
      "name": "check",
-     "spec": "val check : {groups : module list list, main : string option, cycleDefault : bool,\n             records : {table : HsEvidence.table, env : HsInfer.env,\n                        derived : (string * string * HsAst.decl list) list} option,\n             claims : claims option, where_ : HsSource.span -> string, fault : string} -> report * target",
-     "doc": "`check {groups, main, cycleDefault, records, claims, where_, fault}`\nis `infer`'s report, with the checker's records replayed and compared.\n\nIt gives what the target check reads with the report. With `records`, the checker's evidence records and environment\n(HsEvidence, HsInfer) and the derived instances it made as trees\n(HsDerive: each one's module, identity and methods), the second\ninference checks those instances' methods as any instance's, each\nrecord is replayed by Faxén's rules and rhc's (`replayRules`), the\nderived methods' records too, and the records are then held to the\ninference as claims (`compare`); with `claims`, those are too.\n`fault` is as `compare`'s, for every rule.\n\n**Raises** `Refused` at the first breach.\n\n",
+     "spec": "val check : {groups : module list list, main : string option, cycleDefault : bool,\n             records : {table : HsEvidence.table, env : HsInfer.env,\n                        derived : (string * string * HsAst.decl list) list} option,\n             claims : claims option, where_ : HsSource.span -> string, fault : string, library : library option}\n            -> {report : report, target : target, library : library option}",
+     "doc": "`check {groups, main, cycleDefault, records, claims, where_, fault, library}` is `infer`'s report, with the checker's records replayed and\ncompared.\n\nWith `library`, the groups of its modules are not inferred again: the\nrest are inferred after its environment and findings, and only the\nrecords of those modules are replayed, the library's having been\nreplayed where the library was inferred. The report is of the modules\ninferred. Where every module of `groups` is the library's, the result\nholds their inference, for a saved world; NONE otherwise.\n\nIt gives what the target check reads with the report. With `records`,\nthe checker's evidence records and environment (HsEvidence, HsInfer) and the derived instances it made as trees\n(HsDerive: each one's module, identity and methods), the second\ninference checks those instances' methods as any instance's, each\nrecord is replayed by Faxén's rules and rhc's (`replayRules`), the\nderived methods' records too, and the records are then held to the\ninference as claims (`compare`); with `claims`, those are too.\n`fault` is as `compare`'s, for every rule.\n\n**Raises** `Refused` at the first breach.\n\n",
      "page": "sig/HS_LINT.md#val-check"
     },
     {
