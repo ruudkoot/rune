@@ -186,6 +186,29 @@ struct
 
      Raises: `HsSource.Error` for a file that does not lex or parse, which
      stops rhc. *)
+  (* each module read so far, the library's in a saved world among them:
+     the modules its imports name, the Prelude's implicit one with them *)
+  val importsOf : string list M.map ref = ref M.empty
+
+  (* `reaches (m, n)`: whether a chain of imports leads from the module
+     `m` to `n`, `m` itself among those it reaches (5.4: an instance is in
+     scope where one does, R26); a module never read reaches itself alone *)
+  val closures : unit M.map M.map ref = ref M.empty
+  fun closure (m : string) : unit M.map =
+    case M.find (!closures, m) of
+      SOME c => c
+    | NONE =>
+        let
+          fun go ([], seen) = seen
+            | go (x :: rest, seen) =
+                if M.member (seen, x) then go (rest, seen)
+                else go (getOpt (M.find (!importsOf, x), []) @ rest, M.insert (seen, x, ()))
+          val c = go ([m], M.empty)
+        in
+          closures := M.insert (!closures, m, c); c
+        end
+  fun reaches (m : string, n : string) : bool = m = n orelse M.member (closure m, n)
+
   fun scan {roots : string list, dotted : bool, known : node M.map, library : bool, reader : reader} : plan =
     let
       val founds : found M.map ref = ref M.empty
@@ -285,6 +308,9 @@ struct
                    node = once node, parsed = fn () => !parsed}
         in
           founds := M.insert (!founds, id, f);
+          (* its imports, beside every module's read before, for `reaches` *)
+          importsOf := M.insert (!importsOf, id, #imports f);
+          closures := M.empty;
           order := id :: !order;
           List.app
             (fn ((m, _), SOME (t, SOME file)) =>

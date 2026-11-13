@@ -918,6 +918,9 @@ struct
   fun modules {group : E.module list, main : string option, cycleDefault : bool,
                derived : (string * string * A.decl list) list} =
     let
+      (* 5.4: an instance in scope where the inference is, by the imports
+         of the module it infers (R26) *)
+      val () = C.inScope := (fn i => !current = "" orelse E.reaches (!current, E.moduleOfInst i))
       val mods = Vector.fromList group
       (* the bindings of the top level, each with its module *)
       val tagged =

@@ -1386,7 +1386,7 @@ mod.inst.noname	5.4	Instance declarations cannot be named on import or export li
 mod.inst.exported	5.4	All instances in scope within a module are always exported	module	run	M with an export list naming nothing passes on its instances and those it imported	hand	Supported		
 mod.inst.imported	5.4	Any import brings in all instances from the imported module	module	run	import M; the instance is used	hand	Supported		
 mod.inst.chain	5.4	An instance is in scope if a chain of import declarations leads to its module	module	run	A imports B imports C, C holds the instance, A uses it without naming C	hand	Supported		
-mod.inst.nochain	5.4	An instance is in scope only if such a chain exists	module	reject	the instance is in a module of the program no chain from the user reaches: refused; see readings.md	hand	Planned	R26	
+mod.inst.nochain	5.4	An instance is in scope only if such a chain exists	module	reject	the instance is in a module of the program no chain from the module that uses it reaches: refused there; see readings.md	hand	Supported	R26	
 mod.inst.emptylist	5.4	import M() brings no names but does bring M's instances	module	run	show of M's type obtained another way	hand	Supported		
 mod.inst.qualified	5.4	A qualified import brings the instances	module	run	import qualified M ()	hand	Supported		
 mod.inst.hidden	5.4	A hiding import brings the instances	module	run	import M hiding (T)	hand	Supported		
