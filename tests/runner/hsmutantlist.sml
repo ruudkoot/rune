@@ -72,7 +72,7 @@ struct
           "infer.sml", "simplify (dataCtx @ List.concat", "simplify (List.concat",
           ["hs/types/derive/module"]),
      one ("HD02", "deriving", "a derived instance's context too wide: each parameter's, not the fields' types' (10.1)",
-          "infer.sml", "reduce {cls = cls, ty = f}) fields)", "reduce {cls = cls, ty = f}) (fields @ List.tabulate (vars, T.TGen)))",
+          "infer.sml", "reduce h {cls = cls, ty = f}) fields)", "reduce h {cls = cls, ty = f}) (fields @ List.tabulate (vars, T.TGen)))",
           ["hs/types/derive/module"]),
      (* the roadmap's seeds for types and classes (M16), in F's checker, each
         seen by HsLint's second inference or its replay, as M16's done-when
