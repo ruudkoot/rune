@@ -4,10 +4,8 @@
 #
 # ID  SECONDS  (the slowest way; then all three: CPU seconds of the run alone, the child's user and system time, from
 # LOG.times; 2026-11-10, hs-o at haskell98 82574b85d, from the saved world, a loaded machine)
-nofib/real/maillist  566.60  (register-opt; test=530.78 register=544.37 register-opt=566.60)
 nofib/real/compress  80.23  (test; test=80.23 register=25.98 register-opt=24.92)
 nhcnofib/real/pic  65.53  (test; test=65.53 register=16.98 register-opt=22.76)
-nhcnofib/real/maillist  56.91  (test; test=56.91 register=26.72 register-opt=27.33)
 nofib/real/hpg  48.01  (test; test=48.01 register=22.93 register-opt=27.14)
 jhc/5_known_bugs/Segfault1.hs  46.80  (test; test=46.80 register=19.61 register-opt=19.33)
 nhcnofib/imaginary/rfib  45.27  (test; test=45.27 register=39.89 register-opt=28.42)
@@ -72,6 +70,7 @@ nhcnofib/imaginary/x2n1  4.32  (test; test=4.32 register=0.82 register-opt=1.32)
 nhcnofib/imaginary/queens  4.00  (test; test=4.00 register=1.68 register-opt=1.89)
 nofib/spectral/primetest  3.88  (register-opt; test=3.17 register=2.83 register-opt=3.88)
 nhcnofib/UNUSED/nfib  3.31  (test; test=3.31 register=0.91 register-opt=0.83)
+nofib/real/maillist  3.29  (test; test=3.29 register=1.55 register-opt=1.74; 2026-11-13, hs-b, once the file locks looked through the handles open alone)
 nofib/gc/circsim  3.20  (test; test=3.20 register=1.66 register-opt=1.53)
 nhcnofib/spectral/clausify  3.10  (test; test=3.10 register=1.46 register-opt=1.32)
 nhcnofib/spectral/mandel2  3.05  (test; test=3.05 register=1.17 register-opt=1.72)
