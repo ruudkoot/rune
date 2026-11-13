@@ -201,7 +201,9 @@ struct
                   else
                     let
                       val at = i + Substring.size lead
-                      val ok = (at = 0 orelse edge (String.sub (text, at - 1)))
+                      (* a function strictness split (M24) is its worker, %w:NAME, too *)
+                      val ok = (at = 0 orelse edge (String.sub (text, at - 1))
+                                orelse (at >= 3 andalso String.substring (text, at - 3, 3) = "%w:"))
                                andalso (at + size n >= size text orelse edge (String.sub (text, at + size n)))
                     in ok orelse from (at + 1) end
                 end
