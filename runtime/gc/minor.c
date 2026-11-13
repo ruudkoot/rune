@@ -343,6 +343,7 @@ static void minor_into(VM *vm) {
     minor_stack(vm, low);
 #define PROMOTE_ROOT_VALUE(v) (vm->gc_counts.other_roots++, promote_value(vm, (v)))
 #define PROMOTE_ROOT_OBJ(o) (vm->gc_counts.other_roots++, promote_obj(vm, (o)))
+    if (vm->prog.suspends) caf_note_written(vm);   /* the CAFs counted (caf.c), before the marks below are cleared */
     MINOR_ROOTS(vm, PROMOTE_ROOT_VALUE, PROMOTE_ROOT_OBJ, promote_global, low);
 #undef PROMOTE_ROOT_VALUE
 #undef PROMOTE_ROOT_OBJ

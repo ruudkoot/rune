@@ -134,7 +134,10 @@ void gc_shade_old(VM *vm, Obj *o, Value old) {
    large array) is scanned CYCLE_PART fields at a time, where it stopped
    kept apart (gray_part, gray_at) and taken up first, so that a slice
    stays near its bounds. */
-static size_t mark_some(VM *vm, size_t want, size_t most) {
+#if defined(__GNUC__)
+__attribute__((always_inline))
+#endif
+static inline size_t mark_some_as(VM *vm, size_t want, size_t most, int cafs) {
     size_t done = 0, marked0 = vm->gc.cycle_marked;
     uint64_t objects0 = vm->gc_counts.objects;
     while (vm->gc.cycle_marked - marked0 < want && done < most) {
@@ -143,6 +146,9 @@ static size_t mark_some(VM *vm, size_t want, size_t most) {
         if (vm->gc.gray_part) { o = vm->gc.gray_part; i = vm->gc.gray_at; vm->gc.gray_part = NULL; }
         else if (vm->gc.ngray) o = vm->gc.gray[--vm->gc.ngray];
         else break;
+        /* where the cycle keeps its globals by the CAF tables, an object
+           whose code may run takes its function's table (caf.c) */
+        if (cafs && i == 0 && caf_runs(o) && caf_code_due(o)) caf_code(vm, o, shade_value);
         Value *f = obj_fields(o);
         uint32_t n = obj_scanned_fields(o);   /* of one made an indirection since, the first */
         if (i >= n) continue;
@@ -155,6 +161,11 @@ static size_t mark_some(VM *vm, size_t want, size_t most) {
     }
     return done;
 }
+/* a loop of its own where the cycle keeps its globals by the CAF tables,
+   so that one that does not tests nothing more */
+static size_t mark_some(VM *vm, size_t want, size_t most) {
+    return vm->gc.cycle_cafs ? mark_some_as(vm, want, most, 1) : mark_some_as(vm, want, most, 0);
+}
 static int gray_left(const VM *vm) { return vm->gc.ngray || vm->gc.gray_part; }
 
 /* The cycle begun: the roots marked (the nursery is empty) */
@@ -166,12 +177,20 @@ static void cycle_begin(VM *vm) {
     vm->gc.cycle_alloc = vm->bytes_allocated + vm->box_bytes_allocated;
     vm->gc.gray_part = NULL;
     for (Chunk *c = vm->gc.first; c; c = c->next) c->marked = 0;
+    /* a program with suspensions: a global kept only where live code
+       reaches it (caf.c), as it is and as it was now, the frames' tables
+       taken now and their closures with the stack */
+    vm->gc.cycle_cafs = caf_cycle_begin(vm, shade_value);
     gc_stack_roots(vm, shade_value);
+    caf_frames_forget();
+    if (vm->gc.cycle_cafs) caf_roots(vm, shade_value, shade_obj);
+    else {
 #define SHADE_VALUE(v) (vm->gc_counts.other_roots++, shade_value(vm, (v)))
 #define SHADE_OBJ(o) (vm->gc_counts.other_roots++, shade_obj(vm, (o)))
-    OTHER_ROOTS(vm, SHADE_VALUE, SHADE_OBJ);
+        OTHER_ROOTS(vm, SHADE_VALUE, SHADE_OBJ);
 #undef SHADE_VALUE
 #undef SHADE_OBJ
+    }
 }
 
 /* The cycle ended, nothing gray and the nursery empty: the marks become
@@ -179,6 +198,7 @@ static void cycle_begin(VM *vm) {
    counted and the empty chunks given back (segfit.c); the large objects
    not marked freed */
 static void cycle_finish(VM *vm) {
+    if (vm->gc.cycle_cafs) { caf_end(vm); vm->gc.cycle_cafs = 0; }   /* a global no live code reached let go */
     for (Chunk *c = vm->gc.first; c; c = c->next) {
         uint32_t t = c->bits_at;
         c->bits_at = c->lines_at;

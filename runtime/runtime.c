@@ -399,6 +399,7 @@ int vm_release(VM *vm) {
     free(vm->prog.lines);
     for (uint32_t i = 0; vm->prog.inlines && i < vm->prog.ninlines; i++) free(vm->prog.inlines[i].name);
     free(vm->prog.inlines);
+    caf_free(vm);
     free(vm->globals);
     free(vm->global_set);
     for (uint32_t i = 0; i < vm->nunit_sessions; i++) free(vm->unit_sessions[i]);
@@ -444,6 +445,7 @@ void vm_exit(VM *vm, int status) {
                 vm->gc_count, (unsigned long long)vm->bytes_allocated, vm->gc.size, heap_used(vm),
                 (unsigned long long)vm->copied, vm->max_live, (long long)(vm->gc_user_us + vm->gc_sys_us),
                 (long long)vm->gc_longest_us);
+    if (vm->stats && vm->caf) caf_stats(vm, stderr);
     if (vm->stats && vm->gc.nursery)   /* the nursery's (runtime/gc/minor.c) */
         fprintf(stderr, "runevm: nursery %zu bytes: %llu minor and %llu full collections, promoted %llu, "
                 "large objects %llu (%llu bytes), %zu bytes of them live\n",

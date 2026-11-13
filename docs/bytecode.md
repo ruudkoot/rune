@@ -731,7 +731,14 @@ raised as noted.
   (`make test-stress`); with `--gc low-pause --gc-stress-cycles` too, each
   such collection is a minor one that begins a cycle of incremental
   marking where none marks, and every slice marks a few hundred bytes, so
-  that the program's stores run while a cycle marks;
+  that the program's stores run while a cycle marks; with `--gc-stress-full`
+  too, each such collection is a full one;
+* `runevm-stack --caf-tables M file.rbc` says what a full collection does with
+  the globals: `auto`, the default, takes a global only where code that may
+  still run reads it in a program with suspensions (`UPDATE` or
+  `BLACKHOLE`), and as a root in any other; `off` takes every global as a
+  root; `on` takes them by the tables in any program, a test of them
+  ([runtime.md](runtime.md), *The roots*);
 * `runevm-stack --gc-verify file.rbc` checks the heap before and after every
   collection and stops with status 2 where it is not sound ([runtime.md](runtime.md),
   *Watching it*; `make test-heap`);
