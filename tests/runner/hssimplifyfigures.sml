@@ -43,6 +43,10 @@ struct
   type prog = {dir : string, main : string, runDir : string, fresh : bool, args : string list, stdin : string,
                expected : string}
 
+  (* the rhc measured, RUNE_HS_RHC for another build's (an earlier one,
+     for a figure before and after), bin/rhc where none is named *)
+  fun rhc () = env ("RUNE_HS_RHC", fromRoot "bin/rhc")
+
   fun call (cmd, dir, stdin, out, err, timeout) =
     execProcess false limits (fn e => e) {cmd = cmd, dir = SOME dir, stdin = stdin, stdout = out, stderr = err, timeout = timeout}
 
@@ -76,7 +80,7 @@ struct
           fun f x = #dir p ^ "/" ^ name ^ "." ^ x
           (* the interpreter is slow by design: a run past 300 s is not
              compared, its status 124 *)
-          val rs = call ([fromRoot "bin/rhc", #main p] @ flags @ (case #args p of [] => [] | a => "--" :: a), runIn name, #stdin p,
+          val rs = call ([rhc (), #main p] @ flags @ (case #args p of [] => [] | a => "--" :: a), runIn name, #stdin p,
                          f "out", f "err", 300)
           val output = read (f "out")
           val () = if name = "iO0" then i0out := SOME output else ()
@@ -86,9 +90,14 @@ struct
         in append (out, String.concatWith "\t" ([set, id] @ row) ^ "\n") end
       fun one (name, flags) =
         let
-          val rbc = #dir p ^ "/" ^ name ^ ".rbc"
+          (* every way's bytecode named alike, the main file's base, in a
+             directory of the way's: getProgName is the bytecode's name, and
+             a program that prints it must cost the same at every way *)
+          val rbcDir = #dir p ^ "/" ^ name ^ ".way"
+          val () = (rmTree rbcDir; mkdirs rbcDir)
+          val rbc = rbcDir ^ "/" ^ OS.Path.base (OS.Path.file (#main p)) ^ ".rbc"
           fun f x = #dir p ^ "/" ^ name ^ "." ^ x
-          val cs = call ([fromRoot "bin/rhc", #main p] @ flags @ ["-o", rbc], #dir p, "", f "c.out", f "c.err", 1800)
+          val cs = call ([rhc (), #main p] @ flags @ ["-o", rbc], #dir p, "", f "c.out", f "c.err", 1800)
           val row =
             if cs <> 0 then [name, "no", "-", "-", "-", "-", "-", "-", "-", "-", "-"]
             else
@@ -144,7 +153,7 @@ struct
           fun counts flags tag =
             let
               val e = #dir p ^ "/stats." ^ tag ^ ".err"
-              val _ = call ([fromRoot "bin/rhc", #main p, "-O2", "--simplify-stats", "--desugar-only"] @ flags, #dir p, "",
+              val _ = call ([rhc (), #main p, "-O2", "--simplify-stats", "--desugar-only"] @ flags, #dir p, "",
                             "/dev/null", e, 1800)
               fun get what = case lineAfter (e, "simplify " ^ what ^ ": ") of SOME n => n | NONE => "0"
               val all = List.foldl (fn (l, n) => if String.isPrefix "simplify " l
@@ -222,7 +231,7 @@ struct
             | pick (v :: vs) =
                 let val (p, m) = HsCorpus.prepare (c, v, files, work ^ "/" ^ v)
                 in
-                  if call ([fromRoot "bin/rhc", m, "-O0", "-o", "probe.rbc"], p, "", p ^ "/probe.out", p ^ "/probe.err", 1800) = 0
+                  if call ([rhc (), m, "-O0", "-o", "probe.rbc"], p, "", p ^ "/probe.out", p ^ "/probe.err", 1800) = 0
                   then SOME (p, m) else pick vs
                 end
         in

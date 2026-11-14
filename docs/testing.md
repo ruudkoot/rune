@@ -989,7 +989,9 @@ programs of the corpus and the ready lazy ports, prepared as
 (`tests/runner/hssimplifyfigures.sml`, `hs/simplify/corpus/ID` and
 `hs/simplify/lazy/PORT`, nightly). `bin/rune-test hs-simplify-figures SET
 ID OUT [WAY...]` measures one program of those sets for *Decisions on the
-numbers*: each way's output, and the instructions, bytes and objects of
+numbers* (with `RUNE_HS_RHC`, another build's rhc), every way's bytecode
+named alike, since `getProgName` is its name: each way's output, and the
+instructions, bytes and objects of
 `runevm --count`, the suspensions made (`runevm-census`) and the
 instructions:u at tier 2 (`perf`), at `-O0` and `-O2`, with GHC's eta
 (D48's D) and Sestoft's trees (D34's B), on Core's interpreter where asked,
