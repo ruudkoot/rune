@@ -49,7 +49,9 @@ struct
                  "results", "castin", "loopcatch",
                  (* lazy ML's reading (D57, M26): a body that outlives its own
                     update, and a suspension of a suspension *)
-                 "k_outlive", "k_outlive_int", "k_outlive_raise", "k_outlive_three", "outlive_nullary", "k_nested"]
+                 "k_outlive", "k_outlive_int", "k_outlive_raise", "k_outlive_three", "outlive_nullary", "k_nested",
+                 (* suspensions of closures that capture nothing, made beside them (M9b) *)
+                 "nullary_make"]
   fun source k = "tests/thunks/" ^ k ^ ".sml"
   fun args k = words (fromRoot ("tests/thunks/" ^ k ^ ".args"))
 
@@ -254,10 +256,9 @@ struct
   (* thunk_make in line in compiled code (haskell98 M9b), at tier 1 and at
      tier 2: run with every function compiled, --jit-stats counts the
      primitives the code called in C, an in-line one's slow path among
-     them. Of chain's 1,001 suspensions only the first, `delay (fn () =>
-     0)`, is of a closure that captures nothing, which the primitive
-     copies; the loop's 1,000 are made in line, so thunk_make is called in
-     C once at most *)
+     them, and thunk_make is not one: chain's suspensions are of closures
+     that capture (made in place), nullary_make's of closures that capture
+     nothing (made beside them, an allocation in line) *)
   fun inLine k =
     let
       val dir = run ^ "/thunks/" ^ k ^ "/inline"
@@ -275,7 +276,7 @@ struct
                           val calls = List.foldl (fn (l, a) => a + countAfter (String.tokens Char.isSpace l)) 0 called
                       in
                         if code <> 0 then fail (k, "--jit-stats " ^ w ^ ": exit " ^ Int.toString code ^ ": " ^ firstNonEmpty err)
-                        else if calls > 1 then
+                        else if calls > 0 then
                           fail (k, w ^ ": the code calls thunk_make in C " ^ Int.toString calls ^ " times: " ^ String.concatWith " " called)
                         else ()
                       end)
@@ -366,6 +367,7 @@ struct
     | "last" => retains k
     | "leak" => retains k
     | "chain" => chain ()
+    | "nullary_make" => (ordinary k; inLine k)
     | "wrongslot" => wrongslot ()
     | _ => ordinary k
 

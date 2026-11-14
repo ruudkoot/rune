@@ -427,9 +427,11 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   `real_abs`, `real_trunc`, `real_floor`, `real_ceil`): one conversion,
   with the primitive for what an int does not hold and for a NaN. A
   suspension of a fresh closure (`thunk_make`, a lazy front end's) is in
-  line as the loop has it: the closure's kind rewritten, the collector's
-  bits kept (`ms_set_kind`), where it has two fields or more; one that
-  captures nothing is the primitive's, which copies it. The
+  line: of one that captures, the closure's kind rewritten, the
+  collector's bits kept (`ms_set_kind`), as the loop has it; of one that
+  captures nothing, which may be a constant the program shares, a
+  suspension of one field made beside it, its function's (an allocation
+  in line, `FILL_SUSP`), as the primitive makes it. The
   primitives that are a function of the C library on reals and nothing
   else (`real_exp`, `real_ln`, `real_sin`, `real_cos`, `real_tan`,
   `real_atan`, `real_sinh`, `real_cosh`, `real_tanh`, `real_atan2`,

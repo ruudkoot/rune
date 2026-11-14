@@ -779,19 +779,27 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         ms_set_reg(M, d, T_CHAR, R_S1);
         break;
     case PRIM_ref_get: ms_load_obj(M, R_S0, x, K_REF, slow); ms_load_field(M, d, R_S0, 0); break;
-    /* a suspension of a fresh closure that captures, made in place: its
-       kind rewritten, the collector's bits kept (fastprim.h; prims.c,
-       p_thunk_make). One that captures nothing, of a length below 2, may be
-       a constant the program shares, and the primitive copies it: the slow
-       path (haskell98 M9b; E2's prototype had it in line) */
-    case PRIM_thunk_make:
+    /* a suspension of a fresh closure (haskell98 M9b; E2's prototype had
+       it in line): one that captures is made in place, its kind rewritten,
+       the collector's bits kept (fastprim.h); one that captures nothing, of
+       a length below 2, may be a constant the program shares, and the
+       suspension is made beside it, of its function, as the primitive makes
+       it (prims.c, p_thunk_make): an allocation in line, as ref_new's */
+    case PRIM_thunk_make: {
+        AsmLabel captures, done; as_label_init(&captures); as_label_init(&done);
         ms_load_obj(M, R_S0, x, K_CLOSURE, slow);
         ms_load_len(M, R_S1, R_S0);
         as_cmp_ri(A, R_S1, 2);
-        as_jcc(A, CC_B, slow);
+        as_jcc(A, CC_AE, &captures);
+        alloc(j, K_THUNK, THUNK_UNEVALUATED, 1, FILL_SUSP, d, x, 0, NULL);
+        as_jmp(A, &done);
+        as_bind(A, &captures);
         ms_set_kind(M, R_S0, K_THUNK, R_S1);
         ms_set_reg(M, d, T_PTR, R_S0);
+        as_bind(A, &done);
+        as_label_free(&captures); as_label_free(&done);
         break;
+    }
     case PRIM_ref_set:
         ms_need_word(M, y);
         ms_load_obj(M, R_S0, x, K_REF, slow);
@@ -929,6 +937,7 @@ static void alloc(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d,
     case FILL_ONE: ms_need_word(M, a); break;
     case FILL_CLOSURE: for (uint32_t i = 0; i + 1 < n; i++) ms_need_word(M, read_i32(L + 4 * i)); break;
     case FILL_MKEXN: ms_need_word(M, a); ms_need_word(M, b); break;
+    case FILL_SUSP: ms_need_word(M, a); break;
     default: break;
     }
     AsmLabel *slow = jit_alloc_slow(j, kind, contag, n, fill, d, a, b, L);
