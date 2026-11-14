@@ -3,15 +3,19 @@
    simplifier): a program of the run set compiled by rhc in several ways and
    run on bin/runevm, each way's output held to the program's own and to
    -O0's, with the instructions, bytes and objects `runevm --count` gives,
-   the suspensions made (`runevm-census --census-summary`, its THUNK
-   objects) and, where perf is there, the instructions:u of a run at tier
-   2. Measured, not adopted: the owner decides on the figures.
+   the suspensions made (`runevm-census --census-summary`: thunk_make's
+   calls) and, where perf is there, the instructions:u of a run at tier 2,
+   and of the suspensions those copied (the census's THUNK objects, a
+   suspension of a code that captures nothing, which thunk_make allocates
+   apart where it makes the rest of their closures in place). Measured, not
+   adopted: the owner decides on the figures.
 
    `bin/rune-test hs-simplify-figures SET ID OUT [WAY...]` appends a line a
    way to OUT, tab-separated: the set (lang, corpus or lazy), the id, the
    way, whether rhc compiled it, the run's status, whether it printed the
    program's expected output and what -O0 printed, then instructions,
-   bytes, objects, suspensions and instructions:u (- where not measured).
+   bytes, objects, suspensions, instructions:u and suspensions copied (-
+   where not measured).
    The ways are O0, O2 (the pedantic rule, the Report's order), O2-ghc
    (D48's D), O2-sestoft and O0-sestoft (D34's B), all of them where none
    is named or where `all` is; and, where named, iO0 and iO2, the program
@@ -78,7 +82,7 @@ struct
           val () = if name = "iO0" then i0out := SOME output else ()
           val row = [name, "yes", Int.toString rs, if output = #expected p then "yes" else "no",
                      case !i0out of SOME first => if output = first then "yes" else "no" | NONE => "-",
-                     "-", "-", "-", "-", "-"]
+                     "-", "-", "-", "-", "-", "-"]
         in append (out, String.concatWith "\t" ([set, id] @ row) ^ "\n") end
       fun one (name, flags) =
         let
@@ -86,7 +90,7 @@ struct
           fun f x = #dir p ^ "/" ^ name ^ "." ^ x
           val cs = call ([fromRoot "bin/rhc", #main p] @ flags @ ["-o", rbc], #dir p, "", f "c.out", f "c.err", 1800)
           val row =
-            if cs <> 0 then [name, "no", "-", "-", "-", "-", "-", "-", "-", "-"]
+            if cs <> 0 then [name, "no", "-", "-", "-", "-", "-", "-", "-", "-", "-"]
             else
               let
                 val rs = call ([runevm, "--count", rbc] @ #args p, runIn (name ^ ".count"), #stdin p, f "out", f "err", 1800)
@@ -95,8 +99,13 @@ struct
                 val count = getOpt (lineAfter (f "err", "runevm: count: "), "")
                 val fields = String.tokens (fn c => c = #",") count
                 fun nth i = if length fields > i then firstNumber (List.nth (fields, i)) else "-"
-                val thunks =
-                  if not haveCensus then "-"
+                (* the suspensions made, thunk_make's calls (its line of the
+                   census's primitive results), and of them those copied, a
+                   THUNK allocated apart for a code that captures nothing,
+                   where the rest are their closures made suspensions in place
+                   (runtime/prims.c, p_thunk_make) *)
+                val (thunks, copies) =
+                  if not haveCensus then ("-", "-")
                   else
                     let
                       val d = f "census"
@@ -106,8 +115,10 @@ struct
                       val _ = call ([census, "--census-dir", d, "--census-every", "0", "--census-summary", rbc] @ #args p,
                                     runIn (name ^ ".census"), #stdin p,
                                     "/dev/null", f "census.err", 1800)
-                      val t = if exists (d ^ "/census.txt") then getOpt (lineAfter (d ^ "/census.txt", "THUNK\t"), "-") else "-"
-                    in rmTree d; firstNumber t end
+                      val text = d ^ "/census.txt"
+                      val made = if exists text then getOpt (lineAfter (text, "thunk_make\tPTR\t"), "0") else "-"
+                      val copied = if exists text then getOpt (lineAfter (text, "THUNK\t"), "0") else "-"
+                    in rmTree d; (firstNumber made, firstNumber copied) end
                 val tier2 =
                   if not havePerf then "-"
                   else
@@ -121,7 +132,7 @@ struct
               in
                 [name, "yes", Int.toString rs, if output = #expected p then "yes" else "no",
                  case !o0out of SOME first => if output = first then "yes" else "no" | NONE => "-",
-                 nth 0, nth 1, nth 2, thunks, tier2]
+                 nth 0, nth 1, nth 2, thunks, tier2, copies]
               end
         in append (out, String.concatWith "\t" ([set, id] @ row) ^ "\n") end
       (* the eta-expansions under each rule (D48): compiled at -O2 with
