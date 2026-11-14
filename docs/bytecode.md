@@ -709,7 +709,8 @@ its function takes, and the call tests it.
   `<apply return>` (its argument returned) and `<apply K R>` (local 0 the
   closure, 1 to K its arguments, K+1 to K+R the rest) are functions the
   loader adds to a program that has a closure of more parameters than one or
-  a call of more arguments, `<apply K R>` for each K up to the most parameters
+  a call of more arguments (those it has not, after each unit too, as the
+  REPL loads them), `<apply K R>` for each K up to the most parameters
   and each R up to one less than the most arguments; runeopt adds the same to
   the program it translates (`Rbc.withApply`), so each has its native code.
   The JIT keeps a partial application made, one entered with what it wants,

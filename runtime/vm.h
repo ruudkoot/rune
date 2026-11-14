@@ -119,9 +119,9 @@ typedef struct Program {
        (gc_pin_running). One that says BLACKHOLE, at its entry as Haskell's
        do, is not run again while it runs */
     int reruns;
-    /* the most parameters a CLOSUREN of the code gives a closure, and the
-       most arguments a CALLN or TAILCALLN gives (0: none), which the
-       register VM's check of the code finds (D15 C: the general path's
+    /* the most parameters a CLOSUREN or ARITY of the code gives a closure,
+       and the most arguments a CALLN or TAILCALLN gives (0: none), which
+       the check of the code finds (D15 C: the general path's
        functions it needs, vm_isa_after_load) */
     uint32_t apply_amax, apply_nmax;
 } Program;
@@ -990,7 +990,8 @@ uint32_t return_function_code(uint8_t *out, uint32_t *nlocals);
 /* what the instruction set adds to a program it has loaded: the functions
    of the general path of a call (D15 C), <apply return> and <apply K R>,
    where the program has a closure of more parameters than one or a call
-   of more arguments. 1, or 0 and why. */
+   of more arguments, those it has not already: after a program is loaded,
+   and after each unit (load_unit_mem). 1, or 0 and why. */
 int vm_isa_after_load(VM *vm, char *err, size_t errlen);
 /* The stack bytecode's general path of a call through a closure (D15 C;
    runtime/stack/isa_stack.c), for its loop and runeopt's glue: the closure

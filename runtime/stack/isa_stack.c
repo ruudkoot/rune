@@ -382,31 +382,44 @@ static void apply_table(VM *vm) {
    arguments: Program.apply_amax, apply_nmax): <apply return>, then
    <apply K R> for each K up to the most parameters a closure of it has and
    each R up to one less than the most arguments a call of it gives, K the
-   outer. 1, or 0 and why. */
+   outer, those it has not already -- an image's program has them, and a
+   unit loaded later (loader.c) may need more, as the REPL's code does. 1,
+   or 0 and why. */
 int vm_isa_after_load(VM *vm, char *err, size_t errlen) {
     Program *p = &vm->prog;
-    if (!p->apply_amax && !p->apply_nmax) return 1;
-    for (uint32_t f = 0; f < p->nfuncs; f++)
-        if (p->funcs[f].name && strncmp(p->funcs[f].name, "<apply ", 7) == 0) return 1;   /* there already (an image's program) */
-    uint32_t amax = p->apply_amax > 1 ? p->apply_amax : 1, nmax = p->apply_nmax > 1 ? p->apply_nmax : 1;
+    uint32_t amax0 = p->apply_amax, nmax0 = p->apply_nmax;
+    if (!amax0 && !nmax0) return 1;
+    uint32_t amax = amax0 > 1 ? amax0 : 1, nmax = nmax0 > 1 ? nmax0 : 1;
+    /* those it has: the table as it is before any is added */
+    vm->apply_nfuncs = UINT32_MAX;
+    apply_table(vm);
+    uint32_t *had = vm->apply_stubs, hk = vm->apply_kmax, hr = vm->apply_rmax;
+    vm->apply_stubs = NULL;
+    int ok = 1;
     uint8_t code[16];
-    uint32_t nlocals;
-    uint32_t len = return_function_code(code, &nlocals);
-    if (program_add_function(vm, "<apply return>", code, len, nlocals, 1, err, errlen) == UINT32_MAX) return 0;
-    for (uint32_t k = 1; k <= amax; k++)
-        for (uint32_t r = 1; r + 1 <= nmax; r++) {
+    uint32_t nlocals, len;
+    if (vm->apply_return == UINT32_MAX) {
+        len = return_function_code(code, &nlocals);
+        ok = program_add_function(vm, "<apply return>", code, len, nlocals, 1, err, errlen) != UINT32_MAX;
+    }
+    for (uint32_t k = 1; ok && k <= amax; k++)
+        for (uint32_t r = 1; ok && r + 1 <= nmax; r++) {
+            if (had && k <= hk && r <= hr && had[(size_t)(k - 1) * hr + (r - 1)] != UINT32_MAX) continue;
             uint8_t *buf = malloc(32 + 5 * (size_t)(k + r + 1));
-            if (!buf) return fail(err, errlen, "out of memory");
+            if (!buf) { ok = fail(err, errlen, "out of memory"); break; }
             char name[48];
             snprintf(name, sizeof name, "<apply %u %u>", k, r);
             len = apply_code(buf, k, r);
-            uint32_t f = program_add_function(vm, name, buf, len, k + r + 1, k + r + 1, err, errlen);
+            ok = program_add_function(vm, name, buf, len, k + r + 1, k + r + 1, err, errlen) != UINT32_MAX;
             free(buf);
-            if (f == UINT32_MAX) return 0;
         }
-    vm->apply_nfuncs = 0;
+    free(had);
+    /* their own calls are no need of the program's */
+    p->apply_amax = amax0;
+    p->apply_nmax = nmax0;
+    vm->apply_nfuncs = UINT32_MAX;
     apply_table(vm);
-    return 1;
+    return ok;
 }
 
 /* the frame of function f with the count values at stack[from] as its
