@@ -6,7 +6,9 @@ struct
   exception Usage of string
 
   (* --eta=pedantic|ghc: the Core simplifier's eta rule (D48), the
-     pedantic (C, decided) or GHC's default (D, to be measured) *)
+     pedantic (C), the default, the Report's, or GHC's default (D), an
+     option outside the Report, which breaks seq on a partial application
+     (the owner's decision of 2026-11-14) *)
   val eta = ref CoreSimplify.Pedantic
   (* --simplify-stats: the Core simplifier's rewrites, by kind, on
      standard error *)
@@ -107,9 +109,11 @@ struct
     \  -O0, -O1, -O2         the level of Mid's optional passes (default: 1); at -O2 the\n\
     \                        Core simplifier too: core-simplify, core-specialise,\n\
     \                        core-eta, core-simplify-2 (M23)\n\
-    \  --eta=E               the Core simplifier's eta-expansion: pedantic, where the\n\
-    \                        expression is a value already (default), or ghc, GHC's\n\
-    \                        default, through a case and IO, for D48's measurement\n\
+    \  --eta=E               the Core simplifier's eta-expansion (D48): pedantic, the default,\n\
+    \                        the Report's, only where the expression is a value already; or\n\
+    \                        ghc, GHC's default, through a case and IO, which departs from the\n\
+    \                        Report: seq of a partial application can converge where it must\n\
+    \                        be a bottom (D55's bottom probe, tests/hs/simplify/eta.hs)\n\
     \  --simplify-stats      the Core simplifier's rewrites, by kind, on standard error\n\
     \  --fuel=N              make no more than N rewrites of the passes, Core's and Mid's\n\
     \  --target=T            the bytecode: registers (default) or stack\n\

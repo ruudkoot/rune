@@ -972,9 +972,16 @@ copied into a lambda or work moved under one by eta shows
 dump: lacks NAME` has the Core the passes leave held to them, a value of
 the name there or not (a copy at known dictionaries, an overloaded original
 dropped, no `fromInteger` left), what no run shows (`hs/simplify/dump/NAME`).
-`eta.hs` is D48's bottom probe: `seq` of a
+`eta.hs` is D48's bottom probe (D55's): `seq` of a
 function whose lambda is behind a case, given bottom, is bottom under the
-pedantic rule, which GHC's default (`--eta=ghc`, built to be measured) breaks.
+pedantic rule, rhc's default (D48's C), which GHC's default (`--eta=ghc`,
+D48's D, an option outside the Report) breaks, printing `eta.ghc.expected`.
+A program with `NAME.ghc.expected` holds the default to the pedantic rule
+(`hs/simplify/eta/NAME`): compiled at `-O2` with no `--eta`, on the VM and
+on Core's interpreter, and with `--eta=pedantic`, it ends as
+`NAME.expected` and `NAME.exitcode` say, and with `--eta=ghc` it prints
+`NAME.ghc.expected` and ends in a value, so that the probe tells the two
+rules apart.
 Over the run programs of `tests/hs/lang` (nightly, held while their rows
 are `Planned`), the VM prints at `-O2` what it prints at `-O0` and ends
 alike (`hs/simplify/lang/NAME`), and so it does over the 188 vendored
