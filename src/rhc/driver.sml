@@ -405,8 +405,12 @@ struct
               (* the first unit reads its own source and rhc's leaves alone,
                  which its key and the configuration hold *)
               val usages = if null done then [] else List.map (fn r => (HsUsage.key r, answerIn (now ()) r)) reads
-              (* at -O2, what a client may inline or specialise of it (M23) *)
-              val iface = HsIface.encode {modules = mods, unfoldings = RhcSimplify.unfoldingsOf core}
+              (* at -O2, what a client may inline or specialise of it (M23),
+                 where the unit is kept: a compile with no store keeps
+                 nothing, and the simplifier on each own unit would be work
+                 thrown away *)
+              val unfoldings = if isSome (#store opts) then RhcSimplify.unfoldingsOf core else []
+              val iface = HsIface.encode {modules = mods, unfoldings = unfoldings}
               val own = printsFor (mods, prints)
               (* its Core by its declarations, so that a link reads only what
                  it reaches (CoreUnits.index) *)
