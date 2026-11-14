@@ -24,8 +24,10 @@ cache, [plans/build-cache-issues.md](../../plans/build-cache-issues.md)).
 * [handler-reraise-position](handler-reraise-position/BUGREPORT.md): an
   exception a handler does not match is raised again with the position of
   the end of the handler's last rule. At -O1 that can be in an inlined
-  function, so the trace names a function that never ran (2026-11-14, not
-  fixed; `reraise.sml` reproduces it).
+  function, so the trace names a function that never ran (2026-11-14,
+  fixed 2026-11-14 on `hs-l-reraise`: the re-raise is placed at the
+  `handle`; `reraise.sml` reproduces it, `tests/lang/rt.trace_reraise` holds
+  the fix).
 
 [Fixes and validation](terminal-races-fixed.md) records the changes and
 deterministic regressions for all three causes.
