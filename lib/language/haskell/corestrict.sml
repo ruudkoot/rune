@@ -216,6 +216,18 @@ struct
 
   fun workerName f = "%w:" ^ f
 
+  (* whether t holds an unboxed tuple: a case that joins one of a strict
+     parameter with one of a lazy value relaxes the components' `!`
+     (CoreLint's join), which a worker's declared result would not keep *)
+  fun hasUTuple t =
+    case t of
+      TUTuple _ => true
+    | TEval u => hasUTuple u
+    | TFun (a, b) => hasUTuple a orelse hasUTuple b
+    | TForall (_, _, b) => hasUTuple b
+    | TApp (a, b) => hasUTuple a orelse hasUTuple b
+    | _ => false
+
   (* f, strict in some of its parameters: its worker's type and lambda, of
      them evaluated, and a wrapper that evaluates them, of f's type, and
      which of its value parameters the worker takes evaluated; NONE where
@@ -235,7 +247,8 @@ struct
         let
           val marked = ListPair.map (fn ((x, pt), s) => (x, pt, s andalso isLifted dt pt)) (vps, params)
         in
-          if not (List.exists #3 marked) then NONE
+          if not (List.exists #3 marked) orelse hasUTuple (resultAfter (instantiateTo (t, List.map #1 tyBinders), length vps))
+          then NONE
           else
             let
               val tvs = List.map #1 tyBinders
