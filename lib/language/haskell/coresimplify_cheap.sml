@@ -26,6 +26,9 @@
    which may be recursive (GHC's Note in CoreToStg.Prep); not a variable
    that may be a suspension, whose force may loop.
 
+   The case binds a name of its own, and the let's variable is that name at
+   the let's type, so that every type it is held to stays as it was.
+
    A let whose expression is lets around a cheap and total expression has
    those lets floated out of it first: their suspensions are made at once,
    bounded work, and its own expression is then made a case (moving bounded
@@ -148,7 +151,13 @@ struct
         in
           if speculable t andalso not (B.isValue c) andalso ok envc c
              andalso (null ls orelse B.tick "cheap-float") andalso B.tick "cheap"
-          then B.wrapLets (ls, Case (c, x, [AltDefault (exp (evaluate (envc, x)) b)]))
+          then
+            (* the case binds a fresh name, of the evaluated type, and x is
+               it at x's own type, a let of an atom: where x's type is
+               held exactly (a component of an unboxed tuple, IO's in a
+               cast), it is the type it was *)
+            let val x' = B.fresh x
+            in B.wrapLets (ls, Case (c, x', [AltDefault (Let (x, t, Atom (Var x'), exp (evaluate (evaluate (envc, x'), x)) b))])) end
           else Let (x, t, r', exp (bindLazy (env, x, t, r')) b)
         end
     | LetRec (bs, b) =>
