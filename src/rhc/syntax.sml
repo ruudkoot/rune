@@ -242,7 +242,8 @@ struct
               orelse String.isPrefix "--thunks=" a orelse String.isPrefix "--dump-after=" a orelse a = "--pass-stats"
               orelse String.isPrefix "--strings=" a orelse String.isPrefix "--steps=" a orelse String.isPrefix "--depth=" a
               orelse String.isPrefix "--match=" a orelse a = "--desugar-only" orelse a = "--desugar-units"
-              orelse String.isPrefix "--eta=" a orelse a = "--simplify-stats" orelse String.isPrefix "--fuel=" a
+              orelse String.isPrefix "--eta=" a orelse a = "--simplify-stats" orelse a = "--cheap-eagerness"
+              orelse String.isPrefix "--fuel=" a
               orelse option a
             fun check [] = ()
               | check ("-o" :: _ :: rest) = check rest

@@ -16,7 +16,10 @@
      under fuel, with `simplify` after (D49's C; CoreSimplifySpec);
    - `eta`: lambdas added where an expression takes more arguments at no
      cost, under the pedantic rule (D48's C) or GHC's default (D48's D, to
-     be measured; CoreSimplifyEta).
+     be measured; CoreSimplifyEta);
+   - `cheap`: a let of a cheap and total expression made a case, its value
+     made at once and no suspension built (D51's C, built to be measured;
+     CoreSimplifyCheap).
 
    What it refuses of GHC's: foldr/build, which `seq` makes unsound (Hudak
    et al. 2007, §10.3); general full laziness, which changes strictness
@@ -33,14 +36,15 @@ sig
   datatype eta = Pedantic | Ghc
 
   (* What the passes are given: what is asked before each rewrite, whether
-     the program is whole, and the eta rule.
+     the program is whole, the eta rule, and whether cheap eagerness runs.
 
      `spend` is asked before each rewrite (Pass.spend, so that --fuel stops
      them); with `whole` a value main does not reach may go. *)
-  type options = {spend : unit -> bool, whole : bool, eta : eta}
+  type options = {spend : unit -> bool, whole : bool, eta : eta, cheap : bool}
 
   (* `passes ()` is each pass, by its name for --dump-after, in the order
-     they run: core-simplify, core-specialise, core-eta, core-simplify-2. *)
+     they run: core-simplify, core-specialise, core-eta, core-cheap,
+     core-simplify-2. *)
   val passes : unit -> (string * (options -> Core.program -> Core.program)) list
 
   (* `simplify opts p` is p simplified, its rounds run until one makes no
