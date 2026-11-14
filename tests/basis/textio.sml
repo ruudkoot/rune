@@ -1174,6 +1174,17 @@ struct
                            end))
   (*>> multiple-end-of-stream *)
 
+  (*<< full-device *)
+  (* A full device, /dev/full, which the POSIX systems the suite runs on
+     have: what is written waits in a buffer, and the system refuses it when
+     it is written out, so flushOut and closeOut raise Io ("raises the
+     exception Io if ... the flushing fails"; IMPERATIVE_IO, STREAM_IO). *)
+  val () = T.raises ("TextIO.flushOut/Io-device-full", isIo,
+                     fn () => let val out = TextIO.openOut "/dev/full" in TextIO.output (out, "x"); TextIO.flushOut out end)
+  val () = T.raises ("TextIO.closeOut/Io-device-full", isIo,
+                     fn () => let val out = TextIO.openOut "/dev/full" in TextIO.output (out, "x"); TextIO.closeOut out end)
+  (*>> full-device *)
+
   (* A stream that is still open when the program ends: "All streams created
      by [...] the open functions in TextIO will be closed (and the output
      streams among them flushed) when the SML program exits." The runner does
