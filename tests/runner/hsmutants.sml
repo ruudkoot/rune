@@ -206,7 +206,12 @@ struct
            ^ "\n  run a job against it: RUNE_TEST_ROOT=THAT THAT/bin/rune-test run JOB, with RUNE_TEST_RUN unset\n")
     end
 
+  (* a job that stops says why in a FAIL line: Failed's reason, or any other
+     exception by Sh.exnText (an OS.SysErr of a file, say), rather than end
+     uncaught, with a trace that names the end of this handler's rule
+     (docs/bugreport/rune/handler-reraise-position) *)
   fun protect f () = f () handle Failed why => say ("FAIL hs-mutants: " ^ why ^ "\n")
+                               | e => say ("FAIL hs-mutants: " ^ exnText e ^ "\n")
   fun command args =
     case args of
       ["hs-mutants-prepare"] => SOME (protect prepare)
