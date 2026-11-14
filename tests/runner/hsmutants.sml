@@ -58,8 +58,12 @@ struct
       need (code = 0, "scripts/plan-files.sh rhc.plan failed: " ^ firstNonEmpty (out ^ ".err"));
       String.tokens Char.isSpace (read out)
     end
-  fun build (m : mutant) =
-    CompilerMutants.buildFrom {id = #id m, edits = #edits m, srcs = sources (#id m), dir = dirOf (#id m), out = "rhc.rbc"}
+  (* a mutant built in a directory of its own, dirOf dir, which the build
+     empties first: ID's job builds in ID and built-ID's in built-ID, since
+     the tier may run the two at once, and in one directory each removed the
+     other's files (docs/bugreport/rune/hs-mutants-built-race) *)
+  fun build (m : mutant, dir) =
+    CompilerMutants.buildFrom {id = #id m, edits = #edits m, srcs = sources dir, dir = dirOf dir, out = "rhc.rbc"}
 
   (* ---- the corpus *)
   val sample = 160
@@ -138,9 +142,9 @@ struct
     end
 
   fun builtJob id () =
-    let val (rbc, status) = build (named id)
+    let val (rbc, status) = build (named id, "built-" ^ id)
     in
-      rmTree (dirOf id);
+      rmTree (dirOf ("built-" ^ id));
       need (isSome rbc, id ^ " no longer compiles: " ^ status);
       say ("PASS hs-mutants: " ^ id ^ " builds\n")
     end
@@ -154,7 +158,7 @@ struct
     let
       val m = named id
       val d = dirOf id
-      val (rbc, status) = build m
+      val (rbc, status) = build (m, id)
       fun verdict text = (mkdirs (dirOf "verdicts"); write (dirOf "verdicts/" ^ id, text ^ "\n"); say (text ^ "\n"))
       val what = id ^ " (" ^ #stage m ^ ": " ^ #note m ^ ")"
     in
@@ -199,14 +203,19 @@ struct
 
   fun treeCommand id () =
     let val m = named id
-        val (rbc, status) = build m
+        val (rbc, status) = build (m, id)
     in
       need (isSome rbc, id ^ " does not build: " ^ status);
       say ("hs-mutants: " ^ id ^ "'s tree is " ^ mutantTree (dirOf id, valOf rbc)
            ^ "\n  run a job against it: RUNE_TEST_ROOT=THAT THAT/bin/rune-test run JOB, with RUNE_TEST_RUN unset\n")
     end
 
+  (* a job that stops says why in a FAIL line: Failed's reason, or any other
+     exception by Sh.exnText (an OS.SysErr of a file, say), rather than end
+     uncaught, with a trace that names the end of this handler's rule
+     (docs/bugreport/rune/handler-reraise-position) *)
   fun protect f () = f () handle Failed why => say ("FAIL hs-mutants: " ^ why ^ "\n")
+                               | e => say ("FAIL hs-mutants: " ^ exnText e ^ "\n")
   fun command args =
     case args of
       ["hs-mutants-prepare"] => SOME (protect prepare)
