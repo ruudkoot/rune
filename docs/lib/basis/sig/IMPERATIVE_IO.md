@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 4 |
 | Documentation | 25 of 25 entries documented |
-| Tests | 272 checks of 24 entries |
+| Tests | 276 checks of 24 entries |
 | Source | [lib/basis/sig\_imperative\_io.sml](../../../../lib/basis/sig_imperative_io.sml) |
 
 ## Synopsis
@@ -559,11 +559,11 @@ val flushOut : outstream -> unit
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the writer fails.
 
-<details><summary>Tests (9)</summary>
+<details><summary>Tests (11)</summary>
 
-For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `makes-output-visible` &middot; `nothing-to-flush` &middot; `twice` &middot; `closed-stream-is-a-no-op`
+For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `makes-output-visible` &middot; `nothing-to-flush` &middot; `twice` &middot; `closed-stream-is-a-no-op` &middot; `Io-device-full` (raises)
 
-For `BinIO`, in [tests/basis/binio.sml](../../../../tests/basis/binio.sml): `makes-output-visible` &middot; `nothing-to-flush` &middot; `closed-stream-is-a-no-op`
+For `BinIO`, in [tests/basis/binio.sml](../../../../tests/basis/binio.sml): `makes-output-visible` &middot; `nothing-to-flush` &middot; `closed-stream-is-a-no-op` &middot; `Io-device-full` (raises)
 
 For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `reaches-the-file`
 
@@ -583,11 +583,11 @@ Closing twice is allowed.
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the flush or the writer fails.
 
-<details><summary>Tests (7)</summary>
+<details><summary>Tests (9)</summary>
 
-For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `flushes` &middot; `twice` &middot; `other-streams-stay-open`
+For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `flushes` &middot; `twice` &middot; `other-streams-stay-open` &middot; `Io-device-full` (raises)
 
-For `BinIO`, in [tests/basis/binio.sml](../../../../tests/basis/binio.sml): `flushes` &middot; `twice`
+For `BinIO`, in [tests/basis/binio.sml](../../../../tests/basis/binio.sml): `flushes` &middot; `twice` &middot; `Io-device-full` (raises)
 
 In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `BinIO`, `WideTextIO`: `shared-stream` (raises) &middot; `flushes-and-closes`
 
