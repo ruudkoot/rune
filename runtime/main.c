@@ -29,6 +29,10 @@ static void usage(void) {
         "  --gc-log FILE   write a line about every collection into FILE (docs/runtime.md)\n"
         "  --gc-verify     check the heap before and after every collection (testing the collector)\n"
         "  --gc-compact    compact the old space at every full collection (testing the collector)\n"
+        "  --gc-stress-full  make --gc-stress's collection a full one (testing the collector)\n"
+        "  --caf-tables M  a program's globals at a full collection: auto (the default), kept only\n"
+        "                  where live code reaches them in a program with suspensions, roots in any\n"
+        "                  other; off, roots; on, kept by the tables in any program (testing them)\n"
         "  --gc-stress-cycles  make --gc-stress's collection a minor one, which begins the low-pause\n"
         "                  collector's cycle or marks a little of it (testing the collector)\n"
         "  --nursery N     a nursery of N bytes, at least 4096, before the old space (default 1048576;\n"
@@ -105,6 +109,7 @@ int main(int argc, char **argv) {
     size_t heap = 4u << 20, gc_stress = 0, heap_fill = 50, stack = (size_t)1 << 30;
     size_t heap_limit = 0, equality_work = 0, nursery = (size_t)1 << 20, nursery_max = (size_t)8 << 20;
     int old_kind = OLD_IMMIX, gc_compact = 0, gc_stress_cycles = 0, low_pause = 0, nursery_max_set = 0;   /* --gc throughput, the default (docs/plans/garbage-collector-v2.md, D3) */
+    int gc_stress_full = 0, caf_mode = CAF_MODE_AUTO;
     int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0, checked = 0, gc_verify = 0;
     size_t intinf_bits = 0, intinf_memory = 0;
     int intinf_mode = INTINF_AUTO, intinf_given = 0, intinf_stats = 0;
@@ -150,6 +155,14 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--gc-verify") == 0) gc_verify = 1;
         else if (strcmp(argv[i], "--gc-compact") == 0) gc_compact = 1;
         else if (strcmp(argv[i], "--gc-stress-cycles") == 0) gc_stress_cycles = 1;
+        else if (strcmp(argv[i], "--gc-stress-full") == 0) gc_stress_full = 1;
+        else if (strcmp(argv[i], "--caf-tables") == 0 && i + 1 < argc) {
+            const char *m = argv[++i];
+            if (strcmp(m, "auto") == 0) caf_mode = CAF_MODE_AUTO;
+            else if (strcmp(m, "off") == 0) caf_mode = CAF_MODE_OFF;
+            else if (strcmp(m, "on") == 0) caf_mode = CAF_MODE_ON;
+            else { fprintf(stderr, "runevm: --caf-tables takes auto, off or on, not %s\n", m); return 2; }
+        }
         else if (strcmp(argv[i], "--nursery") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &nursery)) { usage(); return 2; }
         }
@@ -234,7 +247,7 @@ int main(int argc, char **argv) {
         VM *vm = calloc(1, sizeof(VM));
         char err[256];
         if (vm) vm->stack_limit = stack;   /* before the image's stack is made */
-        if (vm) { vm->heap_limit = heap_limit; vm->equality_work = equality_work; vm->gc.nursery_size = vm->gc.nursery_min = nursery; vm->gc.nursery_max = nursery_max; vm->gc.old_kind = old_kind; vm->gc.compact_always = gc_compact; vm->gc.stress_cycles = gc_stress_cycles; }
+        if (vm) { vm->heap_limit = heap_limit; vm->equality_work = equality_work; vm->gc.nursery_size = vm->gc.nursery_min = nursery; vm->gc.nursery_max = nursery_max; vm->gc.old_kind = old_kind; vm->gc.compact_always = gc_compact; vm->gc.stress_cycles = gc_stress_cycles; vm->gc.stress_full = gc_stress_full; vm->caf_mode = caf_mode; }
         if (vm) {
             vm->intinf_max_bits = intinf_bits; vm->intinf_gmp_memory = intinf_memory;
             vm->intinf_mode = intinf_mode; vm->intinf_stats = intinf_stats;
@@ -286,7 +299,7 @@ int main(int argc, char **argv) {
         VM *vm = calloc(1, sizeof(VM));
         char err[256];
         if (vm) vm->stack_limit = stack;
-        if (vm) { vm->heap_limit = heap_limit; vm->equality_work = equality_work; vm->gc.nursery_size = vm->gc.nursery_min = nursery; vm->gc.nursery_max = nursery_max; vm->gc.old_kind = old_kind; vm->gc.compact_always = gc_compact; vm->gc.stress_cycles = gc_stress_cycles; }
+        if (vm) { vm->heap_limit = heap_limit; vm->equality_work = equality_work; vm->gc.nursery_size = vm->gc.nursery_min = nursery; vm->gc.nursery_max = nursery_max; vm->gc.old_kind = old_kind; vm->gc.compact_always = gc_compact; vm->gc.stress_cycles = gc_stress_cycles; vm->gc.stress_full = gc_stress_full; vm->caf_mode = caf_mode; }
         if (vm) {
             vm->intinf_max_bits = intinf_bits; vm->intinf_gmp_memory = intinf_memory;
             vm->intinf_mode = intinf_mode; vm->intinf_stats = intinf_stats;
@@ -328,6 +341,8 @@ int main(int argc, char **argv) {
     vm->gc.nursery_max = nursery_max;
     vm->gc.compact_always = gc_compact;
     vm->gc.stress_cycles = gc_stress_cycles;
+    vm->gc.stress_full = gc_stress_full;
+    vm->caf_mode = caf_mode;
     heap_nursery(vm, nursery);
     if (gc_log) heap_log_open(vm, gc_log);
 #ifdef RUNE_CENSUS

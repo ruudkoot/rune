@@ -1,0 +1,7 @@
+three: ||
+ten: |abcdefgh|
+after hFlush: |abcdefghij|
+sixteen: |abcdefghijklmn|
+seventeen: |abcdefghijklmn|
+twenty-two: |abcdefghijklmnopqr|
+after hClose: |abcdefghijklmnopqrstuv|

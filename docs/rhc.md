@@ -164,6 +164,7 @@ of them is a bug of rhc's.
 | `--show-units` | say of each unit whether it was compiled or taken |
 | `--link=whole\|units` | with `--units` over Core, join the units' Core and compile what `main` reaches whole, or link each unit's code (the default) |
 | `--desugar-units` | desugar a program a unit at a time and join the units, as a compile in units does, for its tests |
+| `--canonical-core` | with `--dump-after=desugar`, print what `main` reaches of the Core, its types, then imports, then values, each by name: one program's Core in one form, whole or against the snapshot |
 | `--prune-store DIR` | drop from the store `DIR` every configuration another rhc made |
 
 **rhc itself.**

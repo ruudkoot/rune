@@ -39,7 +39,7 @@ struct
         String.concatWith " "
           ([#name i] @ List.map (kind o #2) (#operands i)
            @ [flowName (#flow i), handlersName (#handlers i), if #raises i then "raises" else "-"])
-      fun prim (p : primitive) = #name p ^ " " ^ Int.toString (#arity p)
+      fun prim (p : primitive) = #name p ^ " " ^ Int.toString (#arity p) ^ " " ^ Int.toString (IsaGen.loaderResult p)
     in
       String.concatWith "\n" (["registers"] @ List.map instr instrs @ ["--"] @ List.map prim prims)
     end

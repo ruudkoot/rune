@@ -376,7 +376,10 @@ the shims, which the run builds). The family is `tests/runner/hssource.sml`, `hs
   difference is a failure unless a line of `tests/hs/oracles.txt` explains it, in the format of *Expectations*
   with the outcome first in its reason (`hugs | conformance98/layout/do::conformance | HOST-BUG | reject: R56:
   ...`); `@stale` fails a line that explains no failure of a job that ran. A disagreement on a conformance test
-  cites its reading of the Report (`tests/hs/readings.md` from R55).
+  cites its reading of the Report (`tests/hs/readings.md` from R55). `hs-oracles/rhc/conformance` and its
+  `@stale`, needing `rhc` and `hs-corpus`, judge rhc on the same 82 the same way (a module but Main checked with
+  `--typecheck-only`, a program compiled and run on the register VM), its lines of way `rhc` (G2's line
+  "conformance98 green, or each failure a recorded reading").
 - `hs-corpus/data`, `source` and `faults`, in `check`: the data is whole and agrees with itself and with
   `oracles.txt`, nothing lands under `tests/hs/corpus/` but its data, each of E7's hard cases has a reading, the
   source rewrites do what E8's did on planted text, and the harness fails where it must on fake oracles.
@@ -416,15 +419,18 @@ rhc goes through the same corpus (`tests/runner/hsrhccorpus.sml`, `hslazyports.s
   judges do not both run it right is kept in the results. Nightly, `hs-corpus-run/sestoft/ID` compiles each program
   whose run in the Report's order no line explains with its matches as Sestoft's decision trees (`--match=sestoft`),
   runs it on the register VM and holds it to the same judge, its label `sestoft` (the lead's ruling 59,
-  `tr.case.obligation`). `hs-corpus-run/@stale` (and `@stale-nightly`) fails a line that explains no failure of a
-  job that ran. `hs-rhc-corpus/vendored-SET`, in `check`, a job a set, puts the 45 under a `LICENSE` through
-  `--typecheck-only` as the nightly jobs above put the whole corpus, and `hs-rhc-corpus/provenance-SET`, nightly,
-  the 143 under a `PROVENANCE` (ruling 46: D56 puts the 188's runs in `check`, not a names job, and the nightly jobs
-  above check the 143 too). `hs-corpus/vendored` (nightly, with the trees) holds `tests/hs/corpus/vendored/` to the
-  trees' bytes at their commits, and `hs-corpus/data` to the vendored programs' files and notices and nothing more:
-  it refuses a file with no `LICENSE` or `PROVENANCE` beside it or above it, or under another notice than its row of
-  `licences.tsv` names, and a `PROVENANCE` that does not name its tree's upstream and commit or quote the owner's
-  rule. `bin/rune-test hs-corpus-vendor` makes it again from the trees, leaving each `PROVENANCE` as written.
+  `tr.case.obligation`). Nightly too, `hs-corpus-run/levels/ID` compiles each program of the run set's two nofib
+  trees that GHC -O0 ran right (E8: 56 and 82) at rhc's `-O0` and `-O2` and holds both runs on the register VM to
+  E8's output, its label `levels` (G2's line on the clean nofib programs). `hs-corpus-run/@stale` (and
+  `@stale-nightly`) fails a line that explains no failure of a job that ran. `hs-rhc-corpus/vendored-SET`, in
+  `check`, a job a set, puts the 45 under a `LICENSE` through `--typecheck-only` as the nightly jobs above put the
+  whole corpus, and `hs-rhc-corpus/provenance-SET`, nightly, the 143 under a `PROVENANCE` (ruling 46: D56 puts the
+  188's runs in `check`, not a names job, and the nightly jobs above check the 143 too). `hs-corpus/vendored`
+  (nightly, with the trees) holds `tests/hs/corpus/vendored/` to the trees' bytes at their commits, and
+  `hs-corpus/data` to the vendored programs' files and notices and nothing more: it refuses a file with no `LICENSE`
+  or `PROVENANCE` beside it or above it, or under another notice than its row of `licences.tsv` names, and a
+  `PROVENANCE` that does not name its tree's upstream and commit or quote the owner's rule. `bin/rune-test
+  hs-corpus-vendor` makes it again from the trees, leaving each `PROVENANCE` as written.
 - `hs-corpus/faults` holds the first to a fake rhc. Commands: `bin/rune-test hs-rhc-corpus m13 ghc-legacy`,
   `hs-rhc-corpus stale`, `hs-lazy-ports calendar-lazy`; `RUNE_HS_RHC`, `RUNE_HS_RUNEVM`, `RUNE_HS_RHC_TXT` and
   `RUNE_HS_LAZY_PORTS` stand in other tools and files.
@@ -748,9 +754,13 @@ newer than every file of `share/rhc`; `accept/K-of-4`, `errors/K-of-4` and
 `--lint=2`, with its `.cargs`, to the same standard output, standard error
 and status, so that HsLint replays each way the records of the modules the
 program reaches, and each program of `tests/hs/lang` run both ways on
-Core's interpreter, every eighth with its Core compared too; the shards
-nightly, and in make check `accept/sample`, `errors/sample` and
-`lang/sample`, the sample of ruling 47 (*Tiers*); `bin/rune-test
+Core's interpreter, every eighth with its Core compared too in its
+canonical form (`--dump-after=desugar --canonical-core`: what `main`
+reaches, each declaration by name, since the units are joined in another
+order than a whole desugaring's and a whole one may keep a value nothing
+reaches); the shards nightly, and in make check `accept/sample`,
+`errors/sample` and `lang/sample`, the sample of ruling 47 (*Tiers*), every
+fourth program of the last with its Core compared; `bin/rune-test
 hs-snapshot-one KIND NAME` judges one. A mutant's tree (`hs-mutants`) has
 no snapshot, so a mutant makes the library's units itself.
 
@@ -861,9 +871,12 @@ instances), changed exactly by the lines of `tests/hs/library/overlay.names`,
 each with its entry; `compile`, `bin/rhc --whole` compiling
 `tests/hs/library/All20.hs`, a program over a name of each of the 20
 modules, which the VM runs to `All20.expected` (M18: the 20 modules compile);
-and `exitzero`, `exitWith (ExitFailure 0)` an IOError that `isIllegalOperation`
+`exitzero`, `exitWith (ExitFailure 0)` an IOError that `isIllegalOperation`
 holds of (ruling 57), caught by `ExitZeroCaught` and uncaught by
-`ExitZeroUncaught`, status 1, on Core's interpreter and on the VM.
+`ExitZeroUncaught`, status 1, on Core's interpreter and on the VM; and
+`devicefull`, `DeviceFull.hs` on a full device (`/dev/full`): `hFlush`, `hClose`,
+`writeFile`, `appendFile` and an unbuffered `hPutStr` raise `isFullError`
+(ruling 62), on both.
 
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants

@@ -188,6 +188,54 @@ __attribute__((noinline))
 static void mark_value(VM *vm, Value *v) { mark_field(vm, v, vm->prog.reruns); }
 #define MARK_VALUE(v) (vm->gc_counts.other_roots++, mark_value(vm, (v)))
 #define MARK_OBJ(o) (vm->gc_counts.other_roots++, *(o) = mark_obj(vm, *(o)))
+static void mark_objp(VM *vm, Obj **o) { vm->gc_counts.other_roots++; *o = mark_obj(vm, *o); }
+
+/* The marking where the program keeps its globals by CAF tables (caf.c):
+   each object whose code may run taking its function's table, and the
+   frames' closures taken last, a reference that reaches one of them
+   marked the frames' alone so far taking its function's table. */
+static inline void caf_late_value(VM *vm, Value *v, int guard);
+static void caf_late_global(VM *vm, Value *v) { caf_late_value(vm, v, vm->prog.reruns); }
+static inline void caf_late_value(VM *vm, Value *v, int guard) {
+    mark_field(vm, v, guard);
+    if (val_is_ptr(*v)) {
+        Obj *o = val_ptr(*v);
+        if (caf_only_take(o) && caf_code_due(o)) caf_code(vm, o, caf_late_global);
+    }
+}
+#if defined(__GNUC__)
+__attribute__((always_inline))
+#endif
+static inline void mark_with_tables_as(VM *vm, int guard) {
+    while (vm->gc.nqueue) {
+        Obj *o = vm->gc.queue[--vm->gc.nqueue];
+        if (caf_runs(o) && caf_code_due(o)) caf_code(vm, o, mark_value);
+        Value *f = obj_fields(o);
+        uint32_t n = obj_scanned_fields(o);
+        for (uint32_t i = 0; i < n; i++) mark_field(vm, &f[i], guard);
+    }
+    CafAside *a;
+    size_t na = caf_aside(&a);
+    for (size_t i = 0; i < na; i++) {
+        Obj *o;
+        if (a[i].slot) { mark_value(vm, a[i].slot); o = val_is_ptr(*a[i].slot) ? val_ptr(*a[i].slot) : NULL; }
+        else { *a[i].root = mark_obj(vm, *a[i].root); o = *a[i].root; }
+        if (o && caf_runs(o)) caf_only_add(o);
+    }
+    while (vm->gc.nqueue) {
+        Obj *o = vm->gc.queue[--vm->gc.nqueue];
+        if (caf_runs(o) && !caf_only_has(o) && caf_code_due(o)) caf_code(vm, o, caf_late_global);
+        Value *f = obj_fields(o);
+        uint32_t n = obj_scanned_fields(o);
+        for (uint32_t i = 0; i < n; i++) caf_late_value(vm, &f[i], guard);
+    }
+    caf_end(vm);
+}
+/* a loop of its own for each guard, as mark_full's (reruns: lazy ML's) */
+static void mark_with_tables(VM *vm) {
+    if (vm->prog.reruns) mark_with_tables_as(vm, 1);
+    else mark_with_tables_as(vm, 0);
+}
 
 /* Whether a full collection compacts the old space: where --heap-limit is
    set and the old space's chunks pass it by a quarter -- what lives in it
@@ -240,14 +288,25 @@ void mark_full(VM *vm) {
         c->used = 0;
     }
     gc_pin_running(vm, 0);
-    gc_stack_roots(vm, mark_value);
-    OTHER_ROOTS(vm, MARK_VALUE, MARK_OBJ);
-    while (vm->gc.nqueue) {
-        Obj *o = vm->gc.queue[--vm->gc.nqueue];
-        Value *f = obj_fields(o);
-        uint32_t n = obj_scanned_fields(o);   /* every field; of an indirection, the first */
-        if (vm->prog.reruns) for (uint32_t i = 0; i < n; i++) mark_field(vm, &f[i], 1);
-        else for (uint32_t i = 0; i < n; i++) mark_field(vm, &f[i], 0);
+    if (caf_begin(vm)) {
+        /* a program with suspensions: a global kept only where live code
+           reaches it (caf.c), the frames' closures last */
+        caf_frames(vm, mark_value, 1);
+        gc_stack_roots(vm, mark_value);   /* the frames caf_frames walked, their closures set aside */
+        caf_frames_forget();
+        caf_roots(vm, mark_value, mark_objp);   /* (the stack VM's frames' closures set aside too) */
+        caf_back(vm);
+        mark_with_tables(vm);
+    } else {
+        gc_stack_roots(vm, mark_value);
+        OTHER_ROOTS(vm, MARK_VALUE, MARK_OBJ);
+        while (vm->gc.nqueue) {
+            Obj *o = vm->gc.queue[--vm->gc.nqueue];
+            Value *f = obj_fields(o);
+            uint32_t n = obj_scanned_fields(o);   /* every field; of an indirection, the first */
+            if (vm->prog.reruns) for (uint32_t i = 0; i < n; i++) mark_field(vm, &f[i], 1);
+            else for (uint32_t i = 0; i < n; i++) mark_field(vm, &f[i], 0);
+        }
     }
 
     switch (vm->gc.old_kind) {

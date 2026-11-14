@@ -339,7 +339,7 @@ Its limits:
 ## The command line and the environment
 
 * **The options of `runevm-stack`** (`--count`, `--stats`, `--heap-size`,
-  `--heap-fill`, `--nursery`, `--nursery-max`, `--gc`, `--old-space`, `--gc-stress`, `--gc-stress-cycles`, `--gc-verify`, `--gc-compact`, `--gc-log`, `--checked`, `--emulate-fork`,
+  `--heap-fill`, `--nursery`, `--nursery-max`, `--gc`, `--old-space`, `--gc-stress`, `--gc-stress-cycles`, `--gc-stress-full`, `--caf-tables`, `--gc-verify`, `--gc-compact`, `--gc-log`, `--checked`, `--emulate-fork`,
   `--restore`)
   come from `runeopt --options` and then the environment variable
   `RUNEVM_OPTIONS`.

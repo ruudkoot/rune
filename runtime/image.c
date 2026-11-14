@@ -980,6 +980,8 @@ int vm_become(VM *vm, const char *path) {
     next->gc.old_kind = vm->gc.old_kind;
     next->gc.compact_always = vm->gc.compact_always;
     next->gc.stress_cycles = vm->gc.stress_cycles;
+    next->gc.stress_full = vm->gc.stress_full;
+    next->caf_mode = vm->caf_mode;   /* (its CAF tables made afresh, from the image's code: runtime/gc/caf.c) */
     next->intinf_max_bits = vm->intinf_max_bits;
     next->intinf_gmp_memory = vm->intinf_gmp_memory;
     next->intinf_mode = vm->intinf_mode;

@@ -7,7 +7,7 @@
 | Signatures | [`BIN_IO`](../sig/BIN_IO.md), [`IMPERATIVE_IO`](../sig/IMPERATIVE_IO.md) |
 | Status | required |
 | Members | 28 |
-| Tests | 155 checks |
+| Tests | 157 checks |
 | Source | [lib/basis/binio.sml](../../../../lib/basis/binio.sml) |
 
 ## Synopsis

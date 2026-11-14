@@ -16,6 +16,14 @@ struct
     else "'" ^ String.translate (fn #"'" => "'\\''" | c => str c) w ^ "'"
 
   fun say s = (TextIO.output (TextIO.stdOut, s); TextIO.flushOut TextIO.stdOut)
+  (* an exception as a harness error's log says it: IO.Io's function, file
+     and cause, an OS.SysErr's message and errno's name, and any other
+     exception's message (exnMessage says only "Io" of IO.Io) *)
+  fun exnText e =
+    case e of
+      IO.Io {name, function, cause} => "Io: " ^ function ^ " of " ^ name ^ ": " ^ exnText cause
+    | OS.SysErr (msg, err) => "SysErr: " ^ msg ^ (case err of SOME n => " (" ^ OS.errorName n ^ ")" | NONE => "")
+    | _ => exnMessage e
   fun exists f = OS.FileSys.access (f, []) handle OS.SysErr _ => false
   fun isDir f = OS.FileSys.isDir f handle OS.SysErr _ => false
   fun read f = (let val s = TextIO.openIn f in TextIO.inputAll s before TextIO.closeIn s end) handle IO.Io _ => ""

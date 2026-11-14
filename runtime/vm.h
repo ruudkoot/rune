@@ -119,6 +119,11 @@ typedef struct Program {
        (gc_pin_running). One that says BLACKHOLE, at its entry as Haskell's
        do, is not run again while it runs */
     int reruns;
+    /* whether a function of it says UPDATE or BLACKHOLE: a program with
+       suspensions, whose full collections keep a global only where live
+       code reaches it (runtime/gc/caf.c; the haskell98 roadmap's D19). No
+       program of SML has one but lazy ML's */
+    int suspends;
     /* the most parameters a CLOSUREN or ARITY of the code gives a closure,
        and the most arguments a CALLN or TAILCALLN gives (0: none), which
        the check of the code finds (D15 C: the general path's
@@ -138,6 +143,14 @@ typedef struct UnitExport {
     uint32_t kind;       /* 0 a function, 1 a global */
     uint32_t index;
 } UnitExport;
+
+/* --caf-tables=MODE (runtime/gc/caf.c): auto, the tables where the program
+   has suspensions; off, every global a root; on, the tables in any program */
+enum { CAF_MODE_AUTO, CAF_MODE_OFF, CAF_MODE_ON };
+struct VM;
+void caf_reset(struct VM *vm);   /* the tables made again: a unit loaded, an image read */
+void caf_free(struct VM *vm);
+void caf_stats(struct VM *vm, FILE *out);
 
 /* ---------------------------------------------------------------- machine */
 
@@ -275,6 +288,7 @@ typedef struct GcState {
        marked, the most it may mark (the heap's at its start), and of what
        it marked the boxes (box_bytes_live) */
     uint64_t marking;
+    int cycle_cafs;        /* the cycle keeps its globals by the CAF tables (runtime/gc/caf.c, caf_cycle_begin) */
     Obj **gray;
     size_t ngray, gray_cap;
     size_t cycle_marked, cycle_work, cycle_boxes;
@@ -286,6 +300,7 @@ typedef struct GcState {
     uint32_t gray_at;
     uint64_t cycles, slices;
     int stress_cycles;     /* --gc-stress-cycles: --gc-stress's collection a minor one, which begins a cycle where none marks, each slice marking little */
+    int stress_full;       /* --gc-stress-full: --gc-stress's collection a full one */
     int full_wanted;       /* vm_collect's: a full collection, not a cycle's end alone */
     size_t nursery_min, nursery_max;   /* the nursery's bounds (D2): after a full collection it is half the heap's room, within these; nursery_max 0: fixed */
     /* The large-object space (runtime/gc/los.c): objects of los_min bytes
@@ -581,6 +596,10 @@ typedef struct VM {
     Value callback_result;
     unsigned callback_depth;
     int (*callback_loop)(struct VM *); /* process-local engine entry, never serialized */
+    /* CAF tables (runtime/gc/caf.c): made at the first full collection of a
+       program with suspensions, NULL before; and --caf-tables's mode */
+    struct CafTables *caf;
+    int caf_mode;
 } VM;
 
 /* Whether p points into the room objects are made in (alloc). Young and

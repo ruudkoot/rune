@@ -1176,6 +1176,11 @@ struct
           fun midAs (name, ty, resTy) =
             atomSlots (env, atoms, ps, fn xs =>
               letv (resTy, "(prim " ^ name ^ " " ^ argText xs ^ " : " ^ ty ^ ")", fn r => deliver (env, c, r, res)))
+          (* a primitive of Mid whose result the Core primitive does not give:
+             it gives World, `()` *)
+          fun midDrop (name, ty) =
+            atomSlots (env, atoms, ps, fn xs =>
+              letv ("bool", "(prim " ^ name ^ " " ^ argText xs ^ " : " ^ ty ^ ")", fn _ => deliver (env, c, "()", res)))
           fun call f = atomSlots (env, atoms, ps, fn xs => out (valTy env res, "(app " ^ f ^ " " ^ argText xs ^ ")"))
           (* a primitive of Mid whose real result is rounded to binary32 *)
           fun rounded (name, ty) =
@@ -1218,10 +1223,10 @@ struct
           | "float_to_double" => atomSlots (env, atoms, ps, fn [x] => deliver (env, c, x, res) | _ => raise Fail "float_to_double")
           | "str_extract" => mid ("string_extract", "(string * int * int) -> string")
           | "h_open" => call "grtOpen"
-          | "h_close" => midAs ("file_close", "int -> unit", "unit")
+          | "h_close" => midDrop ("file_close", "int -> bool")
           | "h_read" => call "grtRead"
           | "h_write" => mid ("file_write", "(int * string) -> bool")
-          | "h_flush" => midAs ("file_flush", "int -> unit", "unit")
+          | "h_flush" => midDrop ("file_flush", "int -> bool")
           | "h_error" => mid ("file_error", "unit -> string")
           | "interleave" =>
               (* a lazy let of the action run with a state of its own, so

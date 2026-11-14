@@ -76,12 +76,14 @@ representation of register d of f disagrees with the code at pc").
 
 **The fingerprint** says which instruction set a file is of. `runeisa`
 works it out from the descriptions of `src/isa` -- the instructions' names,
-operands, stack effects and flow, and the primitives' names and arities, in
-order -- and writes it into the generated tables; a VM refuses a file of
+operands, stack effects and flow, and the primitives' names, arities and results'
+representations (what the loader holds a primitive's register to), in order -- and writes it into the generated tables; a VM refuses a file of
 another instruction set with "bytecode of another instruction set", and an
 image of one (whose magic carries the fingerprint) as not an image of this
-`runevm`. So an opcode or a primitive may be added, removed or moved: a file
-made before is refused rather than read with another meaning. The
+`runevm`. So an opcode or a primitive may be added, removed or moved, or a
+primitive's result change its representation (`file_flush` and `file_close`,
+from unit to bool): a file made before is refused rather than read with
+another meaning. The
 instructions of suspensions (`FORCE`, `ENTER`, `BLACKHOLE`, `UPDATE`) and
 the primitives of `IntInf.int` are in both sets' fingerprints, which
 `runtime/stack/opcodes.def` and `runtime/register/regs.def` say at their
@@ -752,7 +754,7 @@ raised as noted.
 | Arrays of reals (`RealArray`, `RealVector`; the doubles themselves side by side) | `reals_new reals_length reals_sub reals_update reals_blit` — `reals_new` raises `Size` for a length that is negative or above 100000000; indexing and a run that leaves the array raise `Subscript` |
 | Suspensions of a lazy front end ([ir.md](ir.md), *Suspensions*) | `thunk_make` makes a suspension of a fresh closure, the closure itself retagged in place (a copy of one that captures nothing, which may be shared), and is done in the register loop and by the JIT in line; `thunk_force`, `thunk_blackhole` and `thunk_self_update` are what each target makes `FORCE` with `ENTER`, `BLACKHOLE` and `UPDATE` of, and as primitives stop the program; `any_check` gives its argument, and stops the program where it is a suspension or an indirection (`rune --check-casts`) |
 | I/O and system | `print print_err flush_out input_line input_all exit command_args command_name` — `input_line` returns `string option`; `exit` terminates the process |
-| Files | `file_open file_close file_write file_flush file_read_line file_read_all file_error` — handles are ints: 0 stdin, 1 stdout, 2 stderr, others from `file_open (path, mode)` (mode 0 read, 1 write/truncate, 2 append, 3 read and write -- the file made where it is not there and kept where it is, a stream that a read after a write, or a write after a read, turns with a seek to where it is; returns `int option`). `file_write` returns `false` when the handle is invalid or the write fails, and flushes stdout before writing to handle 2; `file_read_line`/`file_read_all` behave like `input_line`/`input_all` (`NONE`/`""` for an invalid handle); `file_read_vec (h, n)` reads at most `n` bytes (`""` at end of file, `Size` for a negative `n`); `file_avail` is what a seekable file has left, `~1` for anything else; `file_error` and `file_errno` are the text and the number of the last failure; `file_tell` and `file_seek` are `ftell` and `fseek` from the start (`~1` for a file without positions, a pipe or a terminal); `file_descriptor` is the descriptor of the system under a handle, which is what an `OS.IO.iodesc` holds and what `os_poll`, `os_desc_kind`, `posix_isatty` and `posix_ttyname` take |
+| Files | `file_open file_close file_write file_flush file_read_line file_read_all file_error` — handles are ints: 0 stdin, 1 stdout, 2 stderr, others from `file_open (path, mode)` (mode 0 read, 1 write/truncate, 2 append, 3 read and write -- the file made where it is not there and kept where it is, a stream that a read after a write, or a write after a read, turns with a seek to where it is; returns `int option`). `file_write` returns `false` when the handle is invalid or the write fails, and flushes stdout before writing to handle 2; `file_flush` and `file_close` return `false` when the system's flush or close fails (the last of a buffer not written, as on a full device), `true` otherwise, a closed handle or none included; `file_read_line`/`file_read_all` behave like `input_line`/`input_all` (`NONE`/`""` for an invalid handle); `file_read_vec (h, n)` reads at most `n` bytes (`""` at end of file, `Size` for a negative `n`); `file_avail` is what a seekable file has left, `~1` for anything else; `file_error` and `file_errno` are the text and the number of the last failure, of these four and of `file_open`; `file_tell` and `file_seek` are `ftell` and `fseek` from the start (`~1` for a file without positions, a pipe or a terminal); `file_descriptor` is the descriptor of the system under a handle, which is what an `OS.IO.iodesc` holds and what `os_poll`, `os_desc_kind`, `posix_isatty` and `posix_ttyname` take |
 
 ## Tools
 
@@ -771,7 +773,14 @@ raised as noted.
   (`make test-stress`); with `--gc low-pause --gc-stress-cycles` too, each
   such collection is a minor one that begins a cycle of incremental
   marking where none marks, and every slice marks a few hundred bytes, so
-  that the program's stores run while a cycle marks;
+  that the program's stores run while a cycle marks; with `--gc-stress-full`
+  too, each such collection is a full one;
+* `runevm-stack --caf-tables M file.rbc` says what a full collection does with
+  the globals: `auto`, the default, takes a global only where code that may
+  still run reads it in a program with suspensions (`UPDATE` or
+  `BLACKHOLE`), and as a root in any other; `off` takes every global as a
+  root; `on` takes them by the tables in any program, a test of them
+  ([runtime.md](runtime.md), *The roots*);
 * `runevm-stack --gc-verify file.rbc` checks the heap before and after every
   collection and stops with status 2 where it is not sound ([runtime.md](runtime.md),
   *Watching it*; `make test-heap`);

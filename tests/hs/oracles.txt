@@ -428,6 +428,10 @@ ghc | hs/lang/lib.r.io.hsetbuffering.discard_lost::run | HOST-BUG | diff: R158: 
 hugs | hs/lang/lib.r.io.hsetbuffering.discard_lost::run | HOST-BUG | diff: R158: Hugs keeps the input a handle has read ahead when it changes to NoBuffering, where 21.6 discards the buffer of a handle that is not writable
 nhc98 | hs/lang/lib.r.io.hsetbuffering.discard_lost::run | HOST-BUG | diff: R158: nhc98 keeps the input a handle has read ahead when it changes to NoBuffering, where 21.6 discards the buffer of a handle that is not writable
 mhs | hs/lang/lib.r.io.hsetbuffering.discard_lost::run | HOST-BUG | diff: R158: MicroHs keeps the input a handle has read ahead when it changes to NoBuffering, where 21.6 discards the buffer of a handle that is not writable
+ghc | hs/lang/lib.r.io.buffer.block_shown::run | SPEC-AMBIGUOUS | diff: GHC's hPutStr writes a string longer than the buffer out at once, more often than BlockBuffering (Just 4) holds, which 21.6 allows ("free to flush the buffer more frequently")
+hugs | hs/lang/lib.r.io.buffer.block_shown::run | HOST-BUG | diff: Hugs holds what is written past BlockBuffering (Just 4)'s size until hFlush or hClose, where 21.6 writes the buffer out whenever it overflows
+nhc98 | hs/lang/lib.r.io.buffer.block_shown::run | HOST-BUG | diff: nhc98 holds what is written past BlockBuffering (Just 4)'s size until hFlush or hClose, where 21.6 writes the buffer out whenever it overflows
+mhs | hs/lang/lib.r.io.buffer.block_shown::run | HOST-BUG | diff: MicroHs holds what is written past BlockBuffering (Just 4)'s size until hFlush or hClose, where 21.6 writes the buffer out whenever it overflows
 ghc | hs/lang/lib.r.io.hgetchar_reading::run | HOST-BUG | diff: GHC's hSeek sets a position beyond the end of a file, as POSIX lseek does, where 21.7.2 says it cannot be set
 nhc98 | hs/lang/lib.r.io.iseof_stdin::run | HOST-BUG | exit: R46: nhc98's getLine is the Prelude's getChar loop, so a last line with no newline fails, where 21.9.2 returns it
 mhs | hs/lang/lib.r.io.iseof_stdin::run | HOST-BUG | reject: MicroHs's IO has no isEOF (21.5)
@@ -499,3 +503,35 @@ nhc98 | hs/lang/lib.r.io.encoding_utf8::run | HOST-BUG | diff: R5: nhc98's 8-bit
 ghc | hs/lang/lib.r.directory.renamefile.nodir::run | HOST-BUG | diff: GHC's renameFile of a directory fails with an inappropriate type, which isPermissionError does not hold of (22)
 nhc98 | hs/lang/lib.r.directory.renamefile.nodir::run | HOST-BUG | exit: nhc98's renameFile of a directory is no permission error, and its getPermissions fails (22)
 mhs | hs/lang/lib.r.directory.renamefile.nodir::run | HOST-BUG | reject: MicroHs's Directory does not export removeDirectory (22)
+
+# rhc on E7's conformance tests (hs-oracles/rhc/conformance; G2's line "conformance98 green, or each failure a recorded
+# reading"): each test rhc does not take as the suite expects, with what records it (2026-11-13)
+rhc | conformance98/Directory/getDirContents::conformance | FAILS | diff: lists the working directory, which each judge leaves with other files
+rhc | conformance98/FFI/evalorder::conformance | FAILS | reject: not Haskell 98: NHC.FFI
+rhc | conformance98/FFI/foreignobj::conformance | FAILS | reject: not Haskell 98: NHC.FFI and foreign import noproto
+rhc | conformance98/FFI/foreignptr::conformance | FAILS | reject: not Haskell 98: NHC.FFI and foreign import noproto
+rhc | conformance98/FFI/newtype::conformance | FAILS | reject: not Haskell 98: NHC.FFI and foreign import noproto
+rhc | conformance98/FFI/sizedtypes/Int::conformance | FAILS | reject: not Haskell 98: NHC.FFI
+rhc | conformance98/FFI/sizedtypes/Word::conformance | FAILS | reject: not Haskell 98: NHC.FFI
+rhc | conformance98/IOExtras/IOArray::conformance | FAILS | reject: not Haskell 98: NHC.IOExtras
+rhc | conformance98/IOExtras/IORef::conformance | FAILS | reject: not Haskell 98: NHC.IOExtras
+rhc | conformance98/fields/operator::conformance | SPEC-AMBIGUOUS | diff: R41: derived Show of a record with an operator field; the suite expects nhc98's text with no spaces, rhc prints GHC's spaced one
+rhc | conformance98/fields/showread::conformance | SPEC-AMBIGUOUS | diff: R41: derived Show of records; the suite expects nhc98's spacing
+rhc | conformance98/fields/type::conformance | SPEC-AMBIGUOUS | diff: R41: derived Show of records; the suite expects nhc98's spacing
+rhc | conformance98/float/show::conformance | FAILS | rtfail: the test has no stdin, and its stderr expects the read to fail: every judge fails alike
+rhc | conformance98/foreign/exportio::conformance | FAILS | reject: not Haskell 98: foreign export and NHC.IOExtras
+rhc | conformance98/foreign/testunsafe::conformance | FAILS | reject: not Haskell 98: NHC.Internal
+rhc | conformance98/hmake::conformance | FAILS | reject: not Haskell 98: the preprocessor
+rhc | conformance98/identifiers/qual::conformance | HOST-BUG | accept: R7: Just.let is Just, ., let (2.4), and f = Just.let x = id in x a legal program; the suite's hmakerr and all four judges refuse it, and rhc follows the text (D38; the roadmap's R7)
+rhc | conformance98/identifiers/twiddle::conformance | FAILS | accept: foo@(~(x,y)) = (1,2) is legal; the suite's hmakerr records nhc98's refusal, which needs no reading (E7)
+rhc | conformance98/import/specialchar::conformance | SPEC-AMBIGUOUS | reject: R34: import Prelude([](..)), which no judge takes; the suite carries no expectation, so accept is the harness's default
+rhc | conformance98/infix/minus::conformance | SPEC-AMBIGUOUS | reject: R10: 3 * -4, prefix minus at precedence 6 under *, refused as by GHC and MicroHs; Hugs and nhc98 take it
+rhc | conformance98/layout/tullsen3::conformance | FAILS | diff: the result of system: this copy expects the raw wait status (256), where rhc gives the exit code, as GHC and Hugs do
+rhc | conformance98/listindex::conformance | SPEC-AMBIGUOUS | reject: R10: xs !! -1, as infix/minus
+rhc | conformance98/read/1x23::conformance | SPEC-AMBIGUOUS | reject: R22: print (reads "1x23") is ambiguous at (Show a, Read a); the suite records nhc98, which defaults it
+rhc | yhc-conformance/BinArray/test1::conformance | FAILS | reject: not Haskell 98: NHC.Binary
+rhc | yhc-conformance/BinArray/test2::conformance | FAILS | reject: not Haskell 98: NHC.Binary
+rhc | yhc-conformance/FFI/sizedtypes/Int::conformance | FAILS | reject: not Haskell 98: NHC.FFI
+rhc | yhc-conformance/float/show::conformance | FAILS | reject: yhc's copy has trailing text that every judge refuses
+rhc | yhc-conformance/getargs::conformance | FAILS | reject: not Haskell 98: System.Environment, a dotted module name, which rhc refuses without --dotted-names (D35)
+rhc | yhc-conformance/packedstring::conformance | FAILS | reject: not Haskell 98: Data.PackedString
