@@ -145,7 +145,10 @@ of them is a bug of rhc's.
 
 | Option | What it does |
 |---|---|
-| `-O0`, `-O1`, `-O2` | the level of Mid's optional passes (default 1) |
+| `-O0`, `-O1`, `-O2` | the level of Mid's optional passes (default 1); at `-O2` the Core simplifier's too (below) |
+| `--eta=E` | the Core simplifier's eta-expansion (D48): `pedantic`, the default, the Report's, or `ghc`, GHC's default, which departs from the Report (below) |
+| `--simplify-stats` | the Core simplifier's rewrites, by kind, on standard error |
+| `--fuel=N` | make no more than N rewrites of the passes, Core's and Mid's, to find the one that breaks a program |
 | `--target=T` | the bytecode: `registers` (the default) or `stack` |
 | `--thunks=c` | suspensions in Mid by form C's primitives, the one form there is |
 | `--match=M` | the order of a match: `report`, the Report's, a clause after another (the default), or `sestoft`, decision trees, for D34's measurement |
@@ -182,6 +185,23 @@ of them is a bug of rhc's.
 
 `RHC_INSTRUCTIONS`, set, has rhc print the bytecode instructions a command
 took on standard error.
+
+**The Core simplifier.** At `-O0` and `-O1` the Core is the desugaring's,
+the Report's translation taken literally. At `-O2` four passes rewrite it
+before Core to Mid (M23; [ir.md](ir.md), *Above Mid*): `core-simplify`
+(inlining, case of a known constructor, case of case, let floating, and
+literals folded, `fromInteger` and `fromRational` at a known type among
+them), `core-specialise` (an overloaded function copied at the dictionaries
+a call gives it, the instance's methods then selected), `core-eta` and
+`core-simplify-2`. Each is a stage: `--dump-after` names it, `--pass-stats`
+times it, and the lint checks what it makes. Eta-expansion follows the
+pedantic rule by default: a binding gains a lambda only where its
+expression is a value already, so that no `seq` can tell. `--eta=ghc` takes
+GHC's default instead, through a `case` and the I/O state, which departs
+from the Report: `seq` of a partial application can converge where 6.2 says
+it is a bottom (D55's bottom probe, `tests/hs/simplify/eta.hs`, which
+`hs/simplify/eta/eta` holds the default to). It is an option to measure
+against, not a conformance mode (the owner's decision of 2026-11-14).
 
 ## The library
 
@@ -225,6 +245,11 @@ does and what rhc follows. Every statement of the Report is a row of
 it (D53; [testing.md](testing.md), *rhc's tests*); what the Report leaves to
 the implementation is decided there, row by row.
 
+These are rhc's defaults. An option can take a compile outside the Report
+where no default does: `--eta=ghc` breaks `seq` on a partial application
+(*The Core simplifier*, above), and `--dotted-names` and
+`--cycle-default=scc` are extensions (D35, D30).
+
 ## Diagnostics
 
 - An error of the program's is a line `FILE:LINE:COL: error: MESSAGE` on
@@ -245,8 +270,9 @@ the implementation is decided there, row by row.
   2010, no hierarchical module names but by `--dotted-names`, which reads a
   file, and no module of a library but the Report's: no `Foreign`, no
   `IORef`, no concurrency.
-- Optimise Core: `-O` sets the level of Mid's passes alone; the roadmap's
-  Core simplifier and strictness (M23, M24) are not in rhc yet.
+- Analyse strictness (M24), or optimise a unit with what its imports
+  export: the Core simplifier works on a program's Core whole, and the
+  unfoldings a unit kept in a store gives at `-O2` no client reads yet.
 - Meet the rows of `tests/hs/conformance.tsv` whose status is `Planned`,
   each waiting on a named piece of work. rhc does not yet refuse a
   record's construction that omits a strict field, an update whose labels
