@@ -3,7 +3,9 @@
 Found 2026-11-14, from four failures of rhc's mutants
 ([hs-mutants-built-race](../hs-mutants-built-race/BUGREPORT.md)), whose
 trace named `RuneStreamIOFn.flushOut` for an `OS.SysErr` that a file
-operation had raised. Status: not fixed.
+operation had raised. Status: fixed 2026-11-14 on `hs-l-reraise`
+(`3d6d700c9`), as the owner decided; [the fix and its test](#the-fix) are
+below. The sections before them record the bug as it was found.
 
 ## What happens
 
@@ -65,13 +67,57 @@ the standard output's flush. A flush that fails there raises `IO.Io`
 (`guarded` wraps the writer's `SysErr`), so a `SysErr` there could not be
 explained. The `SysErr` came from a file operation of the job.
 
-## A fix
+## The fix
 
-Give the default rule the handler's position: `EHandle (e, rules, sp, _)`
-and `Mark (sp, Raise (Var x))`. The trace would then name the function with
-the handler, at the `handle`.
+The default rule now has the handler's position, as Match's and Bind's
+defaults have theirs: `EHandle (e, rules, sp, _)` and `Mark (sp, Raise (Var
+x))` (`3d6d700c9`). An exception that no rule matches is raised again at
+the `handle`, in the function that has the handler. `reraise.sml`'s trace is
+now the same at -O0, -O1 and -O2, on both VMs:
 
-This changes the code of every handler, so it needs the bootstrap's gate
-(stage 1 = stage 2, and the bytes that moved).
+```
+runevm: uncaught exception SysErr <value>
+  in protect at reraise.sml:13:20
+  in <toplevel> at reraise.sml:15:22
+```
 
-The test: `reraise.sml`'s trace at -O1, with its first frame `in protect`.
+**The test** is `tests/lang/rt.trace_reraise`: the same program, raising
+`Fail` where `reraise.sml` has the file's `SysErr`. It runs at -O1, and at
+-O0 and -O2 as `rt.trace_reraise_O0` and `rt.trace_reraise_O2` (their
+`.cargs`). Each `.stderr` names `protect` at the `handle`, in every way
+tests/lang runs. Before the fix the three said `RuneStreamIOFn.flushOut`,
+`protect` at the end of the rule, and `RuneStreamIOFn.flushOut` again.
+
+**The bytes.** Every handler gains a position, so the bytecode moves:
+
+- **The compiler is its own fixed point**, in both bytecodes. Register
+  bytecode: stage 1 = stage 2, 5,498,854 bytes. Stack bytecode:
+  `bin/rune.stack.rbc` is what stage 2 makes with `--target=stack`, and what
+  it makes of itself on `runevm-stack`, 3,613,841 bytes.
+- **The compiler's own bytes:** register 5,495,180 → 5,498,860 (+3,680),
+  both made in trees whose version string has the same length. Stack
+  3,610,223 → 3,613,841. The version in the second is 6 characters
+  shorter (a commit, not `-dirty`), so the stack compiler grew by 3,624.
+- **h98-ref's sources at the six modes**, compiled without and with the fix:
+
+  | Mode | Without | With |
+  |---|---:|---:|
+  | -O1 | 5,406,126 | 5,409,737 |
+  | stack | 3,559,027 | 3,562,590 |
+  | -O0 | 4,780,234 | 4,781,270 |
+  | -O2 | 5,474,444 | 5,478,056 |
+  | stack -O0 | 2,842,618 | 2,843,660 |
+  | stack -O2 | 3,597,128 | 3,600,691 |
+
+- **The budgets** (`make perf-check`, 48 of 48) all hold, so none is
+  re-based. The bootstrap's counts (`budgets/*/bootstrap`, the compiler
+  compiling itself) moved:
+
+  | Bytecode | Count | Without | With | Budget |
+  |---|---|---:|---:|---:|
+  | register | instructions | 2,569,869,927 | 2,570,818,982 (+0.04%) | 2,745,127,138 |
+  | register | bytes | 3,067,909,200 | 3,069,380,320 (+0.05%) | 3,186,669,728 |
+  | register | objects | 116,449,653 | 116,511,159 (+0.05%) | 120,494,788 |
+  | stack | instructions | 4,208,321,349 | 4,210,028,819 (+0.04%) | 4,562,576,478 |
+  | stack | bytes | 2,512,332,088 | 2,513,856,992 (+0.06%) | 2,639,747,079 |
+  | stack | objects | 94,188,913 | 94,252,343 (+0.07%) | 98,596,817 |
