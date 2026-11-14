@@ -183,6 +183,7 @@ CASE(CALL) {
     Value arg = POP();
     Value cv = POP();
     Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
+    if (obj_contag(c) != 0) { PUSH(cv); PUSH(arg); APPLY(1, 0); }
     int64_t fidx = val_imm(obj_field(c, 0));
     if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
@@ -204,6 +205,7 @@ CASE(TAILCALL) {
     Value arg = POP();
     Value cv = POP();
     Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
+    if (obj_contag(c) != 0) { PUSH(cv); PUSH(arg); APPLY(1, 1); }
     int64_t fidx = val_imm(obj_field(c, 0));
     if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
@@ -504,5 +506,63 @@ CASE(UPDATE) {
     SYNC();
     op_UPDATE(vm, 0, 0);
     RELOAD();
+    NEXT;
+}
+CASE(ARITY) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_ARITY, a, 0);
+    pc += 5;
+    count++;
+    SYNC();
+    op_ARITY(vm, a, 0);
+    RELOAD();
+    NEXT;
+}
+CASE(CALLN) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_CALLN, a, 0);
+    pc += 5;
+    count++;
+    POLL();
+    int32_t n = a - 1;   /* TOP takes a signed index */
+    Value cv = TOP(n);
+    Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
+    int64_t fidx = val_imm(obj_field(c, 0));
+    if (obj_contag(c) != n || fidx < 0) APPLY(n, 0);
+    if ((uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
+    Function *fn = &p->funcs[fidx];
+    size_t at = (size_t)(sp - vm->stack) - (size_t)n - 1;
+    vm_push_frame(vm, (uint32_t)fidx, c, PC, at);
+    size_t need = at + fn->nlocals + fn->maxstack;
+    if (need > vm->stack_cap) vm_grow_stack(vm, need);
+    Value *slot = vm->stack + at;
+    memmove(slot, slot + 1, (size_t)n * sizeof(Value));
+    for (uint32_t i = (uint32_t)n; i < fn->nlocals; i++) slot[i] = mk_unit();
+    ENTER(slot, fn);
+    NEXT;
+}
+CASE(TAILCALLN) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_TAILCALLN, a, 0);
+    pc += 5;
+    count++;
+    POLL();
+    int32_t n = a - 1;   /* TOP takes a signed index */
+    Value cv = TOP(n);
+    Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
+    int64_t fidx = val_imm(obj_field(c, 0));
+    if (obj_contag(c) != n || fidx < 0) APPLY(n, 1);
+    if ((uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
+    Function *fn = &p->funcs[fidx];
+    size_t at = FRAME->base;
+    FRAME->func = (uint32_t)fidx;
+    FRAME->closure = c;
+    size_t need = at + fn->nlocals + fn->maxstack;
+    Value *from = sp - n;
+    if (need > vm->stack_cap) { size_t k = (size_t)(from - vm->stack); vm_grow_stack(vm, need); from = vm->stack + k; }
+    Value *slot = vm->stack + at;
+    memmove(slot, from, (size_t)n * sizeof(Value));
+    for (uint32_t i = (uint32_t)n; i < fn->nlocals; i++) slot[i] = mk_unit();
+    ENTER(slot, fn);
     NEXT;
 }

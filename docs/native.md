@@ -74,8 +74,11 @@ stack target*). It checks:
 * every operand fits 31 bits, so that the 32-bit SML/NJ build of `runeopt`
   reads what the others read;
 * every function is given one number of arguments: every known call of it
-  (CALLK, TAILCALLK) passes as many, and a function made a closure, and the
-  top level, one; its entry sets the rest of its locals to unit.
+  (CALLK, TAILCALLK) passes as many, a function made a closure one (or k,
+  where ARITY k follows its CLOSURE: an ARITY anywhere else is refused), the
+  top level one, and a function of the general path's (`<apply K R>`, added
+  where runeopt reads the program as the loader adds it) all its locals; its
+  entry sets the rest of its locals to unit.
 
 Since the height before every instruction is known, a slot is an address in
 the frame, and the room a function needs (its locals and its highest stack)
@@ -116,6 +119,17 @@ address the frame returns to, is never written into an image.
   locals after its arguments to unit, a store each.
 * **TAILCALL** makes the same checks, keeps the frame (its `func` and
   `closure` change), moves the argument into local 0 and jumps.
+* **A closure's parameters** (D15 C; [bytecode.md](bytecode.md), *Calls
+  through a closure*): CALL and TAILCALL take the glue (`native_call`,
+  `native_tailcall`) for a closure whose contag is not 0, of more
+  parameters or a partial application, which the general path does
+  (`stack_apply`); **ARITY**, **CALLN** and **TAILCALLN** call the glue
+  (`native_arity`, `native_calln`, `native_tailcalln`), the last two
+  through the general path, which enters a closure of as many parameters
+  at once. The program runeopt translates has the general path's functions
+  `<apply return>` and `<apply K R>` added as the loader adds them
+  (`Rbc.withApply`), so that each has its native code at the index the
+  loaded program gives it.
 * **CALLK f, n** (a known call, middle-end M8) checks nothing: it pushes the
   frame, with no closure and its base at the first of the `n` arguments,
   which are already the callee's first locals, and jumps straight to `f`'s

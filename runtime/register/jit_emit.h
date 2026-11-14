@@ -51,5 +51,8 @@ void emit_FORCE(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c);
 void emit_ENTER(Jit *j, uint32_t pc, int32_t a, int32_t b);
 void emit_BLACKHOLE(Jit *j, uint32_t pc);
 void emit_UPDATE(Jit *j, uint32_t pc, int32_t a);
+void emit_CLOSUREN(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c, int32_t d, const uint8_t *L, uint32_t n);
+void emit_CALLN(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint32_t n);
+void emit_TAILCALLN(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint32_t n);
 
 #endif

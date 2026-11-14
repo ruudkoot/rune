@@ -135,6 +135,57 @@ n4:
   PRIM int_to_string
   PRIM print
   POP
+  # ARITY, CALLN, TAILCALLN (D15 C) and the general path: sub3 (a - b - c),
+  # a closure of three parameters, called with three: 77
+  CLOSURE &sub3 0
+  ARITY 3
+  SETLOCAL 1
+  LOCAL 1
+  INT 100
+  INT 20
+  INT 3
+  CALLN 4
+  PRIM int_to_string
+  PRIM print
+  POP
+  # given one (a partial application made), then two (it entered): 77
+  LOCAL 1
+  INT 100
+  CALL
+  INT 20
+  INT 3
+  CALLN 3
+  PRIM int_to_string
+  PRIM print
+  POP
+  # over1, a closure of one that gives sub3's, given four: <apply 1 3>: 77
+  CLOSURE &over1 0
+  INT 0
+  INT 100
+  INT 20
+  INT 3
+  CALLN 5
+  PRIM int_to_string
+  PRIM print
+  POP
+  # TAILCALLN, in tailn: 77; and a partial application made by a tail call
+  # (tailp: <apply return>), entered with two: 77
+  LOCAL 1
+  INT 100
+  INT 20
+  CALLK &tailn 3
+  PRIM int_to_string
+  PRIM print
+  POP
+  LOCAL 1
+  INT 100
+  CALLK &tailp 2
+  INT 20
+  INT 3
+  CALLN 3
+  PRIM int_to_string
+  PRIM print
+  POP
   CONST %nl
   PRIM print
   POP
@@ -313,6 +364,31 @@ function susp 2
   UPDATE
   LOCAL 1
   RET
+
+function sub3 3
+  LOCAL 0
+  LOCAL 1
+  PRIM int_sub
+  LOCAL 2
+  PRIM int_sub
+  RET
+
+function over1 1
+  CLOSURE &sub3 0
+  ARITY 3
+  RET
+
+function tailn 3
+  LOCAL 0
+  LOCAL 1
+  LOCAL 2
+  INT 3
+  TAILCALLN 4
+
+function tailp 2
+  LOCAL 0
+  LOCAL 1
+  TAILCALL
 
 function flip 2
   LOCAL 1

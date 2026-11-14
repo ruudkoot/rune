@@ -161,11 +161,13 @@ struct
      compiled for it; the breakpoints set again, which its files may have *)
   val linkedHook : (unit -> unit) ref = ref (fn () => ())
   fun linkFor (bytes : string, moved : Types.tycon IntMap.map) : unit -> unit =
-    let val run = Runtime.link (Byte.stringToBytes bytes)
+    let
+      (* its functions come first after the program's (load_unit_mem); the
+         VM may add functions of its own after them (D15 C's <apply ..>) *)
+      val base = RuneRuntime.debugProgram ()
+      val run = Runtime.link (Byte.stringToBytes bytes)
     in
-      if !debugging then
-        let val table = debugTable moved
-        in debugUnits := {base = RuneRuntime.debugProgram () - Vector.length table, funcs = table} :: !debugUnits end
+      if !debugging then debugUnits := {base = base, funcs = debugTable moved} :: !debugUnits
       else ();
       !linkedHook ();
       run

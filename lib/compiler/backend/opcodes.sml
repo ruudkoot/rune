@@ -4,8 +4,8 @@ struct
   (* the version of the layout of an .rbc, and the fingerprint of the
      instruction set, which an .rbc and an image carry *)
   val rbcVersion = 6
-  val fingerprint = 1302638
-  val fingerprintHex = "0013e06e"
+  val fingerprint = 1581212
+  val fingerprintHex = "0018209c"
   val HALT = 0
   val CONST = 1
   val INT = 2
@@ -51,15 +51,18 @@ struct
   val ENTER = 42
   val BLACKHOLE = 43
   val UPDATE = 44
-  val count = 45
-  val names = Vector.fromList ["HALT", "CONST", "INT", "UNIT", "CON0", "LOCAL", "SETLOCAL", "ENV", "SELF", "GLOBAL", "SETGLOBAL", "POP", "TUPLE", "SELECT", "CON", "DECON", "CONTAG", "CLOSURE", "SETENV", "CALL", "TAILCALL", "RET", "JUMP", "JUMPIFNOT", "JUMPIF", "PUSHHANDLER", "POPHANDLER", "RAISE", "NEWEXN", "BUILTINEXN", "MKEXN", "EXNCON", "EXNARG", "PRIM", "JUMPIFNOTTAG", "TEELOCAL", "CALLK", "SWITCH", "TAILCALLK", "CONN", "FIELD", "FORCE", "ENTER", "BLACKHOLE", "UPDATE"]
-  val nargs = Vector.fromList [0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 2, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 2, 1, 2, 1, 2, 2, 2, 1, 0, 0, 0]
+  val ARITY = 45
+  val CALLN = 46
+  val TAILCALLN = 47
+  val count = 48
+  val names = Vector.fromList ["HALT", "CONST", "INT", "UNIT", "CON0", "LOCAL", "SETLOCAL", "ENV", "SELF", "GLOBAL", "SETGLOBAL", "POP", "TUPLE", "SELECT", "CON", "DECON", "CONTAG", "CLOSURE", "SETENV", "CALL", "TAILCALL", "RET", "JUMP", "JUMPIFNOT", "JUMPIF", "PUSHHANDLER", "POPHANDLER", "RAISE", "NEWEXN", "BUILTINEXN", "MKEXN", "EXNCON", "EXNARG", "PRIM", "JUMPIFNOTTAG", "TEELOCAL", "CALLK", "SWITCH", "TAILCALLK", "CONN", "FIELD", "FORCE", "ENTER", "BLACKHOLE", "UPDATE", "ARITY", "CALLN", "TAILCALLN"]
+  val nargs = Vector.fromList [0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 2, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 2, 1, 2, 1, 2, 2, 2, 1, 0, 0, 0, 1, 1, 1]
   (* each opcode's operands that name a function (0), a global (1) or
      a constant (2), by position: what a linker renumbers *)
-  val linked : (int * int) list vector = Vector.fromList [[], [(0, 2)], [], [], [], [], [], [], [], [(0, 1)], [(0, 1)], [], [], [], [], [], [], [(0, 0)], [], [], [], [], [], [], [], [], [], [], [(0, 2)], [], [], [], [], [], [], [], [(0, 0)], [], [(0, 0)], [], [], [], [], [], []]
+  val linked : (int * int) list vector = Vector.fromList [[], [(0, 2)], [], [], [], [], [], [], [], [(0, 1)], [(0, 1)], [], [], [], [], [], [], [(0, 0)], [], [], [], [], [], [], [], [], [], [], [(0, 2)], [], [], [], [], [], [], [], [(0, 0)], [], [(0, 0)], [], [], [], [], [], [], [], [], []]
   (* each opcode's operands by kind (the loader's numbers, as
      RegCodes.operandKinds): what reading the code back needs (UnitFile) *)
-  val operandKinds : int list vector = Vector.fromList [[], [0], [2], [], [3], [4], [4], [5], [], [6], [6], [], [11], [12], [3], [3], [], [7, 11], [5], [], [], [], [8], [8], [8], [9], [], [], [1], [13], [], [], [], [10], [8, 3], [4], [7, 11], [11], [7, 11], [3, 11], [3, 12], [8], [], [], []]
+  val operandKinds : int list vector = Vector.fromList [[], [0], [2], [], [3], [4], [4], [5], [], [6], [6], [], [11], [12], [3], [3], [], [7, 11], [5], [], [], [], [8], [8], [8], [9], [], [], [1], [13], [], [], [], [10], [8, 3], [4], [7, 11], [11], [7, 11], [3, 11], [3, 12], [8], [], [], [], [11], [11], [11]]
 end
 
 (* The opcodes as a datatype, for code that says what it does with each
@@ -113,6 +116,9 @@ struct
     | ENTER
     | BLACKHOLE
     | UPDATE
-  val all : t vector = Vector.fromList [HALT, CONST, INT, UNIT, CON0, LOCAL, SETLOCAL, ENV, SELF, GLOBAL, SETGLOBAL, POP, TUPLE, SELECT, CON, DECON, CONTAG, CLOSURE, SETENV, CALL, TAILCALL, RET, JUMP, JUMPIFNOT, JUMPIF, PUSHHANDLER, POPHANDLER, RAISE, NEWEXN, BUILTINEXN, MKEXN, EXNCON, EXNARG, PRIM, JUMPIFNOTTAG, TEELOCAL, CALLK, SWITCH, TAILCALLK, CONN, FIELD, FORCE, ENTER, BLACKHOLE, UPDATE]
+    | ARITY
+    | CALLN
+    | TAILCALLN
+  val all : t vector = Vector.fromList [HALT, CONST, INT, UNIT, CON0, LOCAL, SETLOCAL, ENV, SELF, GLOBAL, SETGLOBAL, POP, TUPLE, SELECT, CON, DECON, CONTAG, CLOSURE, SETENV, CALL, TAILCALL, RET, JUMP, JUMPIFNOT, JUMPIF, PUSHHANDLER, POPHANDLER, RAISE, NEWEXN, BUILTINEXN, MKEXN, EXNCON, EXNARG, PRIM, JUMPIFNOTTAG, TEELOCAL, CALLK, SWITCH, TAILCALLK, CONN, FIELD, FORCE, ENTER, BLACKHOLE, UPDATE, ARITY, CALLN, TAILCALLN]
   fun fromInt (n : int) : t = Vector.sub (all, n)
 end

@@ -33,12 +33,16 @@ struct
      vm_top); the loop gives it the VM's state first and takes it back
      after. *)
 
-  (* What CALL and TAILCALL share: the closure and its function checked. *)
-  val callee =
+  (* What CALL and TAILCALL share: the closure and its function checked; a
+     closure of more parameters than one, or a partial application, the
+     general path's (D15 C: stack_apply, runtime/stack/isa_stack.c), the
+     closure and the argument back on the stack for it. *)
+  fun callee tail =
     ["POLL();",
      "Value arg = POP();",
      "Value cv = POP();",
      "Obj *c = EXPECT(cv, K_CLOSURE, \"closure in call\");",
+     "if (obj_contag(c) != 0) { PUSH(cv); PUSH(arg); APPLY(1, " ^ tail ^ "); }",
      "int64_t fidx = val_imm(obj_field(c, 0));",
      "if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
      "Function *fn = &p->funcs[fidx];"]
@@ -132,13 +136,14 @@ struct
            "Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, \"closure\");",
            "if ((uint32_t)a + 1 >= obj_len(c)) vm_fatal(vm, \"environment slot %d out of range\", a);",
            "obj_set_field(vm, c, a + 1, v);"]),
-     inst ("CALL", [], (Fixed 2, 1), Call, "Pop argument, pop closure, and call it.")
-       (callee
+     inst ("CALL", [], (Fixed 2, 1), Call,
+           "Pop argument, pop closure, and call it; a closure of more parameters, or a partial application, is the general path's (D15 C).")
+       (callee "0"
         @ ["size_t at = (size_t)(sp - vm->stack);",
            "vm_push_frame(vm, (uint32_t)fidx, c, PC, at);"]
         @ enter),
      inst ("TAILCALL", [], (Fixed 2, 0), TailCall, "Like CALL but the current frame is replaced.")
-       (callee
+       (callee "1"
         @ ["size_t at = FRAME->base;",
            "FRAME->func = (uint32_t)fidx;",
            "FRAME->closure = c;"]
@@ -323,7 +328,57 @@ struct
           ["Value v = vm_pop(vm);",
            "Obj *c = vm->frames[vm->fp].closure;",
            "if (!c || (obj_kind(c) != K_THUNK && obj_kind(c) != K_IND)) vm_fatal(vm, \"UPDATE outside a suspension\");",
-           "obj_become_ind(vm, c, v);"])]
+           "obj_become_ind(vm, c, v);"]),
+     (* Eval/apply proper (the haskell98 roadmap's D15 C, as the register
+        set's CLOSUREN, CALLN and TAILCALLN): a closure's parameters in its
+        contag (0 for one), a call of m - 1 arguments that tests them, and
+        what does not match -- a partial application (a K_CLOSURE whose field
+        0 is -1), a closure of other than m - 1 parameters -- the general
+        path's in C (stack_apply). *)
+     sharedBody
+       (inst ("ARITY", [("k", Count)], (Fixed 1, 1), Next,
+              "The closure on top, just made by CLOSURE, takes k parameters, k from 2: k in its contag, which a call tests.")
+          ["Obj *c = vm_expect_obj(vm, *vm_top(vm, 0), K_CLOSURE, \"closure\");",
+           "if (a < 2 || a > 65535) vm_fatal(vm, \"ARITY of %d parameters\", a);",
+           "c->contag = (uint16_t)a;"]),
+     inst ("CALLN", [("m", Count)], (OperandValue 0, 1), Call,
+           "Call the closure m - 1 below the top with the m - 1 values above it, m from 3, which become its locals 0 to m - 2; a closure of another number of parameters, or a partial application, is the general path's.")
+       ["POLL();",
+        "int32_t n = a - 1;   /* TOP takes a signed index */",
+        "Value cv = TOP(n);",
+        "Obj *c = EXPECT(cv, K_CLOSURE, \"closure in call\");",
+        "int64_t fidx = val_imm(obj_field(c, 0));",
+        "if (obj_contag(c) != n || fidx < 0) APPLY(n, 0);",
+        "if ((uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
+        "Function *fn = &p->funcs[fidx];",
+        "size_t at = (size_t)(sp - vm->stack) - (size_t)n - 1;",
+        "vm_push_frame(vm, (uint32_t)fidx, c, PC, at);",
+        "size_t need = at + fn->nlocals + fn->maxstack;",
+        "if (need > vm->stack_cap) vm_grow_stack(vm, need);",
+        "Value *slot = vm->stack + at;",
+        "memmove(slot, slot + 1, (size_t)n * sizeof(Value));",
+        "for (uint32_t i = (uint32_t)n; i < fn->nlocals; i++) slot[i] = mk_unit();",
+        "ENTER(slot, fn);"],
+     inst ("TAILCALLN", [("m", Count)], (OperandValue 0, 0), TailCall,
+           "Like CALLN but the current frame is replaced.")
+       ["POLL();",
+        "int32_t n = a - 1;   /* TOP takes a signed index */",
+        "Value cv = TOP(n);",
+        "Obj *c = EXPECT(cv, K_CLOSURE, \"closure in call\");",
+        "int64_t fidx = val_imm(obj_field(c, 0));",
+        "if (obj_contag(c) != n || fidx < 0) APPLY(n, 1);",
+        "if ((uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
+        "Function *fn = &p->funcs[fidx];",
+        "size_t at = FRAME->base;",
+        "FRAME->func = (uint32_t)fidx;",
+        "FRAME->closure = c;",
+        "size_t need = at + fn->nlocals + fn->maxstack;",
+        "Value *from = sp - n;",
+        "if (need > vm->stack_cap) { size_t k = (size_t)(from - vm->stack); vm_grow_stack(vm, need); from = vm->stack + k; }",
+        "Value *slot = vm->stack + at;",
+        "memmove(slot, from, (size_t)n * sizeof(Value));",
+        "for (uint32_t i = (uint32_t)n; i < fn->nlocals; i++) slot[i] = mk_unit();",
+        "ENTER(slot, fn);"]]
 
   (* The same by opcode number. *)
   val info : instruction vector = Vector.fromList instructions

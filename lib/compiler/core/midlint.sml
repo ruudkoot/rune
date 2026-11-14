@@ -16,8 +16,12 @@
      Let's scheme over its type and step, a function's over its
      parameters, result and body, a global's over its definition -- and no
      binder binds one again where it is in scope.
-   * calls: a function of other than one parameter (a worker, M8) is only
-     called, with an argument for each, and never used as a value.
+   * calls: a function of other than one parameter (a worker, M8) is
+     called with an argument for each; one of two or more is a value only
+     as the closure a call of as many arguments enters, of the curried
+     arrow of its parameters (D15 C, Uncurry), and a call through a
+     closure of two arguments or more is as many calls of one -- of
+     anything but a global function of one parameter;
    * constants, primitives, exceptions' payloads and the casts the
      compiler makes, by IrRules (linting roadmap, M4); a Do sets each
      global it lists on every way that returns;
@@ -253,9 +257,13 @@ struct
           SOME _ => bug ("global g" ^ Int.toString g ^ " is defined twice")
         | NONE => IntTable.insert (globals, g, s)
       fun schemeOf (f : fundef) : scheme = (#tyvars f, funTy f)
+      (* the global functions of one parameter: an application of one is a
+         known call, of one argument *)
+      val unary : unit IntTable.table = IntTable.table 256
       val () =
         List.app (fn Val (g, s, _) => define (g, s)
-                   | Funs fs => List.app (fn f => (define (#name f, schemeOf f); naryOf f)) fs
+                   | Funs fs => List.app (fn f => (define (#name f, schemeOf f); naryOf f;
+                                                   case #params f of [_] => IntTable.insert (unary, #name f, ()) | _ => ())) fs
                    | Do (gs, _) => List.app define gs) p
 
       fun instance (what : unit -> string, (tyvars, t) : scheme, args, poly : bool) =
@@ -332,9 +340,21 @@ struct
       and fieldAtom (a : atom) : Ty.ty = atomAt (true, a)
       and atomAt (poly, a : atom) : Ty.ty =
         case a of
-          Var (x, _) => if isNary x then bug ("v" ^ Int.toString x ^ ", a function of other than one parameter, used as a value") else calleeAt (poly, a)
-        | Global (g, _) => if isNary g then bug ("g" ^ Int.toString g ^ ", a function of other than one parameter, used as a value") else calleeAt (poly, a)
+          Var (x, _) => if isNary x then naryValue ("v" ^ Int.toString x, x, calleeAt (poly, a)) else calleeAt (poly, a)
+        | Global (g, _) => if isNary g then naryValue ("g" ^ Int.toString g, g, calleeAt (poly, a)) else calleeAt (poly, a)
         | _ => calleeAt (poly, a)
+      (* a function of two parameters or more as a value (D15 C): the closure
+         a call of as many arguments enters, whose type is the curried
+         arrow of its parameters, under the forall of a polymorphic field's
+         (instance) *)
+      and naryValue (what, x, t) =
+        case (naryParams x, Ty.view t) of
+          (SOME (_ :: _ :: _), Ty.Arrow (d, res)) =>
+            (case Ty.view d of
+               Ty.Tuple ds => List.foldr (fn (p, acc) => Ty.arrow (p, acc)) res ds
+             | _ => bug (what ^ ", a function of other than one parameter, has type " ^ Ty.toString t))
+        | (SOME (_ :: _ :: _), Ty.Forall (vs, b)) => Ty.forall (vs, naryValue (what, x, b))
+        | _ => bug (what ^ ", a function of other than one parameter, used as a value")
 
       and callee (a : atom) : Ty.ty = calleeAt (false, a)
       and calleeAt (poly, a : atom) : Ty.ty =
@@ -371,7 +391,23 @@ struct
               val n = case Option.mapPartial naryParams name of SOME ps => List.length ps | NONE => 1
               val ft = callee f
               fun wrong () = bug ("an application of what has type " ^ Ty.toString ft)
+              (* a call through a closure of two arguments or more (D15 C), as
+                 many calls of one would be: each argument of the domain of
+                 what the one before gives -- but not of a global function of
+                 one parameter, whose application is a known call, of one *)
+              fun curried () =
+                (case f of
+                   Global (g, _) =>
+                     if isSome (IntTable.find (unary, g))
+                     then bug ("g" ^ Int.toString g ^ ", a function of one parameter, given " ^ Int.toString (List.length args)
+                               ^ " arguments")
+                     else ()
+                 | _ => ();
+                 List.foldl (fn (a, t) => case Ty.view t of
+                                            Ty.Arrow (d, res) => (expect (the "an argument", atom a, d); res)
+                                          | _ => wrong ()) ft args)
             in
+              if n = 1 andalso List.length args >= 2 then curried () else
               case (Ty.view ft, args) of
                 (Ty.Arrow (d, res), [a]) =>
                   if n = 1 then (expect (the "an argument", atom a, d); res)

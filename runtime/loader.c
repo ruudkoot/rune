@@ -360,7 +360,7 @@ int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t
     uint8_t *starts = validate_program(p, err, errlen);
     if (!starts) return 0;
     free(starts);
-    return 1;
+    return vm_isa_after_load(vm, err, errlen);
 }
 
 /* The entry covering pc: the last one that begins at or before it, found by
@@ -883,6 +883,10 @@ int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_
     /* The reserved top-level export also records an empty, successfully
        linked unit. Merely interning a referenced name above is not enough. */
     if (!unit_export(vm, session, -1, 0, func_base)) { undo(vm, m); FAIL("out of memory"); }
+    /* the general path's functions its code needs that the program has not
+       (D15 C: a closure of more parameters, or a call of more arguments,
+       than any before it) */
+    if (!vm_isa_after_load(vm, err, errlen)) { undo(vm, m); goto done; }
     result = func_base;
 done:
 #undef FAIL

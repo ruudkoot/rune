@@ -124,6 +124,11 @@ typedef struct Program {
        code reaches it (runtime/gc/caf.c; the haskell98 roadmap's D19). No
        program of SML has one but lazy ML's */
     int suspends;
+    /* the most parameters a CLOSUREN or ARITY of the code gives a closure,
+       and the most arguments a CALLN or TAILCALLN gives (0: none), which
+       the check of the code finds (D15 C: the general path's
+       functions it needs, vm_isa_after_load) */
+    uint32_t apply_amax, apply_nmax;
 } Program;
 /* the representations section freed with the program (runtime/loader.c) */
 void program_free_meta(Program *p);
@@ -542,6 +547,14 @@ typedef struct VM {
     uint32_t unit_slots;
     uint32_t unit_return;
     char unit_error[256];
+    /* D15 C (runtime/register/isa_regs.c, reg_apply): the functions of the
+       general path of a call, which the loader adds to a program with an
+       n-ary call or closure, found by their names: <apply return>, which
+       returns its argument, and <apply K R>, which applies a closure of K
+       parameters to K arguments and what that returns to R more. A table by
+       name, made again when the program has another number of functions. */
+    uint32_t *apply_stubs;   /* apply_kmax * apply_rmax, row k - 1; UINT32_MAX for none */
+    uint32_t apply_kmax, apply_rmax, apply_return, apply_nfuncs;
     /* The constants a minor collection has taken as roots, from 0: they
        never change, so those below it point into the old space and are not
        taken again (runtime/gc/gc.h, MINOR_ROOTS); a unit loaded adds above
@@ -993,6 +1006,21 @@ typedef struct Relocation {
 int relocate_code(uint8_t *code, const Relocation *r, char *err, size_t errlen);
 /* into out, at least 16 bytes: the code; its frame's size; how long */
 uint32_t return_function_code(uint8_t *out, uint32_t *nlocals);
+/* what the instruction set adds to a program it has loaded: the functions
+   of the general path of a call (D15 C), <apply return> and <apply K R>,
+   where the program has a closure of more parameters than one or a call
+   of more arguments, those it has not already: after a program is loaded,
+   and after each unit (load_unit_mem). 1, or 0 and why. */
+int vm_isa_after_load(VM *vm, char *err, size_t errlen);
+/* The stack bytecode's general path of a call through a closure (D15 C;
+   runtime/stack/isa_stack.c), for its loop and runeopt's glue: the closure
+   and n arguments on the stack's top; a frame made (pushed at the
+   closure, returning to ret_pc and from native code to back; for a tail
+   call in the running one's place) and vm->pc its function's code, or a
+   partial application left on the stack for the instruction at ret_pc,
+   vm->pc. */
+enum { STACK_APPLY_ENTERED = 0, STACK_APPLY_VALUE = 1 };
+int stack_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc, const void *back);
 
 /* What each VM's instruction set gives (runtime/stack/isa_stack.c, runtime/register/isa_regs.c):
    the fingerprint an .rbc must carry, and the first bytes of an image. */

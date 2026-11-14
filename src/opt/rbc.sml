@@ -460,6 +460,57 @@ struct
 
   fun le32 (n : int) = leInf (IntInf.fromInt n, 4)
 
+  (* D15 C: the general path's functions, as the stack bytecode's loader
+     adds them to a program that has an ARITY, CALLN or TAILCALLN
+     (vm_isa_after_load, runtime/stack/isa_stack.c): <apply return>, then
+     <apply K R> for K from 1 to the most parameters a closure has and R
+     from 1 to one less than the most arguments a call gives, K the outer;
+     the same code at the same places, so that each has its native code
+     where the program the runtime loads has the function. *)
+  fun withApply (p : program) : program =
+    let
+      val code = #code p
+      val codeLen = String.size code
+      fun operand pc = case i32At (code, pc + 1) of In n => n | _ => 0
+      fun scan (pc, amax, nmax) =
+        if pc >= codeLen then (amax, nmax)
+        else
+          let
+            val opc = byte (code, pc)
+            val len = instrLength opc
+          in
+            if len = 0 then (amax, nmax)
+            else if opc = Opcodes.ARITY then scan (pc + len, Int.max (amax, operand pc), nmax)
+            else if opc = Opcodes.CALLN orelse opc = Opcodes.TAILCALLN then scan (pc + len, amax, Int.max (nmax, operand pc - 1))
+            else scan (pc + len, amax, nmax)
+          end
+      val (amax, nmax) = scan (0, 0, 0)
+      fun op0 opc = String.str (Char.chr opc)
+      fun op1 (opc, n) = op0 opc ^ le32 n
+      fun locals (from, k) = String.concat (List.tabulate (k, fn i => op1 (Opcodes.LOCAL, from + i)))
+      fun stub (k, r) =
+        (locals (0, k + 1) ^ (if k = 1 then op0 Opcodes.CALL else op1 (Opcodes.CALLN, k + 1))
+         ^ locals (k + 1, r) ^ (if r = 1 then op0 Opcodes.TAILCALL else op1 (Opcodes.TAILCALLN, r + 1)),
+         k + r + 1, "<apply " ^ Int.toString k ^ " " ^ Int.toString r ^ ">")
+    in
+      if amax = 0 andalso nmax = 0 then p
+      else if Vector.exists (fn {name, ...} : func => String.isPrefix "<apply " name) (#funcs p) then p
+      else
+        let
+          val added =
+            (op1 (Opcodes.LOCAL, 0) ^ op0 Opcodes.RET, 1, "<apply return>")
+            :: List.concat (List.tabulate (Int.max (amax, 1), fn i => List.tabulate (Int.max (nmax, 1) - 1, fn j => stub (i + 1, j + 1))))
+          fun place ([], _, acc) = List.rev acc
+            | place ((body, nlocals, name) :: rest, at, acc) =
+                place (rest, at + String.size body,
+                       {offset = at, nlocals = nlocals, name = name, stop = at + String.size body} :: acc)
+          val funcs = place (added, codeLen, [])
+        in
+          {consts = #consts p, nglobals = #nglobals p, funcs = Vector.concat [#funcs p, Vector.fromList funcs],
+           code = String.concat (code :: List.map #1 added), files = #files p, lines = #lines p}
+        end
+    end
+
   (* the numbers of the line table, as load_program reads them *)
   fun uvarText (v : IntInf.int) : string =
     let val b128 = IntInf.fromInt 128

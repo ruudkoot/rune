@@ -18,6 +18,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 | `workers` | `Mid` | `Mid`, tupled and curried functions split into workers and wrappers (`lib/compiler/core/workers.sml`), from `-O1` | `MidLint` |
 | `simplify` | `Mid` | `Mid`, shrunk (`lib/compiler/core/simplify.sml`), from `-O1` | `MidLint` |
 | `refs` | `Mid` | `Mid`, a loop's local refs as values (`lib/compiler/core/refs.sml`), from `-O1` | `MidLint` |
+| `uncurry` | `Mid` | `Mid`, curried functions given n-ary twins, and chains of calls through a closure made one call of their arguments (`Uncurry` in `lib/compiler/core/workers.sml`; D15 C), from `-O1` | `MidLint` |
 | `lower` | `Mid` | `Low` (`lib/compiler/backend/low.sml`, by `Lower`) | `LowLint`, `LowShapes` |
 | `stack` | `Low` | instruction lists (`lib/compiler/backend/stack.sml`), with `--target=stack` | the loader's checks and `RbcCheck` (`StackCheck`) |
 | `registers` | `Low` | instruction lists of the register bytecode (`lib/compiler/backend/regs.sml`), the default target | `RegVerify` |
@@ -625,8 +626,9 @@ top level a list of definitions (decision D1 of the plan).
   of the program after each declaration of the top level (`Lambda.Rest`),
   and `ToMid` splits it there.
 * **Functions** take a list of parameters. One of other than one
-  parameter (a worker) is only called, with an argument for each, and
-  never used as a value.
+  parameter (a worker, a twin) is called with an argument for each, or
+  used as a value of the curried type of its parameters, a closure of that
+  many (D15 C: *Calls through a closure* of [bytecode.md](bytecode.md)).
 * **`Case`** tests the tag of a datatype's value: an arm for each tag it
   tests, and a default where the value has none of theirs, or none where
   the arms are every tag (decision D8 of
@@ -737,8 +739,10 @@ function would take it apart, since a parameter's type is no forall;
   parameter is no polymorphic use either); Core to Mid holds its own text to
   it at lint level 2 (`CoreToMid.checking`), and `--fault=susp-type-arg` is
   its mutant (`tests/hs/core/fault-susp-type-arg.core`).
-* **Calls:** a function of other than one parameter is only called, with
-  an argument for each, and never used as a value.
+* **Calls:** a function of other than one parameter is called with an
+  argument for each, or is a value of the curried type of its parameters;
+  a call of an unknown function of several arguments, `App (f, [a1, ..,
+  an])`, is checked against `f`'s type taken n times (`Uncurry` makes them).
 * **Cases:** the value a `Case` tests is a datatype's; each arm is a
   constructor of it, once; and one with no default has an arm of every
   constructor.
@@ -968,7 +972,7 @@ said here.
 |---|---|---|
 | Names | every binder's stamp from `Stamp.fresh`, bound once in the program | `MidLint` |
 | Types | Mid is System F (*Mid*, above) | `MidLint` |
-| Calls | a function has a parameter; one of other than one is only called, with an argument for each, and is a function of the top level: `Lower` stops at a local one at `-O0`, where no pass lifts it (`Lift` runs from `-O1`) | `MidLint`, and `Lower` for a local one |
+| Calls | a function has a parameter; one of other than one is called with an argument for each, or is a value of its parameters' curried type, and is a function of the top level: `Lower` stops at a local one at `-O0`, where no pass lifts it (`Lift` runs from `-O1`) | `MidLint`, and `Lower` for a local one |
 | The top level | `Val`, `Funs` and `Do` in order; a global defined once; a `Do` lists what it sets | `MidLint`, and the VM for a global read before it is set |
 | Recursion | only functions are recursive | `MidLint`, and the datatype's shape |
 | Strictness | `Let` is strict and in order, and a variable of a datatype's type is evaluated: `ConTag` and `Decon` read it as it is, a step nothing uses may go (`Prims.removable`), and tier 2 trusts its representation | nothing: the types alone, by `Lower.repOfTy`, so a value not yet evaluated must have a type that is no datatype |
@@ -1066,7 +1070,9 @@ does.
   the other at every use, at the types the use gives it (M12), so that
   the passes that know a function of the top level know it through the
   alias: `List.foldl f b l` is then a call of the worker, which
-  `specialise` copies for `f`.
+  `specialise` copies for `f`. An alias of a function of other than one
+  parameter, a twin `uncurry` left as a value, stays: a call through it is
+  a call through a closure (`tests/ir/shake-nary-alias.mid`).
 * **`lift`** (lambda lifting): a group of local functions none of which
   escapes -- each is only ever called, by name -- becomes a group of the
   top level. What the group captured it is given instead, as parameters
@@ -1159,6 +1165,18 @@ does.
   and the refs are not made; the copies' own calls are rewritten so in
   turn. A ref used under a handler is left, since a raise would leave its
   value where the handler cannot see it.
+* **`uncurry`** (eval/apply proper, the haskell98 roadmap's D15 C, from
+  `-O1`): a curried function -- one that makes a function and returns it,
+  n deep, with nothing between but steps that may be done later and again
+  -- gets a twin of all n levels' parameters (or, where its innermost
+  body calls a worker of the top level with them all, in order, that
+  worker), and its uses as a value become the twin's, a closure of n
+  parameters; calls through a closure in a row, each applying what
+  the last gave, at once, become one call of them all, eight at most. A
+  closure given to `thunk_make`, a foreign callback or the runtime stays
+  one of one parameter. How the engines call through such a closure is
+  *Calls through a closure* of [bytecode.md](bytecode.md)
+  (`tests/ir/uncurry.sml`, `tests/ir/uncurry-worker.mid`).
 * **`inline`** (in `simplify`, M10): a call of a function of the top level
   of no more than 12 nodes that does not call itself, and does not always
   raise -- a call on the way to an error costs nothing worth saving -- is
@@ -1260,7 +1278,11 @@ leaves implicit is explicit.
   `TailCallK`), by the function's id, with an argument for each of its
   parameters and no closure: such a function captures nothing and names
   itself as its global. A function has a list of parameters; one of other
-  than one parameter is only ever called so, and is made no closure.
+  than one parameter is called so, or made a closure of that many
+  parameters (`CLOSUREN`, `ARITY`).
+* **Calls through a closure:** of one argument, `Call` (and `TailCall`); of
+  several, `CallN` (and `TailCallN`), which test the closure's parameters
+  (D15 C).
 * **Results in globals** (the optional pass `results`, from `-O1`, for the
   whole program and not where the debugger reads it;
   [plans/performance.md](plans/performance.md), M8): a function of the top
@@ -1497,7 +1519,7 @@ holds the link to refusing; a unit so made is not stored in the cache.
 
 * **`make test-ir`** (`ir/*` of `tests/runner/tools.sml`): each `tests/ir/NAME.sml`
   is compiled without the Basis Library, and each `tests/ir/NAME.mid` read
-  as Mid, with the lint at level 3, Mid's text read back after every stage. The first line asks for a dump
+  as Mid and compiled as a whole program (`-o`), with the lint at level 3, Mid's text read back after every stage. The first line asks for a dump
   (`(* dump: --dump-after=PASS *)`), which is compared with `NAME.expected`
   and reviewed line by line like any `.expected` file, or says with what
   the compiler must stop (`(* fail: MESSAGE *)`), for a program a lint must

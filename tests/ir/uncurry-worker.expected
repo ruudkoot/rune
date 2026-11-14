@@ -1,0 +1,10 @@
+(* after uncurry *)
+(funs
+  (fn g1 ((v1 : int) (v2 : int)) : int "add"
+    (return (prim int_add v1 v2 : (int * int) -> int))))
+(val g2 : int -> int -> int
+  (return g1))
+(val g3 : int -> int
+  (return (app g2 1)))
+(val g4 : int
+  (return (app g3 2)))

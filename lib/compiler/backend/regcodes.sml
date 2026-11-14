@@ -3,8 +3,8 @@ structure RegCodes =
 struct
   (* the fingerprint of the register instruction set, which its .rbc
      carries; the layout's version is the stack bytecode's *)
-  val fingerprint = 3854137
-  val fingerprintHex = "003acf39"
+  val fingerprint = 13028111
+  val fingerprintHex = "00c6cb0f"
   val HALT = 0
   val MOVE = 1
   val INT = 2
@@ -50,11 +50,14 @@ struct
   val ENTER = 42
   val BLACKHOLE = 43
   val UPDATE = 44
-  val count = 45
-  val names = Vector.fromList ["HALT", "MOVE", "INT", "CONST", "UNIT", "CON0", "GLOBAL", "SETGLOBAL", "ENV", "SELF", "CALL", "RESULT", "TAILCALL", "RET", "PRIM", "PRIMPUSH", "TUPLE", "CLOSURE", "SELECT", "CON", "DECON", "CONTAG", "NEWEXN", "BUILTINEXN", "MKEXN", "EXNCON", "EXNARG", "SETENV", "JUMP", "JUMPIF", "JUMPIFNOT", "JUMPIFNOTTAG", "PUSHHANDLER", "POPHANDLER", "CATCH", "RAISE", "CALLK", "TAILCALLK", "SWITCH", "CONN", "FIELD", "FORCE", "ENTER", "BLACKHOLE", "UPDATE"]
+  val CLOSUREN = 45
+  val CALLN = 46
+  val TAILCALLN = 47
+  val count = 48
+  val names = Vector.fromList ["HALT", "MOVE", "INT", "CONST", "UNIT", "CON0", "GLOBAL", "SETGLOBAL", "ENV", "SELF", "CALL", "RESULT", "TAILCALL", "RET", "PRIM", "PRIMPUSH", "TUPLE", "CLOSURE", "SELECT", "CON", "DECON", "CONTAG", "NEWEXN", "BUILTINEXN", "MKEXN", "EXNCON", "EXNARG", "SETENV", "JUMP", "JUMPIF", "JUMPIFNOT", "JUMPIFNOTTAG", "PUSHHANDLER", "POPHANDLER", "CATCH", "RAISE", "CALLK", "TAILCALLK", "SWITCH", "CONN", "FIELD", "FORCE", "ENTER", "BLACKHOLE", "UPDATE", "CLOSUREN", "CALLN", "TAILCALLN"]
   (* each opcode's operands that name a function (0), a global (1) or
      a constant (2), by position: what a linker renumbers *)
-  val linked : (int * int) list vector = Vector.fromList [[], [], [], [(1, 2)], [], [], [(1, 1)], [(0, 1)], [], [], [], [], [], [], [], [], [], [(1, 0)], [], [], [], [], [(1, 2)], [], [], [], [], [], [], [], [], [], [], [], [], [], [(0, 0)], [(0, 0)], [], [], [], [], [], [], []]
+  val linked : (int * int) list vector = Vector.fromList [[], [], [], [(1, 2)], [], [], [(1, 1)], [(0, 1)], [], [], [], [], [], [], [], [], [], [(1, 0)], [], [], [], [], [(1, 2)], [], [], [], [], [], [], [], [], [], [], [], [], [], [(0, 0)], [(0, 0)], [], [], [], [], [], [], [], [(1, 0)], [], []]
   (* each opcode's operands before its list, by kind (the loader's RK_
      numbers: a label 8, a handler's label 9); the operand that
      says how long its list is, ~1 for none; and whether that operand
@@ -62,9 +65,9 @@ struct
      needs (UnitFile) *)
   val kindLabel = 8
   val kindHandlerLabel = 9
-  val operandKinds : int list vector = Vector.fromList [[], [14, 14], [14, 2], [14, 0], [14], [14, 3], [14, 6], [6, 14], [14, 5], [14], [14, 14], [14], [14, 14], [14], [10, 14], [10], [14, 11], [14, 7, 11], [14, 12, 14], [14, 3, 14], [14, 14, 3], [14, 14], [14, 1], [14, 13], [14, 14, 14], [14, 14], [14, 14], [14, 5, 14], [8], [14, 8], [14, 8], [14, 8, 3], [9], [], [14], [14], [7, 11], [7, 11], [14, 11], [14, 3, 11], [14, 14, 3, 12], [14, 14, 8], [14, 14], [], [14]]
-  val listAt : int vector = Vector.fromList [~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, 0, 0, 1, 2, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, 1, 1, ~1, 2, ~1, ~1, ~1, ~1, ~1]
-  val listPrim : bool vector = Vector.fromList [false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
+  val operandKinds : int list vector = Vector.fromList [[], [14, 14], [14, 2], [14, 0], [14], [14, 3], [14, 6], [6, 14], [14, 5], [14], [14, 14], [14], [14, 14], [14], [10, 14], [10], [14, 11], [14, 7, 11], [14, 12, 14], [14, 3, 14], [14, 14, 3], [14, 14], [14, 1], [14, 13], [14, 14, 14], [14, 14], [14, 14], [14, 5, 14], [8], [14, 8], [14, 8], [14, 8, 3], [9], [], [14], [14], [7, 11], [7, 11], [14, 11], [14, 3, 11], [14, 14, 3, 12], [14, 14, 8], [14, 14], [], [14], [14, 7, 3, 11], [14, 11], [14, 11]]
+  val listAt : int vector = Vector.fromList [~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, 0, 0, 1, 2, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, ~1, 1, 1, ~1, 2, ~1, ~1, ~1, ~1, ~1, 3, 1, 1]
+  val listPrim : bool vector = Vector.fromList [false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
 
   (* What a checker of the code needs (src/isa/regs.sml), none of it in
      the fingerprint. What a register an instruction reads must hold, or
@@ -135,7 +138,10 @@ struct
      (* FORCE *) [Writes (Is 0), Reads (Is 0), Other],
      (* ENTER *) [Reads (Is 6), Reads (Is 0)],
      (* BLACKHOLE *) [],
-     (* UPDATE *) [Reads (Is 0)]]
+     (* UPDATE *) [Reads (Is 0)],
+     (* CLOSUREN *) [Writes (Is 6), Other, Other, Other],
+     (* CALLN *) [Reads (Is 6), Other],
+     (* TAILCALLN *) [Reads (Is 6), Other]]
   (* what each register of its list holds, which it reads *)
   val listHolds : value option vector = Vector.fromList
     [(* HALT *) NONE,
@@ -182,7 +188,10 @@ struct
      (* FORCE *) NONE,
      (* ENTER *) NONE,
      (* BLACKHOLE *) NONE,
-     (* UPDATE *) NONE]
+     (* UPDATE *) NONE,
+     (* CLOSUREN *) SOME (CapturesOf 1),
+     (* CALLN *) SOME (Is 0),
+     (* TAILCALLN *) SOME (Is 0)]
   (* what each does beside its operands *)
   val implicit : implicit list vector = Vector.fromList
     [(* HALT *) [],
@@ -229,7 +238,10 @@ struct
      (* FORCE *) [],
      (* ENTER *) [CallsClosure, Leaves (Is 0)],
      (* BLACKHOLE *) [ReadsClosure],
-     (* UPDATE *) [ReadsClosure]]
+     (* UPDATE *) [ReadsClosure],
+     (* CLOSUREN *) [MakesClosure 1],
+     (* CALLN *) [CallsClosure, Leaves (Is 0)],
+     (* TAILCALLN *) [CallsClosure]]
   (* what must come after each *)
   val order : order list vector = Vector.fromList
     [(* HALT *) [],
@@ -276,13 +288,16 @@ struct
      (* FORCE *) [],
      (* ENTER *) [Then 11],
      (* BLACKHOLE *) [],
-     (* UPDATE *) []]
-  val flow : flow vector = Vector.fromList [Halt, Next, Next, Next, Next, Next, Next, Next, Next, Next, Call, Next, TailCall, Return, Next, Next, Next, Next, Next, Next, Next, Next, Next, Next, Next, Next, Next, Next, Jump, Branch, Branch, Branch, Next, Next, Next, Raise, Call, TailCall, Switch, Next, Next, Branch, Call, Next, Next]
-  val raises : bool vector = Vector.fromList [false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false]
-  val handlers : handlers vector = Vector.fromList [Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Installs, Removes, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps]
+     (* UPDATE *) [],
+     (* CLOSUREN *) [],
+     (* CALLN *) [Then 11],
+     (* TAILCALLN *) []]
+  val flow : flow vector = Vector.fromList [Halt, Next, Next, Next, Next, Next, Next, Next, Next, Next, Call, Next, TailCall, Return, Next, Next, Next, Next, Next, Next, Next, Next, Next, Next, Next, Next, Next, Next, Jump, Branch, Branch, Branch, Next, Next, Next, Raise, Call, TailCall, Switch, Next, Next, Branch, Call, Next, Next, Next, Call, TailCall]
+  val raises : bool vector = Vector.fromList [false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false, false]
+  val handlers : handlers vector = Vector.fromList [Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Installs, Removes, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps, Keeps]
   (* whether the primitive it names must be an image primitive (SOME
      true), must not be one (SOME false), or is either, or none (NONE) *)
-  val imageOnly : bool option vector = Vector.fromList [NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, SOME false, SOME true, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE]
+  val imageOnly : bool option vector = Vector.fromList [NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, SOME false, SOME true, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE]
   (* the image primitives (Isa.imagePrimitive): those that save or restore
      an image, or may make the world another, which PRIMPUSH calls *)
   val imagePrims = ["posix_fork", "rt_save", "rt_restore", "rt_link", "rt_debug_hook", "rt_debug_mode", "rt_debug_step"]

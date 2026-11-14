@@ -521,11 +521,13 @@ struct
       | M.SetGlobal (g, a) => L.SetGlobal (g, at a)
     end
 
-  (* a call through a closure, of one argument *)
+  (* a call through a closure, of one argument, or of more (D15 C: the
+     register target's CALLN, which tests the closure's arity) *)
   and unknown (b, cx, r : M.rhs) : L.operation =
     case r of
       M.App (f, [a]) => let val f = atom (b, cx, f) in L.Call (f, atom (b, cx, a)) end
-    | _ => bug "a call of other than one argument through a closure"
+    | M.App (f, xs as _ :: _ :: _) => let val f = atom (b, cx, f) in L.CallN (f, List.map (fn a => atom (b, cx, a)) xs) end
+    | _ => bug "a call of no argument through a closure"
 
   (* a call of a function that returns in globals: its first field and
      the others, read at once, each of the representation of its type *)
@@ -882,6 +884,8 @@ struct
   and tailCall (b, cx, r : M.rhs) =
     case (#depth cx, r) of
       (0, M.App (f, [a])) => let val f = atom (b, cx, f) in finish (b, L.TailCall (f, atom (b, cx, a))) end
+    | (0, M.App (f, xs as _ :: _ :: _)) =>
+        let val f = atom (b, cx, f) in finish (b, L.TailCallN (f, List.map (fn a => atom (b, cx, a)) xs)) end
     | _ => let val v = value (b, cx, r) in pops (b, #depth cx); finish (b, L.Return v) end
 
   (* The closures of a group of functions: each made in turn, capturing
@@ -957,8 +961,39 @@ struct
        pos = pos, reps = reps, result = result, captures = captures}
     end
 
+  (* The global functions of other than one parameter the program uses as
+     values -- the n-ary functions Uncurry makes of curried ones, whose
+     closures a call of as many arguments enters (D15 C) -- which get a
+     closure in their global, as a function of one does. *)
+  fun naryValues (p : M.program) : unit IntMap.map =
+    let
+      val acc = ref IntMap.empty
+      fun atom (M.Global (g, _)) = acc := IntMap.insert (!acc, g, ())
+        | atom _ = ()
+      fun rhs (M.App (_, xs)) = List.app atom xs
+        | rhs r = List.app atom (M.atomsOfRhs r)
+      fun exp e =
+        case e of
+          M.Let (_, _, r, e) => (rhs r; exp e)
+        | M.Fun (fs, e) => (List.app (exp o #body) fs; exp e)
+        | M.Join (_, _, body, scope) => (exp body; exp scope)
+        | M.Jump (_, xs) => List.app atom xs
+        | M.If (a, t, e) => (atom a; exp t; exp e)
+        | M.Handle (body, _, h) => (exp body; exp h)
+        | M.Raise a => atom a
+        | M.Return r => rhs r
+        | M.Mark (_, e) => exp e
+        | M.Case (a, arms, d) => (atom a; List.app (exp o #2) arms; Option.app exp d)
+      val () = List.app (fn M.Val (_, _, e) => exp e | M.Funs fs => List.app (exp o #body) fs | M.Do (_, e) => exp e) p
+      val nary = List.foldl (fn (M.Funs fs, m) => List.foldl (fn (f, m) => case #params f of [_] => m | _ => IntMap.insert (m, #name f, ())) m fs
+                              | (_, m) => m) IntMap.empty p
+    in
+      IntMap.filteri (fn (g, ()) => IntMap.member (nary, g)) (!acc)
+    end
+
   fun program {results : bool} (p : M.program) : L.program =
     let
+      val naryAsValues = naryValues p
       val () = resultsOn := (results andalso not (!debugInfo))
       (* the types of the variables, kept where their shapes are checked *)
       val () = (keepTys := !shapesChecked (); lastTys := IntTable.table (if !keepTys then 256 else 1))
@@ -969,7 +1004,7 @@ struct
                                | (M.Funs fs, m) =>
                                    List.foldl (fn (f, m) => case #params f of
                                                               [_] => IntMap.insert (m, #name f, L.RPtr)
-                                                            | _ => m) m fs
+                                                            | _ => if IntMap.member (naryAsValues, #name f) then IntMap.insert (m, #name f, L.RPtr) else m) m fs
                                | (M.Do (gs, _), m) => List.foldl (fn ((g, (_, t)), m) => IntMap.insert (m, g, repOfTy t)) m gs)
                              IntMap.empty p;
                 selectUses := IntTable.table 1024; selectFields := IntTable.table 1024; sumUses := IntTable.table 1024; sumRead := IntTable.table 1024; binderFn := IntTable.table 4096; nextFn := 0; virtuals := IntTable.table 1024;
@@ -1025,7 +1060,8 @@ struct
                           globalFids := IntMap.insert (!globalFids, #name f, fid);
                           case #params f of
                             [_] => ignore (def (b, L.SetGlobal (#name f, def (b, L.Closure (fid, [])))))
-                          | _ => ()
+                          | _ => if IntMap.member (naryAsValues, #name f) then ignore (def (b, L.SetGlobal (#name f, def (b, L.Closure (fid, [])))))
+                                 else ()
                         end) fs
         | M.Do (_, e) => defining (e, fn _ => ())
       val () = List.app definition p
