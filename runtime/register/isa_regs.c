@@ -48,6 +48,11 @@ static int operand_ok(const Program *p, uint32_t fi, int kind, int32_t v) {
    from where the first of them begins, which is what a unit appended to
    the program brings (runtime/loader.c, load_unit_mem): what is before it
    was checked when it came. Its result is indexed from that place. */
+/* whether function f is one of the general path's (D15 C, vm_isa_after_load) */
+static int apply_function(const Program *p, uint32_t f) {
+    return p->funcs[f].name && strncmp(p->funcs[f].name, "<apply ", 7) == 0;
+}
+
 uint8_t *validate_program(Program *p, char *err, size_t errlen) {
     return validate_program_from(p, 0, err, errlen);
 }
@@ -101,7 +106,9 @@ uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t err
            the registers where it takes the general path (D15 C, reg_apply) */
         if ((op == ROP_CALL || op == ROP_TAILCALL) && 2 > p->funcs[fi].maxstack) p->funcs[fi].maxstack = 2;
         if ((op == ROP_CALLN || op == ROP_TAILCALLN) && n + 1 > p->funcs[fi].maxstack) p->funcs[fi].maxstack = n + 1;
-        if ((op == ROP_CALLN || op == ROP_TAILCALLN) && n > p->apply_nmax) p->apply_nmax = n;
+        /* the most a program needs of the general path's functions: those
+           functions' own calls are none of it (vm_isa_after_load) */
+        if ((op == ROP_CALLN || op == ROP_TAILCALLN) && n > p->apply_nmax && !apply_function(p, fi)) p->apply_nmax = n;
         if (op == ROP_CLOSUREN && (uint32_t)read_i32(at + 9) > p->apply_amax) p->apply_amax = (uint32_t)read_i32(at + 9);
         /* what reads the frame's closure (ReadsClosure, src/isa/regs.sml):
            its captures, itself, or the suspension a suspension's code makes
@@ -842,9 +849,6 @@ int vm_isa_after_load(VM *vm, char *err, size_t errlen) {
             free(buf);
         }
     free(had);
-    /* their own calls are no need of the program's */
-    p->apply_amax = amax0;
-    p->apply_nmax = nmax0;
     vm->apply_nfuncs = UINT32_MAX;
     apply_table(vm);
     return ok;

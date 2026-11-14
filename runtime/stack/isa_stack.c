@@ -117,6 +117,11 @@ static int stack_heights(Program *p, uint32_t first, char *err, size_t errlen) {
    from where the first of them begins, which is what a unit appended to
    the program brings (runtime/loader.c, load_unit_mem): what is before it
    was checked when it came. Its result is indexed from that place. */
+/* whether function f is one of the general path's (D15 C, vm_isa_after_load) */
+static int apply_function(const Program *p, uint32_t f) {
+    return p->funcs[f].name && strncmp(p->funcs[f].name, "<apply ", 7) == 0;
+}
+
 uint8_t *validate_program(Program *p, char *err, size_t errlen) {
     return validate_program_from(p, 0, err, errlen);
 }
@@ -177,9 +182,10 @@ uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t err
         if ((op == OP_CALLK || op == OP_TAILCALLK) && !bad) bad = (uint32_t)b > p->funcs[a].nlocals;
         /* D15 C: a closure of 2 parameters or more (ARITY), a call through one of 2
            arguments or more (CALLN, TAILCALLN: m the closure and they); the
-           most of each, for the general path's functions (vm_isa_after_load) */
+           most of each, for the general path's functions (vm_isa_after_load),
+           whose own calls are none of it */
         if (op == OP_ARITY && !bad) { bad = a < 2 || a > 65535; if (!bad && (uint32_t)a > p->apply_amax) p->apply_amax = (uint32_t)a; }
-        if ((op == OP_CALLN || op == OP_TAILCALLN) && !bad) { bad = a < 3; if (!bad && (uint32_t)a - 1 > p->apply_nmax) p->apply_nmax = (uint32_t)a - 1; }
+        if ((op == OP_CALLN || op == OP_TAILCALLN) && !bad) { bad = a < 3; if (!bad && (uint32_t)a - 1 > p->apply_nmax && !apply_function(p, fi)) p->apply_nmax = (uint32_t)a - 1; }
         if (op == OP_UPDATE) updates = 1;
         if (op == OP_BLACKHOLE) holes = 1;
         if (bad) { free(starts); snprintf(err, errlen, "bad operand for %s at %u", op_names[op], pc); return NULL; }
@@ -414,9 +420,6 @@ int vm_isa_after_load(VM *vm, char *err, size_t errlen) {
             free(buf);
         }
     free(had);
-    /* their own calls are no need of the program's */
-    p->apply_amax = amax0;
-    p->apply_nmax = nmax0;
     vm->apply_nfuncs = UINT32_MAX;
     apply_table(vm);
     return ok;
