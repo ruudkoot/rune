@@ -32,15 +32,22 @@ struct
 
   (* the unfoldings a unit gives its clients at -O2, HsIface's section (D44's
      C, M21): the unit's Core through the passes as a unit, not whole, and
-     each unfolding the text of Core of its one declaration; none below -O2,
-     where nothing reads them *)
-  fun unfoldingsOf (p : Core.program) : string list =
-    if not (enabled ()) then []
+     each unfolding the text of Core of its one declaration; and its
+     functions' strictness signatures (M24), by name, CoreStrict.show's
+     text, of that Core; none below -O2, where nothing reads them *)
+  fun sectionsOf (p : Core.program) : string list * (string * string) list =
+    if not (enabled ()) then ([], [])
     else
       let
         val opts = {spend = fn () => true, whole = false, eta = !RhcOptions.eta}
         val p' = List.foldl (fn ((_, pass), p) => pass opts p) p (CoreSimplify.passes ())
-      in List.map (fn d => CoreText.show [d]) (CoreSimplify.unfoldings p') end
+        val strictness =
+          if not (!CoreStrict.enabled) then []
+          else
+            let val sigs = CoreStrict.signatures p'
+            in List.mapPartial (fn Core.Val (f, _, _) => Option.map (fn s => (f, CoreStrict.show s)) (CoreMap.find (sigs, f))
+                                 | _ => NONE) p' end
+      in (List.map (fn d => CoreText.show [d]) (CoreSimplify.unfoldings p'), strictness) end
       handle Fail msg => raise Error.Bug ("rhc's simplifier fails on a unit, a bug of rhc's: " ^ msg)
 
   (* the Core p, a program of the files named, through the passes; whole

@@ -48,16 +48,21 @@ struct
       val () = need (HsModIface.canonical back = HsModIface.canonical iface, "and stands for what the interface stood for")
       val () = need (#exports back = #exports iface andalso #defs back = #defs iface andalso #fixities back = #fixities iface,
                      "its exports, definitions and fixities as they were")
-      val whole = {modules = [iface, back], desugar = "the desugaring's part\nof two lines", unfoldings = []}
+      val whole = {modules = [iface, back], desugar = "the desugaring's part\nof two lines", unfoldings = [],
+                   strictness = [("M.f", "SLb"), ("%w:M.f", "SL"), ("M.g", "")]}
       val again = HsIface.decode (HsIface.encode whole)
       val () = need (HsIface.encode again = HsIface.encode whole andalso #desugar again = #desugar whole
                      andalso length (#modules again) = 2, "a unit's interface read back as written")
+      val () = need (#strictness again = #strictness whole, "its strictness signatures as they were (M24)")
+      val () = need (List.all (fn (_, s) => isSome (CoreStrict.read s)) (#strictness again)
+                     andalso CoreStrict.read "SLb" = SOME {params = [true, false], bottom = true},
+                     "and each one CoreStrict reads")
     in () end
 
   fun refused () =
     let
       fun refuses s = (ignore (HsIface.decode s); false) handle HsIface.Bad _ => true
-      val text = HsIface.encode {modules = [iface], desugar = "", unfoldings = []}
+      val text = HsIface.encode {modules = [iface], desugar = "", unfoldings = [], strictness = []}
       val () = need (refuses (String.substring (text, 0, size text - 3)), "a text cut short is refused")
       val () = need (refuses ("9:NotIfaces 1 0 0: 0 "), "a text of another mark is refused")
       val unsolved = {id = "M", exports = [], defs = [], fixities = [],

@@ -7,12 +7,12 @@ struct
   structure T = HsTypes
   structure Mo = HsModules
 
-  type t = {modules : HsModIface.t list, desugar : string, unfoldings : string list}
+  type t = {modules : HsModIface.t list, desugar : string, unfoldings : string list, strictness : (string * string) list}
 
   exception Bad of string
 
   val magic = "HsIface"
-  val version = 1
+  val version = 2   (* 2: the strictness section (M24) *)
 
   (* ---- writing ---- *)
 
@@ -73,9 +73,9 @@ struct
   fun written f x = let val w = ref [] in f (w, x); String.concat (List.rev (!w)) end
 
   fun encodeModule m = written moduleTo m
-  fun encode ({modules, desugar, unfoldings} : t) =
+  fun encode ({modules, desugar, unfoldings, strictness} : t) =
     written (fn (w, ()) => (str (w, magic); int (w, version); list moduleTo (w, modules); str (w, desugar);
-                            list str (w, unfoldings)))
+                            list str (w, unfoldings); list (fn (w, (f, s)) => (str (w, f); str (w, s))) (w, strictness)))
             ()
 
   (* ---- reading ---- *)
@@ -179,6 +179,8 @@ struct
                  val () = if rint r = version then () else bad (r, "HsIface's version " ^ Int.toString version)
                  val modules = rlist rmodule r
                  val desugar = rstr r
-               in {modules = modules, desugar = desugar, unfoldings = rlist rstr r} end)
+                 val unfoldings = rlist rstr r
+               in {modules = modules, desugar = desugar, unfoldings = unfoldings,
+                   strictness = rlist (fn r => let val f = rstr r in (f, rstr r) end) r} end)
             s
 end

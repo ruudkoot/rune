@@ -3,14 +3,16 @@
    of its modules' interfaces as the renamer and the checker make them
    (HsModIface), and the desugaring's part, its Core among it, as text the
    desugaring gives. The unfoldings section is in the format from the
-   start and empty until M23 (D44's C).
+   start and empty until M23 (D44's C). The strictness section (M24) is
+   each function's strictness signature, by its Core name, in
+   CoreStrict.show's text; empty below -O2.
 
    Area: Languages *)
 signature HS_IFACE =
 sig
-  (* A unit's interface: its modules', the desugaring's part, and the
-     unfoldings, none yet. *)
-  type t = {modules : HsModIface.t list, desugar : string, unfoldings : string list}
+  (* A unit's interface: its modules', the desugaring's part, the
+     unfoldings, and the strictness signatures. *)
+  type t = {modules : HsModIface.t list, desugar : string, unfoldings : string list, strictness : (string * string) list}
 
   (* What makes text no interface: where, and what. *)
   exception Bad of string
