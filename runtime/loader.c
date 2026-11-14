@@ -567,6 +567,7 @@ uint32_t program_add_function(VM *vm, const char *name, const uint8_t *code, uin
     uint8_t *starts = validate_program_from(p, m.nfuncs, err, errlen);
     if (!starts) { undo(vm, m); return UINT32_MAX; }
     free(starts);
+    caf_reset(vm);   /* the CAF tables made again, with it (runtime/gc/caf.c) */
     return m.nfuncs;
 }
 
@@ -863,6 +864,7 @@ int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_
         uint8_t *starts = validate_program_from(p, func_base, err, errlen);
         if (!starts) { undo(vm, m); goto done; }
         free(starts);
+        caf_reset(vm);   /* the CAF tables made again, with its code and globals (runtime/gc/caf.c) */
     }
 
     /* what it exports: the functions its file names, and every global it sets */

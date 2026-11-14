@@ -418,6 +418,31 @@ callee runs. The liveness is the one the JIT keeps its registers by
 time a collection finds a frame of it waiting; nothing is added to the
 bytecode, to an image, or to the code that runs.
 
+**CAF tables.** In a program with suspensions -- one some function of which
+says `UPDATE` or `BLACKHOLE`: rhc's, and lazy ML's -- a full collection
+takes a global only where code that may still run reads it, as GHC's
+static reference tables have it (the haskell98 roadmap's D19;
+`runtime/gc/caf.c`). A top-level lazy list that nothing reads once it is
+walked, a CAF, is then let go where it would be kept for the whole run.
+What each function's code reaches is worked out from the bytecode at the
+first such collection: the globals its code reads and, through every
+function it calls by name or makes a closure of, theirs, one table to a
+strongly connected group of the call graph (about a millisecond for rhc's
+programs). A collection takes the table of each frame from where it waits
+(the running frame's whole), of each closure and suspension not yet
+evaluated it marks, and of what the units loaded export; the frames' own
+closures come last, so that one only the frames hold does not keep all its
+function reaches; and it makes unit every global none of those reached. The
+full collection, the copier and the low-pause collector's cycle (which
+keeps the globals as they were when it began, beside what they are, for its
+snapshot) take them, on both VMs and in native code. A program of SML has
+no suspensions, builds no table and keeps its globals as roots, as before;
+`runevm --caf-tables off` keeps them roots in any program, and
+`--caf-tables on` takes the tables in any (a test of them). Minor
+collections take the globals written since the last, as above. `--stats`
+says what the tables did: the CAFs (globals that held a suspension), those
+let go, and the globals let go in all.
+
 ### What is kept that the program no longer needs
 
 Where the collector does not know what is live it keeps what is there,
@@ -445,9 +470,11 @@ expects:
 * **What any handler of a function needs is kept at every call of the
   function,** in the handler's range or not, since a callee may raise into
   a handler.
-* **A global is a root for the whole run.** What is bound at the top level
+* **A global is a root for the whole run** in a program without
+  suspensions (all of SML's but lazy ML's). What is bound at the top level
   and used by a function is a global, whether or not anything will use it
-  again.
+  again; a program with suspensions keeps one only while live code may
+  read it (*CAF tables*, above).
 * **The stack bytecode and native programs keep every slot.** On
   `runevm-stack` and in a program `runeopt` made every slot of the stack
   is a root. A slot there is reused by the next value of any kind, which
@@ -486,7 +513,8 @@ what `Runtime.stats` says is live.
   the low-pause collector, every such collection begins a cycle where none
   marks, and every slice marks a few hundred bytes, a slice coming every 64
   bytes allocated, so that `make test-gc` and `make test-stress` run every
-  store of the suites while a cycle marks. With `--nursery 0` every such
+  store of the suites while a cycle marks; with `--gc-stress-full`, every
+  such collection is a full one. With `--nursery 0` every such
   allocation moves everything, which is how `make test-stress` (every 101st
   allocation: the interpreters with `--nursery 0`, the JIT with a nursery
   of 4 KiB) finds a primitive that keeps a heap pointer in a C variable
@@ -1059,8 +1087,8 @@ the program -- and the table of their exports, so that a session saved after
 loading goes on loading. A program of native code (`runeopt`) loads no units.
 
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
-`--gc-stress`, `--gc-stress-cycles`, `--gc-verify`, `--checked`, `--heap-size`, `--heap-limit`,
-`--heap-fill`, `--nursery`, `--gc`, `--old-space`, `--stack-size`, `--equality-work`, `--gc-log`,
+`--gc-stress`, `--gc-stress-cycles`, `--gc-stress-full`, `--gc-verify`, `--checked`, `--heap-size`, `--heap-limit`,
+`--heap-fill`, `--nursery`, `--gc`, `--old-space`, `--caf-tables`, `--stack-size`, `--equality-work`, `--gc-log`,
 `--emulate-fork`, `--restore`, `--name`, `--version` -- is described in
 [bytecode.md](bytecode.md).
 
@@ -1082,7 +1110,7 @@ What differs:
 
 * The options of `runevm` (`--count`, `--stats`, `--heap-size`,
   `--heap-limit`, `--heap-fill`, `--nursery`, `--gc`, `--old-space`, `--equality-work`, `--gc-stress`, `--gc-stress-cycles`,
-  `--gc-verify`, `--gc-log`, `--checked`) come from the environment
+  `--gc-stress-full`, `--caf-tables`, `--gc-verify`, `--gc-log`, `--checked`) come from the environment
   variable `RUNEVM_OPTIONS`, after
   those the program was made with (`runeopt --options`), and the program takes
   the variable out of its environment.

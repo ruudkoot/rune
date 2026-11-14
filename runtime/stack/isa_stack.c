@@ -134,7 +134,7 @@ uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t err
     if (first > 0 && p->funcs[first - 1].code_end != base) { fail(err, errlen, "function does not end where the next begins"); return NULL; }
     uint8_t *starts = calloc(p->code_len - base + 1, 1);
     if (!starts) { fail(err, errlen, "out of memory"); return NULL; }
-    if (first == 0) p->reruns = 0;
+    if (first == 0) p->reruns = p->suspends = 0;
     uint32_t fi = first;
     uint32_t pc = base;
     /* whether the function fi says UPDATE, and BLACKHOLE (Program's reruns) */
@@ -177,6 +177,7 @@ uint8_t *validate_program_from(Program *p, uint32_t first, char *err, size_t err
         if ((op == OP_CALLK || op == OP_TAILCALLK) && !bad) bad = (uint32_t)b > p->funcs[a].nlocals;
         if (op == OP_UPDATE) updates = 1;
         if (op == OP_BLACKHOLE) holes = 1;
+        if (op == OP_UPDATE || op == OP_BLACKHOLE) p->suspends = 1;
         if (bad) { free(starts); snprintf(err, errlen, "bad operand for %s at %u", op_names[op], pc); return NULL; }
         pc += len;
     }
@@ -308,6 +309,83 @@ void disassemble(const Program *p, FILE *out) {
         fprintf(out, "\n");
         pc += len;
     }
+}
+
+/* ---- What code reaches (runtime/gc/caf.c's tables; the haskell98
+   roadmap's D19) ----
+   Each global the code of function fi reads, along every way on from pc
+   and from each handler the function installs (a call the frame waits on
+   may raise into it), given to global; each function an operand names --
+   one it calls by name or makes a closure of -- given to callee. The room
+   of the walk is kept from one walk to the next, and which fixed operands
+   of each instruction are labels, globals read and functions. */
+static uint8_t *caf_seen;
+static uint32_t *caf_work;
+static uint32_t caf_room;
+static uint8_t caf_labels[OP__COUNT], caf_globals[OP__COUNT], caf_funcs[OP__COUNT];
+static int caf_kinds_made;
+int isa_caf_walk(const Program *p, uint32_t fi, uint32_t pc0, void (*global)(void *, uint32_t),
+                 void (*callee)(void *, uint32_t), void *ctx) {
+    if (fi >= p->nfuncs) return -1;
+    uint32_t from = p->funcs[fi].code_offset, to = p->funcs[fi].code_end;
+    if (to <= from) return 0;
+    uint32_t n = to - from;
+    if (!caf_kinds_made) {
+        for (int op = 0; op < OP__COUNT; op++)
+            for (int k = 0; k < op_nargs[op] && k < 8; k++) {
+                int kind = op_kinds[op][k];
+                if (kind == OPND_LABEL || kind == OPND_HANDLER_LABEL) caf_labels[op] |= (uint8_t)(1u << k);
+                if (kind == OPND_GLOBAL && op != OP_SETGLOBAL) caf_globals[op] |= (uint8_t)(1u << k);   /* a store reads nothing */
+                if (kind == OPND_FUNCTION) caf_funcs[op] |= (uint8_t)(1u << k);
+            }
+        caf_kinds_made = 1;
+    }
+    if (n + 1 > caf_room) {
+        uint32_t room = caf_room ? caf_room : 4096;
+        while (room < n + 1) room *= 2;
+        uint8_t *s = realloc(caf_seen, room);
+        if (s) caf_seen = s;
+        uint32_t *w = realloc(caf_work, sizeof(uint32_t) * (size_t)room);
+        if (w) caf_work = w;
+        if (!s || !w) return -1;
+        caf_room = room;
+    }
+    uint8_t *seen = caf_seen;
+    uint32_t *work = caf_work;
+    memset(seen, 0, n);
+    size_t nw = 0;
+#define CAF_PUSH(x) do { uint32_t x_ = (x); if (x_ >= from && x_ < to && !seen[x_ - from]) { seen[x_ - from] = 1; work[nw++] = x_; } } while (0)
+    CAF_PUSH(pc0);
+    for (uint32_t pc = from; pc < to; ) {
+        uint32_t len = (uint32_t)instr_length(p->code[pc]);
+        if (!len) return -1;
+        if (p->code[pc] == OP_PUSHHANDLER) CAF_PUSH((uint32_t)read_i32(p->code + pc + 1));
+        pc += len;
+    }
+    while (nw) {
+        uint32_t pc = work[--nw];
+        uint8_t op = p->code[pc];
+        if (op >= OP__COUNT) return -1;
+        uint32_t len = (uint32_t)instr_length(p->code[pc]);
+        for (uint32_t k = 0; k < 8 && (caf_labels[op] | caf_globals[op] | caf_funcs[op]) >> k; k++) {
+            uint32_t v = (uint32_t)read_i32(p->code + pc + 1 + 4 * k);
+            if (caf_labels[op] >> k & 1) CAF_PUSH(v);
+            if (caf_globals[op] >> k & 1) global(ctx, v);
+            if (caf_funcs[op] >> k & 1) callee(ctx, v);
+        }
+        switch (op_flow[op]) {
+        case FLOW_SWITCH: {
+            /* the JUMPs of its table, and past them */
+            uint32_t m = (uint32_t)read_i32(p->code + pc + 1);
+            for (uint32_t k = 0; k <= m; k++) CAF_PUSH(pc + len + 5 * k);
+            break;
+        }
+        case FLOW_JUMP: case FLOW_TAILCALL: case FLOW_RETURN: case FLOW_RAISE: case FLOW_HALT: break;
+        default: CAF_PUSH(pc + len); break;
+        }
+    }
+#undef CAF_PUSH
+    return 0;
 }
 
 /* the frames, as the runtime walks them (vm.h; native-frames.md, M3) */
