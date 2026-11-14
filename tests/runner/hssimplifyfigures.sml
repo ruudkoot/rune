@@ -90,10 +90,12 @@ struct
         in append (out, String.concatWith "\t" ([set, id] @ row) ^ "\n") end
       fun one (name, flags) =
         let
-          (* every way's bytecode named alike, the main file's base, in a
-             directory of the way's: getProgName is the bytecode's name, and
-             a program that prints it must cost the same at every way *)
-          val rbcDir = #dir p ^ "/" ^ name ^ ".way"
+          (* every way's bytecode at one path, the main file's base in one
+             directory, made again for each way: getProgName reads the
+             bytecode's path, a character at a time, so that a program that
+             prints it costs more for a longer one, and a way's name in the
+             path was measured as the way's (nhcnofib/real/grep) *)
+          val rbcDir = #dir p ^ "/way"
           val () = (rmTree rbcDir; mkdirs rbcDir)
           val rbc = rbcDir ^ "/" ^ OS.Path.base (OS.Path.file (#main p)) ^ ".rbc"
           fun f x = #dir p ^ "/" ^ name ^ "." ^ x
