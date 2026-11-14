@@ -13,6 +13,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`CORE_PRIM`](sig/CORE_PRIM.md) | 6 | 6 | 100% | 2 | 2 |
 | [`CORE_PRIM_FAMILY`](sig/CORE_PRIM_FAMILY.md) | 4 | 4 | 100% | 0 | 0 |
 | [`CORE_RUNTIME`](sig/CORE_RUNTIME.md) | 6 | 6 | 100% | 4 | 4 |
+| [`CORE_SIMPLIFY`](sig/CORE_SIMPLIFY.md) | 9 | 9 | 100% | 7 | 7 |
 | [`CORE_TEXT`](sig/CORE_TEXT.md) | 9 | 9 | 100% | 8 | 8 |
 | [`CORE_TO_MID`](sig/CORE_TO_MID.md) | 8 | 8 | 100% | 2 | 2 |
 | [`CORE_UNITS`](sig/CORE_UNITS.md) | 10 | 10 | 100% | 8 | 8 |
@@ -45,7 +46,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_TOKEN`](sig/HS_TOKEN.md) | 9 | 9 | 100% | 5 | 5 |
 | [`HS_TYPES`](sig/HS_TYPES.md) | 43 | 43 | 100% | 29 | 29 |
 | [`HS_USAGE`](sig/HS_USAGE.md) | 5 | 5 | 100% | 4 | 4 |
-| **all** | 455 | 455 | 100% | 288 | 288 |
+| **all** | 464 | 464 | 100% | 295 | 295 |
 
 ## Members a signature describes
 
@@ -54,7 +55,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-39 structures have a page, with 455 members, of which 455 (100%) are described by a signature.
+40 structures have a page, with 464 members, of which 464 (100%) are described by a signature.
 
 ## Examples that are run
 
