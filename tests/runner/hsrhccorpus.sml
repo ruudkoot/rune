@@ -110,8 +110,8 @@ struct
       val (got, said) = case go tries NONE of SOME r => r | NONE => ("accept", "")
     in rmTree work; {id = id, label = "check", got = got, said = said, passed = got = "accept", judged = judgesAccept row,
                      want = "GHC and Hugs accept it"} : outcome end
-    handle e => (note (out () ^ "/logs/" ^ #id c ^ ".exn", exnMessage e ^ "\n");
-                 {id = #id c, label = "check", got = "harness-error", said = exnMessage e, passed = false, judged = true,
+    handle e => (note (out () ^ "/logs/" ^ #id c ^ ".exn", exnText e ^ "\n");
+                 {id = #id c, label = "check", got = "harness-error", said = exnText e, passed = false, judged = true,
                   want = "GHC and Hugs accept it"})
 
   (* ---- What is expected ---- *)

@@ -22,7 +22,10 @@
    - hs/library/exitzero: exitWith (ExitFailure 0) is an IOError
      isIllegalOperation holds of (ov.system.exitzero, ruling 57): on
      Core's interpreter and on the VM, ExitZeroCaught catches it and goes
-     on, status 0; ExitZeroUncaught ends with status 1, its output written. *)
+     on, status 0; ExitZeroUncaught ends with status 1, its output written.
+   - hs/library/devicefull: on a full device (/dev/full) hFlush, hClose,
+     writeFile, appendFile and an unbuffered hPutStr raise isFullError
+     (ruling 62), on Core's interpreter and on the VM (DeviceFull.hs). *)
 structure HsLibrary =
 struct
   open Sh
@@ -421,10 +424,10 @@ struct
         end
     end
 
-  (* `both (name, status)`: tests/hs/library/NAME.hs through bin/rhc --whole
+  (* `both (job, name, status)`: tests/hs/library/NAME.hs through bin/rhc --whole
      on Core's interpreter and compiled to the VM, each printing NAME.expected
      and ending with the status *)
-  fun both (name, status) =
+  fun both (job, name, status) =
     let
       val out = run ^ "/hs-library/" ^ name
       val () = mkdirs out
@@ -432,9 +435,9 @@ struct
       val src = fromRoot ("tests/hs/library/" ^ name ^ ".hs")
       val want = read (fromRoot ("tests/hs/library/" ^ name ^ ".expected"))
       fun judge (way, st, stdout, stderr) =
-        if st <> status then fail ("hs/library/exitzero: " ^ name ^ " ends with status " ^ Int.toString st ^ " on " ^ way ^ ", not " ^
+        if st <> status then fail ("hs/library/" ^ job ^ ": " ^ name ^ " ends with status " ^ Int.toString st ^ " on " ^ way ^ ", not " ^
                                    Int.toString status ^ ": " ^ firstLine stderr)
-        else if read stdout <> want then fail ("hs/library/exitzero: " ^ name ^ " prints otherwise than its .expected on " ^ way ^
+        else if read stdout <> want then fail ("hs/library/" ^ job ^ ": " ^ name ^ " prints otherwise than its .expected on " ^ way ^
                                               " (" ^ stdout ^ ")")
         else ()
       val ist = exec {cmd = [fromRoot "bin/rhc", "--whole", "--lint=3", src], dir = SOME out, stdin = "", stdout = f "i.out",
@@ -443,7 +446,7 @@ struct
       val cst = exec {cmd = [fromRoot "bin/rhc", "--whole", "--lint=2", src, "-o", f "p.rbc"], dir = NONE, stdin = "",
                       stdout = f "c.err", stderr = f "c.err", timeout = 600}
     in
-      if cst <> 0 then fail ("hs/library/exitzero: bin/rhc does not compile " ^ name ^ ": " ^ firstLine (f "c.err"))
+      if cst <> 0 then fail ("hs/library/" ^ job ^ ": bin/rhc does not compile " ^ name ^ ": " ^ firstLine (f "c.err"))
       else
         judge ("the VM", exec {cmd = [fromRoot "bin/runevm", f "p.rbc"], dir = SOME out, stdin = "", stdout = f "v.out",
                                stderr = f "v.err", timeout = 300},
@@ -451,8 +454,12 @@ struct
     end
 
   fun exitzero () =
-    (both ("ExitZeroCaught", 0); both ("ExitZeroUncaught", 1);
+    (both ("exitzero", "ExitZeroCaught", 0); both ("exitzero", "ExitZeroUncaught", 1);
      say "hs/library/exitzero: exitWith (ExitFailure 0) an IOError, caught and uncaught, on the interpreter and the VM\n")
+
+  fun devicefull () =
+    (both ("devicefull", "DeviceFull", 0);
+     say "hs/library/devicefull: a full device's IOError, isFullError, from hFlush, hClose, writeFile, appendFile and hPutStr\n")
 
   fun job (name, cmd) =
     Test.it name
@@ -471,7 +478,7 @@ struct
          (Test.describe ""
             [job ("overlay", "hs-library-overlay"), job ("pristine", "hs-library-pristine"),
              job ("report", "hs-library-report"), job ("compile", "hs-library-compile"),
-             job ("exitzero", "hs-library-exitzero")])]
+             job ("exitzero", "hs-library-exitzero"), job ("devicefull", "hs-library-devicefull")])]
 
   fun command args =
     case args of
@@ -480,5 +487,6 @@ struct
     | ["hs-library-report"] => SOME report
     | ["hs-library-compile"] => SOME compile
     | ["hs-library-exitzero"] => SOME exitzero
+    | ["hs-library-devicefull"] => SOME devicefull
     | _ => NONE
 end

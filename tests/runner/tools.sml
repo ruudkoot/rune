@@ -77,7 +77,9 @@ struct
       val line1 = case String.fields (fn c => c = #"\n") (read src) of l :: _ => l | [] => ""
       fun marker m = if String.isPrefix ("(* " ^ m ^ ": ") line1 andalso String.isSuffix " *)" line1
                      then SOME (String.substring (line1, size m + 5, size line1 - size m - 8)) else NONE
-      val input = if String.isSuffix ".mid" src then ["--read-mid", src] else ["--no-prelude", "-o", f ".rbc", src]
+      (* a program of Mid's text made into bytecode too, as one in SML: without
+         -o, --read-mid checks it and runs no pass after mid *)
+      val input = if String.isSuffix ".mid" src then ["--read-mid", src, "-o", f ".rbc"] else ["--no-prelude", "-o", f ".rbc", src]
       (* at level 3, every stage's Mid read back: the tier of make check
          that lints deepest (docs/ir.md, Levels) *)
       fun rune flags = exec {cmd = ["bin/rune-stack", "--lint=3"] @ flags @ input, dir = NONE, stdin = "",

@@ -754,9 +754,13 @@ newer than every file of `share/rhc`; `accept/K-of-4`, `errors/K-of-4` and
 `--lint=2`, with its `.cargs`, to the same standard output, standard error
 and status, so that HsLint replays each way the records of the modules the
 program reaches, and each program of `tests/hs/lang` run both ways on
-Core's interpreter, every eighth with its Core compared too; the shards
-nightly, and in make check `accept/sample`, `errors/sample` and
-`lang/sample`, the sample of ruling 47 (*Tiers*); `bin/rune-test
+Core's interpreter, every eighth with its Core compared too in its
+canonical form (`--dump-after=desugar --canonical-core`: what `main`
+reaches, each declaration by name, since the units are joined in another
+order than a whole desugaring's and a whole one may keep a value nothing
+reaches); the shards nightly, and in make check `accept/sample`,
+`errors/sample` and `lang/sample`, the sample of ruling 47 (*Tiers*), every
+fourth program of the last with its Core compared; `bin/rune-test
 hs-snapshot-one KIND NAME` judges one. A mutant's tree (`hs-mutants`) has
 no snapshot, so a mutant makes the library's units itself.
 
@@ -867,9 +871,12 @@ instances), changed exactly by the lines of `tests/hs/library/overlay.names`,
 each with its entry; `compile`, `bin/rhc --whole` compiling
 `tests/hs/library/All20.hs`, a program over a name of each of the 20
 modules, which the VM runs to `All20.expected` (M18: the 20 modules compile);
-and `exitzero`, `exitWith (ExitFailure 0)` an IOError that `isIllegalOperation`
+`exitzero`, `exitWith (ExitFailure 0)` an IOError that `isIllegalOperation`
 holds of (ruling 57), caught by `ExitZeroCaught` and uncaught by
-`ExitZeroUncaught`, status 1, on Core's interpreter and on the VM.
+`ExitZeroUncaught`, status 1, on Core's interpreter and on the VM; and
+`devicefull`, `DeviceFull.hs` on a full device (`/dev/full`): `hFlush`, `hClose`,
+`writeFile`, `appendFile` and an unbuffered `hPutStr` raise `isFullError`
+(ruling 62), on both.
 
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants

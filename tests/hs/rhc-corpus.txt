@@ -11,6 +11,10 @@ rhc | hse/NonDecreasing.hs::check | HOST-BUG | reject: R3: a do at the column of
 rhc | jhc/1_typecheck/2_pass/fixed_bugs/flat_do_where.hs::check | HOST-BUG | reject: R3: nested dos at the enclosing do's column (NondecreasingIndentation, on in GHC's Haskell98 mode); 9.3 gives them empty blocks; out of M13's list (ruling 43)
 rhc | hse/RelaxedDo.hs::check | HOST-BUG | reject: R3: a do at the column of the enclosing do (its LANGUAGE NondecreasingIndentation, blanked by the preparation, and on in GHC's Haskell98 mode); 9.3 gives it an empty block
 
+# mod.exp.synonym.dotdot: 5.2 names a type synonym in an export list by the form T alone, though the grammar allows
+# T(..); GHC takes T(..) with a warning (-Wdodgy-exports) and Hugs takes it; rhc follows 5.2 (the conformance row, R34)
+rhc | nhcnofib/spectral/compreals::check | HOST-BUG | reject: mod.exp.synonym.dotdot: ContinuedFractions.lhs exports the synonym ContinuedFraction as ContinuedFraction(..), which 5.2 does not give a synonym
+
 # rhc's runs of D56's 188 (tests/runner/hscorpusrun.sml, `hs-corpus-run/ID`): a program both judges ran right
 # (E8's run.tsv) that rhc does not run right in D56's three ways, by its cause, the outcome first: compile (rhc
 # refuses it, in E8's variant, rewritten and under --dotted-names), exit (a status not 0) or diff (another output)

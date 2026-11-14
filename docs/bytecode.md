@@ -76,12 +76,14 @@ representation of register d of f disagrees with the code at pc").
 
 **The fingerprint** says which instruction set a file is of. `runeisa`
 works it out from the descriptions of `src/isa` -- the instructions' names,
-operands, stack effects and flow, and the primitives' names and arities, in
-order -- and writes it into the generated tables; a VM refuses a file of
+operands, stack effects and flow, and the primitives' names, arities and results'
+representations (what the loader holds a primitive's register to), in order -- and writes it into the generated tables; a VM refuses a file of
 another instruction set with "bytecode of another instruction set", and an
 image of one (whose magic carries the fingerprint) as not an image of this
-`runevm`. So an opcode or a primitive may be added, removed or moved: a file
-made before is refused rather than read with another meaning. The
+`runevm`. So an opcode or a primitive may be added, removed or moved, or a
+primitive's result change its representation (`file_flush` and `file_close`,
+from unit to bool): a file made before is refused rather than read with
+another meaning. The
 instructions of suspensions (`FORCE`, `ENTER`, `BLACKHOLE`, `UPDATE`) and
 the primitives of `IntInf.int` are in both sets' fingerprints, which
 `runtime/stack/opcodes.def` and `runtime/register/regs.def` say at their
@@ -521,7 +523,9 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `CONTAG` | | Pop a constructor value (nullary or not), push its tag as an int. |
 | `CLOSURE f, n` | function, count | Pop `n` values into the environment of a new closure of function `f`. |
 | `SETENV e` | slot | Pop value `v`, pop closure `c`, set `c.env[e] := v` (patches mutually recursive closures). |
-| `CALL` / `TAILCALL` | | Pop argument, pop closure, call (replacing the frame for `TAILCALL`). |
+| `CALL` / `TAILCALL` | | Pop argument, pop closure, call (replacing the frame for `TAILCALL`); a closure of more parameters than one, or a partial application, is the general path's (*Calls through a closure*, below). |
+| `ARITY k` | count | The closure on top, just made by `CLOSURE`, takes `k` parameters, `k` from 2: `k` in its header's contag, which a call tests. |
+| `CALLN m` / `TAILCALLN m` | count | Call the closure `m - 1` below the top with the `m - 1` values above it, `m` from 3, which become its locals 0 to `m - 2` (replacing the frame for `TAILCALLN`); a closure of another number of parameters, or a partial application, is the general path's. |
 | `CALLK f, n` / `TAILCALLK f, n` | function, count | Call function `f` with the `n` values on top of the stack as its locals 0 to `n-1`, and no closure (replacing the frame for `TAILCALLK`); `n` is at most `f`'s locals. |
 | `RET` | | Return the top of stack to the caller. |
 | `JUMP o` | offset | Jump to absolute code offset `o`. |
@@ -543,7 +547,7 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 ## The register bytecode (runtime/register)
 
 `runtime/register`'s loop (`bin/runevm`, `runtime/register/interp.c`; `runtime/register/README.md`
-is the VM as built) runs a second instruction set, of 45 registers
+is the VM as built) runs a second instruction set, of 48 registers
 instructions (`src/isa/regs.sml`; decision D4 of
 [plans/middle-end.md](plans/middle-end.md)). `rune` makes it unless told
 `--target=stack`, from `-O1`. Its `.rbc` is laid out as the stack bytecode's, with the
@@ -653,7 +657,8 @@ refuses the other's file and image.
 | `UNIT d` / `CON0 d t` | register, tag | `d := ()` / the nullary constructor `t`. |
 | `GLOBAL d g` / `SETGLOBAL g s` | register, global | `d :=` global `g` / global `g := s`. |
 | `ENV d e` / `SELF d` | register, slot | `d :=` slot `e` of the running closure / the running closure. |
-| `CALL f x` / `TAILCALL f x` | registers | Call the closure in `f` with `x` (replacing the frame for `TAILCALL`). |
+| `CALL f x` / `TAILCALL f x` | registers | Call the closure in `f` with `x` (replacing the frame for `TAILCALL`); a closure of more parameters than one, or a partial application, is the general path's (*Calls through a closure*, below). |
+| `CALLN f n a...` / `TAILCALLN f n a...` | register, count, registers | Call the closure in `f` with the `n` registers `a...`, `n` from 2, as its registers 0 to `n-1` (replacing the frame for `TAILCALLN`); a closure of another number of parameters, or a partial application, is the general path's. |
 | `CALLK f n a...` / `TAILCALLK f n a...` | function, count, registers | Call function `f` with the registers `a...` as its registers 0 to `n-1`, and no closure (replacing the frame for `TAILCALLK`). |
 | `RESULT d` | register | `d :=` what the call or `PRIMPUSH` before it left. |
 | `RET s` | register | Return `s` to the caller. |
@@ -661,6 +666,7 @@ refuses the other's file and image.
 | `PRIMPUSH p a...` | primitive, registers | Primitive `p` of `a...`, its result left for `RESULT`. |
 | `TUPLE d n a...` | register, count, registers | `d :=` a tuple of `a...`; `n = 0` gives `()`. |
 | `CLOSURE d f n a...` | register, function, count, registers | `d :=` a closure of function `f` capturing `a...`. |
+| `CLOSUREN d f k n a...` | register, function, count, count, registers | `d :=` a closure of function `f`, of `k` parameters (`k` from 2: in its contag), capturing `a...`. |
 | `SELECT d i s` | register, index, register | `d :=` field `i` of the tuple in `s`. |
 | `CON d t s` / `DECON d s t` / `CONTAG d s` | registers, tag | Build a constructor value / take the argument of one of tag `t` (tested only under `--checked`) / its tag as an int. |
 | `CONN d t n a...` / `FIELD d s t i` | registers, tag, count or index | As the stack bytecode's: `d :=` constructor `t` made of the fields `a...` / field `i` of the constructor value in `s`, of tag `t` (tested only under `--checked`). |
@@ -677,6 +683,42 @@ refuses the other's file and image.
 | `FORCE d s o` | registers, offset | Where `s` holds no unevaluated suspension, `d :=` its value -- what an indirection holds, else what `s` holds -- and jump to `o`; else on to the `ENTER` after it ([ir.md](ir.md), *Suspensions*). |
 | `ENTER f x` | registers | Enter the suspension in `f`, as `CALL` enters a closure, with `x`; `RESULT` takes its value. One under evaluation is a loop, and the exception `Loop` is raised from here. |
 | `BLACKHOLE` / `UPDATE s` | register | The suspension running goes under evaluation, its captures read and no longer followed by the collector / becomes an indirection to `s`, or holds `s` now where it is one already (lazy ML's). |
+
+## Calls through a closure
+
+Both instruction sets call through a closure as eval/apply does (the haskell98
+roadmap's D15, decided C on 2026-11-13): the closure says how many parameters
+its function takes, and the call tests it.
+
+* **A closure's parameters** are in its header's contag: 0 for one, as every
+  closure `CLOSURE` makes, else the number, which the stack bytecode's `ARITY`
+  and the register bytecode's `CLOSUREN` give it. The compiler makes one of
+  more parameters of a curried function's twin (`Uncurry`, [ir.md](ir.md)),
+  and a call of several arguments through a closure, `CALLN`, of a chain of
+  calls each of whose result the next applies at once.
+* **A partial application** is a `K_CLOSURE` whose field 0 is the int -1, where
+  a closure's is its function: its contag is how many more arguments it
+  wants, field 1 the closure it applies (never itself a partial application)
+  and the fields after it the arguments it was given, in order.
+* **The general path.** A call whose closure has as many parameters as the
+  call gives arguments enters its function at once. Any other -- a closure of
+  more parameters (a partial application made: the call's value, a tail
+  call's frame returning it through `<apply return>`), of fewer (the closure
+  called with its first arguments and what it gives with the rest, by
+  `<apply K R>`), a partial application (what it holds put before the
+  arguments, and the call made again) -- is done in C (`reg_apply` in
+  `runtime/register/isa_regs.c`, `stack_apply` in `runtime/stack/isa_stack.c`).
+  `<apply return>` (its argument returned) and `<apply K R>` (local 0 the
+  closure, 1 to K its arguments, K+1 to K+R the rest) are functions the
+  loader adds to a program that has a closure of more parameters than one or
+  a call of more arguments (those it has not, after each unit too, as the
+  REPL loads them), `<apply K R>` for each K up to the most parameters
+  and each R up to one less than the most arguments; runeopt adds the same to
+  the program it translates (`Rbc.withApply`), so each has its native code.
+  The JIT keeps a partial application made, one entered with what it wants,
+  one given fewer, and a closure of one over-applied, in compiled code
+  (`runtime/register/README.md`); runeopt's code calls the glue
+  (`runtime/native/native.c`) for any but a closure of one.
 
 ## Primitives
 
@@ -712,7 +754,7 @@ raised as noted.
 | Arrays of reals (`RealArray`, `RealVector`; the doubles themselves side by side) | `reals_new reals_length reals_sub reals_update reals_blit` — `reals_new` raises `Size` for a length that is negative or above 100000000; indexing and a run that leaves the array raise `Subscript` |
 | Suspensions of a lazy front end ([ir.md](ir.md), *Suspensions*) | `thunk_make` makes a suspension of a fresh closure, the closure itself retagged in place (a copy of one that captures nothing, which may be shared), and is done in the register loop and by the JIT in line; `thunk_force`, `thunk_blackhole` and `thunk_self_update` are what each target makes `FORCE` with `ENTER`, `BLACKHOLE` and `UPDATE` of, and as primitives stop the program; `any_check` gives its argument, and stops the program where it is a suspension or an indirection (`rune --check-casts`) |
 | I/O and system | `print print_err flush_out input_line input_all exit command_args command_name` — `input_line` returns `string option`; `exit` terminates the process |
-| Files | `file_open file_close file_write file_flush file_read_line file_read_all file_error` — handles are ints: 0 stdin, 1 stdout, 2 stderr, others from `file_open (path, mode)` (mode 0 read, 1 write/truncate, 2 append, 3 read and write -- the file made where it is not there and kept where it is, a stream that a read after a write, or a write after a read, turns with a seek to where it is; returns `int option`). `file_write` returns `false` when the handle is invalid or the write fails, and flushes stdout before writing to handle 2; `file_read_line`/`file_read_all` behave like `input_line`/`input_all` (`NONE`/`""` for an invalid handle); `file_read_vec (h, n)` reads at most `n` bytes (`""` at end of file, `Size` for a negative `n`); `file_avail` is what a seekable file has left, `~1` for anything else; `file_error` and `file_errno` are the text and the number of the last failure; `file_tell` and `file_seek` are `ftell` and `fseek` from the start (`~1` for a file without positions, a pipe or a terminal); `file_descriptor` is the descriptor of the system under a handle, which is what an `OS.IO.iodesc` holds and what `os_poll`, `os_desc_kind`, `posix_isatty` and `posix_ttyname` take |
+| Files | `file_open file_close file_write file_flush file_read_line file_read_all file_error` — handles are ints: 0 stdin, 1 stdout, 2 stderr, others from `file_open (path, mode)` (mode 0 read, 1 write/truncate, 2 append, 3 read and write -- the file made where it is not there and kept where it is, a stream that a read after a write, or a write after a read, turns with a seek to where it is; returns `int option`). `file_write` returns `false` when the handle is invalid or the write fails, and flushes stdout before writing to handle 2; `file_flush` and `file_close` return `false` when the system's flush or close fails (the last of a buffer not written, as on a full device), `true` otherwise, a closed handle or none included; `file_read_line`/`file_read_all` behave like `input_line`/`input_all` (`NONE`/`""` for an invalid handle); `file_read_vec (h, n)` reads at most `n` bytes (`""` at end of file, `Size` for a negative `n`); `file_avail` is what a seekable file has left, `~1` for anything else; `file_error` and `file_errno` are the text and the number of the last failure, of these four and of `file_open`; `file_tell` and `file_seek` are `ftell` and `fseek` from the start (`~1` for a file without positions, a pipe or a terminal); `file_descriptor` is the descriptor of the system under a handle, which is what an `OS.IO.iodesc` holds and what `os_poll`, `os_desc_kind`, `posix_isatty` and `posix_ttyname` take |
 
 ## Tools
 
@@ -731,7 +773,14 @@ raised as noted.
   (`make test-stress`); with `--gc low-pause --gc-stress-cycles` too, each
   such collection is a minor one that begins a cycle of incremental
   marking where none marks, and every slice marks a few hundred bytes, so
-  that the program's stores run while a cycle marks;
+  that the program's stores run while a cycle marks; with `--gc-stress-full`
+  too, each such collection is a full one;
+* `runevm-stack --caf-tables M file.rbc` says what a full collection does with
+  the globals: `auto`, the default, takes a global only where code that may
+  still run reads it in a program with suspensions (`UPDATE` or
+  `BLACKHOLE`), and as a root in any other; `off` takes every global as a
+  root; `on` takes them by the tables in any program, a test of them
+  ([runtime.md](runtime.md), *The roots*);
 * `runevm-stack --gc-verify file.rbc` checks the heap before and after every
   collection and stops with status 2 where it is not sound ([runtime.md](runtime.md),
   *Watching it*; `make test-heap`);

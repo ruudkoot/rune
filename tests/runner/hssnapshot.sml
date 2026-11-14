@@ -20,17 +20,24 @@
      ways on Core's interpreter, its `.stdin` its standard input, in a
      directory of its own, to the same output and status, and every
      eighth of a shard has its Core compared too (`--desugar-only
-     --dump-after=desugar`): what main reaches of the units, the library's
-     taken from the snapshot, is the Core a whole desugaring gives.
-     tests/hs/lang's shards are twice as many.
+     --dump-after=desugar --canonical-core`): what main reaches of the
+     units, the library's taken from the snapshot, is what main reaches of
+     the Core a whole desugaring gives, declaration by declaration. Not
+     their order, which differs: the units are joined in their order, each
+     unit's types before its values, and a whole desugaring puts every type
+     before every value; nor a value main does not reach, which a whole
+     desugaring may keep (a constructor's function of the constructor's
+     name where only the constructor is made); their bytecode is the same
+     (hs/units' comparisons). tests/hs/lang's shards are twice as many.
 
    The programs of a directory are judged in `shards` jobs, the K-th
    taking every N-th from the K-th, each a line FAIL for each program
    that differs, all nightly; make check's job of a directory, `sample`,
    takes the sample of ruling 47 (HsLang.sampled: one program in
    HsLang.sampleOneIn, by its name's hash, never one of lang-nightly.txt)
-   (the roadmap's D56, the lead's rulings 45 and 47). `bin/rune-test
-   hs-snapshot-one KIND NAME` judges one. *)
+   (the roadmap's D56, the lead's rulings 45 and 47), and of
+   tests/hs/lang every fourth of the sample has its Core compared too.
+   `bin/rune-test hs-snapshot-one KIND NAME` judges one. *)
 structure HsSnapshotJobs =
 struct
   open Sh
@@ -97,14 +104,21 @@ struct
      family's jobs are `family/KIND/...` *)
   fun compareWith way (kind, p) = compareStage way ("check", ["--typecheck-only"], "") (kind, p)
 
+  (* a program's Core both ways, as desugaring leaves it in its canonical
+     form (`--desugar-only --dump-after=desugar --canonical-core`): what
+     main reaches, each declaration by name, so that neither the order the
+     units are joined in nor a declaration main does not reach, which a
+     whole desugaring may keep, tells them apart *)
+  fun compareCore way (kind, p : Lang.program) =
+    compareStage way ("core", ["--desugar-only", "--dump-after=desugar", "--canonical-core"], "") (kind, p)
+
   (* a run program of tests/hs/lang run both ways, on Core's interpreter,
-     its `.stdin` file its standard input; with `core`, its Core too, as
-     desugaring leaves it (`--desugar-only --dump-after=desugar`) *)
+     its `.stdin` file its standard input; with `core`, its Core too *)
   fun compareRun way core (kind, p : Lang.program) =
     let val stdin = if exists (#base p ^ ".stdin") then #base p ^ ".stdin" else ""
     in
       compareStage way ("run", [], stdin) (kind, p);
-      if core then compareStage way ("core", ["--desugar-only", "--dump-after=desugar"], stdin) (kind, p) else ()
+      if core then compareCore way (kind, p) else ()
     end
 
   val snapshot = {family = "hs/snapshot", way = "against the snapshot", flags = []}
@@ -130,8 +144,14 @@ struct
   fun compareShard (kind, k, n) =
     List.app (fn (i, p) => compareOneWith (i mod 8 = 0) (kind, p))
       (let val ps = shardOf (kind, k, n) in ListPair.zip (List.tabulate (length ps, fn i => i), ps) end)
-  (* make check's sample, checked both ways *)
-  fun compareSample kind = List.app (fn p => compareOne (kind, p)) (List.filter (fn (p : Lang.program) => HsLang.sampled (#name p)) (programs kind))
+  (* make check's sample, checked both ways; of tests/hs/lang, every
+     fourth program of it has its Core compared too *)
+  fun compareSample kind =
+    let val ps = List.filter (fn (p : Lang.program) => HsLang.sampled (#name p)) (programs kind)
+    in
+      List.app (fn (i, p) => (compareOne (kind, p); if kind = "lang" andalso i mod 4 = 0 then compareCore snapshot (kind, p) else ()))
+        (ListPair.zip (List.tabulate (length ps, fn i => i), ps))
+    end
 
   fun compareNamed (kind, name) =
     case List.find (fn (p : Lang.program) => #name p = name) (programs kind) of

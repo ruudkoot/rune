@@ -1,0 +1,21 @@
+(* dump: --passes=shake --dump-after=shake *)
+(* Shake follows a global that is another's alias to the other (g4 to g3),
+   but not to a function of other than one parameter (g2 to g1, as
+   Uncurry leaves a twin used as a value, D15 C): g2 1 is a call through a
+   closure, which g1's own name would make a known call of one argument
+   where it takes two. *)
+(funs
+  (fn g1 ((v1 : int) (v2 : int)) : int "add"
+    (return (prim int_add v1 v2 : (int * int) -> int))))
+(val g2 : int -> int -> int
+  (return g1))
+(funs
+  (fn g3 ((v3 : int)) : int "double"
+    (return (prim int_add v3 v3 : (int * int) -> int))))
+(val g4 : int -> int
+  (return g3))
+(val g5 : int -> int
+  (return (app g2 1)))
+(val g6 : int
+  (let (v4 : int) (app g5 2)
+  (return (app g4 v4))))

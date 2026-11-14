@@ -117,6 +117,9 @@ struct
     \                        that, and run nothing (with --dump-after=desugar, print it)\n\
     \  --desugar-units       on a program of Haskell: desugar it a unit at a time, each group of\n\
     \                        modules after the interfaces of those before, and join the units\n\
+    \  --canonical-core      with --dump-after=desugar, print what main reaches of the Core,\n\
+    \                        types, then imports, then values, each by name: one form of one\n\
+    \                        program's Core however it was made (hs/snapshot's comparison)\n\
     \  --match=M             the order of a match in Haskell: report, the Report's, a clause\n\
     \                        after another (default), or sestoft, decision trees that make no\n\
     \                        test the tests made decide, for D34's measurement\n\

@@ -57,6 +57,29 @@
             sp = vm->stack + vm->sp; \
         } \
     } while (0)
+/* D15 C: the closure fv applied to n arguments the general way
+   (reg_apply, isa_regs.c), for a closure of another arity or a partial
+   application: fv and the arguments above the frame's registers, where
+   the collector sees them, then a frame made and its function entered,
+   or a value left for the RESULT after a call (REG_APPLY_VALUE). APPLY's
+   arguments are at args, APPLY_LIST's the instruction's list. Not a
+   do-while: NEXT is `continue` in the switch's loop. */
+#define APPLY_FROM(fv, n, ARG, tail) \
+    { \
+        Value fv_ = (fv); \
+        for (uint32_t i_ = 0; i_ < (uint32_t)(n); i_++) sp[1 + i_] = ARG(i_); \
+        sp[0] = fv_; \
+        sp += (uint32_t)(n) + 1; \
+        SYNC(); \
+        int r_ = reg_apply(vm, (uint32_t)(n), (tail), pc); \
+        RELOAD(); \
+        if (r_ != REG_APPLY_VALUE) HANDOVER(vm->func); \
+        NEXT; \
+    }
+#define APPLY_ARG_AT_(i) (apply_args_[(i)])
+#define APPLY(fv, n, args, tail) { const Value *apply_args_ = (args); APPLY_FROM((fv), (n), APPLY_ARG_AT_, (tail)) }
+#define APPLY_LIST_ARG_(i) (R(LIST(i)))
+#define APPLY_LIST(fv, n, tail) APPLY_FROM((fv), (n), APPLY_LIST_ARG_, (tail))
 #define FATAL(...) (SYNC(), vm_fatal(vm, __VA_ARGS__))
 #define EXPECT(v, kind, what) expect_obj(vm, (v), (kind), (what), sp, pc, count)
 /* The object v points to, which must be of that kind; the program stops
