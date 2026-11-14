@@ -308,7 +308,7 @@ program
   unit src/main/rhc-main.sml src/main/rhc-main.sml ascii
 end
 provenance
-  input rhc.build 51d22d502d4e4000ab4bb8d12f700d0db40e33eb50d79a0397c117b8d18b01f0
+  input rhc.build 6054e9cd867b10d0d8c594888fb7cf00c5826199097fe4551326842965445858
   input lib/compiler/mid.build 3457b8d2776d3c493c09d63ea2ee5df01b4dfe1a92dc0195f2922a10ea3587cf
   input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
   input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
