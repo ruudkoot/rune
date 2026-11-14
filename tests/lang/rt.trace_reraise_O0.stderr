@@ -1,0 +1,3 @@
+runevm: uncaught exception Fail "not Failed"
+  in protect at tests/lang/rt.trace_reraise_O0.sml:10:20
+  in <toplevel> at tests/lang/rt.trace_reraise_O0.sml:12:22
