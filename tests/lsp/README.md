@@ -93,6 +93,16 @@ make test-lsp-oracle
 RUNE_ORACLE_HOL4=/path/boss.build RUNE_ORACLE_MLTON=/path/mlton.build make test-lsp-oracle-corpora
 ```
 
+`make test-lsp-oracle` is three targets, one for each run on `rune.build`:
+`test-lsp-oracle-walk` (every file open), `test-lsp-oracle-focus` (`--focus
+--share`) and `test-lsp-oracle-store` (the store's compile, then `--focus
+--store`), the same commands and `--require` lists as when they were one. `make
+check` runs them as three jobs of one CPU each (`make/test-lsp-oracle-walk` and
+the others), because as one job they took about 2,300 s of CPU, 550 billion
+instructions under `--count`, and passed the job's 3,600 s of wall under make
+check's load in most runs of November 2026; each alone takes 700 to 900 s of CPU,
+the walk at a peak of 3.2 GB, the others under 2 GB.
+
 The second is the nightly tier's, and takes hours. `RUNE_ORACLE_HOL4` is HOL4's
 `src/boss` closure as one build file, after HOL's filter; `RUNE_ORACLE_MLTON` is
 MLton's 606 files, flat. Neither builds in `corpus/`: both go by absolute paths

@@ -475,13 +475,22 @@ bin/rune-lsp-replay.rbc: $(RUNE) tests/lsp/client.sml tools/lsp/seconds.sml tool
 	$(RUNE) --build tools/lsp/replay.build -o $@
 ORACLE = bin/runevm --jit=opt --equality-work 1000000000 --heap-limit
 ORACLE_PATHS = placed,walked,rebound,loaded,cutoff,broken,failed,cancelled,query
-.PHONY: test-lsp-oracle test-lsp-oracle-corpora
-test-lsp-oracle: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
+# The oracle on the compiler's own build, in three runs that are three targets,
+# so that make check runs them as three jobs of one CPU each: as one job they
+# took about 2,300 s of CPU and passed 3,600 s of wall under make check's load
+# (tests/lsp/README.md). test-lsp-oracle is all three.
+.PHONY: test-lsp-oracle test-lsp-oracle-walk test-lsp-oracle-focus test-lsp-oracle-store test-lsp-oracle-corpora
+test-lsp-oracle: test-lsp-oracle-walk test-lsp-oracle-focus test-lsp-oracle-store
+test-lsp-oracle-walk: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
 	@mkdir -p build/lsp
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
 	  --scenarios tests/lsp/oracle/rune.tsv --out build/lsp/oracle-rune.jsonl --require placed,walked,rebound,cutoff,failed,cancelled,query
+test-lsp-oracle-focus: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
+	@mkdir -p build/lsp
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
 	  --scenarios tests/lsp/oracle/rune.tsv --focus --out build/lsp/oracle-rune-focus.jsonl --share --require $(ORACLE_PATHS),opened,shared,byneed
+test-lsp-oracle-store: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
+	@mkdir -p build/lsp
 	rm -rf build/lsp/store
 	$(RUNE) --units -O0 --build rune.build --cache-dir build/lsp/store -o build/lsp/store.rbc 2>/dev/null
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
