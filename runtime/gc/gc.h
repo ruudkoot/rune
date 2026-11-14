@@ -172,6 +172,69 @@ void gc_born(VM *vm, Obj *o);               /* a large object with fields, made:
 static inline int gc_in_nursery(const VM *vm, const void *p) {
     return vm->gc.nursery && (uintptr_t)((const char *)p - vm->alloc.from) < (uintptr_t)vm->alloc.size;
 }
+/* Wadler's rule (the haskell98 roadmap's D17, C): a selector o (K_THUNK,
+   contag THUNK_SELECTOR + i, runtime/value.h) whose first capture, the
+   tuple, is evaluated -- a constructor of tag 0, or an indirection to one
+   -- gives that tuple's field i, into *to. A tuple not yet a constructor (a
+   suspension, or one a moving collection has copied already) gives
+   nothing, and the selector is copied or marked as it is. */
+static inline int gc_select(Obj *o, Value *to) {
+    if (obj_len(o) < 2) return 0;
+    Value p = obj_fields(o)[1];
+    if (!val_is_ptr(p)) return 0;
+    Obj *t = val_ptr(p);
+    if (obj_kind(t) == K_IND) {
+        p = obj_fields(t)[0];
+        if (!val_is_ptr(p)) return 0;
+        t = val_ptr(p);
+    }
+    uint32_t i = (uint32_t)(o->contag - THUNK_SELECTOR);
+    if (obj_kind(t) != K_CON || t->contag != 0 || i >= obj_len(t)) return 0;
+    *to = obj_fields(t)[i];
+    return 1;
+}
+/* The shortcut of the field *v, which points to a suspension or an
+   indirection (the last two kinds: each collector tests that first, one
+   comparison, which is all a field of SML's, never one of them, pays):
+   through at most IND_HOPS indirections (D18; where inds: --nursery 0's
+   copier copies one as it is) and through selectors whose tuple is
+   evaluated (D17's C) as far as their chain goes, as GHC's collector does
+   (selector_chain), a cycle of them stopped by Brent's method; where young,
+   through the nursery's objects alone (a minor collection). Where guard
+   (Program's reruns: lazy ML's suspensions), an indirection only where it
+   may be (ind_may_shortcut), and a selector only to a field that is no
+   suspension or indirection, looked at through its forwarding pointer: a
+   field that held the outer of an 'a susp susp must not come to hold the
+   inner (M26). Out of line, out of the way of the scan. */
+#if defined(__GNUC__)
+__attribute__((noinline, unused))
+#endif
+static void gc_shortcut_walk(const VM *vm, Value *v, int inds, int young, int guard) {
+    int hops = 0;
+    uint64_t power = 1, lam = 0;
+    Value tortoise = *v;
+    while (val_is_ptr(*v)) {
+        Obj *o = val_ptr(*v);
+        if (young && !gc_in_nursery(vm, o)) return;
+        int k = obj_kind(o);
+        Value to;
+        if (k == K_IND) {
+            if (!inds || hops >= IND_HOPS || (guard && !ind_may_shortcut(*v))) return;
+            to = obj_fields(o)[0];
+            hops++;
+        } else if (k == K_THUNK && o->contag >= THUNK_SELECTOR) {
+            if (!gc_select(o, &to)) return;
+            if (guard && val_is_ptr(to)) {
+                const Obj *t = val_ptr(to);
+                if (obj_forwarded(t)) t = obj_forwarding(t);
+                if (obj_kind(t) == K_THUNK || obj_kind(t) == K_IND) return;
+            }
+        } else return;
+        *v = to;
+        if (*v == tortoise) return;
+        if (++lam == power) { tortoise = *v; power <<= 1; lam = 0; }
+    }
+}
 /* the card of field f of the old object o, and its block's dirty byte (D6) */
 static inline void gc_remember(Obj *o, Value *f) {
     Chunk *c = chunk_of(o);
@@ -349,7 +412,7 @@ void caf_note_written(VM *vm);
 void caf_stats(VM *vm, FILE *out);
 /* what may run: a closure, or a suspension not yet evaluated */
 static inline int caf_runs(const Obj *o) {
-    return obj_kind(o) == K_CLOSURE || (obj_kind(o) == K_THUNK && o->contag == THUNK_UNEVALUATED);
+    return obj_kind(o) == K_CLOSURE || (obj_kind(o) == K_THUNK && thunk_unevaluated(o->contag));
 }
 /* a closure the frames alone hold so far in a collection: a bit of the
    header's free byte (Obj.pad), set and cleared within the collection

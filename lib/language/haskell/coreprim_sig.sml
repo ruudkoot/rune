@@ -51,6 +51,8 @@ sig
        `h_write`, `h_flush`, `h_error`; `interleave`, which defers an
        action until its value is forced (D25's one interleaving
        primitive); `ref_new`, `ref_get`, `ref_set`, `real_world`;
+       `sel_mark`, which marks a pattern binding's selector for the
+       collector (the roadmap's D17, C: Wadler's rule);
      - exceptions: `raise`, `raise_io`, `exn_error`, `exn_io`, `exn_io_full`,
        `exn_io_code`, `exn_io_file`, `exn_io_handle`, `exn_pattern`,
        `exn_kind`, `exn_name`, `exn_message` and `catch`;

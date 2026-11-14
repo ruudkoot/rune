@@ -622,6 +622,20 @@ is a change to the collector and not to everything that touches the heap.
   any, gives the field that pointed to it what it holds (along a chain of
   at most 16), so that the indirection dies; the copier of `--nursery 0`
   and the low-pause collector's cycle keep it as it is.
+* **A selector is reduced** (Wadler's rule; the haskell98 roadmap's D17):
+  a suspension `thunk_selector` marked, of field i of a tuple, is given up
+  by a minor collection (where young), a full one and the copier of
+  `--nursery 0`, the field that pointed to it given field i of the tuple
+  once the tuple is evaluated, along a chain of selectors as far as it
+  goes, a cycle stopped by Brent's method (`gc_shortcut_walk`,
+  `runtime/gc/gc.h`). Each collector tests a field's kind first, one
+  comparison, and walks out of line only from a suspension or an
+  indirection: a program of SML, which makes neither, pays that comparison,
+  about 2% of its collections' instructions and 0.01% of a run's (the
+  compiler compiling itself 0.16%). Where the program reruns (lazy ML's),
+  the walk keeps the indirection's guard and gives no field a component
+  that is a suspension or an indirection. The low-pause collector's cycle
+  reduces none.
 * **The collector's state is the VM's** (`GcState`), and where the next
   object goes is the allocating thread's (`AllocState`): no variable of
   the collector is the process's, so two VMs of a process collect each by

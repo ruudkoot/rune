@@ -73,8 +73,20 @@ static Obj *copy_obj(VM *vm, Obj *o) {
     return n;
 }
 
-static void copy_value(VM *vm, Value *v) {
-    if (val_is_ptr(*v)) *v = mk_ptr(copy_obj(vm, val_ptr(*v)));
+/* A field copied, a selector shortcut first (D17's C: gc_shortcut_walk,
+   gc.h), entered only for a suspension or an indirection, one comparison;
+   an indirection is copied as it is. In line, as it was: out of line, it
+   cost --nursery 0's collections 14% more instructions. */
+#if defined(__GNUC__)
+__attribute__((always_inline))
+#endif
+static inline void copy_value(VM *vm, Value *v) {
+    if (!val_is_ptr(*v)) return;
+    if (obj_kind(val_ptr(*v)) >= K_THUNK) {
+        gc_shortcut_walk(vm, v, 0, 0, vm->prog.reruns);
+        if (!val_is_ptr(*v)) return;
+    }
+    *v = mk_ptr(copy_obj(vm, val_ptr(*v)));
 }
 #define COPY_VALUE(v) copy_value(vm, (v))
 #define COPY_OBJ(o) (*(o) = copy_obj(vm, *(o)))

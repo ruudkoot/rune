@@ -24,6 +24,7 @@
 - `PJux` (con): [HS_AST](../sig/HS_AST.md#con-pjux)
 - `Plain` (con): [HS_AST](../sig/HS_AST.md#con-plain)
 - `plain` (val): [HS_TOKEN](../sig/HS_TOKEN.md#val-plain)
+- `plainTuple` (val): [HS_MATCH](../sig/HS_MATCH.md#val-plaintuple)
 - `PLazy` (con): [HS_AST](../sig/HS_AST.md#con-plazy)
 - `PList` (con): [HS_AST](../sig/HS_AST.md#con-plist)
 - `PLit` (con): [HS_AST](../sig/HS_AST.md#con-plit)

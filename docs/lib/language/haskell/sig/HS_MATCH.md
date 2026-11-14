@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 8 of 8 entries documented |
+| Documentation | 12 of 12 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/match\_sig.sml](../../../../../lib/language/haskell/match_sig.sml) |
 
@@ -58,6 +58,10 @@ sig
   datatype <a href="#type-order">order</a> = <a href="#con-report">Report</a> | <a href="#con-sestoft">Sestoft</a>
   val <a href="#val-order">order</a> : order ref
   type <a href="#type-occurrence">occurrence</a> = Core.atom * Core.ty
+  val <a href="#val-tupleform">tupleForm</a> : int -&gt; bool
+  val <a href="#val-plaintuple">plainTuple</a> : HsAst.pat -&gt; bool
+  val <a href="#val-selector">selector</a> : string * Core.ty * (string * Core.ty) list * int -&gt; HsDsCore.texp
+  val <a href="#val-marks">marks</a> : string * Core.ty * (string * Core.ty) list * HsDsCore.texp -&gt; HsDsCore.texp
   type <a href="#type-clause">clause</a> = HsAst.pat list * (HsDsEnv.env * HsDsCore.texp -&gt; HsDsCore.texp)
   val <a href="#val-clauses">clauses</a> : HsDsEnv.env * occurrence list * clause list * (Core.ty -&gt; HsDsCore.texp) -&gt; HsDsCore.texp
   val <a href="#val-pattern">pattern</a> : HsDsEnv.env * occurrence * HsAst.pat * (HsDsEnv.env -&gt; HsDsCore.texp) * HsDsCore.texp
@@ -96,6 +100,50 @@ type occurrence = Core.atom * Core.ty
 ```
 
 What is matched: an atom of Core and its type.
+
+### <a name="val-tupleform"></a>`tupleForm`
+
+```sml
+val tupleForm : int -> bool
+```
+
+`tupleForm n` is whether a pattern binding or a lazy pattern of `n`
+variables takes the tuple form (the roadmap's D17, C).
+
+The tuple of the variables' components is bound once, and each variable
+is its selector, which the collector reduces once the tuple is
+evaluated (Wadler 1987); otherwise rule (d), each variable a match of
+its own.
+
+### <a name="val-plaintuple"></a>`plainTuple`
+
+```sml
+val plainTuple : HsAst.pat -> bool
+```
+
+`plainTuple p` is whether `p` is a tuple of variables alone, whose
+value is the tuple of their components already.
+
+### <a name="val-selector"></a>`selector`
+
+```sml
+val selector : string * Core.ty * (string * Core.ty) list * int -> HsDsCore.texp
+```
+
+`selector (t, tupleTy, vs, i)` is the selector of the i-th of the
+variables `vs` from `t`, the tuple of their components: its i-th field.
+
+`vs` are Core names and types, and `tupleTy` the tuple's type.
+
+### <a name="val-marks"></a>`marks`
+
+```sml
+val marks : string * Core.ty * (string * Core.ty) list * HsDsCore.texp -> HsDsCore.texp
+```
+
+`marks (t, tupleTy, vs, body)` is `body` after each of the selectors
+`vs` of the tuple `t` is marked one for the collector (sel\_mark,
+the VM's thunk\_selector).
 
 ### <a name="type-clause"></a>`clause`
 

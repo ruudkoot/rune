@@ -439,7 +439,8 @@ struct
     ("thunk_force", 433, 1),
     ("thunk_blackhole", 434, 1),
     ("thunk_self_update", 435, 1),
-    ("any_check", 436, 1)
+    ("any_check", 436, 1),
+    ("thunk_selector", 437, 3)
   ]
   val byName =
     List.foldl (fn ((n, i, a), m) => StringMap.insert (m, n, (i, a))) StringMap.empty table
@@ -1051,7 +1052,8 @@ struct
             (* thunk_force *) ([0], 0),
             (* thunk_blackhole *) ([8], 8),
             (* thunk_self_update *) ([0], 8),
-            (* any_check *) ([0], 0)]);
+            (* any_check *) ([0], 0),
+            (* thunk_selector *) ([0, 0, 1], 8)]);
          repsAt i)
   fun repsOf name = case find name of SOME (i, _) => repsAt i | NONE => NONE
 end
@@ -1512,7 +1514,8 @@ struct
              (* thunk_force *) ([Con ("susp", [Var 0])], Var 0),
              (* thunk_blackhole *) ([Con ("unit", [])], Con ("unit", [])),
              (* thunk_self_update *) ([Var 0], Con ("unit", [])),
-             (* any_check *) ([Var 0], Var 0)]
+             (* any_check *) ([Var 0], Var 0),
+             (* thunk_selector *) ([Con ("susp", [Var 0]), Con ("susp", [Var 1]), Con ("int", [])], Con ("unit", []))]
         in types := SOME v; v end
   (* find name = SOME (parameters, result) *)
   fun find name = case Prims.find name of SOME (i, _) => SOME (Vector.sub (all (), i)) | NONE => NONE

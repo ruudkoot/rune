@@ -148,23 +148,10 @@ static Obj *mark_obj(VM *vm, Obj *o) {
     return o;
 }
 
-/* The indirection shortcut where the program has lazy ML's suspensions
-   (Program's reruns): the field given what it holds (D18; one thread, so
-   no race with the program) where it may be (ind_may_shortcut); 0 where
-   the field comes to hold no pointer. Out of line, as minor.c's is. */
-#if defined(__GNUC__)
-__attribute__((noinline))
-#endif
-static int shortcut_guarded(Value *v) {
-    for (int hops = 0; hops < IND_HOPS && ind_may_shortcut(*v); hops++) {
-        *v = obj_fields(val_ptr(*v))[0];
-        if (!val_is_ptr(*v)) return 0;
-    }
-    return 1;
-}
-
-/* A field's mark, an indirection shortcut first (D18), through the guard
-   and past the pin where the program has lazy ML's suspensions (guard). In
+/* A field's mark, an indirection or selector shortcut first (D18; D17's
+   C: gc_shortcut_walk, gc.h; one thread, so no race with the program),
+   entered only for a suspension or an indirection, through the guard and
+   past the pin where the program has lazy ML's suspensions (guard). In
    line where the queue's objects are scanned field by field, a loop of
    each guard, out of line (mark_value) for the roots, as minor.c's
    promote_field is. */
@@ -173,13 +160,10 @@ __attribute__((always_inline))
 #endif
 static inline void mark_field(VM *vm, Value *v, int guard) {
     if (!val_is_ptr(*v)) return;
-    if (guard) {
-        if (obj_kind(val_ptr(*v)) == K_IND && !shortcut_guarded(v)) return;
-    } else
-        for (int hops = 0; hops < IND_HOPS && obj_kind(val_ptr(*v)) == K_IND; hops++) {
-            *v = obj_fields(val_ptr(*v))[0];
-            if (!val_is_ptr(*v)) return;
-        }
+    if (obj_kind(val_ptr(*v)) >= K_THUNK) {
+        gc_shortcut_walk(vm, v, 1, 0, guard);
+        if (!val_is_ptr(*v)) return;
+    }
     *v = mk_ptr(mark_obj(vm, val_ptr(*v)));
 }
 #if defined(__GNUC__)

@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_MATCH`](../sig/HS_MATCH.md) |
 | Status | required |
-| Members | 8 |
+| Members | 12 |
 | Tests | not listed |
 | Source | [lib/language/haskell/match.sml](../../../../../lib/language/haskell/match.sml) |
 
@@ -27,8 +27,12 @@ What each means is on [`HS_MATCH`](../sig/HS_MATCH.md); the types are this struc
 | datatype | [`order`](../sig/HS_MATCH.md#type-order) | `Report` &#124; `Sestoft` |
 | val | [`clauses`](../sig/HS_MATCH.md#val-clauses) | `HsDsEnv.env * occurrence list * clause list * (Core.ty -> Core.exp * Core.ty) -> Core.exp * Core.ty` |
 | val | [`lazy`](../sig/HS_MATCH.md#val-lazy) | `HsAst.pat -> bool` |
+| val | [`marks`](../sig/HS_MATCH.md#val-marks) | `string * Core.ty * (string * Core.ty) list * (Core.exp * Core.ty) -> Core.exp * Core.ty` |
 | val | [`order`](../sig/HS_MATCH.md#val-order) | `HsMatch.order ref` |
 | val | [`pattern`](../sig/HS_MATCH.md#val-pattern) | `HsDsEnv.env * occurrence * HsAst.pat * (HsDsEnv.env -> Core.exp * Core.ty) * (Core.exp * Core.ty) -> Core.exp * Core.ty` |
+| val | [`plainTuple`](../sig/HS_MATCH.md#val-plaintuple) | `HsAst.pat -> bool` |
+| val | [`selector`](../sig/HS_MATCH.md#val-selector) | `string * Core.ty * (string * Core.ty) list * int -> Core.exp * Core.ty` |
+| val | [`tupleForm`](../sig/HS_MATCH.md#val-tupleform) | `int -> bool` |
 | val | [`variables`](../sig/HS_MATCH.md#val-variables) | `HsAst.pat -> HsAst.name list` |
 
 ---
