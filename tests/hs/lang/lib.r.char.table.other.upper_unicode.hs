@@ -6,6 +6,7 @@
 -- character, non-printing; toUpper and toLower of any letter with an equivalent; isSpace false beyond Latin-1;
 -- showLitChar's decimal escapes; and isAlpha c == isUpper c || isLower c at every character. The expected output
 -- is written from the text.
+-- interp: no: Core's interpreter needs over 300 s for every code point's table, past its 600 s under load
 module Main (main) where
 
 import Char

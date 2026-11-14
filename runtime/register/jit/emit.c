@@ -1588,6 +1588,20 @@ static void suspension(Jit *j, int what) {
     as_cmp_ri(A, R_S1, K_THUNK);
     as_jcc(A, CC_NE, jit_fatal(j, what, 0, 0, 0));
 }
+/* UPDATE's: a suspension, or an indirection already -- lazy ML's, which a
+   force from inside its own code updated first (D57, M26) */
+static void suspension_or_ind(Jit *j, int what) {
+    closure(j, what);
+    ms_load_kind(M, R_S1, R_S0);
+    AsmLabel ok;
+    as_label_init(&ok);
+    as_cmp_ri(A, R_S1, K_THUNK);
+    as_jcc(A, CC_E, &ok);
+    as_cmp_ri(A, R_S1, K_IND);
+    as_jcc(A, CC_NE, jit_fatal(j, what, 0, 0, 0));
+    as_bind(A, &ok);
+    as_label_free(&ok);
+}
 /* BLACKHOLE and UPDATE: a write of the suspension's header, and UPDATE's
    of its first field through the barrier; while the low-pause collector's
    cycle marks, the whole in C (compile.c, SLOW_THUNK), which shades what
@@ -1605,7 +1619,7 @@ void emit_BLACKHOLE(Jit *j, uint32_t pc) {
 void emit_UPDATE(Jit *j, uint32_t pc, int32_t a) {
     (void)pc;
     ms_need_word(M, a);
-    suspension(j, FATAL_UPDATE);
+    suspension_or_ind(j, FATAL_UPDATE);
     Slow *s = ms_slow(M, SLOW_THUNK, j->next);
     if (!s) return;
     s->a = a;

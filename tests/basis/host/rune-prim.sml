@@ -728,12 +728,19 @@ struct
     in next := h + 1; files := (h, f) :: !files; SOME h end
     handle OS.SysErr (msg, e) => (lastError := msg; noteError e; NONE)
 
+  (* false where the system's close fails, its error kept; the handle is
+     gone either way *)
   fun file_close h =
-    (case lookup h of
-       SOME (Reader {fd, ...}) => Posix.IO.close fd
-     | SOME (Writer fd) => Posix.IO.close fd
-     | NONE => ();
-     files := List.filter (fn (h', _) => h' <> h) (!files))
+    let
+      fun forget () = files := List.filter (fn (h', _) => h' <> h) (!files)
+    in
+      ((case lookup h of
+          SOME (Reader {fd, ...}) => Posix.IO.close fd
+        | SOME (Writer fd) => Posix.IO.close fd
+        | NONE => ());
+       forget (); true)
+      handle OS.SysErr (msg, e) => (forget (); lastError := msg; noteError e; false)
+    end
 
   fun writeAll (fd, s) =
     let
@@ -751,9 +758,14 @@ struct
        | _ => (lastError := OS.errorMsg Posix.Error.badf; false))
       handle OS.SysErr (msg, e) => (lastError := msg; noteError e; false)
 
-  fun file_flush 1 = TextIO.flushOut TextIO.stdOut
-    | file_flush 2 = TextIO.flushOut TextIO.stdErr
-    | file_flush _ = ()
+  (* false where the system's flush fails (a full device), its error kept;
+     a file's writer writes at once, so it has nothing to flush *)
+  fun flushed s =
+    (TextIO.flushOut s; true)
+    handle IO.Io {cause = OS.SysErr (msg, e), ...} => (lastError := msg; noteError e; false)
+  fun file_flush 1 = flushed TextIO.stdOut
+    | file_flush 2 = flushed TextIO.stdErr
+    | file_flush _ = true
 
   (* fill: append what the file has to the buffer; false when it has nothing
      more for now. A file may grow after it has been read to its end, so this

@@ -76,12 +76,18 @@ representation of register d of f disagrees with the code at pc").
 
 **The fingerprint** says which instruction set a file is of. `runeisa`
 works it out from the descriptions of `src/isa` -- the instructions' names,
-operands, stack effects and flow, and the primitives' names and arities, in
-order -- and writes it into the generated tables; a VM refuses a file of
+operands, stack effects and flow, and the primitives' names, arities and results'
+representations (what the loader holds a primitive's register to), in order -- and writes it into the generated tables; a VM refuses a file of
 another instruction set with "bytecode of another instruction set", and an
 image of one (whose magic carries the fingerprint) as not an image of this
-`runevm`. So an opcode or a primitive may be added, removed or moved: a file
-made before is refused rather than read with another meaning.
+`runevm`. So an opcode or a primitive may be added, removed or moved, or a
+primitive's result change its representation (`file_flush` and `file_close`,
+from unit to bool): a file made before is refused rather than read with
+another meaning. The
+instructions of suspensions (`FORCE`, `ENTER`, `BLACKHOLE`, `UPDATE`) and
+the primitives of `IntInf.int` are in both sets' fingerprints, which
+`runtime/stack/opcodes.def` and `runtime/register/regs.def` say at their
+head, so a file made before them is refused.
 
 **The line table** says where each instruction came from, which is what
 `--disasm` prints beside it and what a stack trace reads. Its entries are in
@@ -436,7 +442,20 @@ exponent allows it -- or a pointer to a heap object. Heap objects:
 | REAL | 8 raw bytes | a real that has no immediate: zero, a subnormal, an infinity, NaN, or a number outside 2^-511 to 2^513 |
 | BOX | 8 raw bytes | an `Int64.int` or a `Word64.word` that needs its 64th bit |
 | THUNK | function index, captured fields; its state in the tag | a suspension of a lazy front end ([ir.md](ir.md), *Suspensions*): unevaluated (0), or under evaluation (1) once its code has said `BLACKHOLE`, when the collector follows none of its fields |
-| IND | its value, then dead fields | a suspension that has its value, made in place by `UPDATE`; a force reads it, and the collector gives what points to one its value |
+| IND | its value, then dead fields | a suspension that has its value, made in place by `UPDATE`; a force reads it, and the collector gives what points to one its value, but where a frame runs it (lazy ML's, pinned: contag `IND_RUNNING`) or its value is a suspension or an indirection itself ([ir.md](ir.md), *Suspensions*) |
+
+A `THUNK` is the closure `thunk_make` was given, its kind changed in place
+(a copy of one that captures nothing, which may be shared), and `UPDATE`
+makes it an `IND`. As it loads a program the VM notes whether any function
+says `UPDATE` and not `BLACKHOLE` (`Program`'s `reruns`, in
+`runtime/register/isa_regs.c` and `runtime/stack/isa_stack.c`): a
+suspension in lazy ML's reading, which a force from inside its own code
+runs again while it runs. Only then does the collector pin the indirections
+a frame still runs (`gc_pin_running`, `IND_RUNNING`) and guard its shortcut
+of an indirection (`ind_may_shortcut`); a program of SML's or Haskell's,
+whose suspensions say `BLACKHOLE` at their entry, never pays for either
+([ir.md](ir.md), *Suspensions*; D57 and M26 of
+[plans/language/haskell98.md](plans/language/haskell98.md)).
 
 Booleans are `CON0 0` (`false`) and `CON0 1` (`true`). Records store their
 fields sorted by label (numeric labels first, in numeric order, then
@@ -521,7 +540,7 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `FORCE o` | offset | Where the top of stack is no unevaluated suspension, replace it by its value -- what an indirection holds, else itself -- and jump to `o`; else leave it for the `ENTER` after ([ir.md](ir.md), *Suspensions*). |
 | `ENTER` | | Pop argument, pop a suspension, and enter it as `CALL` enters a closure; one under evaluation is a loop, and the exception `Loop` is raised from here. |
 | `BLACKHOLE` | | The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows. |
-| `UPDATE` | | Pop a value; the suspension running becomes an indirection to it. |
+| `UPDATE` | | Pop a value; the suspension running becomes an indirection to it; one that is an indirection already, lazy ML's that a force from inside it updated first, holds it now. |
 
 ## The register bytecode (runtime/register)
 
@@ -659,7 +678,7 @@ refuses the other's file and image.
 | `RAISE s` | register | Raise the exception in `s`. |
 | `FORCE d s o` | registers, offset | Where `s` holds no unevaluated suspension, `d :=` its value -- what an indirection holds, else what `s` holds -- and jump to `o`; else on to the `ENTER` after it ([ir.md](ir.md), *Suspensions*). |
 | `ENTER f x` | registers | Enter the suspension in `f`, as `CALL` enters a closure, with `x`; `RESULT` takes its value. One under evaluation is a loop, and the exception `Loop` is raised from here. |
-| `BLACKHOLE` / `UPDATE s` | register | The suspension running goes under evaluation, its captures read and no longer followed by the collector / becomes an indirection to `s`. |
+| `BLACKHOLE` / `UPDATE s` | register | The suspension running goes under evaluation, its captures read and no longer followed by the collector / becomes an indirection to `s`, or holds `s` now where it is one already (lazy ML's). |
 
 ## Primitives
 
@@ -695,7 +714,7 @@ raised as noted.
 | Arrays of reals (`RealArray`, `RealVector`; the doubles themselves side by side) | `reals_new reals_length reals_sub reals_update reals_blit` — `reals_new` raises `Size` for a length that is negative or above 100000000; indexing and a run that leaves the array raise `Subscript` |
 | Suspensions of a lazy front end ([ir.md](ir.md), *Suspensions*) | `thunk_make` makes a suspension of a fresh closure, the closure itself retagged in place (a copy of one that captures nothing, which may be shared), and is done in the register loop and by the JIT in line; `thunk_force`, `thunk_blackhole` and `thunk_self_update` are what each target makes `FORCE` with `ENTER`, `BLACKHOLE` and `UPDATE` of, and as primitives stop the program; `any_check` gives its argument, and stops the program where it is a suspension or an indirection (`rune --check-casts`) |
 | I/O and system | `print print_err flush_out input_line input_all exit command_args command_name` — `input_line` returns `string option`; `exit` terminates the process |
-| Files | `file_open file_close file_write file_flush file_read_line file_read_all file_error` — handles are ints: 0 stdin, 1 stdout, 2 stderr, others from `file_open (path, mode)` (mode 0 read, 1 write/truncate, 2 append, 3 read and write -- the file made where it is not there and kept where it is, a stream that a read after a write, or a write after a read, turns with a seek to where it is; returns `int option`). `file_write` returns `false` when the handle is invalid or the write fails, and flushes stdout before writing to handle 2; `file_read_line`/`file_read_all` behave like `input_line`/`input_all` (`NONE`/`""` for an invalid handle); `file_read_vec (h, n)` reads at most `n` bytes (`""` at end of file, `Size` for a negative `n`); `file_avail` is what a seekable file has left, `~1` for anything else; `file_error` and `file_errno` are the text and the number of the last failure; `file_tell` and `file_seek` are `ftell` and `fseek` from the start (`~1` for a file without positions, a pipe or a terminal); `file_descriptor` is the descriptor of the system under a handle, which is what an `OS.IO.iodesc` holds and what `os_poll`, `os_desc_kind`, `posix_isatty` and `posix_ttyname` take |
+| Files | `file_open file_close file_write file_flush file_read_line file_read_all file_error` — handles are ints: 0 stdin, 1 stdout, 2 stderr, others from `file_open (path, mode)` (mode 0 read, 1 write/truncate, 2 append, 3 read and write -- the file made where it is not there and kept where it is, a stream that a read after a write, or a write after a read, turns with a seek to where it is; returns `int option`). `file_write` returns `false` when the handle is invalid or the write fails, and flushes stdout before writing to handle 2; `file_flush` and `file_close` return `false` when the system's flush or close fails (the last of a buffer not written, as on a full device), `true` otherwise, a closed handle or none included; `file_read_line`/`file_read_all` behave like `input_line`/`input_all` (`NONE`/`""` for an invalid handle); `file_read_vec (h, n)` reads at most `n` bytes (`""` at end of file, `Size` for a negative `n`); `file_avail` is what a seekable file has left, `~1` for anything else; `file_error` and `file_errno` are the text and the number of the last failure, of these four and of `file_open`; `file_tell` and `file_seek` are `ftell` and `fseek` from the start (`~1` for a file without positions, a pipe or a terminal); `file_descriptor` is the descriptor of the system under a handle, which is what an `OS.IO.iodesc` holds and what `os_poll`, `os_desc_kind`, `posix_isatty` and `posix_ttyname` take |
 
 ## Tools
 

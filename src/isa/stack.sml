@@ -318,10 +318,11 @@ struct
            "if (!c || obj_kind(c) != K_THUNK) vm_fatal(vm, \"BLACKHOLE outside a suspension\");",
            "vm_blackhole(vm, c);"]),
      sharedBody
-       (inst ("UPDATE", [], (Fixed 1, 0), Next, "Pop a value; the suspension running becomes an indirection to it.")
+       (inst ("UPDATE", [], (Fixed 1, 0), Next,
+              "Pop a value; the suspension running becomes an indirection to it; one that is an indirection already, lazy ML's that a force from inside it updated first, holds it now.")
           ["Value v = vm_pop(vm);",
            "Obj *c = vm->frames[vm->fp].closure;",
-           "if (!c || obj_kind(c) != K_THUNK) vm_fatal(vm, \"UPDATE outside a suspension\");",
+           "if (!c || (obj_kind(c) != K_THUNK && obj_kind(c) != K_IND)) vm_fatal(vm, \"UPDATE outside a suspension\");",
            "obj_become_ind(vm, c, v);"])]
 
   (* The same by opcode number. *)

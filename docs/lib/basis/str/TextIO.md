@@ -7,7 +7,7 @@
 | Signatures | [`TEXT_IO`](../sig/TEXT_IO.md), [`IMPERATIVE_IO`](../sig/IMPERATIVE_IO.md) |
 | Status | required |
 | Members | 37 |
-| Tests | 234 checks |
+| Tests | 236 checks |
 | Source | [lib/basis/textio.sml](../../../../lib/basis/textio.sml) |
 
 ## Synopsis

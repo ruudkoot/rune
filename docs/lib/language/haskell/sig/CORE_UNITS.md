@@ -1,6 +1,6 @@
 # signature CORE_UNITS
 
-[Haskell 98 front end](../README.md) &rsaquo; **CORE_UNITS**
+[Haskell 98 front end](../README.md) &rsaquo; Languages &rsaquo; **CORE_UNITS**
 
 |  |  |
 | --- | --- |

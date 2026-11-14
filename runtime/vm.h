@@ -113,6 +113,12 @@ typedef struct Program {
     LineEntry *lines;
     uint32_t ninlines;
     Inlined *inlines;
+    /* whether a function of it says UPDATE and not BLACKHOLE: a suspension
+       in lazy ML's reading, which a force from inside its own code runs
+       again while it runs (D57); the collector pins what such a frame runs
+       (gc_pin_running). One that says BLACKHOLE, at its entry as Haskell's
+       do, is not run again while it runs */
+    int reruns;
 } Program;
 /* the representations section freed with the program (runtime/loader.c) */
 void program_free_meta(Program *p);

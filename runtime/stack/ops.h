@@ -92,7 +92,7 @@ static inline void op_UPDATE(VM *vm, int32_t a, int32_t b) {
     (void)p; (void)a; (void)b;
     Value v = vm_pop(vm);
     Obj *c = vm->frames[vm->fp].closure;
-    if (!c || obj_kind(c) != K_THUNK) vm_fatal(vm, "UPDATE outside a suspension");
+    if (!c || (obj_kind(c) != K_THUNK && obj_kind(c) != K_IND)) vm_fatal(vm, "UPDATE outside a suspension");
     obj_become_ind(vm, c, v);
 }
 

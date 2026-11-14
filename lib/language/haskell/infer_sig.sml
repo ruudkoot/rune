@@ -71,6 +71,14 @@ sig
      since a dictionary's name is one of them. *)
   val renumber : int -> unit
 
+  (* `numberFrom n` makes the checker's next fresh variables, and HsTypes',
+     number from `n`, whatever came before.
+
+     A unit given a range of its own is then numbered alike whatever was
+     checked before it: the library's units, which the saved world and a
+     whole program check in different numbers. *)
+  val numberFrom : int -> unit
+
   (* What the environment holds of one module's entities, by key.
 
      That is its values' types (its constructors', fields' and methods'
@@ -80,7 +88,7 @@ sig
      modules' parts (HsModIface, the haskell98 roadmap's M21). *)
   type part = {values : (string * HsTypes.scheme) list, tycons : HsKinds.tycon list, classes : HsClasses.class list,
                instances : HsClasses.instance list,
-               cons : (string * {tycon : string, arity : int, fields : string list}) list,
+               cons : (string * {tycon : string, arity : int, fields : string list, strict : bool list}) list,
                fields : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,
                methods : (string * {cls : string, scheme : HsTypes.scheme}) list}
 
@@ -91,6 +99,15 @@ sig
   (* `extend (env, p)` is `env` with the part `p`, as a client checks
      against a module it has only the interface of. *)
   val extend : env * part -> env
+
+  (* `setReaches f` makes `f (m, n)` the checker's answer to 5.4's scope.
+
+     `f (m, n)` is whether a chain of imports leads from the module `m` to
+     `n`, `m` among those it reaches: an instance is in scope in a module
+     only where it reaches the instance's (R26). The driver sets it from
+     the program's graph; until it does, every instance is in scope
+     everywhere. *)
+  val setReaches : (string * string -> bool) -> unit
 
   (* `valueScheme (env, key)` is the type of the value of `key`. *)
   val valueScheme : env * string -> HsTypes.scheme option

@@ -18,7 +18,7 @@
 - `ELit` (con): [HS_AST](../sig/HS_AST.md#con-elit)
 - `ELSE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-else)
 - `empty` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-empty), [HS_DS_ENV](../sig/HS_DS_ENV.md#val-empty), [HS_EVIDENCE](../sig/HS_EVIDENCE.md#val-empty), [HS_STRING_MAP](../sig/HS_STRING_MAP.md#val-empty)
-- `encode` (val): [HS_IFACE](../sig/HS_IFACE.md#val-encode)
+- `encode` (val): [HS_IFACE](../sig/HS_IFACE.md#val-encode), [HS_LINT](../sig/HS_LINT.md#val-encode)
 - `encodeModule` (val): [HS_IFACE](../sig/HS_IFACE.md#val-encodemodule)
 - `ENeg` (con): [HS_AST](../sig/HS_AST.md#con-eneg)
 - `Ent` (con): [HS_AST](../sig/HS_AST.md#con-ent)

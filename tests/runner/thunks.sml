@@ -33,13 +33,23 @@
    the lint refuses it at -O2; results' suspensions, read back from where
    a function's results return a datatype, are forced at every level; and
    castin's values cast into suspensions and forced in a suspension's code,
-   cast there or where the closure is made, pass RegVerify at every level. *)
+   cast there or where the closure is made, pass RegVerify at every level.
+
+   And the kernels of lazy ML's reading (the haskell98 roadmap's D57, M26),
+   whose suspension never goes under evaluation: k_outlive, k_outlive_int,
+   k_outlive_raise, k_outlive_three and outlive_nullary, a body that outlives
+   its own update, which the collector's pin keeps written (gc_pin_running),
+   and k_nested, a suspension of a suspension, which its guard keeps apart
+   (ind_may_shortcut); ordinary kernels, every build and every way. *)
 structure Thunks =
 struct
   open Sh
 
   val kernels = ["chain", "tailchain", "knot", "share", "reenter", "barrier", "image", "last", "leak", "wrongslot", "cast", "forget",
-                 "results", "castin", "loopcatch"]
+                 "results", "castin", "loopcatch",
+                 (* lazy ML's reading (D57, M26): a body that outlives its own
+                    update, and a suspension of a suspension *)
+                 "k_outlive", "k_outlive_int", "k_outlive_raise", "k_outlive_three", "outlive_nullary", "k_nested"]
   fun source k = "tests/thunks/" ^ k ^ ".sml"
   fun args k = words (fromRoot ("tests/thunks/" ^ k ^ ".args"))
 

@@ -24,6 +24,29 @@ struct
     let val ins = TextIO.openIn path
     in TextIO.inputAll ins before TextIO.closeIn ins end
 
+  (* `canonical p`: what main reaches of p (CoreUnits.reach), its types and
+     newtypes, then its imports, then its values, each by name: the Core of
+     one program in one form however it was made, whole or a unit at a time
+     against the snapshot (--canonical-core, for hs/snapshot's comparison):
+     neither the order of the declarations nor one main does not reach,
+     which a whole desugaring may keep (a constructor's function of the
+     constructor's name where only the constructor is made), changes it *)
+  fun canonical (p : Core.program) : Core.program =
+    let
+      val reached = CoreUnits.reach (p, ["main"]) handle CoreUnits.Error _ => p
+      fun key d =
+        case d of
+          Core.Data (t, _, _) => (0, t)
+        | Core.Newtype (t, _, _, _) => (0, t)
+        | Core.Import (x, _) => (1, x)
+        | Core.Val (x, _, _) => (2, x)
+      fun precedes (a, b) = let val (i, x) = key a val (j, y) = key b in i < j orelse (i = j andalso String.< (x, y)) end
+      fun insert (d, []) = [d]
+        | insert (d, e :: es) = if precedes (d, e) then d :: e :: es else e :: insert (d, es)
+    in
+      List.foldl insert [] reached
+    end
+
   (* Core's text read back, at level 3: print, read, print is the identity *)
   val roundTrip = RhcSimplify.roundTrip
 
@@ -334,6 +357,9 @@ struct
          joined (M21f) *)
       val (byUnits, args) = List.partition (fn a => a = "--desugar-units") args
       val () = RhcDesugar.byUnits := not (null byUnits)
+      (* --canonical-core: the desugar stage's dump in its canonical form *)
+      val (canonicalCore, args) = List.partition (fn a => a = "--canonical-core") args
+      val showCore = if null canonicalCore then CoreText.show else CoreText.show o canonical
       val opts = RhcOptions.parse args
       val () = List.app (fn s => if s = "all" orelse List.exists (fn t => t = s) stages then ()
                                  else raise RhcOptions.Usage ("--dump-after: no stage " ^ s ^ " (the stages: "
@@ -341,7 +367,7 @@ struct
                         (!Pass.dumpAfter)
       val () = Pass.startup ()
       val p =
-        Pass.stage {name = "desugar", showIn = NONE, show = CoreText.show,
+        Pass.stage {name = "desugar", showIn = NONE, show = showCore,
                     check = Pass.checkAt ("desugar", 3) roundTrip, size = List.length} desugar (#strings opts)
         handle Fail msg => raise Error.Bug ("rhc's desugaring fails, a bug of rhc's: " ^ msg)
       val () = lint ([file], p)
@@ -365,43 +391,44 @@ struct
     handle RhcOptions.Usage msg => (eprint ("rhc: " ^ msg ^ "\n" ^ "rhc --help says what rhc takes\n"); 1)
          | Failed => 1
 
-  (* --share DIR, where rhc's library is, which the wrapper bin/rhc gives *)
+  (* the snapshot (D45's A, rulings 66 and 67): the store of the library
+     compiled once, which the wrapper bin/rhc names, a layer of every check
+     and compile, after those --layer names in units *)
+  val snapshot : string option ref = ref NONE
+
+  (* --share DIR, where rhc's library is, and --snapshot DIR, which the
+     wrapper bin/rhc gives *)
   fun share args =
     case args of
       "--share" :: d :: rest => (RhcLibrary.share := SOME d; share rest)
+    | "--snapshot" :: d :: rest => (snapshot := SOME d; share rest)
     | ["--share"] => raise RhcOptions.Usage "--share takes a directory"
     | a :: rest => a :: share rest
     | [] => []
 
-  (* --whole, a program read and checked whole without the saved world;
-     --world, what of it there is (RhcWorld); --identity, rhc's own
-     (Config), which the Makefile writes to bin/rhc.identity *)
-  fun world args =
+  (* --whole, a program read and checked whole, the library's modules
+     too, not against the snapshot *)
+  fun whole args =
     case args of
-      "--whole" :: rest => (RhcWorld.whole := true; world rest)
-    | a :: rest => a :: world rest
+      "--whole" :: rest => (RhcSyntax.whole := true; whole rest)
+    | a :: rest => a :: whole rest
     | [] => []
-
-  (* the library replayed by HsLint, at level 2, when its world is made;
-     what the check keeps for the target check is a program's, not the
-     library's, so the saved image holds none *)
-  val () = RhcWorld.checkLibrary := (fn (g, r) => (RhcLint.check (g, r, false); RhcLint.kept := NONE))
 
   fun run (args : string list) : int =
     let
       val (args, ownArgs) = splitArgs args
       val () = programArgs := ownArgs
-      val args = world (share args)
+      val args = whole (share args)
+      val () = RhcSyntax.layers := (case !snapshot of SOME d => [d] | NONE => [])
     in
     case args of
-      ["--make-world", image] =>
-        (* the saved world, made: the world that saves it stops here, and
-           one bin/rhc restores goes on with its own command line *)
-        (case RhcWorld.make image of
-           Runtime.Saved => 0
-         | Runtime.Restored => run (CommandLine.arguments ()))
-    | ["--world"] => (print (RhcWorld.describe () ^ "\n"); 0)
-    | ["--identity"] => (print (Config.identity ^ "\n"); 0)
+      ["--identity"] => (print (Config.identity ^ "\n"); 0)
+      (* the store DIR with the configurations of rhc's own identity alone:
+         make's for bin/rhc.layer, after a build of rhc *)
+    | ["--prune-store", dir] =>
+        (print ("rhc: " ^ Int.toString (RhcStore.dropOthers (dir, Config.identity)) ^ " other configurations dropped from " ^
+                dir ^ "\n");
+         0)
     | _ =>
     if List.exists (fn a => a = "--units") args andalso List.exists isHaskell args then haskellUnits args else
     case RhcSyntax.command args of
@@ -459,6 +486,19 @@ struct
     end
     end
 
+  (* With RHC_INSTRUCTIONS set, the bytecode instructions a command took
+     (Pass.instructions), on standard error *)
+  and counted (args : string list) : int =
+    let
+      val i0 = !Pass.instructions ()
+      val status = run args
+    in
+      (case OS.Process.getEnv "RHC_INSTRUCTIONS" of
+         SOME _ => eprint ("rhc: " ^ Int.toString (!Pass.instructions () - i0) ^ " instructions\n")
+       | NONE => ());
+      status
+    end
+
   and isHaskell a = String.isSuffix ".hs" a orelse String.isSuffix ".lhs" a
 
   (* a program of Haskell in units (M21f): its files, and rhc's options for
@@ -467,17 +507,22 @@ struct
   and haskellUnits (args : string list) : int =
     let
       val (roots, rest) = List.partition isHaskell args
+      (* --hslint-claims=FILE: claims HsLint's check of each unit made at
+         level 2 is held to, as a whole compile's *)
+      val (claimed, rest) = List.partition (String.isPrefix "--hslint-claims=") rest
+      val () = List.app (fn a => RhcLint.claims := SOME (String.extract (a, size "--hslint-claims=", NONE))) claimed
       val opts = RhcOptions.parse rest
       val out = case #output opts of SOME f => f | NONE => raise RhcOptions.Usage "--units compiles: give -o FILE"
       val () = Pass.startup ()
       val status =
-        RhcDriver.compile {roots = roots, out = out, store = #store opts, layers = #layers opts, show = #showUnits opts,
+        RhcDriver.compile {roots = roots, out = out, store = #store opts,
+                           layers = #layers opts @ (case !snapshot of SOME d => [d] | NONE => []), show = #showUnits opts,
                            strings = #strings opts, fault = #fault opts, compile = fn (p, f) => compile (opts, p, f)}
         handle RhcDriver.Failed msg => (eprint ("rhc: error: " ^ msg ^ "\n"); 1)
     in Pass.finish (); status end
 
   fun main (_ : string, args : string list) : int =
-    run args
+    counted args
     handle RhcOptions.Usage msg => (eprint ("rhc: " ^ msg ^ "\n" ^ "rhc --help says what rhc takes\n"); 1)
          | Failed => 1
          | Error.Bug msg => (eprint ("rhc: " ^ msg ^ "\n"); 1)

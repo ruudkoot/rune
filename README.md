@@ -74,6 +74,7 @@ slower on `IntInf`. The compiler compiles itself in 3.0 s, MLton's build in
 * [building.md](docs/building.md): prerequisites, every `make` target, installing.
 * [architecture.md](docs/architecture.md): how the compiler is organised.
 * [ir.md](docs/ir.md): the intermediate representations.
+* [rhc.md](docs/rhc.md): rhc, the Haskell 98 compiler built on Rune's.
 * [bytecode.md](docs/bytecode.md): the instruction sets and the file format.
 * [runtime.md](docs/runtime.md): what a running program can count on.
 * [repl.md](docs/repl.md): the REPL's manual.

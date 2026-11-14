@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 11 of 11 entries documented |
+| Documentation | 13 of 13 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/infer\_sig.sml](../../../../../lib/language/haskell/infer_sig.sml) |
 
@@ -61,13 +61,15 @@ sig
                <a href="#fld-check.evidence">evidence</a> : HsEvidence.table}
               -&gt; {env : env, errors : (HsSource.span * string) list, derived : (string * string * HsAst.decl list) list}
   val <a href="#val-renumber">renumber</a> : int -&gt; unit
+  val <a href="#val-numberfrom">numberFrom</a> : int -&gt; unit
   type <a href="#type-part">part</a> = {<a href="#fld-part.values">values</a> : (string * HsTypes.scheme) list, <a href="#fld-part.tycons">tycons</a> : HsKinds.tycon list, <a href="#fld-part.classes">classes</a> : HsClasses.class list,
                <a href="#fld-part.instances">instances</a> : HsClasses.instance list,
-               <a href="#fld-part.cons">cons</a> : (string * {tycon : string, arity : int, fields : string list}) list,
+               <a href="#fld-part.cons">cons</a> : (string * {tycon : string, arity : int, fields : string list, strict : bool list}) list,
                <a href="#fld-part.fields">fields</a> : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,
                <a href="#fld-part.methods">methods</a> : (string * {cls : string, scheme : HsTypes.scheme}) list}
   val <a href="#val-part">part</a> : env * (string -&gt; bool) -&gt; part
   val <a href="#val-extend">extend</a> : env * part -&gt; env
+  val <a href="#val-setreaches">setReaches</a> : (string * string -&gt; bool) -&gt; unit
   val <a href="#val-valuescheme">valueScheme</a> : env * string -&gt; HsTypes.scheme option
   val <a href="#val-classes">classes</a> : env -&gt; HsClasses.env
 end
@@ -171,12 +173,25 @@ checked before them (rhc's saved world, a program checked by
 interfaces), and stay apart from each other and from the library's,
 since a dictionary's name is one of them.
 
+### <a name="val-numberfrom"></a>`numberFrom`
+
+```sml
+val numberFrom : int -> unit
+```
+
+`numberFrom n` makes the checker's next fresh variables, and HsTypes',
+number from `n`, whatever came before.
+
+A unit given a range of its own is then numbered alike whatever was
+checked before it: the library's units, which the saved world and a
+whole program check in different numbers.
+
 ### <a name="type-part"></a>`part`
 
 ```sml
 type part = {values : (string * HsTypes.scheme) list, tycons : HsKinds.tycon list, classes : HsClasses.class list,
              instances : HsClasses.instance list,
-             cons : (string * {tycon : string, arity : int, fields : string list}) list,
+             cons : (string * {tycon : string, arity : int, fields : string list, strict : bool list}) list,
              fields : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,
              methods : (string * {cls : string, scheme : HsTypes.scheme}) list}
 ```
@@ -195,7 +210,7 @@ modules' parts (HsModIface, the haskell98 roadmap's M21).
 | <a name="fld-part.tycons"></a>`tycons` | `HsKinds.tycon list` |  |
 | <a name="fld-part.classes"></a>`classes` | `HsClasses.class list` |  |
 | <a name="fld-part.instances"></a>`instances` | `HsClasses.instance list` |  |
-| <a name="fld-part.cons"></a>`cons` | `(string * {tycon : string, arity : int, fields : string list}) list` |  |
+| <a name="fld-part.cons"></a>`cons` | `(string * {tycon : string, arity : int, fields : string list, strict : bool list}) list` |  |
 | <a name="fld-part.fields"></a>`fields` | `(string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list` |  |
 | <a name="fld-part.methods"></a>`methods` | `(string * {cls : string, scheme : HsTypes.scheme}) list` |  |
 
@@ -216,6 +231,20 @@ val extend : env * part -> env
 
 `extend (env, p)` is `env` with the part `p`, as a client checks
 against a module it has only the interface of.
+
+### <a name="val-setreaches"></a>`setReaches`
+
+```sml
+val setReaches : (string * string -> bool) -> unit
+```
+
+`setReaches f` makes `f (m, n)` the checker's answer to 5.4's scope.
+
+`f (m, n)` is whether a chain of imports leads from the module `m` to
+`n`, `m` among those it reaches: an instance is in scope in a module
+only where it reaches the instance's (R26). The driver sets it from
+the program's graph; until it does, every instance is in scope
+everywhere.
 
 ### <a name="val-valuescheme"></a>`valueScheme`
 
