@@ -384,7 +384,43 @@ struct
                  in #2 (#2 (made ((ps, rhs), fn v => (Core.Var (C.fresh "unreached"), varType (env, v))))) end
              | [] => raise Fail "HsMatch: a match of no clause")
       val r = C.lazyTy r
-      val whole = if C.mentions (ff, body) then C.let_ (ff, r, failure r, (body, r)) else (body, r)
+      (* The match that fails at the end, bound at the head of the tree, is
+         a suspension made at every entry of the match, and one that
+         captures nothing where it is a raise of a literal, so copied apart,
+         where the Report's order makes it only once every clause has
+         fallen (D34, the figures of M23). Where it is an atom or such a
+         raise it is written at each leaf that fails instead: a run reaches
+         one leaf, so none is made twice, and none is made at all until it
+         is reached. *)
+      val (fe, _) = failure r
+      fun small e =
+        case e of
+          Core.Atom _ => true
+        | Core.App (Core.Atom (Core.Var _), args) => List.all (fn Core.TyArg _ => true | Core.ValArg (Core.Lit _) => true | _ => false) args
+        | _ => false
+      fun leaves e =
+        case e of
+          Core.Atom (Core.Var x) => if x = ff then fe else e
+        | Core.Atom _ => e
+        | Core.App (g, args) => Core.App (leaves g, args)
+        | Core.Lam (bs, b) => Core.Lam (bs, leaves b)
+        | Core.Let (x, t, a, b) => Core.Let (x, t, leaves a, leaves b)
+        | Core.LetRec (bs, b) => Core.LetRec (List.map (fn (x, t, a) => (x, t, leaves a)) bs, leaves b)
+        | Core.Case (sc, x, alts) =>
+            Core.Case (leaves sc, x,
+                       List.map (fn Core.AltCon (k, fs, b) => Core.AltCon (k, fs, leaves b)
+                                  | Core.AltLit (l, b) => Core.AltLit (l, leaves b)
+                                  | Core.AltUTuple (xs, b) => Core.AltUTuple (xs, leaves b)
+                                  | Core.AltDefault b => Core.AltDefault (leaves b)) alts)
+        | Core.Cast (b, t) => Core.Cast (leaves b, t)
+        | Core.Con _ => e
+        | Core.Prim _ => e
+        | Core.UTuple _ => e
+      val whole =
+        if not (C.mentions (ff, body)) then (body, r)
+        else
+          let val written = if small fe then leaves body else body
+          in if C.mentions (ff, written) then C.let_ (ff, r, (fe, r), (body, r)) else (written, r) end
     in
       List.foldr (fn (SOME {name, value, ...}, b) => C.let_ (name, #2 value, value, b) | (NONE, b) => b) whole lifted
     end

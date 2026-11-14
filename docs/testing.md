@@ -971,7 +971,13 @@ copied into a lambda or work moved under one by eta shows
 (`hs/simplify/budget/NAME`); one with lines `-- dump: has NAME` or `--
 dump: lacks NAME` has the Core the passes leave held to them, a value of
 the name there or not (a copy at known dictionaries, an overloaded original
-dropped, no `fromInteger` left), what no run shows (`hs/simplify/dump/NAME`).
+dropped, no `fromInteger` left), what no run shows (`hs/simplify/dump/NAME`);
+one with `-- objects: IN1 <= IN2` holds Sestoft's trees (D34's B) to making
+nothing for a match that does not fail on the run: compiled with
+`--match=sestoft` at `-O0` and `-O2`, its run on `IN1` makes at most 16
+objects more than its run on `IN2` (`hs/simplify/objects/NAME`;
+`nomatch.hs`, a match with leaves that fail against one with none, which
+a no-match continuation made at every call fails).
 `eta.hs` is D48's bottom probe: `seq` of a
 function whose lambda is behind a case, given bottom, is bottom under the
 pedantic rule, which GHC's default (`--eta=ghc`, built to be measured) breaks.
