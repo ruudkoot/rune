@@ -245,20 +245,23 @@ struct
     in if List.all (fn b => b) oks then rmTree w else () end
 
   (* a run program of tests/hs/lang at -O0 and -O2 on the VM: the same
-     output, and both a value or both a bottom *)
+     output, and both a value or both a bottom. Each way's binary is
+     prog.rbc in a directory of its own, the runner's name (ruling 33), so
+     that getProgName answers the same both ways *)
   fun langOne (p : Lang.program) () =
     let
       val w = workFor ("lang", #name p)
       val what = "hs/simplify/lang/" ^ #name p
       fun ends c = if c = 0 then "a value" else "a bottom"
+      val () = (mkdirs (w ^ "/O0"); mkdirs (w ^ "/O2"))
     in
-      case (onVm (p, ["-O0"], [], w, "O0", stdinOf p), onVm (p, ["-O2"], [], w, "O2", stdinOf p)) of
+      case (onVm (p, ["-O0"], [], w, "O0/prog", stdinOf p), onVm (p, ["-O2"], [], w, "O2/prog", stdinOf p)) of
         (SOME (a, ca), SOME (b, cb)) =>
-          if a <> b then fail (what ^ ": -O2 prints otherwise than -O0 (" ^ w ^ "/O0.out, O2.out)")
+          if a <> b then fail (what ^ ": -O2 prints otherwise than -O0 (" ^ w ^ "/O0/prog.out, O2/prog.out)")
           else if (ca = 0) <> (cb = 0) then fail (what ^ ": -O0 ends in " ^ ends ca ^ ", -O2 in " ^ ends cb)
           else rmTree w
-      | (NONE, _) => fail (what ^ ": rhc does not compile it at -O0: " ^ firstNonEmpty (w ^ "/O0.c.err"))
-      | (_, NONE) => fail (what ^ ": rhc does not compile it at -O2: " ^ firstNonEmpty (w ^ "/O2.c.err"))
+      | (NONE, _) => fail (what ^ ": rhc does not compile it at -O0: " ^ firstNonEmpty (w ^ "/O0/prog.c.err"))
+      | (_, NONE) => fail (what ^ ": rhc does not compile it at -O2: " ^ firstNonEmpty (w ^ "/O2/prog.c.err"))
     end
 
   fun programs () = Lang.programsOf (dir, [".hs"], ["Main.hs"])
