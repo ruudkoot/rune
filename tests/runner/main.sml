@@ -80,7 +80,13 @@ struct
        alone ("test-lsp-protocol", [], ["src/lsp/*", "lib/lsp/*", "lib/jsonrpc/*", "tests/lsp/*", "tools/lsp/*", "runelsp.build"]),
        alone ("test-compiler-state", [], ["lib/compiler/*", "tests/lib/compiler/*", "tests/compiler/*", "tools/compiler/*"]),
        alone ("test-lsp-bench", [], ["tools/lsp/*", "tests/lsp/*"]),
-       step ("test-lsp-oracle", {cpus = 1, memory = 2000, pools = [], after = []}, [],
+       (* the oracle's three runs, three jobs (tests/lsp/README.md): each
+          about 700 to 900 s of CPU, its peak memory measured *)
+       step ("test-lsp-oracle-walk", {cpus = 1, memory = 3200, pools = [], after = []}, [],
+             ["lib/compiler/api/*", "lib/compiler/driver/unitbasis.sml", "tools/lsp/*", "tests/lsp/oracle/*"]),
+       step ("test-lsp-oracle-focus", {cpus = 1, memory = 2000, pools = [], after = []}, [],
+             ["lib/compiler/api/*", "lib/compiler/driver/unitbasis.sml", "tools/lsp/*", "tests/lsp/oracle/*"]),
+       step ("test-lsp-oracle-store", {cpus = 1, memory = 2000, pools = [], after = []}, [],
              ["lib/compiler/api/*", "lib/compiler/driver/unitbasis.sml", "tools/lsp/*", "tests/lsp/oracle/*"]),
        (* the scale target (D28): what the load cannot move in make check,
           its times nightly *)

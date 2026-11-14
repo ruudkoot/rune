@@ -371,7 +371,9 @@ told to. `make test-lsp-oracle`, part of `make check`, runs it on the compiler's
 own build three times: with every file open; with one, and the Basis Library's
 units taken from another context (`--share`); and with one, cold from a store a
 compile at `-O0` made, whose units are taken from it (`--store`, *The store*,
-below). `make test-lsp-oracle-corpora`, in the nightly tier, on HOL4's closure
+below), the three runs three targets and three jobs of `make check`
+(`test-lsp-oracle-walk`, `-focus` and `-store`; `tests/lsp/README.md` says why).
+`make test-lsp-oracle-corpora`, in the nightly tier, on HOL4's closure
 and MLton (`tests/lsp/README.md`).
 
 ### The store
