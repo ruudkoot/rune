@@ -436,7 +436,7 @@ struct
         else []
     in rmTree work; main :: opened @ ext end
     handle e as Failed _ => raise e
-         | e => (note (out () ^ "/" ^ oracle ^ "/logs/" ^ #id c ^ ".exn", exnMessage e ^ "\n");
+         | e => (note (out () ^ "/" ^ oracle ^ "/logs/" ^ #id c ^ ".exn", exnText e ^ "\n");
                  [{oracle = oracle, id = #id c, label = "judge", got = "harness-error", want = "", passed = false}])
 
   fun judge (oracle, set) =
@@ -535,7 +535,7 @@ struct
                  | b => b ^ "/" ^ HsCorpus.field row (oracle ^ "_rc") ^ "/" ^ HsCorpus.field row (oracle ^ "_out")
     in rmTree work; {oracle = oracle, id = id, label = "run", got = got, want = want, passed = got = want} : outcome end
     handle e as Failed _ => raise e
-         | e => (note (out () ^ "/" ^ oracle ^ "/logs/" ^ HsCorpus.field row "id" ^ ".exn", exnMessage e ^ "\n");
+         | e => (note (out () ^ "/" ^ oracle ^ "/logs/" ^ HsCorpus.field row "id" ^ ".exn", exnText e ^ "\n");
                  {oracle = oracle, id = HsCorpus.field row "id", label = "run", got = "harness-error", want = "", passed = false})
 
   fun runSet (oracle, set) =

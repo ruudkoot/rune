@@ -193,6 +193,24 @@ image stops at one with its value on the stack -- the value is pushed and
 the handlers to the innermost handler's, pushes the exception and enters
 the handler's code, which begins with `CATCH d`.
 
+Calls through a closure test its parameters (D15 C; [docs/bytecode.md](../../docs/bytecode.md),
+*Calls through a closure*): `CALL` enters a closure whose contag is 0,
+`CALLN f n a...` one whose contag is `n` (`CLOSUREN` makes them), and any
+other -- a closure of another number of parameters, a partial application
+(field 0 the int -1) -- goes to the general path, `reg_apply`
+(`isa_regs.c`), with the closure and the arguments pushed above the
+registers (`APPLY`, `reg_words.h`; each frame's `maxstack` has room for
+them): a partial application made, which the `RESULT` after takes, or in a
+tail call returned through `<apply return>`; a closure of fewer parameters
+entered through `<apply K R>`, which calls it with its first and what it
+gives with the rest; a partial application's held values put before the
+arguments and the call made again. `vm_isa_after_load` adds `<apply return>`
+and the `<apply K R>` a program needs (the most parameters a `CLOSUREN`
+gives, the most arguments a `CALLN` gives: `Program.apply_amax`,
+`apply_nmax`, found by the check of the code). `RUNE_APPLY_STATS=1`
+prints the general path's uses at exit, and the compiled code's
+(*Tier 1*); `=2` the uses by site too.
+
 ## The loop
 
 `runtime/register/interp.c` defines the words the bodies of `src/isa/regs.sml` are
@@ -539,7 +557,24 @@ entry at 8 times it less 8, the room at 8 times it; checked against the
 number of functions where the section does not vouch for the closure),
 the room claimed (a slow path claims and starts the instruction over),
 the registers made, the header's closure and return word written and
-the entry jumped to. `RET` takes the value's word into `rax` and jumps
+the entry jumped to; `CALLN` and `TAILCALLN` the same for a closure whose
+contag is their number of arguments. A closure of another number of
+parameters, or a partial application, is taken after the call's code,
+out of the way of the call that finds what it wants, by four cases kept in
+compiled code (D15 C, `apply_fast` and `apply_fast_tail` in `emit.c`): a
+partial application made in line (the call's value, as a callee's return
+leaves it at the landing; a tail call's frame returning it), a partial
+application of as many more arguments as the call gives entered as a call
+of its closure with what it holds and then the arguments (in a tail call
+gathered above the frame and moved down to its base), one given fewer
+than it wants made another (`ms_alloc_dynamic`), and a closure of one
+given more entered through the program's `<apply 1 n-1>`, a known call;
+anything else -- the nursery full, a closure of k >= 2 given more than k
+-- goes to `reg_apply` in C (`SLOW_APPLY`, `jit_h_apply`), which goes on in
+the code of the function it entered, or after the `RESULT` in the
+caller's. The cases are off under `--jit-returns=call` and for a program
+without every arity in the section, and `RUNE_JIT_APPLY_FAST=0` turns them
+off, for a measurement. `RET` takes the value's word into `rax` and jumps
 where the frame's return word says, testing nothing: two instructions
 -- to the landing of the caller's compiled call, which moves `r14` back
 by the caller's registers and the header, loads the homes needed after

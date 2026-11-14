@@ -935,6 +935,12 @@ void emit_CLOSURE(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c, const ui
     (void)pc; (void)c;
     alloc(j, K_CLOSURE, 0, n + 1, FILL_CLOSURE, a, b, 0, L);
 }
+/* D15 C: a closure of c parameters says c in its contag (src/isa/regs.sml) */
+void emit_CLOSUREN(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c, int32_t d, const uint8_t *L, uint32_t n) {
+    (void)pc; (void)d;
+    if (c < 2) { jit_unsupported(j); return; }
+    alloc(j, K_CLOSURE, c, n + 1, FILL_CLOSURE, a, b, 0, L);
+}
 void emit_SELECT(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
     ms_load_obj(M, R_S0, c, K_TUPLE, jit_fatal(j, FATAL_EXPECT_TUPLE, 0, 0, 0));
@@ -1425,9 +1431,18 @@ static void called(Jit *j, uint32_t pc) {
    representation would choose the address a call jumps to (the linting
    roadmap's D8); rcx := the table of calls (CallInfo, M6), read from the
    VM, which a unit loaded grows and may move */
-static void closure_function(Jit *j, int32_t a, int obj, int kind) {
+static void closure_function(Jit *j, int32_t a, int obj, int kind, AsmLabel *general, uint32_t n) {
     ms_load_obj(M, obj, a, kind, jit_fatal(j, kind == K_THUNK ? FATAL_ENTER : FATAL_CALL, 0, 0, 0));
+    /* D15 C: a closure of another arity than the call gives (its contag,
+       0 for one), or a partial application (field 0 REG_PAP), is the
+       interpreter's general path's (SLOW_APPLY, reg_apply) */
+    if (general) {
+        ms_load_contag(M, R_S6, obj);
+        as_cmp_ri(A, R_S6, n == 1 ? 0 : (int32_t)n);
+        as_jcc(A, CC_NE, general);
+    }
     ms_load_field_bits(M, R_S6, obj, 0);   /* field 0: the function, its word */
+    if (general && n >= 2) { as_cmp_ri(A, R_S6, 0); as_jcc(A, CC_L, general); }
     as_ld32(A, R_S3, VMR, OFF(prog.nfuncs));
     as_lea(A, R_S3, R_S3, R_S3, 1, 1);   /* the word of the number of functions */
     as_cmp_rr(A, R_S6, R_S3);
@@ -1496,14 +1511,290 @@ static void fill_unit_dynamic(Jit *j) {
     as_bind(A, &done);
     as_label_free(&loop); as_label_free(&done);
 }
+/* ---- D15 C tuned: the general path's common cases in compiled code ----
+   A call through a closure that has not as many parameters as the call
+   gives arguments, or through a partial application, was the general
+   path's alone (SLOW_APPLY: reg_apply in C, and the code left twice, into
+   the function entered and back through the return barrier). Three of its
+   cases stay in compiled code, as GHC's stg_ap_* do, each after the call's
+   own checks, out of the way of a call that finds the arity it wants:
+   - a closure of more parameters than the call gives: a partial
+     application made (a K_CLOSURE of n + 2 fields, field 0 REG_PAP, field 1
+     the closure, then the arguments; its contag what it still wants), and
+     the call's value -- in a tail call, the frame's;
+   - a partial application that wants as many arguments as the call
+     gives: its function entered with what it holds and then the call's
+     arguments, as a call through the closure it holds -- in a tail call,
+     in the frame's place;
+   - a partial application that wants more arguments than the call gives:
+     another made, of what it holds and the arguments (its size known when
+     it runs: ms_alloc_dynamic);
+   - a closure of one parameter given n >= 2: the program's <apply 1 n-1>
+     entered as a known function, given the closure and the arguments,
+     which calls it with the first and the result with the rest.
+   Anything else -- the allocation's nursery full, a partial application
+   given more than it wants, a closure of k >= 2 given more than k -- goes
+   to C as before. Under --jit-returns=call (whose landing follows its call), for
+   a program without every arity in the section, and with
+   RUNE_JIT_APPLY_FAST=0 (the measurement before), none. */
+static int apply_fast_on(Jit *j) {
+    static int on = -1;
+    if (on < 0) { const char *e = getenv("RUNE_JIT_APPLY_FAST"); on = !(e && *e == '0'); }
+    return on && !j->callret && j->jit->all_meta;
+}
+/* jit_apply_fast_counts[k] += 1, where RUNE_APPLY_STATS asks (r scratch) */
+static void apply_counted(Jit *j, int k, int r) {
+    if (!reg_apply_stats) return;
+    as_mov_ri(A, r, (int64_t)(intptr_t)&jit_apply_fast_counts[k]);
+    as_add_mi(A, r, 0, 1);
+}
+/* the word of the function of the closure in rdx into r11, checked as
+   closure_function checks it (r8 clobbered); rcx := the table of calls */
+static void function_word(Jit *j) {
+    ms_load_field_bits(M, R_S6, R_S2, 0);
+    as_ld32(A, R_S3, VMR, OFF(prog.nfuncs));
+    as_lea(A, R_S3, R_S3, R_S3, 1, 1);
+    as_cmp_rr(A, R_S6, R_S3);
+    as_jcc(A, CC_AE, jit_fatal(j, FATAL_FUNCTION, 0, 0, 0));
+    as_ld64(A, R_S1, VMR, OFF(jit_calls));
+}
+/* the partial application in rax made for the closure in rdx (of r8
+   parameters) given the n arguments; to `fail` where the nursery has no
+   room, the bump undone */
+static void make_pap(Jit *j, uint32_t n, const int32_t *args, AsmLabel *general) {
+    AsmLabel fail; as_label_init(&fail);
+    ms_alloc(M, K_CLOSURE, 0, n + 2, &fail);   /* rax; rcx clobbered */
+    as_sub_ri(A, R_S3, (int32_t)n);
+    ms_set_kind_contag(M, R_S0, K_CLOSURE, R_S3);   /* its contag: what it still wants */
+    ms_store_field_imm(M, R_S0, 0, T_INT, REG_PAP);
+    ms_store_field_reg(M, R_S0, 1, R_S2);
+    for (uint32_t i = 0; i < n; i++) ms_store_field(M, R_S0, 2 + i, args[i]);
+    AsmLabel done; as_label_init(&done);
+    as_jmp(A, &done);
+    as_bind(A, &fail);
+    ms_alloc_undo(M, K_CLOSURE, n + 2);
+    as_jmp(A, general);
+    as_bind(A, &done);
+    as_label_free(&fail); as_label_free(&done);
+}
+/* the words from [rax] up to [r8] to [rcx] up (r11 clobbered) */
+static void copy_words(Jit *j) { ms_copy_words(M, R_S0, R_S1, R_S3, R_S6); }
+/* rax := a partial application of what the one in rdx holds and the n
+   arguments, which it wants fewer of than it wants (its contag the less
+   by n), or to general where the nursery has no room (rdx clobbered) */
+static void more_pap(Jit *j, uint32_t n, const int32_t *args, AsmLabel *general) {
+    ms_load_len(M, R_S6, R_S2);
+    as_add_ri(A, R_S6, (int32_t)n);   /* its fields */
+    as_mov_rr(A, R_S3, R_S6);
+    ms_object_size(M, R_S3);
+    ms_alloc_dynamic(M, K_CLOSURE, R_S6, R_S3, general);
+    ms_load_contag(M, R_S3, R_S2);
+    as_sub_ri(A, R_S3, (int32_t)n);
+    ms_set_kind_contag(M, R_S0, K_CLOSURE, R_S3);
+    ms_store_field_imm(M, R_S0, 0, T_INT, REG_PAP);
+    ms_load_field_bits(M, R_S3, R_S2, 1);
+    ms_store_field_reg(M, R_S0, 1, R_S3);
+    as_sub_ri(A, R_S6, (int32_t)n + 2);
+    ms_scale_index(M, R_S6);
+    ms_field_address(M, R_S2, R_S2, 2);
+    as_add_rr(A, R_S6, R_S2);
+    ms_field_address(M, R_S1, R_S0, 2);
+    ms_copy_words(M, R_S2, R_S1, R_S6, R_S3);
+    for (uint32_t i = 0; i < n; i++) ms_store_value(M, R_S1, (int32_t)sizeof(Value) * (int32_t)i, args[i]);
+}
+/* rax := the first of what the partial application in register a holds,
+   r8 := past its last */
+static void pap_held(Jit *j, int32_t a) {
+    ms_load_bits(M, R_S0, a);
+    ms_load_len(M, R_S3, R_S0);
+    as_sub_ri(A, R_S3, 2);
+    ms_scale_index(M, R_S3);
+    ms_field_address(M, R_S0, R_S0, 2);
+    as_add_rr(A, R_S3, R_S0);
+}
+/* A call's cases, at odd (rdx the closure or partial application that the
+   call's checks refused), before its landing, after: the frame pushed with
+   after as its return word, or (a partial application made) the value in
+   rax as a callee's return leaves it */
+static void apply_fast(Jit *j, int32_t a, uint32_t n, const int32_t *args, AsmLabel *odd, AsmLabel *general,
+                       AsmLabel *after, int grow) {
+    uint32_t above = j->m.nlocals + MS_HEADER;
+    uint32_t stub = n >= 2 ? reg_apply_stub(j->vm, 1, n - 1) : UINT32_MAX;
+    AsmLabel pap, make, over, more; as_label_init(&pap); as_label_init(&make); as_label_init(&over); as_label_init(&more);
+    ms_role(M, MR_CLOS);
+    as_bind(A, odd);
+    ms_load_field_bits(M, R_S6, R_S2, 0);
+    as_cmp_ri(A, R_S6, 0);
+    as_jcc(A, CC_L, &pap);
+    ms_load_contag(M, R_S3, R_S2);   /* its parameters; 0 for one */
+    if (stub != UINT32_MAX) { as_cmp_ri(A, R_S3, 0); as_jcc(A, CC_E, &over); }
+    as_cmp_ri(A, R_S3, (int32_t)n);
+    as_jcc(A, CC_A, &make);
+    as_jmp(A, general);
+    /* a partial application made: the call's value */
+    as_bind(A, &make);
+    apply_counted(j, 0, R_S6);
+    make_pap(j, n, args, general);
+    ms_count(M, 1);   /* the RESULT the interpreter runs after the general path's value, which the landing passes over */
+    as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)above);   /* as the landing finds a callee's base */
+    as_jmp(A, after);
+    /* a partial application entered: its closure called with what it
+       holds, then the call's arguments */
+    as_bind(A, &pap);
+    ms_load_contag(M, R_S3, R_S2);
+    as_cmp_ri(A, R_S3, (int32_t)n);
+    as_jcc(A, CC_A, &more);
+    as_jcc(A, CC_NE, general);
+    apply_counted(j, 1, R_S3);
+    ms_load_field_bits(M, R_S2, R_S2, 1);
+    function_word(j);
+    ms_role(M, MR_ROOM);
+    room_dynamic(j, grow, above);
+    ms_role(M, MR_ARGS);
+    pap_held(j, a);
+    as_lea(A, R_S1, BASER, -1, 1, (int32_t)sizeof(Value) * (int32_t)above);
+    copy_words(j);
+    for (uint32_t i = 0; i < n; i++) ms_store_nth(M, R_S1, i, args[i]);
+    function_word(j);
+    callee_entry(j, R_S5);
+    ms_role(M, MR_FRAME);
+    call_header(j, R_S2, 0, after, R_H2);
+    as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)above);
+    ms_role(M, MR_JUMP);
+    as_jmp_r(A, R_S5);
+    /* a partial application given fewer than it wants: another, of what it
+       holds and the arguments, the call's value */
+    as_bind(A, &more);
+    apply_counted(j, 5, R_S6);
+    more_pap(j, n, args, general);
+    ms_count(M, 1);
+    as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)above);
+    as_jmp(A, after);
+    /* a closure of one over-applied: its stub, a known function */
+    if (stub != UINT32_MAX) {
+        const Function *fn = &j->vm->prog.funcs[stub];
+        as_bind(A, &over);
+        apply_counted(j, 3, R_S3);
+        ms_role(M, MR_ROOM);
+        room(j, above + fn->nlocals + fn->maxstack);
+        ms_role(M, MR_ARGS);
+        ms_store_nth(M, BASER, above, a);
+        for (uint32_t i = 0; i < n; i++) ms_store_nth(M, BASER, above + 1 + i, args[i]);
+        ms_role(M, MR_FRAME);
+        call_header(j, -1, fn->reads_closure, after, R_S3);
+        as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)above);
+        ms_role(M, MR_JUMP);
+        to_callee(j, stub, fn);
+    }
+    as_label_free(&pap); as_label_free(&make); as_label_free(&over); as_label_free(&more);
+}
+/* A tail call's cases, at odd: in the frame's place, its return word
+   kept; the arguments, for n >= 2, above the frame already (tail_object),
+   and for one put there first */
+static void apply_fast_tail(Jit *j, int32_t a, uint32_t n, const int32_t *args, AsmLabel *odd, AsmLabel *general, int grow) {
+    uint32_t nl = j->m.nlocals;
+    uint32_t stub = n >= 2 ? reg_apply_stub(j->vm, 1, n - 1) : UINT32_MAX;
+    AsmLabel pap, make, over, more; as_label_init(&pap); as_label_init(&make); as_label_init(&over); as_label_init(&more);
+    ms_role(M, MR_CLOS);
+    as_bind(A, odd);
+    ms_load_field_bits(M, R_S6, R_S2, 0);
+    as_cmp_ri(A, R_S6, 0);
+    as_jcc(A, CC_L, &pap);
+    ms_load_contag(M, R_S3, R_S2);
+    if (stub != UINT32_MAX) { as_cmp_ri(A, R_S3, 0); as_jcc(A, CC_E, &over); }
+    as_cmp_ri(A, R_S3, (int32_t)n);
+    as_jcc(A, CC_A, &make);
+    as_jmp(A, general);
+    /* a partial application made: the frame's value, returned */
+    as_bind(A, &make);
+    apply_counted(j, 0, R_S6);
+    make_pap(j, n, args, general);
+    ms_count(M, 1);   /* the RET of <apply return>, which the general path enters with it */
+    ms_role(M, MR_RET);
+    as_jmp_ret(A, BASER, HEADER_AT(0, 1));
+    /* a partial application entered in the frame's place: what it holds,
+       then the arguments, gathered above the frame -- [nlocals + n, ...),
+       past the arguments' copies at [nlocals, nlocals + n) -- and moved
+       down to the frame's base, lowest first */
+    as_bind(A, &pap);
+    ms_load_contag(M, R_S3, R_S2);
+    as_cmp_ri(A, R_S3, (int32_t)n);
+    as_jcc(A, CC_A, &more);
+    as_jcc(A, CC_NE, general);
+    apply_counted(j, 2, R_S3);
+    ms_role(M, MR_ARGS);
+    if (n == 1) ms_store_nth(M, BASER, nl, args[0]);
+    ms_load_field_bits(M, R_S2, R_S2, 1);
+    function_word(j);
+    ms_role(M, MR_ROOM);
+    room_dynamic(j, grow, nl + n);   /* the gathering's: the callee's room past the frame's and the copies */
+    ms_role(M, MR_ARGS);
+    pap_held(j, a);
+    as_lea(A, R_S1, BASER, -1, 1, (int32_t)sizeof(Value) * (int32_t)(nl + n));
+    copy_words(j);
+    /* rcx past what it holds: the arguments after them, from their copies */
+    for (uint32_t i = 0; i < n; i++) {
+        as_ld64(A, R_S6, BASER, (int32_t)sizeof(Value) * (int32_t)(nl + i));
+        as_st64(A, R_S1, (int32_t)sizeof(Value) * (int32_t)i, R_S6);
+    }
+    as_lea(A, R_S3, R_S1, -1, 1, (int32_t)sizeof(Value) * (int32_t)n);
+    as_lea(A, R_S0, BASER, -1, 1, (int32_t)sizeof(Value) * (int32_t)(nl + n));
+    as_mov_rr(A, R_S1, BASER);
+    copy_words(j);
+    function_word(j);
+    callee_entry(j, R_S5);
+    ms_role(M, MR_FRAME);
+    as_st64(A, BASER, HEADER_AT(0, 2), R_S2);
+    ms_role(M, MR_JUMP);
+    as_jmp_r(A, R_S5);
+    /* a partial application given fewer than it wants: another, returned */
+    as_bind(A, &more);
+    apply_counted(j, 5, R_S6);
+    more_pap(j, n, args, general);
+    ms_count(M, 1);
+    ms_role(M, MR_RET);
+    as_jmp_ret(A, BASER, HEADER_AT(0, 1));
+    /* a closure of one over-applied: its stub in the frame's place, given
+       the closure and the arguments, from their copies above the frame */
+    if (stub != UINT32_MAX) {
+        const Function *fn = &j->vm->prog.funcs[stub];
+        uint32_t need = nl + n + 1;
+        if (fn->nlocals + fn->maxstack > need) need = fn->nlocals + fn->maxstack;
+        as_bind(A, &over);
+        apply_counted(j, 4, R_S3);
+        ms_role(M, MR_ARGS);
+        ms_store_nth(M, BASER, nl + n, a);
+        ms_role(M, MR_ROOM);
+        room(j, need);
+        ms_role(M, MR_ARGS);
+        for (uint32_t i = 0; i < n; i++) ms_slot_from_nth_raw(M, (int32_t)(1 + i), BASER, nl + i);
+        ms_slot_from_nth_raw(M, 0, BASER, nl + n);
+        ms_role(M, MR_FRAME);
+        if (fn->reads_closure) as_st64i(A, BASER, HEADER_AT(0, 2), (int32_t)mk_unit());
+        ms_role(M, MR_JUMP);
+        to_callee(j, stub, fn);
+    }
+    as_label_free(&pap); as_label_free(&make); as_label_free(&over); as_label_free(&more);
+}
+
 /* A call through a closure reads a home last where it stores the
    argument, and until then keeps what it found in rax, rcx, rdx, r8 and
    r11 alone: every other general register may be a home (asm.h), and a
    slow path writes the homes back. After it they are free. ENTER is the
    same call of a suspension, of kind K_THUNK, which is a loop where its
    code has said BLACKHOLE. */
-static void call_object(Jit *j, uint32_t pc, int32_t a, int32_t b, int kind) {
-    if (result_at(j, j->next) < 0) { jit_unsupported(j); return; }   /* a call the compiler follows by RESULT, always */
+static void call_object(Jit *j, uint32_t pc, int32_t a, uint32_t n, const int32_t *args, int kind) {
+    AsmLabel *general = NULL, *gen_c = NULL;
+    AsmLabel odd; as_label_init(&odd);
+    int fast = kind == K_CLOSURE && apply_fast_on(j);
+    if (kind == K_CLOSURE) {
+        Slow *g = ms_slow(M, SLOW_APPLY, j->next);
+        if (!g) { as_label_free(&odd); return; }
+        g->a = (int32_t)pc;
+        gen_c = &g->here;
+        general = fast ? &odd : gen_c;
+    }
+    if (result_at(j, j->next) < 0) { jit_unsupported(j); as_label_free(&odd); return; }   /* a call the compiler follows by RESULT, always */
     AsmLabel after; as_label_init(&after);   /* the landing (M6) */
     /* before the restart label: the slots stay right across a restart (M9);
        under --jit-profile, every home live here, which the profile's helper
@@ -1512,11 +1803,11 @@ static void call_object(Jit *j, uint32_t pc, int32_t a, int32_t b, int kind) {
     if (j->jit->profile) ms_writeback(M, pc);
     else ms_writeback_call(M, pc, j->next + 5, result_at(j, j->next));
     ms_role(M, MR_ARGS);
-    ms_need_word(M, b);
+    for (uint32_t i = 0; i < n; i++) ms_need_word(M, args[i]);
     int grow = grow_slow(j);
-    if (grow < 0) { as_label_free(&after); return; }
+    if (grow < 0) { as_label_free(&after); as_label_free(&odd); return; }
     ms_role(M, MR_CLOS);
-    closure_function(j, a, R_S2, kind);
+    closure_function(j, a, R_S2, kind, general, n);
     if (kind == K_THUNK) {
         /* a loop: Loop raised, out of line (compile.c, SLOW_LOOP) */
         Slow *s = ms_slow(M, SLOW_LOOP, j->next);
@@ -1533,7 +1824,7 @@ static void call_object(Jit *j, uint32_t pc, int32_t a, int32_t b, int kind) {
        from register b (the last home read), the rest as the stack's clean
        part has them (M6) or unit where not every function has its arity
        in the section */
-    ms_store_nth(M, BASER, j->m.nlocals + MS_HEADER, b);
+    for (uint32_t i = 0; i < n; i++) ms_store_nth(M, BASER, j->m.nlocals + MS_HEADER + i, args[i]);
     callee_entry(j, R_S5);
     /* r11 stays the function's word, which the stub of the interpreter
        wants (ms_emit_call_interp); the fill its number */
@@ -1553,11 +1844,13 @@ static void call_object(Jit *j, uint32_t pc, int32_t a, int32_t b, int kind) {
     ms_role(M, MR_JUMP);
     if (j->callret) as_call_ret_r(A, R_S5);   /* (M7) */
     else as_jmp_r(A, R_S5);   /* its code, or the interpreter (the table of calls, M6) */
+    if (fast) apply_fast(j, a, n, args, &odd, gen_c, &after, grow);
     call_landing(j, &after);
     as_label_free(&after);
+    as_label_free(&odd);
 }
-void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) { call_object(j, pc, a, b, K_CLOSURE); }
-void emit_ENTER(Jit *j, uint32_t pc, int32_t a, int32_t b) { call_object(j, pc, a, b, K_THUNK); }
+void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) { call_object(j, pc, a, 1, &b, K_CLOSURE); }
+void emit_ENTER(Jit *j, uint32_t pc, int32_t a, int32_t b) { call_object(j, pc, a, 1, &b, K_THUNK); }
 /* ---- suspensions (docs/ir.md, Suspensions) ----
    FORCE: a branch to o with the value, where register s holds no
    unevaluated suspension -- what an indirection holds, else s's word; on
@@ -1628,24 +1921,34 @@ void emit_UPDATE(Jit *j, uint32_t pc, int32_t a) {
     ms_set_field(M, R_S0, 0, a);
     as_bind(A, &s->back);
 }
-void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
+static void tail_object(Jit *j, uint32_t pc, int32_t a, uint32_t n, const int32_t *args) {
+    Slow *g = ms_slow(M, SLOW_APPLY, j->next);
+    if (!g) return;
+    g->a = (int32_t)pc;
+    int fast = apply_fast_on(j);
+    AsmLabel odd; as_label_init(&odd);
+    AsmLabel *general = fast ? &odd : &g->here;
     /* the frame is replaced: of its homes only the argument is wanted, and
        under --jit-profile every one, which the profile's helper (called)
        loads again (M9) */
     ms_role(M, MR_ARGS);
     if (j->jit->profile) ms_writeback(M, pc);
-    else ms_need_word(M, b);
+    else for (uint32_t i = 0; i < n; i++) ms_need_word(M, args[i]);
     int grow = grow_slow(j);
-    if (grow < 0) return;
+    if (grow < 0) { as_label_free(&odd); return; }
+    /* more than one argument: above the frame first, since they are read
+       from its registers, which become the callee's (D15 C) */
+    if (n > 1) for (uint32_t i = 0; i < n; i++) ms_store_nth(M, BASER, j->m.nlocals + i, args[i]);
     ms_role(M, MR_CLOS);
-    closure_function(j, a, R_S2, K_CLOSURE);
+    closure_function(j, a, R_S2, K_CLOSURE, general, n);
     called(j, pc);
     ms_role(M, MR_ROOM);
     room_dynamic(j, grow, 0);
     ms_role(M, MR_ARGS);
     /* the callee's registers are this frame's, from its base: register 0
        from register b, the last home read */
-    ms_store_nth(M, BASER, 0, b);
+    if (n == 1) ms_store_nth(M, BASER, 0, args[0]);
+    else for (uint32_t i = 0; i < n; i++) ms_slot_from_nth_raw(M, (int32_t)i, BASER, j->m.nlocals + i);
     callee_entry(j, R_S5);
     if (!j->jit->all_meta) {   /* (r11 the function's word again after, as in CALL) */
         as_shr_ri(A, R_S6, 1);
@@ -1661,8 +1964,11 @@ void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     ms_role(M, MR_JUMP);
     if (j->callret) as_push_ret(A, BASER, HEADER_AT(0, 1));   /* the entry stores it again (M7) */
     as_jmp_r(A, R_S5);   /* its code, or the interpreter (the table of calls, M6) */
+    if (fast) apply_fast_tail(j, a, n, args, &odd, &g->here, grow);
     ms_role(M, MR_BODY);
+    as_label_free(&odd);
 }
+void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) { tail_object(j, pc, a, 1, &b); }
 /* after a CALL or CALLK a RESULT is the callee's RET's to do, and is passed
    over (compile.c, phantom); after a PRIMPUSH it takes what the primitive
    left on the stack, above the registers */
@@ -1813,4 +2119,26 @@ void emit_RAISE(Jit *j, uint32_t pc, int32_t a) {
     as_bind(A, &hand);
     ms_handback(M, RUN_INTERP);
     as_label_free(&hand);
+}
+
+/* ---- D15 C: calls of n arguments through a closure ----
+   In line where the closure has n parameters, as CALL is where it has
+   one; any other, and a partial application, the general path's
+   (SLOW_APPLY). Where not every function has its arity in the section, a
+   callee's registers would be filled from the second (fill_unit_dynamic),
+   which an argument is: left to the interpreter. */
+static int call_args(Jit *j, const uint8_t *L, uint32_t n, int32_t *args) {
+    if (n < 2 || n > 64 || !j->jit->all_meta) { jit_unsupported(j); return 0; }
+    for (uint32_t i = 0; i < n; i++) args[i] = read_i32(L + 4 * i);
+    return 1;
+}
+void emit_CALLN(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint32_t n) {
+    (void)b;
+    int32_t args[64];
+    if (call_args(j, L, n, args)) call_object(j, pc, a, n, args, K_CLOSURE);
+}
+void emit_TAILCALLN(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint32_t n) {
+    (void)b;
+    int32_t args[64];
+    if (call_args(j, L, n, args)) tail_object(j, pc, a, n, args);
 }

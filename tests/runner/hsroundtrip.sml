@@ -196,7 +196,7 @@ struct
       case (how, String.tokens Char.isSpace command) of
         (Here, "bin/rune-test" :: "hs-stub-syntax" :: words) =>
           ((write (out, stubOutput (words @ args)); write (err, ""); SOME (read out))
-           handle e => (write (err, exnMessage e ^ "\n"); NONE))
+           handle e => (write (err, exnText e ^ "\n"); NONE))
       | _ =>
           let
             val status = exec {cmd = ["/bin/sh", "-c", "exec " ^ command ^ String.concat (List.tabulate (length args, fn i => " \"$" ^ Int.toString (i + 1) ^ "\"")),

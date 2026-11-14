@@ -33,7 +33,13 @@
    the lint refuses it at -O2; results' suspensions, read back from where
    a function's results return a datatype, are forced at every level; and
    castin's values cast into suspensions and forced in a suspension's code,
-   cast there or where the closure is made, pass RegVerify at every level.
+   cast there or where the closure is made, pass RegVerify at every level;
+   and caf's top-level list, which no code reads once it is walked, is let
+   go (the CAF tables, runtime/gc/caf.c: the haskell98 roadmap's D19): the
+   live at the end the same at n = 1000 and 2000 on both VMs, interpreted
+   and at tier 2, under every collector -- the full collection, the copier
+   and the low-pause collector's cycle, a collection at every allocation --
+   and greater at 2000 with every global a root (--caf-tables off).
 
    And the kernels of lazy ML's reading (the haskell98 roadmap's D57, M26),
    whose suspension never goes under evaluation: k_outlive, k_outlive_int,
@@ -46,7 +52,7 @@ struct
   open Sh
 
   val kernels = ["chain", "tailchain", "knot", "share", "reenter", "barrier", "image", "last", "leak", "wrongslot", "cast", "forget",
-                 "results", "castin", "loopcatch",
+                 "results", "castin", "loopcatch", "caf",
                  (* lazy ML's reading (D57, M26): a body that outlives its own
                     update, and a suspension of a suspension *)
                  "k_outlive", "k_outlive_int", "k_outlive_raise", "k_outlive_three", "outlive_nullary", "k_nested"]
@@ -250,6 +256,50 @@ struct
                [("O0", ["-O0"]), ("O2", ["-O2"])]
     end
 
+  (* caf's top-level list let go: the live at the end (--stats), a
+     collection at every allocation, the same at 1000 and 2000 under each
+     collector where the tables are taken, and more at 2000 where every
+     global is a root *)
+  fun cafLive (dir, name, vm, opts, rbc, n) =
+    let
+      val d = dir ^ "/live-" ^ name
+      val () = scratch d
+      val _ = exec {cmd = [fromRoot vm] @ opts @ ["--stats", rbc, n],
+                    dir = SOME d, stdin = "", stdout = d ^ "/stdout", stderr = d ^ "/stderr", timeout = 600}
+      (* runevm's line: "... semispace N bytes, L live, ..." *)
+      val (prefix, at) = Substring.position " live," (Substring.full (read (d ^ "/stderr")))
+    in if Substring.isEmpty at then NONE else Int.fromString (Substring.string (Substring.taker Char.isDigit prefix)) end
+  fun caf () =
+    let
+      val k = "caf"
+      val () = ordinary k
+      val dir = run ^ "/thunks/" ^ k ^ "/live"
+      val () = scratch dir
+      val cafCollectors = [("full", ["--gc-stress", "1", "--gc-stress-full"]),
+                           ("copy", ["--nursery", "0", "--old-space", "copy", "--gc-stress", "1"]),
+                           ("lowpause", ["--gc", "low-pause", "--gc-stress", "1", "--gc-stress-cycles"])]
+      fun check (b, vm, rbc) (w, opts) =
+        let
+          fun live tag mode n = cafLive (dir, b ^ "-" ^ w ^ "-" ^ tag ^ "-" ^ n, vm, ["--caf-tables", mode] @ opts, rbc, n)
+        in
+          case (live "on" "auto" "1000", live "on" "auto" "2000", live "off" "off" "1000", live "off" "off" "2000") of
+            (SOME x, SOME y, SOME u, SOME v) =>
+              (if x = y then ()
+               else fail (k, b ^ " " ^ w ^ ": keeps " ^ Int.toString ((y - x) div 1000) ^ " bytes an element of the CAF (live at the end "
+                             ^ Int.toString x ^ " at 1000, " ^ Int.toString y ^ " at 2000)");
+               if v > u then () else fail (k, b ^ " " ^ w ^ ": with every global a root, the live at the end grows no more ("
+                                               ^ Int.toString u ^ " at 1000, " ^ Int.toString v ^ " at 2000): the test sees nothing"))
+          | _ => fail (k, b ^ " " ^ w ^ ": no live in --stats")
+        end
+      val rways = List.concat (List.map (fn (c, copts) => [("off-" ^ c, "--jit=off" :: copts), ("opt-" ^ c, ["--jit=all", "--jit-tier=2"] @ copts)])
+                                        cafCollectors)
+    in
+      List.app (fn b => case compile (k, dir, b, true) of SOME rbc => List.app (check (#1 b, "bin/runevm", rbc)) rways | NONE => ())
+               [("O0", ["-O0"]), ("O2", ["-O2"])];
+      List.app (fn b => case compile (k, dir, b, true) of SOME rbc => List.app (check (#1 b, "bin/runevm-stack", rbc)) cafCollectors | NONE => ())
+               [("S0", ["--target=stack", "-O0"]), ("S2", ["--target=stack", "-O2"])]
+    end
+
   (* D18: a chain of 10^7 suspensions forced from its head fits the default stack *)
   fun chain () =
     let
@@ -333,6 +383,7 @@ struct
     | "last" => retains k
     | "leak" => retains k
     | "chain" => chain ()
+    | "caf" => caf ()
     | "wrongslot" => wrongslot ()
     | _ => ordinary k
 

@@ -1,0 +1,21 @@
+(* dump: --passes=shake,uncurry --dump-after=uncurry *)
+(* Uncurrying (D15 C) a local curried function whose innermost body calls
+   a global worker with every parameter, in order (as Workers and the
+   inliner leave a functor's foldl): its twin is the worker itself, g1, so
+   its use as a value becomes g1's (a closure of two parameters) and its
+   group, left empty, goes. *)
+(funs
+  (fn g1 ((v1 : int) (v2 : int)) : int "add"
+    (return (prim int_add v1 v2 : (int * int) -> int))))
+(val g2 : int -> int -> int
+  (fun
+    (fn v3 ((v4 : int)) : int -> int "add"
+      (fun
+        (fn v5 ((v6 : int)) : int "add"
+          (return (app g1 v4 v6)))
+      (return v5)))
+  (return v3)))
+(val g3 : int -> int
+  (return (app g2 1)))
+(val g4 : int
+  (return (app g3 2)))

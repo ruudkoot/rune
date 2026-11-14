@@ -660,7 +660,7 @@ struct
          {name = "rt_debug_return", arity = 1, ty = "'a -> unit", effects = anything,
           doc = "<debug>'s own, after the hook: its frame taken off, and the program on from the instruction it stopped at, or with the exception it stopped for (its argument)."},
          {name = "rt_debug_program", arity = 1, ty = "unit -> int", effects = anything,
-          doc = "How many functions the program has: after a unit is linked, its own are the last."},
+          doc = "How many functions the program has: a unit linked next has its own from there on."},
          {name = "rt_random_bytes", arity = 1, ty = "int -> string", effects = anything,
           doc = "n bytes of the system's randomness (/dev/urandom, RtlGenRandom), as a string; \"\" where there is none."},
          {name = "win_event_new", arity = 1, ty = "unit -> int", effects = anything,

@@ -96,4 +96,12 @@ static inline void op_UPDATE(VM *vm, int32_t a, int32_t b) {
     obj_become_ind(vm, c, v);
 }
 
+static inline void op_ARITY(VM *vm, int32_t a, int32_t b) {
+    Program *p = &vm->prog;
+    (void)p; (void)a; (void)b;
+    Obj *c = vm_expect_obj(vm, *vm_top(vm, 0), K_CLOSURE, "closure");
+    if (a < 2 || a > 65535) vm_fatal(vm, "ARITY of %d parameters", a);
+    c->contag = (uint16_t)a;
+}
+
 #endif

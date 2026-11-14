@@ -16,6 +16,16 @@ cache, [plans/build-cache-issues.md](../../plans/build-cache-issues.md)).
 * [terminal-tests-under-load](terminal-tests-under-load/BUGREPORT.md):
   the three causes above, with the repeated-run evidence that distinguished
   a lost resize from an incorrect redraw (fixed 2026-10-29).
+* [hs-mutants-built-race](hs-mutants-built-race/BUGREPORT.md): four of
+  rhc's mutants in `make test-rhc-mutants` ended in an uncaught `SysErr`,
+  "in RuneStreamIOFn.flushOut". A mutant's built job, run beside it, had
+  removed their shared directory. Not the tool shell's exit, which was
+  tested (2026-11-14, fixed 2026-11-14 on `hs-l`; `race.sh` reproduces it).
+* [handler-reraise-position](handler-reraise-position/BUGREPORT.md): an
+  exception a handler does not match is raised again with the position of
+  the end of the handler's last rule. At -O1 that can be in an inlined
+  function, so the trace names a function that never ran (2026-11-14, not
+  fixed; `reraise.sml` reproduces it).
 
 [Fixes and validation](terminal-races-fixed.md) records the changes and
 deterministic regressions for all three causes.

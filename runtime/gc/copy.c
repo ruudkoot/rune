@@ -78,6 +78,60 @@ static void copy_value(VM *vm, Value *v) {
 }
 #define COPY_VALUE(v) copy_value(vm, (v))
 #define COPY_OBJ(o) (*(o) = copy_obj(vm, *(o)))
+static void copy_objp(VM *vm, Obj **o) { vm->gc_counts.other_roots++; *o = copy_obj(vm, *o); }
+
+/* An object copied, its fields copied: where the program keeps its
+   globals by CAF tables (caf.c, mode 1), one whose code may run taking its
+   function's table; and after the frames' closures (mode 2), one of those
+   that a field reaches, the frames' alone so far, taking its function's
+   too (late). */
+static void copy_late_global(VM *vm, Value *v);
+static inline void copy_late_value(VM *vm, Value *v) {
+    copy_value(vm, v);
+    if (val_is_ptr(*v)) {
+        Obj *o = val_ptr(*v);
+        if (caf_only_take(o) && caf_code_due(o)) caf_code(vm, o, copy_late_global);
+    }
+}
+static void copy_late_global(VM *vm, Value *v) { copy_late_value(vm, v); }
+static inline void copy_fields(VM *vm, Obj *o, int mode) {
+    Value *f = obj_fields(o);
+    uint32_t n = obj_scanned_fields(o);   /* every field; of an indirection, the first */
+    if (mode == 1 && caf_runs(o) && caf_code_due(o)) caf_code(vm, o, copy_value);
+    if (mode == 2) {
+        if (caf_runs(o) && !caf_only_has(o) && caf_code_due(o)) caf_code(vm, o, copy_late_global);
+        for (uint32_t i = 0; i < n; i++) copy_late_value(vm, &f[i]);
+    } else
+        for (uint32_t i = 0; i < n; i++) copy_value(vm, &f[i]);
+}
+/* the scan, chunk by chunk in the order they were filled (the last grows,
+   and others are added after it, while it is scanned), and the large
+   objects marked, from where it stopped (*cp, *atp) until neither has more;
+   in line, so that each mode is a loop of its own and the copier without
+   tables tests nothing more than it did */
+#if defined(__GNUC__)
+__attribute__((always_inline))
+#endif
+static inline void copy_scan(VM *vm, Chunk **cp, size_t *atp, int mode) {
+    Chunk *c = *cp;
+    size_t at = *atp;
+    for (;;) {
+        while (c) {
+            while (at < c->used) {
+                Obj *o = (Obj *)(chunk_payload(c) + at);
+                if (obj_has_fields(o)) copy_fields(vm, o, mode);
+                at += obj_size(o);
+            }
+            if (!c->next) break;
+            c = c->next;
+            at = 0;
+        }
+        if (!vm->gc.nqueue) break;
+        copy_fields(vm, vm->gc.queue[--vm->gc.nqueue], mode);
+    }
+    *cp = c;
+    *atp = at;
+}
 
 /* The value stack as roots. Every slot, where the engine does not say what
    is live (the stack bytecode; VM.frame_live). Where it does, the registers
@@ -152,38 +206,35 @@ static void collect_into(VM *vm, size_t new_size) {
     census_collect_begin();
 #endif
 
-    gc_stack_roots(vm, copy_value);
-#define COPY_ROOT_VALUE(v) (vm->gc_counts.other_roots++, COPY_VALUE(v))
-#define COPY_ROOT_OBJ(o) (vm->gc_counts.other_roots++, COPY_OBJ(o))
-    OTHER_ROOTS(vm, COPY_ROOT_VALUE, COPY_ROOT_OBJ);
-#undef COPY_ROOT_VALUE
-#undef COPY_ROOT_OBJ
-
-    /* scan, chunk by chunk in the order they were filled (the last grows,
-       and others are added after it, while it is scanned), and the large
-       objects marked, until neither has more */
     Chunk *c = vm->gc.first;
     size_t at = 0;
-    for (;;) {
-        while (c) {
-            while (at < c->used) {
-                Obj *o = (Obj *)(chunk_payload(c) + at);
-                if (obj_has_fields(o)) {
-                    Value *f = obj_fields(o);
-                    uint32_t n = obj_scanned_fields(o);   /* every field; of an indirection, the first */
-                    for (uint32_t i = 0; i < n; i++) copy_value(vm, &f[i]);
-                }
-                at += obj_size(o);
-            }
-            if (!c->next) break;
-            c = c->next;
-            at = 0;
+    if (caf_begin(vm)) {
+        /* a program with suspensions: a global kept only where live code
+           reaches it (caf.c), the frames' closures last */
+        caf_frames(vm, copy_value, 1);
+        gc_stack_roots(vm, copy_value);   /* the frames caf_frames walked, their closures set aside */
+        caf_frames_forget();
+        caf_roots(vm, copy_value, copy_objp);   /* (the stack VM's frames' closures set aside too) */
+        caf_back(vm);
+        copy_scan(vm, &c, &at, 1);
+        CafAside *a;
+        size_t na = caf_aside(&a);
+        for (size_t i = 0; i < na; i++) {
+            Obj *o;
+            if (a[i].slot) { copy_value(vm, a[i].slot); o = val_is_ptr(*a[i].slot) ? val_ptr(*a[i].slot) : NULL; }
+            else { *a[i].root = copy_obj(vm, *a[i].root); o = *a[i].root; }
+            if (o && caf_runs(o)) caf_only_add(o);
         }
-        if (!vm->gc.nqueue) break;
-        Obj *o = vm->gc.queue[--vm->gc.nqueue];
-        Value *f = obj_fields(o);
-        uint32_t n = obj_scanned_fields(o);
-        for (uint32_t i = 0; i < n; i++) copy_value(vm, &f[i]);
+        copy_scan(vm, &c, &at, 2);
+        caf_end(vm);
+    } else {
+        gc_stack_roots(vm, copy_value);
+#define COPY_ROOT_VALUE(v) (vm->gc_counts.other_roots++, COPY_VALUE(v))
+#define COPY_ROOT_OBJ(o) (vm->gc_counts.other_roots++, COPY_OBJ(o))
+        OTHER_ROOTS(vm, COPY_ROOT_VALUE, COPY_ROOT_OBJ);
+#undef COPY_ROOT_VALUE
+#undef COPY_ROOT_OBJ
+        copy_scan(vm, &c, &at, 0);
     }
 
     vm->gc.size = new_size;

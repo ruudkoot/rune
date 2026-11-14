@@ -50,6 +50,9 @@ enum RegOpcode {
   ROP_ENTER = 42,  /* Enter the suspension in register f, as CALL enters a closure, with register x; RESULT takes its value. One under evaluation is a loop: the exception Loop is raised. */
   ROP_BLACKHOLE = 43,  /* The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows. */
   ROP_UPDATE = 44,  /* The suspension running becomes an indirection to register s; one that is an indirection already, lazy ML's that a force from inside it updated first, holds register s now. */
+  ROP_CLOSUREN = 45,  /* Register d := a closure of function f, of k parameters (2 or more), capturing the n registers of env: a call of k arguments enters it. */
+  ROP_CALLN = 46,  /* Call the closure in register f with the n registers of args (2 or more), as many calls of one argument would; RESULT takes what it returns. */
+  ROP_TAILCALLN = 47,  /* Like CALLN, but the current frame is replaced. */
   ROP__COUNT
 };
 
@@ -99,6 +102,9 @@ static const char *const rop_names[] = {
   "ENTER",
   "BLACKHOLE",
   "UPDATE",
+  "CLOSUREN",
+  "CALLN",
+  "TAILCALLN",
 };
 
 /* how many operands come before the list, if there is one */
@@ -148,6 +154,9 @@ static const unsigned char rop_nfixed[] = {
   2,
   0,
   1,
+  4,
+  2,
+  2,
 };
 
 /* the operand that says how long the list is (-1: no list), and
@@ -198,6 +207,9 @@ static const signed char rop_list_at[] = {
   -1,
   -1,
   -1,
+  3,
+  1,
+  1,
 };
 static const unsigned char rop_list_prim[] = {
   0,
@@ -216,6 +228,9 @@ static const unsigned char rop_list_prim[] = {
   0,
   1,
   1,
+  0,
+  0,
+  0,
   0,
   0,
   0,
@@ -315,6 +330,9 @@ static const unsigned char rop_kinds[][4] = {
   {14, 14, 0, 0},  /* ENTER */
   {0, 0, 0, 0},  /* BLACKHOLE */
   {14, 0, 0, 0},  /* UPDATE */
+  {14, 7, 3, 11},  /* CLOSUREN */
+  {14, 11, 0, 0},  /* CALLN */
+  {14, 11, 0, 0},  /* TAILCALLN */
 };
 
 /* Where control goes after each, whether it may raise, and what it does
@@ -366,6 +384,9 @@ static const unsigned char rop_flow[] = {
   FLOW_CALL,
   FLOW_NEXT,
   FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_CALL,
+  FLOW_TAILCALL,
 };
 static const unsigned char rop_raises[] = {
   0,
@@ -413,6 +434,9 @@ static const unsigned char rop_raises[] = {
   0,
   0,
   0,
+  0,
+  0,
+  0,
 };
 /* 0 keeps the handlers, 1 installs one, 2 removes one */
 static const unsigned char rop_handlers[] = {
@@ -450,6 +474,9 @@ static const unsigned char rop_handlers[] = {
   0,
   1,
   2,
+  0,
+  0,
+  0,
   0,
   0,
   0,
@@ -509,6 +536,9 @@ static const signed char rop_dest[] = {
   0,
   0,
   -1,
+  -1,
+  -1,
+  0,
   -1,
   -1,
 };
