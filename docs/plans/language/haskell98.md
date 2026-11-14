@@ -79,13 +79,13 @@ Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation be
 | M16. HsLint | F | L | D54 | done: the second inference, replay of Faxén's rules, two judges held to one verdict, and the target check naming the pass that broke the Core; its library part kept per unit; G2's lint line (every family at level 2) and mutant line (35 caught, one equivalent, none uncaught) hold |
 | M17. The Prelude: primitives, overlay | L | L | D20-D26, D36, D37 | done: the overlay as code over rhc's runtime, the token comparison with the Report, the 15 bottom probes right on the interpreter and the VM; on `0f44dafbe` |
 | M18. The Report's libraries | L | M | D36 | done: the 20 modules compile and run, the 52 examples are programs; `ReadWriteMode` by the owner's word of 2026-11-10; `ExitFailure 0` an error; 21.6's discard of an input buffer. A full device reported as an error in Rune's runtime and in rhc (`isFullError`), by the owner's choice of 2026-11-12, the fingerprint taking the primitives' result representations (ruling 68); `BlockBuffering`'s size honoured |
-| M19. Conformance: the table worked through | T | L | D52, D55, D56 | done, G2 passed on it: all 3,901 rows Supported; eight deviations, each on one of D38's grounds as the owner left them on 2026-11-13; rhc's check tier 38.0% of `make check` (Run D) |
+| M19. Conformance: the table worked through | T | L | D52, D55, D56 | done, G2 passed on it: all 3,901 rows Supported; eight deviations, each on one of D38's grounds as the owner left them on 2026-11-13; rhc's check tier 38.0% of `make check` (Run D), accepted by the owner |
 | M20. The store's policy out of `UnitCache`, optional | S | S | D43 | done; on `0f44dafbe` |
 | M21. HsIface and rhc's driver | S | L | D43, D44, D45 | done: HsIface and its codec; rhc compiles a program by units through the store, each group checked and linted from the interfaces and parts before it, the link compiling whole what `main` reaches; the library a snapshot layer made at `make` time (D45's A), which retired the saved world: every mode of `bin/rhc` goes through it at 0.757 of the world's cost by median, byte for byte the whole compile's; a warm compile of hello 8.6M instructions against 145M whole; E13's holes as cases and mutants |
 | M22. SCC keys | S | M | D30, D36 | done: a unit's modules fingerprinted by recursive groups over all of them; a body edit in a cycle compiles no client; a split cycle recompiles none whose reads are unchanged |
 | M23. Core simplifier, known dictionaries | P | L | D47, D48, D49 | built on its branch, to merge after G2: at `-O2` the corpus runs in 0.28 of `-O0`'s instructions and makes 0.31 of its suspensions (0.04 of its suspensions copied by the collector), alike everywhere; D48 decided |
 | M24. Strictness | P | M | D50 | under way on its branch, to merge after G2 |
-| M25. What measurement justifies | P | | D15-D17, D19, D51 | under way: D3, D9, D16 and D24 measured and decided; D15's C and D19's B decided and ready to land after G2; D17's B, C and both being measured against A; D34's B being tuned; D51 decided, on at `-O2` |
+| M25. What measurement justifies | P | | D15-D17, D19, D51 | under way: D3, D9, D16 and D24 measured and decided; D15's C and D19's B decided and ready to land after G2; D17's C decided, to land; D34's B tuned, for the owner; D51 decided, on at `-O2` |
 | M26. Ready for lazy ML | Z | | D57 | done, ahead of G2: the checklist's six lines each shown by a test; the collector's pin and guard only where a program reruns a suspension (Haskell 1.0002, SML 1.002 at most) |
 | M27. Retire | | S | | under way: `docs/rhc.md` and the architecture's rhc section written |
 | M28. `Ty` with application and forall | A | L | D4 | done; the arrow as a type name and the lazy arrow `(~>)` with it (rulings 60, 65) |
@@ -5225,7 +5225,7 @@ Every change to Rune is graded on the brief's scale: **large**, optimal for Hask
 | D14 | Stack bytecode and runeopt parity | Parity by G: force in `stack.sml`, +22 as built in E14, nothing in runeopt | decided: C, by the owner's rule; confirmed |
 | D15 | Eval/apply | Not now: M25, on measurement | decided: C, measured |
 | D16 | Pointer code 11 | None: force loads the header | measure B against A |
-| D17 | Selector thunks | After leaks are measured on the corpus | measure B against A |
+| D17 | Selector thunks | After leaks are measured on the corpus | decided: C, measured |
 | D18 | Depth | None: a 10^7 chain fits 1 GiB under G | decided: A |
 | D19 | CAF roots and the barrier | CAFs stay roots at first, measured on the corpus; the barrier needs nothing new | decided: B, measured; barrier as recommended |
 | D20 | `Integer` | C: an immediate small `Integer`, primitives in line; the bignum path built first | decided: D |
@@ -5264,7 +5264,7 @@ Every change to Rune is graded on the brief's scale: **large**, optimal for Hask
 | D53 | Conformance table | Generated TSV of 3,901 rows, enforced by id | decided: C |
 | D54 | HsLint | A target check and a second inference, on the elaborated output | decided: C |
 | D55 | Generators and metamorphic relations | Both, with rhc's mutants | decided: B |
-| D56 | Budget | The 188 programs under 1 s in `make check`, in 3 of `Lang.ways`' 18 ways, the rest nightly; K from E5 | decided: B |
+| D56 | Budget | The 188 programs under 1 s in `make check`, in 3 of `Lang.ways`' 18 ways, the rest nightly; K from E5 | decided: B; 38% accepted |
 | D57 | What "ready for lazy ML" means | A checklist of six, run by E14: the pin, a MidLint rule, stack force, the spec's programs, flag off, `susp` documented | decided: C; run again on form C |
 
 **G0 is passed.** It needed D1-D6, D11-D13 and D36, which fix the boundary between Core and Mid, the thunk and the layout
@@ -6108,6 +6108,8 @@ leak that was known in 1987.
 justifies it.
 
 **Decided (owner, 2026-11-09).** To be measured: B, Sparud's method, built and benchmarked on rhc's programs, and on Rune's where it applies; then A or B on the numbers. Until then A stands. Built in M25 (*Decisions on the numbers*).
+
+**Measured and decided (owner, 2026-11-14): C, Wadler's rule in the collector.** B was built (branch `hs-d-d17`, `f514128c4`) and tuned at the owner's word (`f80c0d585`); C, a pattern binding's selectors marked by a primitive and reduced by the collector once the tuple is evaluated, and B + C were built beside it (`hs-d-d17c`, `b2e463f45`). The owner kept A against C. On `lines`, `words`, `span`, `break` and `unzip` at 10^5 and 10^6, C keeps 46.7% less at its peak and 45.8% fewer byte-seconds, allocates exactly A's bytes and runs 0.7% fewer bytecodes; on the run set, 174 programs, 3.6% less at the peak (`treejoin` -41.7%, `sorting` -36.1%, `boyer2` -28.9%) for 0.1% more allocation and 0.3% at tier 2. B + C adds nothing over B, since `updatePat` leaves the collector no marked selector. Every collector with the heap checked and both JIT tiers agree with A, and a cycle of selectors ends in `<<loop>>` as under A. SML pays about 2% of its collector's instructions (1.6% to 2.4% by way), 0.01% of a whole run and 0.16% of the compiler compiling itself; C lands as measured, the shortcut keeping M26's guard where a program reruns. Not covered: top-level pattern bindings, bindings of one variable, and a program's own `fst` and `snd` (`impl/d/d17/` in the drafts).
 
 *From the papers (E15b).* B is a desugaring of pattern bindings plus an impure `updatePat`, not a Core construct (Sparud 1993, §3.3). Under form C a sibling's component may be unevaluated, and `FORCE` takes what a `K_IND` holds as the value (`patches/E2-all-forms.patch:1566`), so the write may not be a `K_IND` to a thunk: it retargets the sibling's code and capture, or is made only when the component is evaluated. And the sibling whose force ran the match is under evaluation when `updatePat` runs, so overwriting it is E14's case of a body outliving its own update, which would make D11's pin Haskell's and move it from M26 to M25. The write skips any sibling that is not unevaluated, which avoids both [P1's inference; nothing built]. B changes how pattern bindings and `~p` are desugared, so it touches D34.
 
@@ -7221,6 +7223,8 @@ K comes from hand-lowering three programs and four kernels. It prices running, n
 
 **Decided (owner, 2026-11-09).** B, as recommended: the 188 programs under 1 s in `make check`, in 3 of `Lang.ways`' 18 ways, the rest nightly.
 
+**Measured and accepted (owner, 2026-11-14).** Run D (`603ab3e3f`, the snapshot layer): rhc's check tier is 4,515 s of CPU, 38.0% of `make check` (Run B 58.2%, Run C 43.6%), with rhc's compile 15.6% of it; the owner accepted it, with no further sampling.
+
 ### D57. What "ready for lazy ML" means
 
 **Question.** The brief: "doing haskell first ensures the whole stack supports lazy evalaution properly and the lazy ml can be a properly supported language extension to rune later". Haskell alone does not ensure that: W6. What is the exit of track Z?
@@ -7888,6 +7892,7 @@ The owner took nine decisions on measurement: build the option, measure it, and 
 - *Built:* pattern bindings and `~p` desugared to Sparud's tuple form with selectors, his equation (8), plus an impure `updatePat` that overwrites each sibling. It is a desugaring and a primitive, not a Core construct (Sparud 1993, §3.3). Under form C the write skips any sibling that is not unevaluated, and is not a `K_IND` to an unevaluated component: it retargets the sibling's code and capture, or is made only when the component is evaluated. Otherwise the sibling whose force ran the match outlives its own update, E14's case, and D11's pin becomes Haskell's and lands with B, not in M26 [P1's inference]. B changes D34's desugaring. In M25.
 - *On:* the run set, and programs over `lines`, `span`, `break` and `unzip` on long input, with E2's `last` and `leak` as residency tests at two sizes, the form M10 set. On Rune it applies only through a lazy pattern binding, which SML has not; lazy ML's would be one, and this roadmap does not land it, so Rune's figure is that nothing moves [inference].
 - *Figures:* residency, peak and byte-seconds, as Runciman and Wakeling gave for clausify, 47,548 to 34,083 byte-seconds; bytes allocated; and instructions at tier 2, since Sparud says a program that does not leak runs "somewhat slower".
+- *Measured, decided (2026-11-14):* C: B's residency at A's cost; SML's collector about 2% (D17's section).
 
 **D19: B, CAF tables, against A.**
 - *Built:* a table per function of the CAFs its code reaches, emitted at or below Core to Mid, and a collector that traces from live code; in M25.
