@@ -495,9 +495,9 @@ struct
      | Prim ("thunk_force", _, _) => true | Prim ("unsafe_cast", _, _) => true
      | _ => false)
     andalso ofNoGlobal r
-  fun levels (f : fundef) : ((var * Ty.ty) list * Ty.ty * string option) list * exp =
+  (* mentions (x, e): whether the body e of the function x names x *)
+  fun levels (mentions : var * exp -> bool) (f : fundef) : ((var * Ty.ty) list * Ty.ty * string option) list * exp =
     let
-      fun mentions (x, e) = let val t = IntTable.table 16 in Workers.count t e; isSome (IntTable.find (t, x)) end
       fun wrap (steps, e) = List.foldr (fn (Step (x, s, r), e) => Let (x, s, r, e) | (At sp, e) => Mark (sp, e)) e steps
       (* acc the levels, the last first; done the steps after the levels
          before the last, start the body of the last; pending the steps
@@ -519,15 +519,39 @@ struct
       go ([(#params f, #result f, #label f)], [], #body f, [], #body f)
     end
 
-  (* how many times each variable and global is named, as an atom *)
-  fun countUses (p : program) : int IntTable.table =
+  (* a step that rewrite's chain may move before a call (its early), by its
+     shape alone *)
+  fun earlyShape r =
+    case r of
+      Atom _ => true | Tuple _ => true | Select _ => true | Con _ => true | Decon _ => true
+    | Prim ("unsafe_cast", _, _) => true | Prim ("thunk_make", _, _) => true
+    | _ => false
+  (* whether a call of x may come next in e, past the steps and functions a
+     chain passes (rewrite's chain, go): the variables bound to a call's
+     result whose uses it asks of are among those *)
+  fun appliedNext (x, e) =
+    case e of
+      Mark (_, e) => appliedNext (x, e)
+    | Let (_, _, App (Var (y, _), _), _) => y = x
+    | Return (App (Var (y, _), _)) => y = x
+    | Let (_, _, r, e) => earlyShape r andalso appliedNext (x, e)
+    | Fun (_, e) => appliedNext (x, e)
+    | _ => false
+
+  (* how many times each variable Uncurry asks of is named, as an atom, in
+     e, added to t: a local function's name (levels, keep), and one bound to
+     a call's result that a call may apply next (chain's usedOnce) -- each
+     made a key where it is bound, before any use of it, and its uses
+     counted; no other variable is a key *)
+  fun countIn (t : int IntTable.table) (e : exp) : unit =
     let
-      val t : int IntTable.table = IntTable.table 4096
-      fun atom a = case a of Var (x, _) => IntTable.bump (t, x) | Global (g, _) => IntTable.bump (t, g) | _ => ()
+      fun atom a = case a of Var (x, _) => if isSome (IntTable.find (t, x)) then IntTable.bump (t, x) else () | _ => ()
       fun exp e =
         case e of
-          Let (_, _, r, b) => (appAtomsOfRhs atom r; exp b)
-        | Fun (fs, b) => (List.app (fn f => exp (#body f)) fs; exp b)
+          Let (x, _, r, b) =>
+            ((case r of App _ => if appliedNext (x, b) then IntTable.insert (t, x, 0) else () | _ => ());
+             appAtomsOfRhs atom r; exp b)
+        | Fun (fs, b) => (List.app (fn f => IntTable.insert (t, #name f, 0)) fs; List.app (fn f => exp (#body f)) fs; exp b)
         | Join (_, _, body, s) => (exp body; exp s)
         | Jump (_, xs) => List.app atom xs
         | If (c, a, b) => (atom c; exp a; exp b)
@@ -536,13 +560,28 @@ struct
         | Return r => appAtomsOfRhs atom r
         | Mark (_, a) => exp a
         | Case (a, arms, d) => (atom a; List.app exp (caseExps (arms, d)))
+    in exp e end
+  (* in the program *)
+  fun countUses (p : program) : int IntTable.table =
+    let val t : int IntTable.table = IntTable.table 4096
     in
-      List.app (fn Val (_, _, e) => exp e | Funs fs => List.app (fn f => exp (#body f)) fs | Do (_, e) => exp e) p;
+      List.app (fn Val (_, _, e) => countIn t e | Funs fs => List.app (fn f => countIn t (#body f)) fs | Do (_, e) => countIn t e) p;
       t
     end
 
   fun program (p : program) : program =
     let
+      (* the uses of the variables asked of (countIn), counted once: in the
+         program given, and in each twin once it is made (what rewrite
+         asks); a level's function in the program given names itself in its
+         body where it is named more than once, since it is named once at
+         the end of its scope (levels), and one of a twin's own is asked of
+         its body *)
+      val uses = countUses p
+      fun mentions (x, e) =
+        case IntTable.find (uses, x) of
+          SOME n => n > 1
+        | NONE => let val t = IntTable.table 16 in Workers.count t e; isSome (IntTable.find (t, x)) end
       (* the twins, by the curried function's name: the twin's, its arity,
          and whether it is a global (a worker Workers gave a global
          function, which a local one may call: the twin of both) *)
@@ -551,11 +590,15 @@ struct
       val globalFuns : fundef IntTable.table = IntTable.table 256
       val () = List.app (fn Funs fs => List.app (fn f => IntTable.insert (globalFuns, #name f, f)) fs | _ => ()) p
       val localFuns : unit IntTable.table = IntTable.table 256
+      (* whether twinsIn is in a twin's body; the twins made outside any,
+         each group's *)
+      val inTwin = ref false
+      val made : fundef list list ref = ref []
 
       (* the twin of f, where f is curried: an existing worker, or a new
          function made of its innermost body *)
       fun twinOf (f : fundef) : fundef option option =
-        case levels f of
+        case levels mentions f of
           (ls as _ :: _ :: _, inner) =>
             if List.length ls > maxArity orelse not (List.all (fn (ps, _, _) => List.length ps = 1) ls) then NONE
             else
@@ -595,8 +638,17 @@ struct
          function, its twin would end the levels there); then each given
          the twins inside it *)
       fun group (fs : fundef list) : fundef list =
-        let val ts = List.mapPartial (fn f => case twinOf f of SOME (SOME t) => SOME t | _ => NONE) fs
-        in List.map (fn f => withBody (f, twinsIn (#body f))) (fs @ ts) end
+        let
+          val ts = List.mapPartial (fn f => case twinOf f of SOME (SOME t) => SOME t | _ => NONE) fs
+          val fs' = List.map (fn f => withBody (f, twinsIn (#body f))) fs
+          (* a twin's body, with the twins inside it, is counted once, as
+             it is when made: a twin made inside one is counted with it *)
+          val outer = not (!inTwin)
+          val () = inTwin := true
+          val ts' = List.map (fn f => withBody (f, twinsIn (#body f))) ts
+          val () = inTwin := not outer
+          val () = if outer then made := ts' :: !made else ()
+        in fs' @ ts' end
 
       (* the program with every curried function's twin beside it *)
       and twinsIn e =
@@ -622,24 +674,32 @@ struct
                    | Funs fs => Funs (group fs)
                    | Do (gs, e) => Do (gs, twinsIn e)) p
       val () = List.app (fn Funs fs => List.app (fn f => IntTable.insert (globalFuns, #name f, f)) fs | _ => ()) p
+      (* the uses of the program as it is now: the twins' too *)
+      val () = List.app (List.app (fn f => countIn uses (#body f))) (!made)
     in
-      rewrite (p, twins, globalFuns, localFuns)
+      rewrite (p, twins, globalFuns, localFuns, uses)
     end
 
-  (* the uses as values become the twins', and calls in a row one call *)
-  and rewrite (p : program, twins, globalFuns, localFuns) : program =
+  (* the uses as values become the twins', and calls in a row one call;
+     uses the uses of each variable and global in p *)
+  and rewrite (p : program, twins, globalFuns, localFuns, uses) : program =
     let
       val valGlobals : unit IntTable.table = IntTable.table 256
       val () = List.app (fn Val (g, _, _) => IntTable.insert (valGlobals, g, ())
                           | Do (gs, _) => List.app (fn (g, _) => IntTable.insert (valGlobals, g, ())) gs
                           | Funs _ => ()) p
-      val uses = countUses p
+      (* the uses of each local function that became its twin's: one
+         named no more, every use of it its twin's, goes (keep) *)
+      val replaced : int IntTable.table = IntTable.table 64
       fun usedOnce x = case IntTable.find (uses, x) of SOME 1 => true | _ => false
       fun twinNamed (x2, ts, global) = if global then Global (x2, ts) else Var (x2, ts)
       fun twinAtom a =
         case a of
           Global (g, ts) => (case IntTable.find (twins, g) of SOME (g2, _, _) => Global (g2, ts) | NONE => a)
-        | Var (x, ts) => (case IntTable.find (twins, x) of SOME (x2, _, global) => twinNamed (x2, ts, global) | NONE => a)
+        | Var (x, ts) =>
+            (case IntTable.find (twins, x) of
+               SOME (x2, _, global) => (IntTable.bump (replaced, x); twinNamed (x2, ts, global))
+             | NONE => a)
         | _ => a
       fun rhs r =
         case r of
@@ -673,12 +733,7 @@ struct
          names neither t nor a global; or functions that do not name t *)
       datatype moved = Moved of var * scheme * rhs | MovedFuns of fundef list
       fun names (t, r) = let val n = ref false in appAtomsOfRhs (fn Var (x, _) => if x = t then n := true else () | _ => ()) r; !n end
-      fun early (t, r) =
-        (case r of
-           Atom _ => true | Tuple _ => true | Select _ => true | Con _ => true | Decon _ => true
-         | Prim ("unsafe_cast", _, _) => true | Prim ("thunk_make", _, _) => true
-         | _ => false)
-        andalso ofNoGlobal r andalso not (names (t, r))
+      fun early (t, r) = earlyShape r andalso ofNoGlobal r andalso not (names (t, r))
       fun earlyFuns (t, fs : fundef list) =
         let val u = IntTable.table 64 in List.app (fn f => Workers.count u (#body f)) fs; not (isSome (IntTable.find (u, t))) end
       (* a call, h applied to xs, its result t; and the calls after it that
@@ -705,18 +760,24 @@ struct
             if List.length xs < 2 then NONE
             else SOME (fn h => ahead (pre, Let (t, s, App (h, List.map twinAtom xs), remark (marks, exp rest))), List.length xs)
           and remark (marks, e) = List.foldl (fn (sp, e) => Mark (sp, e)) e marks
-          and ahead (pre, e) = List.foldl (fn (Moved (y, s, r), e) => Let (y, s, rhs r, e) | (MovedFuns fs, e) => Fun (List.map fundef fs, e)) e pre
+          and ahead (pre, e) = List.foldl (fn (Moved (y, s, r), e) => Let (y, s, rhs r, e) | (MovedFuns fs, e) => keep (List.map fundef fs, e)) e pre
+          fun asIs () = Let (t, s, rhs (App (h, xs)), exp rest)
         in
-          case (headOf h, go (t, s, xs, rest, [], [])) of
-            (Value, SOME (k, _)) => k h
-          | (Twin (h2, n), SOME (k, m)) => if m = n then k h2 else Let (t, s, rhs (App (h, xs)), exp rest)
-          | _ => Let (t, s, rhs (App (h, xs)), exp rest)
+          (* a call that stays is no chain's: go is asked of the others *)
+          case headOf h of
+            Stays => asIs ()
+          | Value => (case go (t, s, xs, rest, [], []) of SOME (k, _) => k h | NONE => asIs ())
+          | Twin (h2, n) =>
+              (case go (t, s, xs, rest, [], []) of
+                 SOME (k, m) =>
+                   if m = n then ((case h of Var (x, _) => IntTable.bump (replaced, x) | _ => ()); k h2) else asIs ()
+               | NONE => asIs ())
         end
       and exp e =
         case e of
           Let (t, s, App (h, xs), rest) => chain (t, s, h, xs, rest)
         | Let (x, s, r, b) => Let (x, s, rhs r, exp b)
-        | Fun (fs, b) => Fun (List.map fundef fs, exp b)
+        | Fun (fs, b) => let val fs = List.map fundef fs in keep (fs, exp b) end
         | Join (j, ps, body, s) => Join (j, ps, exp body, exp s)
         | Jump (j, xs) => Jump (j, List.map twinAtom xs)
         | If (c, a, b) => If (twinAtom c, exp a, exp b)
@@ -727,31 +788,19 @@ struct
         | Case (a, arms, d) => let val (arms, d) = mapCase exp (arms, d) in Case (twinAtom a, arms, d) end
       and fundef ({name, label, tyvars, params, result, body} : fundef) : fundef =
         {name = name, label = label, tyvars = tyvars, params = params, result = result, body = exp body}
-      val p = List.map (fn Val (g, s, e) => Val (g, s, exp e) | Funs fs => Funs (List.map fundef fs) | Do (gs, e) => Do (gs, exp e)) p
-      (* a local curried function named no more goes *)
-      val after = countUses p
-      fun named x = isSome (IntTable.find (after, x))
-      fun drop e =
-        case e of
-          Let (x, s, r, b) => Let (x, s, r, drop b)
-        | Fun (fs, b) =>
-            (* a group left empty, its functions' twins global workers,
-               goes *)
-            (case List.filter (fn f => named (#name f) orelse not (isSome (IntTable.find (twins, #name f)))) fs of
-               [] => drop b
-             | fs' => Fun (List.map (fn f => {name = #name f, label = #label f, tyvars = #tyvars f, params = #params f,
-                                              result = #result f, body = drop (#body f)}) fs', drop b))
-        | Join (j, ps, body, s) => Join (j, ps, drop body, drop s)
-        | If (c, a, b) => If (c, drop a, drop b)
-        | Handle (a, x, h) => Handle (drop a, x, drop h)
-        | Mark (sp, a) => Mark (sp, drop a)
-        | Case (a, arms, d) => let val (arms, d) = mapCase drop (arms, d) in Case (a, arms, d) end
-        | Jump _ => e
-        | Raise _ => e
-        | Return _ => e
-      fun dropFun (f : fundef) = {name = #name f, label = #label f, tyvars = #tyvars f, params = #params f, result = #result f,
-                                  body = drop (#body f)}
+      (* a group of local functions, each rewritten, and the scope after it,
+         where every use of them is: one with a twin named no more goes, and
+         a group left empty, its functions' twins global workers *)
+      and keep (fs : fundef list, scope : exp) : exp =
+        let
+          fun count (t, x) = case IntTable.find (t, x) of SOME n => n | NONE => 0
+          fun named x = count (uses, x) > count (replaced, x)
+        in
+          case List.filter (fn f => named (#name f) orelse not (isSome (IntTable.find (twins, #name f)))) fs of
+            [] => scope
+          | fs' => Fun (fs', scope)
+        end
     in
-      List.map (fn Val (g, s, e) => Val (g, s, drop e) | Funs fs => Funs (List.map dropFun fs) | Do (gs, e) => Do (gs, drop e)) p
+      List.map (fn Val (g, s, e) => Val (g, s, exp e) | Funs fs => Funs (List.map fundef fs) | Do (gs, e) => Do (gs, exp e)) p
     end
 end
