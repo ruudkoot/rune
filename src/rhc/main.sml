@@ -24,6 +24,29 @@ struct
     let val ins = TextIO.openIn path
     in TextIO.inputAll ins before TextIO.closeIn ins end
 
+  (* `canonical p`: what main reaches of p (CoreUnits.reach), its types and
+     newtypes, then its imports, then its values, each by name: the Core of
+     one program in one form however it was made, whole or a unit at a time
+     against the snapshot (--canonical-core, for hs/snapshot's comparison):
+     neither the order of the declarations nor one main does not reach,
+     which a whole desugaring may keep (a constructor's function of the
+     constructor's name where only the constructor is made), changes it *)
+  fun canonical (p : Core.program) : Core.program =
+    let
+      val reached = CoreUnits.reach (p, ["main"]) handle CoreUnits.Error _ => p
+      fun key d =
+        case d of
+          Core.Data (t, _, _) => (0, t)
+        | Core.Newtype (t, _, _, _) => (0, t)
+        | Core.Import (x, _) => (1, x)
+        | Core.Val (x, _, _) => (2, x)
+      fun precedes (a, b) = let val (i, x) = key a val (j, y) = key b in i < j orelse (i = j andalso String.< (x, y)) end
+      fun insert (d, []) = [d]
+        | insert (d, e :: es) = if precedes (d, e) then d :: e :: es else e :: insert (d, es)
+    in
+      List.foldl insert [] reached
+    end
+
   (* Core's text read back, at level 3: print, read, print is the identity *)
   fun roundTrip (p : Core.program) =
     let
@@ -344,6 +367,9 @@ struct
          joined (M21f) *)
       val (byUnits, args) = List.partition (fn a => a = "--desugar-units") args
       val () = RhcDesugar.byUnits := not (null byUnits)
+      (* --canonical-core: the desugar stage's dump in its canonical form *)
+      val (canonicalCore, args) = List.partition (fn a => a = "--canonical-core") args
+      val showCore = if null canonicalCore then CoreText.show else CoreText.show o canonical
       val opts = RhcOptions.parse args
       val () = List.app (fn s => if s = "all" orelse List.exists (fn t => t = s) stages then ()
                                  else raise RhcOptions.Usage ("--dump-after: no stage " ^ s ^ " (the stages: "
@@ -351,7 +377,7 @@ struct
                         (!Pass.dumpAfter)
       val () = Pass.startup ()
       val p =
-        Pass.stage {name = "desugar", showIn = NONE, show = CoreText.show,
+        Pass.stage {name = "desugar", showIn = NONE, show = showCore,
                     check = Pass.checkAt ("desugar", 3) roundTrip, size = List.length} desugar (#strings opts)
         handle Fail msg => raise Error.Bug ("rhc's desugaring fails, a bug of rhc's: " ^ msg)
       val () = lint ([file], p)

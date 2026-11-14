@@ -230,8 +230,8 @@ struct
      at 2). The compiler's own options that a compile of a file may have,
      `-o` and its file, `--target=`, `-O`, `--thunks=`, `--dump-after=`,
      `--pass-stats`, `--strings=`, `--steps=`, `--depth=`, `--match=`,
-     `--desugar-only` and `--desugar-units`, are taken and given to
-     `compile`. *)
+     `--desugar-only`, `--desugar-units` and `--canonical-core`, are taken
+     and given to `compile`. *)
   fun command (args : string list) : (unit -> OS.Process.status) option =
     let
       val modes = List.mapPartial modeOf args
@@ -275,6 +275,7 @@ struct
               orelse String.isPrefix "--thunks=" a orelse String.isPrefix "--dump-after=" a orelse a = "--pass-stats"
               orelse String.isPrefix "--strings=" a orelse String.isPrefix "--steps=" a orelse String.isPrefix "--depth=" a
               orelse String.isPrefix "--match=" a orelse a = "--desugar-only" orelse a = "--desugar-units"
+              orelse a = "--canonical-core"
               orelse option a
             fun check [] = ()
               | check ("-o" :: _ :: rest) = check rest

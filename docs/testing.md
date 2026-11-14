@@ -754,9 +754,13 @@ newer than every file of `share/rhc`; `accept/K-of-4`, `errors/K-of-4` and
 `--lint=2`, with its `.cargs`, to the same standard output, standard error
 and status, so that HsLint replays each way the records of the modules the
 program reaches, and each program of `tests/hs/lang` run both ways on
-Core's interpreter, every eighth with its Core compared too; the shards
-nightly, and in make check `accept/sample`, `errors/sample` and
-`lang/sample`, the sample of ruling 47 (*Tiers*); `bin/rune-test
+Core's interpreter, every eighth with its Core compared too in its
+canonical form (`--dump-after=desugar --canonical-core`: what `main`
+reaches, each declaration by name, since the units are joined in another
+order than a whole desugaring's and a whole one may keep a value nothing
+reaches); the shards nightly, and in make check `accept/sample`,
+`errors/sample` and `lang/sample`, the sample of ruling 47 (*Tiers*), every
+fourth program of the last with its Core compared; `bin/rune-test
 hs-snapshot-one KIND NAME` judges one. A mutant's tree (`hs-mutants`) has
 no snapshot, so a mutant makes the library's units itself.
 
