@@ -113,11 +113,11 @@ struct
           "              SOME rep => C.atom (C.cast ((Core.Atom a, t), rep),\n" ^
           "                                  fn occ' => C.force ((Core.Atom (#1 occ'), #2 occ'), fn (v, vt) => pattern (env, (Core.Var v, vt), hd ps, success, failure)))",
           ["hs/desugar/report/newtype"]),
-     (* the simplifier's (M23; D51: what stops a copy of a thunk): a let used
-        once inside a lambda put there, its work done once for each call,
-        which the sharing budget sees as a square *)
-     one ("HS01", "simplifier", "a thunk copied: a let used once inside a lambda is inlined into it, its work repeated at each call (D51)",
-          "coresimplify_simp.sml", "andalso (not (#lam oc) orelse B.isValue r') andalso B.tick \"inline-once\"",
-          "andalso true andalso B.tick \"inline-once\"",
+     (* P's seeds of M23 (the Core simplifier; D51: what stops a copy of a
+        thunk), the first of P's HS01 to HS06 *)
+     one ("HS01", "simplifier", "a thunk copied into a lambda: a binding used once inside a lambda is inlined there though it is no value",
+          "coresimplify_simp.sml",
+          "if #n oc = 1 andalso not (#arg oc) andalso (not (#lam oc) orelse B.isValue r') andalso B.tick \"inline-once\"",
+          "if #n oc = 1 andalso not (#arg oc) andalso B.tick \"inline-once\"",
           ["hs/simplify/budget/share"])]
 end

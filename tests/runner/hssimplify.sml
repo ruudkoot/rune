@@ -6,10 +6,10 @@
    Mid at --lint=2 and run on the VM at both levels, each printing
    NAME.expected and ending as NAME.exitcode says, 0 where there is none,
    a bottom anything else (hs/simplify/run/NAME); with NAME.stdin as its
-   standard input. And at -O2 with cheap eagerness (--cheap-eagerness:
-   D51's C, built to be measured), on the interpreter and the VM, so that a
-   let made a case that raises or loops before it is demanded shows
-   (cheap.hs's bottom probes above all).
+   standard input. And at -O2 without cheap eagerness (--no-cheap-eagerness:
+   D51's C, on at -O2), on the interpreter and the VM, so that a let made a
+   case that raises or loops before it is demanded shows as a difference
+   from that (cheap.hs's bottom probes above all).
 
    A program with a line `-- fuel:` is compiled at -O2 again with the
    rewrites stopped after each of several counts (--fuel=N), every lint
@@ -19,7 +19,7 @@
    instructions at the second at most 2.2 times those at the first, so
    that a thunk copied where it runs once for each element, or eta that
    moves its work under a lambda, shows as a square (hs/simplify/budget/NAME;
-   at -O2 with cheap eagerness too);
+   at -O2 without cheap eagerness too);
    one with lines `-- dump: has NAME` or `-- dump: lacks NAME` has its Core
    at -O2 held to them, a value of that name there or not, what the
    simplifier must have made of it, which no run shows
@@ -97,14 +97,14 @@ struct
         case onVm (p, ["-" ^ level], [], w, "vm." ^ level, stdin) of
           SOME r => judge (what ^ " (VM, -" ^ level ^ ")", p, w, r)
         | NONE => (fail (what ^ ": rhc does not compile it at -" ^ level ^ ": " ^ firstNonEmpty (w ^ "/vm." ^ level ^ ".c.err")); false)
-      val cheap = ["-O2", "--cheap-eagerness"]
+      val nocheap = ["-O2", "--no-cheap-eagerness"]
       val oks = [judge (what ^ " (interpreter, -O0)", p, w, interpret (p, ["-O0"], w, "interp.O0", stdin)),
                  judge (what ^ " (interpreter, -O2)", p, w, interpret (p, ["-O2"], w, "interp.O2", stdin)),
-                 judge (what ^ " (interpreter, -O2 --cheap-eagerness)", p, w, interpret (p, cheap, w, "interp.O2c", stdin)),
+                 judge (what ^ " (interpreter, -O2 --no-cheap-eagerness)", p, w, interpret (p, nocheap, w, "interp.O2n", stdin)),
                  vm "O0", vm "O2",
-                 case onVm (p, cheap, [], w, "vm.O2c", stdin) of
-                   SOME r => judge (what ^ " (VM, -O2 --cheap-eagerness)", p, w, r)
-                 | NONE => (fail (what ^ ": rhc does not compile it at -O2 --cheap-eagerness: " ^ firstNonEmpty (w ^ "/vm.O2c.c.err")); false)]
+                 case onVm (p, nocheap, [], w, "vm.O2n", stdin) of
+                   SOME r => judge (what ^ " (VM, -O2 --no-cheap-eagerness)", p, w, r)
+                 | NONE => (fail (what ^ ": rhc does not compile it at -O2 --no-cheap-eagerness: " ^ firstNonEmpty (w ^ "/vm.O2n.c.err")); false)]
     in if List.all (fn b => b) oks then rmTree w else () end
 
   (* the counts of rewrites a program is stopped after *)
@@ -149,7 +149,7 @@ struct
                  fun level l =
                    let
                      val rbc = w ^ "/" ^ l ^ ".rbc"
-                     val flags = if l = "O2c" then ["-O2", "--cheap-eagerness"] else ["-" ^ l]
+                     val flags = if l = "O2n" then ["-O2", "--no-cheap-eagerness"] else ["-" ^ l]
                      val cc = exec {cmd = [rhcPath (), "--lint=2"] @ flags @ [fromRoot (#src p), "-o", rbc], dir = SOME w, stdin = "",
                                     stdout = w ^ "/" ^ l ^ ".c.err", stderr = w ^ "/" ^ l ^ ".c.err", timeout = 600}
                    in
@@ -162,7 +162,7 @@ struct
                                        ^ Int.toString x ^ " at the first: a lost share"); false)
                        | _ => (fail (what ^ ": at -" ^ l ^ " no count (" ^ w ^ ")"); false)
                    end
-               in if List.all level ["O0", "O2", "O2c"] then rmTree w else () end
+               in if List.all level ["O0", "O2", "O2n"] then rmTree w else () end
            | _ => fail (what ^ ": its line -- budget: wants two sizes"))
       | _ => fail (what ^ ": no line -- budget: SIZE1 SIZE2")
     end

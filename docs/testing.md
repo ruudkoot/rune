@@ -975,6 +975,12 @@ dropped, no `fromInteger` left), what no run shows (`hs/simplify/dump/NAME`).
 `eta.hs` is D48's bottom probe: `seq` of a
 function whose lambda is behind a case, given bottom, is bottom under the
 pedantic rule, which GHC's default (`--eta=ghc`, built to be measured) breaks.
+`cheap.hs` is D51's: a let of what may raise or loop -- `Int` arithmetic,
+`div`, `chr` out of range, `head []`, `error`, a loop, a case of a
+suspension that is bottom -- bound and never demanded, where cheap eagerness
+(`core-cheap`) makes only a cheap and total let a case; every program runs
+at `-O2` without it too (`--no-cheap-eagerness`), on the interpreter and the
+VM, and so does each sharing budget.
 Over the run programs of `tests/hs/lang` (nightly, held while their rows
 are `Planned`), the VM prints at `-O2` what it prints at `-O0` and ends
 alike (`hs/simplify/lang/NAME`), and so it does over the 188 vendored

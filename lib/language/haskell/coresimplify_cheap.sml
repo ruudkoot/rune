@@ -33,8 +33,9 @@
    polymorphic or unlifted type, a letrec, and a value of the top level
    stay as they are.
 
-   Built to be measured (M25): the pass core-cheap runs at -O2 under
-   rhc --cheap-eagerness, and else leaves the program as it is. *)
+   The pass core-cheap runs at -O2, after eta and before the last
+   simplification, as the owner took D51's C (2026-11-14); rhc
+   --no-cheap-eagerness leaves the program as it is. *)
 structure CoreSimplifyCheap =
 struct
   open Core

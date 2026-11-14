@@ -1,6 +1,6 @@
--- Cheap eagerness's bottom probes (D51; the simplifier's core-cheap, under
--- --cheap-eagerness at -O2): a let of a cheap and total expression is made a
--- case, its value made at once; one that may raise or loop stays a
+-- Cheap eagerness's bottom probes (D51; the simplifier's core-cheap, at -O2
+-- unless --no-cheap-eagerness): a let of a cheap and total expression is
+-- made a case, its value made at once; one that may raise or loop stays a
 -- suspension, made only where it is demanded. Each of a to g is bound and
 -- never demanded (n is 1), so one made at once would stop the program here:
 -- Int's arithmetic, which raises on overflow (D22), div by zero, chr out of

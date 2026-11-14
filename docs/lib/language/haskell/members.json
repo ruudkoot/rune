@@ -351,7 +351,7 @@
    ]
   },
   "CORE_SIMPLIFY": {
-   "doc": "The Core simplifier (the haskell98 roadmap's M23; D47, D48, D49): rhc's\noptimiser, on Core, at -O2; Mid's passes run below it unchanged (D47).\n\nIts passes, in order, each a function of a program to a program whose\nevery rewrite keeps the program well typed (CoreLint) and keeps what is\nshared and what is bottom:\n\n- `simplify`: inlining of small functions and of bindings used once,\n  beta, a case of a known constructor or literal, a case of a case,\n  floating of lets, the folding of primitives and of `fromInteger` and\n  `fromRational` of literals at the Prelude's instances (Augustsson 1993,\n  §4.3), and with the whole program the values main does not reach\n  dropped (CoreSimplifySimp);\n- `specialise`: each overloaded function applied to closed types and\n  constant dictionaries copied at them, local overloaded bindings too,\n  under fuel, with `simplify` after (D49's C; CoreSimplifySpec);\n- `eta`: lambdas added where an expression takes more arguments at no\n  cost, under the pedantic rule (D48's C) or GHC's default (D48's D, to\n  be measured; CoreSimplifyEta).\n\nWhat it refuses of GHC's: foldr/build, which `seq` makes unsound (Hudak\net al. 2007, §10.3); general full laziness, which changes strictness\n(Pałka 2012); eta through a case, and through `IO`, the state hack,\nbut as D's option. A thunk is never copied where it may run twice: a\nbinding is inlined into a lambda only where it is a value.\n\n",
+   "doc": "The Core simplifier (the haskell98 roadmap's M23; D47, D48, D49): rhc's\noptimiser, on Core, at -O2; Mid's passes run below it unchanged (D47).\n\nIts passes, in order, each a function of a program to a program whose\nevery rewrite keeps the program well typed (CoreLint) and keeps what is\nshared and what is bottom:\n\n- `simplify`: inlining of small functions and of bindings used once,\n  beta, a case of a known constructor or literal, a case of a case,\n  floating of lets, the folding of primitives and of `fromInteger` and\n  `fromRational` of literals at the Prelude's instances (Augustsson 1993,\n  §4.3), and with the whole program the values main does not reach\n  dropped (CoreSimplifySimp);\n- `specialise`: each overloaded function applied to closed types and\n  constant dictionaries copied at them, local overloaded bindings too,\n  under fuel, with `simplify` after (D49's C; CoreSimplifySpec);\n- `eta`: lambdas added where an expression takes more arguments at no\n  cost, under the pedantic rule (D48's C) or GHC's default (D48's D, to\n  be measured; CoreSimplifyEta);\n- `cheap`: a let of a cheap and total expression made a case, its value\n  made at once and no suspension built (D51's C; CoreSimplifyCheap).\n\nWhat it refuses of GHC's: foldr/build, which `seq` makes unsound (Hudak\net al. 2007, §10.3); general full laziness, which changes strictness\n(Pałka 2012); eta through a case, and through `IO`, the state hack,\nbut as D's option. A thunk is never copied where it may run twice: a\nbinding is inlined into a lambda only where it is a value.\n\n",
    "page": "sig/CORE_SIMPLIFY.md",
    "members": [
     {
@@ -364,15 +364,15 @@
     {
      "kind": "type",
      "name": "options",
-     "spec": "type options = {spend : unit -> bool, whole : bool, eta : eta}",
-     "doc": "What the passes are given: what is asked before each rewrite, whether\nthe program is whole, and the eta rule.\n\n`spend` is asked before each rewrite (Pass.spend, so that --fuel stops\nthem); with `whole` a value main does not reach may go.\n\n",
+     "spec": "type options = {spend : unit -> bool, whole : bool, eta : eta, cheap : bool}",
+     "doc": "What the passes are given: what is asked before each rewrite, whether\nthe program is whole, the eta rule, and whether cheap eagerness runs.\n\n`spend` is asked before each rewrite (Pass.spend, so that --fuel stops\nthem); with `whole` a value main does not reach may go. `cheap` is\nrhc's default, which --no-cheap-eagerness turns off.\n\n",
      "page": "sig/CORE_SIMPLIFY.md#type-options"
     },
     {
      "kind": "val",
      "name": "passes",
      "spec": "val passes : unit -> (string * (options -> Core.program -> Core.program)) list",
-     "doc": "`passes ()` is each pass, by its name for --dump-after, in the order\nthey run: core-simplify, core-specialise, core-eta, core-simplify-2.\n\n",
+     "doc": "`passes ()` is each pass, by its name for --dump-after, in the order\nthey run: core-simplify, core-specialise, core-eta, core-cheap,\ncore-simplify-2.\n\n",
      "page": "sig/CORE_SIMPLIFY.md#val-passes"
     },
     {
