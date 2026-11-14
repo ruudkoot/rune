@@ -79,7 +79,7 @@ Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation be
 | M16. HsLint | F | L | D54 | done: the second inference, replay of Faxén's rules, two judges held to one verdict, and the target check naming the pass that broke the Core; its library part kept per unit; G2's lint line (every family at level 2) and mutant line (35 caught, one equivalent, none uncaught) hold |
 | M17. The Prelude: primitives, overlay | L | L | D20-D26, D36, D37 | done: the overlay as code over rhc's runtime, the token comparison with the Report, the 15 bottom probes right on the interpreter and the VM; on `0f44dafbe` |
 | M18. The Report's libraries | L | M | D36 | done: the 20 modules compile and run, the 52 examples are programs; `ReadWriteMode` by the owner's word of 2026-11-10; `ExitFailure 0` an error; 21.6's discard of an input buffer. A full device reported as an error in Rune's runtime and in rhc (`isFullError`), by the owner's choice of 2026-11-12, the fingerprint taking the primitives' result representations (ruling 68); `BlockBuffering`'s size honoured |
-| M19. Conformance: the table worked through | T | L | D52, D55, D56 | all 3,901 rows Supported; eight deviations, each on one of D38's grounds as the owner left them on 2026-11-13; rhc's check tier 38.0% of `make check` (Run D) |
+| M19. Conformance: the table worked through | T | L | D52, D55, D56 | done, G2 passed on it: all 3,901 rows Supported; eight deviations, each on one of D38's grounds as the owner left them on 2026-11-13; rhc's check tier 38.0% of `make check` (Run D) |
 | M20. The store's policy out of `UnitCache`, optional | S | S | D43 | done; on `0f44dafbe` |
 | M21. HsIface and rhc's driver | S | L | D43, D44, D45 | done: HsIface and its codec; rhc compiles a program by units through the store, each group checked and linted from the interfaces and parts before it, the link compiling whole what `main` reaches; the library a snapshot layer made at `make` time (D45's A), which retired the saved world: every mode of `bin/rhc` goes through it at 0.757 of the world's cost by median, byte for byte the whole compile's; a warm compile of hello 8.6M instructions against 145M whole; E13's holes as cases and mutants |
 | M22. SCC keys | S | M | D30, D36 | done: a unit's modules fingerprinted by recursive groups over all of them; a body edit in a cycle compiles no client; a split cycle recompiles none whose reads are unchanged |
@@ -93,7 +93,7 @@ Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation be
 | M30. Multi-value return, built to be measured | A | L | D9 | built and measured on `hs-a-m30`; the owner took A (2026-11-10), so it does not land |
 | M31. `IntInf` immediate | A | M | D20 | done; on `57a5306a4` |
 
-Gates: G0, the owner's decisions, passed on 2026-11-09; G1, hello on the interpreter and the VM, passed on 2026-11-10; G2, the Report's exit; and a standing gate on SML's budgets and bytes. M19 runs on a frozen Prelude, the saved world until M21, with M20 and M21 beside it and not gating it, and M22 comes before G2.
+Gates: G0, the owner's decisions, passed on 2026-11-09; G1, hello on the interpreter and the VM, passed on 2026-11-10; G2, the Report's exit, passed on 2026-11-14 (*The gates' exits*); and a standing gate on SML's budgets and bytes. M19 runs on a frozen Prelude, the saved world until M21, with M20 and M21 beside it and not gating it, and M22 comes before G2.
 
 ## Found while writing this roadmap
 
@@ -8224,6 +8224,17 @@ K is a ratio of instructions laid on seconds of `ghc -O0`, and it is tier 2's. T
 | HsLint, CoreLint and MidLint clean at level 2 | Every suite, under `RUNE_LINT=2` |
 | rhc's mutants caught | `test-rhc-mutants`: no `UNCAUGHT` |
 | All of it on both bytecodes, every tier and gc-stress | The nightly ways |
+
+
+**G2 passed (2026-11-14), on `ff87807aa` with the four commits after it** (`9a989c307`, `f006fe359`, `291655eca`, `80792e82d`, each a record, a test's form or a harness's message). Line by line:
+
+- *No row `Planned`:* 3,901 of 3,901 rows Supported, eight deviations each on one of D38's grounds as the owner left them on 2026-11-13 (`ff87807aa`).
+- *`conformance98`:* of E7's 82 tests through rhc, 52 green and the 30 others each recorded in `tests/hs/oracles.txt` under way `rhc`: 16 not Haskell 98; 8 hard, seven of them readings (R10, R22, R34, R41) and one a refusal of nhc98's that the Report does not make; 5 that depend on the environment; and 1 the suite expects refused, which the text allows (R7) (`hs-oracles/rhc/conformance`, nightly).
+- *The clean nofib programs:* 135 of the run set's 138 match at `-O0` and at `-O2`; the other three are outside the Report (`Control.Concurrent`, `Data.Map`) or refused by 5.3.1 (`eliza`) (`hs-corpus-run/levels`, nightly). M23 shows the line again at its new top level.
+- *The Prelude's diff:* the token comparison against the transcription holds every module but the listed overlay (M17).
+- *The lints at level 2, every tier, both bytecodes, gc-stress:* the nightly over every rhc family (`hs/*`, `hs-*/*`, `RUNE_LINT=2`) on `ff87807aa`: 9,369 tests, 9,323 pass, 37 skip (the oracles not installed here); its nine failures were `compreals`, refused by 5.2 as the table's `mod.exp.synonym.dotdot` says and recorded (`9a989c307`), and the snapshot's Core compared in an order the whole program does not keep (`f006fe359`, a canonical dump). Both families again on `f006fe359`: 43 pass, 1 skip, and one harness I/O error that passed alone.
+- *Mutants:* `make test-rhc-mutants` at `80792e82d`: 79 of 79, none uncaught. On `f006fe359` four of the units' mutants (HU07, HU08, HU09, HU11) once ended early on an exception from a flush, which no rerun repeats; it is followed as a bug report.
+- *The standing gate:* `make check` on `ff87807aa` in a fresh tree: 28,055 tests, 28,048 pass, 5 skip; one dump not regenerated for `handleHeld` (`291655eca`), and `make/test-lsp-oracle` past its 3,600 s under the run's load, as in five of the last six runs, which passes alone in 1,673 s.
 
 Sharing budgets, generators and bottom probes are not lines of the Report's exit: the first because the Report asks nothing of sharing, the others because they find bugs and state no coverage. Each runs from the milestone that makes it possible, and from then on it is a test like any other.
 
