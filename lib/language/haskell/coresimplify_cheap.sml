@@ -8,7 +8,9 @@
    `!T`, a case's binder, a field a constructor declares `!T`, a variable
    bound to a value):
    - a value: a constructor applied, a lambda, a literal, an evaluated
-     variable;
+     variable, a function bound to a lambda of the top level or of a let
+     given fewer arguments than its lambda's (a partial application: a
+     closure made, Mid's functions being curried);
    - a primitive of `cheapPrims`: the comparisons of Int, Char, Double and
      Float, Char's `ord`, a Str's size, and the arithmetic, conversions and
      tests of Double and Float, which IEEE's rules make total; its operands
@@ -53,11 +55,19 @@ struct
 
   (* what is evaluated: the variables known to hold a value, not a
      suspension *)
-  type env = {evaluated : bool CoreMap.map, dt : B.datatypes}
+  type env = {evaluated : bool CoreMap.map, dt : B.datatypes, arity : int CoreMap.map}
 
   fun evaluate (env : env, x : string) : env =
-    if x = "_" then env else {evaluated = CoreMap.insert (#evaluated env, x, true), dt = #dt env}
+    if x = "_" then env else {evaluated = CoreMap.insert (#evaluated env, x, true), dt = #dt env, arity = #arity env}
   fun isEvaluated (env : env, x : string) = CoreMap.member (#evaluated env, x)
+  (* a function bound to a lambda: how many values the lambda binds *)
+  fun withArity (env : env, x : string, e : exp) : env =
+    case e of
+      Lam (bs, _) => let val n = B.valueArity bs
+                     in if n > 0 then {evaluated = #evaluated env, dt = #dt env, arity = CoreMap.insert (#arity env, x, n)} else env end
+    | _ => env
+  fun arityOf (env : env, f : string) = getOpt (CoreMap.find (#arity env, f), 0)
+  fun valueArgs args = List.length (List.filter (fn ValArg _ => true | TyArg _ => false) args)
 
   fun atomOk (env : env) (a : atom) =
     case a of
@@ -94,6 +104,7 @@ struct
     | Con _ => true
     | Lam (bs, _) => List.exists (fn ValBinder _ => true | _ => false) bs
     | Prim (p, _, _) => cheapPrim p
+    | App (Atom (Var f), args) => let val n = valueArgs args in n > 0 andalso n < arityOf (env, f) end
     | Case (s, b, alts) =>
         (case s of Atom (Var y) => isEvaluated (env, y) | _ => ok env s)
         andalso List.all (fn alt => ok (altEnv (env, b, alt)) (B.altRhs alt)) alts
@@ -101,12 +112,15 @@ struct
     | _ => false
 
   (* the environment after the binding of x to r, lazily *)
-  fun bindLazy (env : env, x : string, t : ty, r : exp) : env =
+  fun bindLazy (env0 : env, x : string, t : ty, r : exp) : env =
+    let val env = withArity (env0, x, r)
+    in
     if isEval t then evaluate (env, x)
     else
       case r of
         Atom a => if atomOk env a then evaluate (env, x) else env
       | _ => if B.isValue r then evaluate (env, x) else env
+    end
 
   fun bindings (env : env, bs : B.binding list) : env =
     List.foldl (fn (B.NonRec (x, t, r), env) => bindLazy (env, x, t, r) | (B.Rec _, env) => env) env bs
@@ -136,7 +150,9 @@ struct
           then B.wrapLets (ls, Case (c, x, [AltDefault (exp (evaluate (envc, x)) b)]))
           else Let (x, t, r', exp (bindLazy (env, x, t, r')) b)
         end
-    | LetRec (bs, b) => LetRec (List.map (fn (x, t, r) => (x, t, exp env r)) bs, exp env b)
+    | LetRec (bs, b) =>
+        let val env' = List.foldl (fn ((x, _, r), env) => withArity (env, x, r)) env bs
+        in LetRec (List.map (fn (x, t, r) => (x, t, exp env' r)) bs, exp env' b) end
     | Case (s, b, alts) =>
         Case (exp env s, b, List.map (fn alt => let val env' = altEnv (env, b, alt)
                                                 in case alt of
@@ -156,7 +172,8 @@ struct
     let
       val p = B.distinct p
       val dt = B.datatypes p
-      val top = List.foldl (fn (Val (x, t, e), env) => if isEval t orelse B.isValue e then evaluate (env, x) else env
-                             | (_, env) => env) {evaluated = CoreMap.empty, dt = dt} p
+      val top = List.foldl (fn (Val (x, t, e), env) => let val env = withArity (env, x, e)
+                                                       in if isEval t orelse B.isValue e then evaluate (env, x) else env end
+                             | (_, env) => env) {evaluated = CoreMap.empty, dt = dt, arity = CoreMap.empty} p
     in List.map (fn Val (x, t, e) => Val (x, t, exp top e) | d => d) p end
 end
