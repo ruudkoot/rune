@@ -29,6 +29,9 @@
    The case binds a name of its own, and the let's variable is that name at
    the let's type, so that every type it is held to stays as it was.
 
+   A let of a newtype's type stays a let: a case does not take a newtype's
+   value but cast to what it wraps.
+
    A let whose expression is lets around a cheap and total expression has
    those lets floated out of it first: their suspensions are made at once,
    bounded work, and its own expression is then made a case (moving bounded
@@ -129,11 +132,14 @@ struct
   fun bindings (env : env, bs : B.binding list) : env =
     List.foldl (fn (B.NonRec (x, t, r), env) => bindLazy (env, x, t, r) | (B.Rec _, env) => env) env bs
 
-  (* whether a let of type t may be made a case: not polymorphic, not unlifted *)
-  fun speculable (t : ty) : bool =
+  (* whether a let of type t may be made a case: not polymorphic, not
+     unlifted, and not of a newtype, which a case takes only cast *)
+  fun speculable (env : env) (t : ty) : bool =
     case stripEval t of
       TForall _ => false
-    | _ => not (B.isUnliftedTy t)
+    | t' =>
+        not (B.isUnliftedTy t)
+        andalso (case spine t' of (TCon c, _) => not (CoreMap.member (#newtypes (#dt env), c)) | _ => true)
 
   fun exp (env : env) (e : exp) : exp =
     case e of
@@ -149,7 +155,7 @@ struct
           val (ls, c) = B.peelLets r'
           val envc = bindings (env, ls)
         in
-          if speculable t andalso not (B.isValue c) andalso ok envc c
+          if speculable env t andalso not (B.isValue c) andalso ok envc c
              andalso (null ls orelse B.tick "cheap-float") andalso B.tick "cheap"
           then
             (* the case binds a fresh name, of the evaluated type, and x is

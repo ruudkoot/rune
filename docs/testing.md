@@ -980,7 +980,9 @@ pedantic rule, which GHC's default (`--eta=ghc`, built to be measured) breaks.
 suspension that is bottom -- bound and never demanded, where cheap eagerness
 (`core-cheap`) makes only a cheap and total let a case; every program runs
 at `-O2` without it too (`--no-cheap-eagerness`), on the interpreter and the
-VM, and so does each sharing budget.
+VM, and so does each sharing budget. `cheapnewtype.hs` holds a cheap let of
+a newtype's type a let, which CoreLint finds made a case (a case on a
+newtype).
 Over the run programs of `tests/hs/lang` (nightly, held while their rows
 are `Planned`), the VM prints at `-O2` what it prints at `-O0` and ends
 alike (`hs/simplify/lang/NAME`), and so it does over the 188 vendored
