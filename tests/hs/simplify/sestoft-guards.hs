@@ -8,7 +8,7 @@ module Main where
 p :: Int -> [Int] -> Int
 p n (x:_) | n > 0 = x
 p 0 _ = 100
-p n (_:y:_) | n < 0, y > 0 = y
+p n (_:y:_) | n < 0 && y > 0 = y
             | n < 0 = negate y
 p n xs | null xs = 0
        | otherwise = length xs + n
