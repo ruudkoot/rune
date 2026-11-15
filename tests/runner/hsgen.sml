@@ -255,11 +255,12 @@ struct
                   end)
                (List.tabulate (count, fn k => first + k))
     end
-  (* each program compiled with the flags (none: the Report's order of
-     matching; --match=sestoft: decision trees, D34) and run, its output held
-     to the evaluator's, which is the Report's meaning *)
+  (* each program compiled with the flags (--match=report: the Report's
+     order of matching; --match=sestoft: decision trees, D34), each order
+     named, not the level's default (Sestoft's trees at -O2 and above), and
+     run, its output held to the evaluator's, which is the Report's meaning *)
   fun runRangeWith flags (first, count) () =
-    let val d = work ((if null flags then "run-" else "orders-") ^ Int.toString first)
+    let val d = work ((if flags = ["--match=report"] then "run-" else "orders-") ^ Int.toString first)
     in
       List.app (fn seed =>
                   let
@@ -283,7 +284,7 @@ struct
                   end)
                (List.tabulate (count, fn k => first + k))
     end
-  val runRange = runRangeWith []
+  val runRange = runRangeWith ["--match=report"]
   fun printOne seed () = let val (text, expected) = generate seed in say (text ^ "-- expected:\n" ^ expected) end
 
   fun command args =

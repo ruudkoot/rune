@@ -1055,8 +1055,10 @@ numbers* (with `RUNE_HS_RHC`, another build's rhc), every way's bytecode
 at one path, since `getProgName`'s cost grows with it: each way's output, and the
 instructions, bytes and objects of
 `runevm --count`, the suspensions made (`runevm-census`) and the
-instructions:u at tier 2 (`perf`), at `-O0` and `-O2`, with GHC's eta
-(D48's D) and Sestoft's trees (D34's B), on Core's interpreter where asked,
+instructions:u at tier 2 (`perf`), at `-O0` and `-O2` with each level's
+defaults (the Report's order at `-O0`, Sestoft's trees at `-O2`, D34), and
+with the Report's order at `-O2` (`O2-report`), GHC's eta (D48's D) and
+Sestoft's trees named (D34's B), on Core's interpreter where asked,
 and the eta rewrites under each rule (`stats`); `bin/rune-test
 hs-simplify-compile SET ID OUT [WAY...]` only compiles, a line a way with
 the compile's instructions:u and the bytecode's bytes. The expected outputs are GHC 9.4.7's
@@ -1087,9 +1089,10 @@ seed, with Int, Bool and `[Int]` values, top-level functions, `let`, `case`,
 lambdas, the list functions and `const e undefined`, each with the output its
 own evaluator gives. `hs/generated/@parse` puts 32 through rhc's parser in
 `make check` now; `hs/generated/@run` (16 from seed 1, `check`) and
-`hs/generated/@nightly` (400, `nightly`) compile and run them, held until
-the rows they need are out of `Planned`; `hs/generated/@orders` (the same
-400, `nightly`) compiles them with `--match=sestoft`, Sestoft's decision trees
+`hs/generated/@nightly` (400, `nightly`) compile and run them with
+`--match=report`, held until the rows they need are out of `Planned`;
+`hs/generated/@orders` (the same 400, `nightly`) compiles them with
+`--match=sestoft`, each order named, not the level's default, Sestoft's decision trees
 held to the meaning of the Report's top-to-bottom rules (`tr.case.obligation`).
 `bin/rune-test hs-generate SEED` prints a program and its output;
 `hs-generated FIRST COUNT` runs a range, and `hs-generated-orders FIRST
