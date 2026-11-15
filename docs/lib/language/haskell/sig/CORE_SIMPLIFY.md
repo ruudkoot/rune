@@ -39,7 +39,9 @@ shared and what is bottom:
   under fuel, with [`simplify`](#val-simplify) after (D49's C; CoreSimplifySpec);
 - [`eta`](#val-eta): lambdas added where an expression takes more arguments at no
   cost, under the pedantic rule (D48's C) or GHC's default (D48's D, to
-  be measured; CoreSimplifyEta).
+  be measured; CoreSimplifyEta);
+- `cheap`: a let of a cheap and total expression made a case, its value
+  made at once and no suspension built (D51's C; CoreSimplifyCheap).
 
 What it refuses of GHC's: foldr/build, which `seq` makes unsound (Hudak
 et al. 2007, §10.3); general full laziness, which changes strictness
@@ -53,7 +55,7 @@ binding is inlined into a lambda only where it is a value.
 signature CORE_SIMPLIFY =
 sig
   datatype <a href="#type-eta">eta</a> = <a href="#con-pedantic">Pedantic</a> | <a href="#con-ghc">Ghc</a>
-  type <a href="#type-options">options</a> = {<a href="#fld-options.spend">spend</a> : unit -&gt; bool, <a href="#fld-options.whole">whole</a> : bool, <a href="#fld-options.eta">eta</a> : eta}
+  type <a href="#type-options">options</a> = {<a href="#fld-options.spend">spend</a> : unit -&gt; bool, <a href="#fld-options.whole">whole</a> : bool, <a href="#fld-options.eta">eta</a> : eta, <a href="#fld-options.cheap">cheap</a> : bool}
   val <a href="#val-passes">passes</a> : unit -&gt; (string * (options -&gt; Core.program -&gt; Core.program)) list
   val <a href="#val-simplify">simplify</a> : options -&gt; Core.program -&gt; Core.program
   val <a href="#val-specialise">specialise</a> : options -&gt; Core.program -&gt; Core.program
@@ -82,20 +84,22 @@ measured).
 ### <a name="type-options"></a>`options`
 
 ```sml
-type options = {spend : unit -> bool, whole : bool, eta : eta}
+type options = {spend : unit -> bool, whole : bool, eta : eta, cheap : bool}
 ```
 
 What the passes are given: what is asked before each rewrite, whether
-the program is whole, and the eta rule.
+the program is whole, the eta rule, and whether cheap eagerness runs.
 
 `spend` is asked before each rewrite (Pass.spend, so that --fuel stops
-them); with `whole` a value main does not reach may go.
+them); with `whole` a value main does not reach may go. `cheap` is
+rhc's default, which --no-cheap-eagerness turns off.
 
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-options.spend"></a>`spend` | `unit -> bool` |  |
 | <a name="fld-options.whole"></a>`whole` | `bool` |  |
 | <a name="fld-options.eta"></a>`eta` | `eta` |  |
+| <a name="fld-options.cheap"></a>`cheap` | `bool` |  |
 
 ### <a name="val-passes"></a>`passes`
 
@@ -104,7 +108,8 @@ val passes : unit -> (string * (options -> Core.program -> Core.program)) list
 ```
 
 `passes ()` is each pass, by its name for --dump-after, in the order
-they run: core-simplify, core-specialise, core-eta, core-simplify-2.
+they run: core-simplify, core-specialise, core-eta, core-cheap,
+core-simplify-2.
 
 ### <a name="val-simplify"></a>`simplify`
 

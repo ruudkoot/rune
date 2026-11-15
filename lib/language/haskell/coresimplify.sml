@@ -7,7 +7,7 @@ struct
 
   datatype eta = Pedantic | Ghc
 
-  type options = {spend : unit -> bool, whole : bool, eta : eta}
+  type options = {spend : unit -> bool, whole : bool, eta : eta, cheap : bool}
 
   (* how many rounds a simplification runs at most, and how many rounds of
      copies a specialisation makes *)
@@ -48,11 +48,15 @@ struct
 
   fun simplify2 (opts : options) (p : program) : program = (setup opts; rounds (p, maxRounds))
 
+  fun cheap (opts : options) (p : program) : program =
+    if #cheap opts then (setup opts; CoreSimplifyCheap.program p) else p
+
   (* strictness (M24): workers and wrappers, which the next round inlines *)
   fun strict (opts : options) (p : program) : program = (setup opts; CoreStrict.program (#spend opts, p))
 
   fun passes () =
     [("core-simplify", simplify), ("core-specialise", specialise), ("core-eta", eta), ("core-strict", strict),
+     ("core-cheap", cheap),
      ("core-simplify-2", simplify2)]
 
   fun counts () = List.map (fn (w, r) => (w, !r)) (!B.counts)

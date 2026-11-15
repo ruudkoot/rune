@@ -117,15 +117,23 @@ struct
           "              SOME rep => C.atom (C.cast ((Core.Atom a, t), rep),\n" ^
           "                                  fn occ' => C.force ((Core.Atom (#1 occ'), #2 occ'), fn (v, vt) => pattern (env, (Core.Var v, vt), hd ps, success, failure)))",
           ["hs/desugar/report/newtype"]),
-     (* D's seeds of M24 (strictness, CoreStrict): a lazy argument marked
-        strict, caught by the run of hs/simplify where -O2 would force what
-        -O0 does not; and no precise exception, caught where the state token
-        is a parameter, as in rhc's runtime's Core *)
-     one ("HS01", "strictness", "a lazy argument marked strict: every value parameter of a signature strict (M24)",
+     (* P's seeds of M23 (the Core simplifier; D51: what stops a copy of a
+        thunk), the first of P's HS01 to HS06 *)
+     one ("HS01", "simplifier", "a thunk copied into a lambda: a binding used once inside a lambda is inlined there though it is no value",
+          "coresimplify_simp.sml",
+          "if #n oc = 1 andalso not (#arg oc) andalso (not (#lam oc) orelse B.isValue r') andalso B.tick \"inline-once\"",
+          "if #n oc = 1 andalso not (#arg oc) andalso B.tick \"inline-once\"",
+          ["hs/simplify/budget/share"]),
+     (* D's seeds of M24 (strictness, CoreStrict; W for workers): a lazy
+        argument marked strict, caught by the run of hs/simplify where -O2
+        would force what -O0 does not; and no precise exceptions, caught at
+        -O2 where a function that is split calls an I/O action's, the state
+        token a parameter, as in rhc's runtime's Core *)
+     one ("HW01", "strictness", "a lazy argument marked strict: every value parameter of a signature strict (M24)",
           "corestrict.sml", "{params = List.map (fn (x, t) => isEval t orelse mem (x, #strict d)) ps, bottom = #div d}",
           "{params = List.map (fn (x, t) => true) ps, bottom = #div d}",
           ["hs/simplify/run/strict_lazy", "hs/simplify/run/strict_order"]),
-     one ("HS02", "strictness", "no precise exceptions: what an I/O action's alternatives do made strict before the action (D50, M24)",
+     one ("HW02", "strictness", "no precise exceptions: what an I/O action's alternatives do made strict before the action (D50, M24)",
           "corestrict.sml", "          val da = if io then none else da", "          val da = da",
           ["hs/core/vm/strict-order"]),
      (* E13's holes H1 to H9 (the haskell98 roadmap's section What a cache

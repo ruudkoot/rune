@@ -902,7 +902,8 @@ seed rhc's lexer, its literate reader, its layout and its parser, CoreLint,
 Core's interpreter and Core's text reader, these last seen by `hs/core`'s
 jobs; HK01 to HK05 the checker, seen by `hs/hslint`'s; HD01 to HD03
 deriving; HM01 to HM03 desugaring, seen by `hs/desugar`'s; HU01 to HU11
-the holes of rhc's units, seen by `hs/units/holes` (*rhc in units*). F's parser
+the holes of rhc's units, seen by `hs/units/holes` (*rhc in units*); HW01 and
+HW02 strictness, its workers and wrappers, seen at -O2. F's parser
 mutants (`tests/runner/hssyntax.sml`) are the in-process kind.
 
 **rhc's metamorphic relations** (D55; `tests/runner/hsmeta.sml`). Pairs of
@@ -992,7 +993,8 @@ HM03 of rhc's mutants).
 
 **rhc's Core simplifier** (`tests/runner/hssimplify.sml`, `hs/simplify/*`; the
 roadmap's M23, D48, D49). rhc's optimiser on Core runs at `-O2`: its passes
-(`core-simplify`, `core-specialise`, `core-eta`, `core-simplify-2`) each
+(`core-simplify`, `core-specialise`, `core-eta`, `core-cheap`,
+`core-simplify-2`) each
 through `Pass.stage`, with CoreLint and HsLint's target check after each at
 level 2 and Core's text read back at level 3. Each program of
 `tests/hs/simplify` runs on Core's interpreter at `-O0` and `-O2` and on the
@@ -1018,6 +1020,14 @@ on Core's interpreter, and with `--eta=pedantic`, it ends as
 `NAME.expected` and `NAME.exitcode` say, and with `--eta=ghc` it prints
 `NAME.ghc.expected` and ends in a value, so that the probe tells the two
 rules apart.
+`cheap.hs` is D51's: a let of what may raise or loop -- `Int` arithmetic,
+`div`, `chr` out of range, `head []`, `error`, a loop, a case of a
+suspension that is bottom -- bound and never demanded, where cheap eagerness
+(`core-cheap`) makes only a cheap and total let a case; every program runs
+at `-O2` without it too (`--no-cheap-eagerness`), on the interpreter and the
+VM, and so does each sharing budget. `cheapnewtype.hs` holds a cheap let of
+a newtype's type a let, which CoreLint finds made a case (a case on a
+newtype).
 Over the run programs of `tests/hs/lang` (nightly, held while their rows
 are `Planned`), the VM prints at `-O2` what it prints at `-O0` and ends
 alike (`hs/simplify/lang/NAME`), and so it does over the 188 vendored
