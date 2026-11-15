@@ -90,7 +90,8 @@ struct
      identity. Of a set of the library's modules that holds what they
      import, this is the order the whole library's groups give it, so that
      a program checks and desugars its modules of the library alike whether
-     they were read now or restored from the saved world (RhcWorld). A
+     they were read now or taken from bin/rhc's snapshot, which holds the
+     whole library's units (RhcDriver). A
      member is known by its identity and the identities its imports name. *)
   fun canonical (id : 'a -> string, targets : 'a -> string list) (groups : 'a list list) : 'a list list =
     let
@@ -157,9 +158,15 @@ struct
      program's; a program's with `dotted`), and what a reader gives of a
      module: its text's hash, given the text where it asks for it, and the
      header it keeps of a text by its hash, if it keeps one *)
+  (* What a module's reading asks of a reader: its text's hash, and the
+     header kept of a text, by the name it is read for (an import's, or ""
+     for a file rhc is given), the way it is read and the text's hash, not
+     by its file: a header kept of one copy of a text is any copy's, its
+     spans the file's that is read (bin/rhc's snapshot, made where rhc is
+     built, read where it is installed) *)
   type reader = {hash : {file : string, mode : string, text : unit -> string} -> string,
-                 header : {file : string, mode : string, hash : string} -> header option,
-                 keep : {file : string, mode : string, hash : string} * header -> unit}
+                 header : {file : string, name : string, mode : string, hash : string} -> header option,
+                 keep : {file : string, name : string, mode : string, hash : string} * header -> unit}
 
   (* the reader that keeps nothing, each module parsed as it is found *)
   val parsing : reader = {hash = fn _ => "", header = fn _ => NONE, keep = fn _ => ()}
@@ -181,11 +188,33 @@ struct
      program, each module's imports from the header `reader` keeps of its
      text, its tree parsed only where it keeps none or where the module's
      node is asked for. A module whose identity `known` has is not read
-     again: it is in no group of this graph, its group taken before
-     (RhcWorld).
+     again: it is in no group of this graph, its group taken before.
 
      Raises: `HsSource.Error` for a file that does not lex or parse, which
      stops rhc. *)
+  (* each module read so far, the library's in a saved world among them:
+     the modules its imports name, the Prelude's implicit one with them *)
+  val importsOf : string list M.map ref = ref M.empty
+
+  (* `reaches (m, n)`: whether a chain of imports leads from the module
+     `m` to `n`, `m` itself among those it reaches (5.4: an instance is in
+     scope where one does, R26); a module never read reaches itself alone *)
+  val closures : unit M.map M.map ref = ref M.empty
+  fun closure (m : string) : unit M.map =
+    case M.find (!closures, m) of
+      SOME c => c
+    | NONE =>
+        let
+          fun go ([], seen) = seen
+            | go (x :: rest, seen) =
+                if M.member (seen, x) then go (rest, seen)
+                else go (getOpt (M.find (!importsOf, x), []) @ rest, M.insert (seen, x, ()))
+          val c = go ([m], M.empty)
+        in
+          closures := M.insert (!closures, m, c); c
+        end
+  fun reaches (m : string, n : string) : bool = m = n orelse M.member (closure m, n)
+
   fun scan {roots : string list, dotted : bool, known : node M.map, library : bool, reader : reader} : plan =
     let
       val founds : found M.map ref = ref M.empty
@@ -206,7 +235,7 @@ struct
 
       (* a module's file read: its header, the reader's or its tree's, its
          text's hash, and its tree, parsed where first asked for *)
-      fun read (file, library) : header * string * (unit -> A.module) * bool ref =
+      fun read (file, library, name) : header * string * (unit -> A.module) * bool ref =
         let
           val text = once (fn () => readBytes file)
           val mode = if library then "library" else if dotted then "dotted" else "program"
@@ -214,9 +243,11 @@ struct
           val parsed = ref false
           val tree = once (fn () => (parsed := true; parse (file, library, text ())))
           val header =
-            case #header reader {file = file, mode = mode, hash = hash} of
+            case #header reader {file = file, name = name, mode = mode, hash = hash} of
               SOME h => h
-            | NONE => let val h = headerOf (tree ()) in #keep reader ({file = file, mode = mode, hash = hash}, h); h end
+            | NONE =>
+                let val h = headerOf (tree ())
+                in #keep reader ({file = file, name = name, mode = mode, hash = hash}, h); h end
         in
           (header, hash, tree, parsed)
         end
@@ -256,7 +287,7 @@ struct
 
       fun visit (id, file, library, expected) =
         if M.member (!founds, id) orelse M.member (known, id) then ()
-        else add (id, file, library, expected, read (file, library))
+        else add (id, file, library, expected, read (file, library, getOpt (expected, "")))
 
       and add (id, file, library, expected, ({name, at, imports = explicit}, hash, tree, parsed)) =
         let
@@ -285,6 +316,9 @@ struct
                    node = once node, parsed = fn () => !parsed}
         in
           founds := M.insert (!founds, id, f);
+          (* its imports, beside every module's read before, for `reaches` *)
+          importsOf := M.insert (!importsOf, id, #imports f);
+          closures := M.empty;
           order := id :: !order;
           List.app
             (fn ((m, _), SOME (t, SOME file)) =>
@@ -301,7 +335,7 @@ struct
         List.map
           (fn file =>
              let
-               val r as ({name = id, ...}, _, _, _) = read (file, false)
+               val r as ({name = id, ...}, _, _, _) = read (file, false, "")
              in
                if M.member (!founds, id) then () else add (id, file, false, NONE, r);
                id
@@ -371,8 +405,4 @@ struct
      Raises: `HsSource.Error` for a file that does not lex or parse, which
      stops rhc. *)
   fun load {roots, dotted} = loadFrom {roots = roots, dotted = dotted, known = M.empty, library = false}
-
-  (* `loadLibrary ()` reads every module of the library, a graph of no
-     program (RhcWorld). *)
-  fun loadLibrary () = loadFrom {roots = [], dotted = false, known = M.empty, library = true}
 end

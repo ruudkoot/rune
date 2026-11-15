@@ -55,12 +55,19 @@ struct
      the other at every use, at the types the use gives it, so that what
      knows a function of the top level knows it through the alias too: the
      workers, known calls, inlining (M12). The alias itself then goes, where
-     nothing else uses it. *)
+     nothing else uses it. An alias of a function of other than one
+     parameter -- a twin used as a value (Uncurry, D15 C) -- stays: a call
+     through it is a call through a closure, which the function's own name
+     would make a known call of too few or too many arguments. *)
   fun aliases (p : program) : program =
     let
       fun global (Return (Atom (Global (h, ts)))) = SOME (h, ts)
         | global (Mark (_, e)) = global e
         | global _ = NONE
+      val nary =
+        List.foldl (fn (Funs fs, s) =>
+                         List.foldl (fn (f, s) => if List.length (#params f) <> 1 then IntMap.insert (s, #name f, ()) else s) s fs
+                     | (_, s) => s) IntMap.empty p
       val direct =
         List.foldl (fn (Val (g, (tvs, _), e), m) =>
                          (case global e of SOME (h, ts) => IntMap.insert (m, g, (tvs, h, ts)) | NONE => m)
@@ -70,7 +77,7 @@ struct
       fun resolve (g, us, n) =
         case IntMap.find (direct, g) of
           SOME (tvs, h, ts) =>
-            if n > 64 orelse List.length tvs <> List.length us then (g, us)
+            if n > 64 orelse List.length tvs <> List.length us orelse IntMap.member (nary, h) then (g, us)
             else
               let val s = ListPair.foldl (fn (tv, u, s) => IntMap.insert (s, tv, u)) IntMap.empty (tvs, us)
               in resolve (h, List.map (Ty.subst s) ts, n + 1) end

@@ -1,5 +1,5 @@
-KIND	Main	Container :: * -> *
 KIND	Main	App :: (* -> *) -> * -> *
+KIND	Main	Container :: * -> *
 KIND	Main	E :: *
 KIND	Main	N :: *
 KIND	Main	Pair :: * -> *
@@ -7,18 +7,18 @@ KIND	Main	Rose :: * -> *
 KIND	Main	T :: * -> *
 DERIVED	Main	Bounded E
 DERIVED	Main	Enum E
-DERIVED	Main	Eq a => Eq (Rose a)
 DERIVED	Main	Eq E
 DERIVED	Main	Eq N
+DERIVED	Main	Eq a => Eq (Rose a)
 DERIVED	Main	Eq a => Eq (T a)
 DERIVED	Main	Ord E
 DERIVED	Main	Ord N
 DERIVED	Main	Read E
-DERIVED	Main	Show a => Show (Rose a)
 DERIVED	Main	Show E
+DERIVED	Main	Show a => Show (Rose a)
 DERIVED	Main	Show a => Show (T a)
-SIGNED	Main	swap :: (a, a) -> (a, a)
-TYPE	Main	single :: Container a => b -> a b
 SIGNED	Main	main :: IO ()
+TYPE	Main	single :: Container a => b -> a b
+SIGNED	Main	swap :: (a, a) -> (a, a)
 DEFAULT	Main	27:1	Num a -> Integer
 DEFAULT	Main	27:1	Num a -> Integer

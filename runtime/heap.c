@@ -131,7 +131,7 @@ static Obj *alloc_young(VM *vm, size_t size, int stress, int *large) {
         /* a slice point of the low-pause collector's cycle, where the object
            fits the nursery: a slice of the cycle's marking (cycle.c) */
         if (!minor && !stress && vm->alloc.size < vm->gc.nursery_size && size <= vm->gc.nursery_size - vm->alloc.used) cycle_slice(vm);
-        else if (USED_STOCK(vm) > vm->gc.size) vm_gc(vm, 0);
+        else if (USED_STOCK(vm) > vm->gc.size || (stress && vm->gc.stress_full)) vm_gc(vm, 0);
         else collect_minor(vm);
         /* the next slice point nearer than the object's end: moved past it */
         if (size > vm->alloc.size - vm->alloc.used) { vm->alloc.size = vm->alloc.used + size; vm_alloc_limit(vm); }

@@ -62,12 +62,23 @@ static uint32_t callee(VM *vm, Obj *c) {
     return (uint32_t)fidx;
 }
 
+/* D15 C: the general path (stack_apply, runtime/stack/isa_stack.c), the
+   closure and n arguments on the stack's top: the native code of the
+   function it enters, or, where it made a partial application for the
+   instruction after the call, `back`, the native code there */
+static const void *apply(VM *vm, uint32_t n, int tail, void *back) {
+    if (stack_apply(vm, n, tail, vm->pc, back) == STACK_APPLY_ENTERED) return entry(vm->frames[vm->fp].func);
+    return back;
+}
+
 /* CALL, with vm->pc already the instruction after it, which is where the
-   frame returns to: `back` is the native code there. */
+   frame returns to: `back` is the native code there. A closure of more
+   parameters than one, or a partial application, the general path's. */
 const void *native_call(VM *vm, void *back) {
     Value arg = vm_pop(vm);
     Value cv = vm_pop(vm);
     Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, "closure in call");
+    if (obj_contag(c) != 0) { vm_push(vm, cv); vm_push(vm, arg); return apply(vm, 1, 0, back); }
     uint32_t f = callee(vm, c);
     vm_push_frame(vm, f, c, vm->pc, vm->sp);
     vm->frames[vm->fp].native_ret = back;
@@ -78,6 +89,7 @@ const void *native_tailcall(VM *vm) {
     Value arg = vm_pop(vm);
     Value cv = vm_pop(vm);
     Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, "closure in call");
+    if (obj_contag(c) != 0) { vm_push(vm, cv); vm_push(vm, arg); return apply(vm, 1, 1, NULL); }
     uint32_t f = callee(vm, c);
     Frame *fr = &vm->frames[vm->fp];
     vm->sp = fr->base;
@@ -253,6 +265,12 @@ void native_con(VM *vm, int32_t a) { op_CON(vm, a, 0); }
 void native_conn(VM *vm, int32_t a, int32_t b) { op_CONN(vm, a, b); }
 void native_closure(VM *vm, int32_t a, int32_t b) { op_CLOSURE(vm, a, b); }
 void native_setenv(VM *vm, int32_t a) { op_SETENV(vm, a, 0); }
+void native_arity(VM *vm, int32_t a) { op_ARITY(vm, a, 0); }
+/* CALLN and TAILCALLN (D15 C): the closure m - 1 below the top called with
+   the m - 1 values above it, through the general path, which enters a
+   closure of that many parameters at once */
+const void *native_calln(VM *vm, int32_t m, void *back) { return apply(vm, (uint32_t)m - 1, 0, back); }
+const void *native_tailcalln(VM *vm, int32_t m) { return apply(vm, (uint32_t)m - 1, 1, NULL); }
 void native_newexn(VM *vm, int32_t a) { op_NEWEXN(vm, a, 0); }
 void native_mkexn(VM *vm) { op_MKEXN(vm, 0, 0); }
 void native_blackhole(VM *vm) { op_BLACKHOLE(vm, 0, 0); }
@@ -290,6 +308,7 @@ typedef struct Options {
     size_t heap, gc_stress, heap_fill, heap_limit, equality_work, nursery, nursery_max;
     int old_kind;
     int stats, count, emulate_fork, checked, gc_verify, gc_compact, gc_stress_cycles, low_pause, nursery_max_set;
+    int gc_stress_full, caf_mode;
     char *restore, *gc_log;
     size_t intinf_bits, intinf_memory;
     int intinf_mode, intinf_stats, intinf_given;
@@ -323,6 +342,12 @@ static void options(const char *text, const char *where, Options *o) {
         else if (strcmp(w, "--gc-verify") == 0) o->gc_verify = 1;
         else if (strcmp(w, "--gc-compact") == 0) o->gc_compact = 1;
         else if (strcmp(w, "--gc-stress-cycles") == 0) o->gc_stress_cycles = 1;
+        else if (strcmp(w, "--gc-stress-full") == 0) o->gc_stress_full = 1;
+        else if (strcmp(w, "--caf-tables") == 0 && i + 1 < n && (strcmp(words[i + 1], "auto") == 0 || strcmp(words[i + 1], "off") == 0
+                                                                || strcmp(words[i + 1], "on") == 0)) {
+            i++;
+            o->caf_mode = strcmp(words[i], "off") == 0 ? CAF_MODE_OFF : strcmp(words[i], "on") == 0 ? CAF_MODE_ON : CAF_MODE_AUTO;
+        }
         else if (strcmp(w, "--heap-size") == 0 && i + 1 < n && size_arg(words[i + 1], &o->heap)) {
             if (o->heap < 4096) o->heap = 4096;
             i++;
@@ -365,7 +390,7 @@ static void options(const char *text, const char *where, Options *o) {
             strcpy(*to, words[++i]);
         } else {
             fprintf(stderr, "runevm: %s: %s is not an option of a native program "
-                    "(--count, --stats, --heap-size N, --heap-limit N, --equality-work N, --heap-fill P, --gc-stress N, --nursery N, --nursery-max N, --gc G, --old-space S, --gc-verify, --gc-compact, --gc-stress-cycles, --checked, --emulate-fork, "
+                    "(--count, --stats, --heap-size N, --heap-limit N, --equality-work N, --heap-fill P, --gc-stress N, --nursery N, --nursery-max N, --gc G, --old-space S, --gc-verify, --gc-compact, --gc-stress-cycles, --gc-stress-full, --caf-tables M, --checked, --emulate-fork, "
                     "--restore FILE, --gc-log FILE, --intinf=MODE, --intinf-max-bits N, --intinf-gmp-memory N, --intinf-stats)\n", where, w);
             exit(2);
         }
@@ -409,6 +434,8 @@ int main(int argc, char **argv) {
         vm->gc.old_kind = o.old_kind;
         vm->gc.compact_always = o.gc_compact;
         vm->gc.stress_cycles = o.gc_stress_cycles;
+        vm->gc.stress_full = o.gc_stress_full;
+        vm->caf_mode = o.caf_mode;
         vm->intinf_max_bits = o.intinf_bits; vm->intinf_gmp_memory = o.intinf_memory;
         vm->intinf_mode = o.intinf_mode; vm->intinf_stats = o.intinf_stats;
         int ok = child ? vm_resume(vm, argv[2], err, sizeof err) : vm_restore(vm, o.restore, err, sizeof err);
@@ -480,6 +507,8 @@ int main(int argc, char **argv) {
     vm->gc.nursery_max = o.nursery_max;
     vm->gc.compact_always = o.gc_compact;
     vm->gc.stress_cycles = o.gc_stress_cycles;
+    vm->gc.stress_full = o.gc_stress_full;
+    vm->caf_mode = o.caf_mode;
     heap_nursery(vm, o.nursery);
     if (o.gc_log) heap_log_open(vm, o.gc_log);
 

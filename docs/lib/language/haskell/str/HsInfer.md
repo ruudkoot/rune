@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_INFER`](../sig/HS_INFER.md) |
 | Status | required |
-| Members | 11 |
+| Members | 13 |
 | Tests | not listed |
 | Source | [lib/language/haskell/infer.sml](../../../../../lib/language/haskell/infer.sml) |
 
@@ -25,13 +25,15 @@ What each means is on [`HS_INFER`](../sig/HS_INFER.md); the types are this struc
 | datatype | [`cycleDefault`](../sig/HS_INFER.md#type-cycledefault) | `PerModule` &#124; `PerGroup` |
 | type | [`env`](../sig/HS_INFER.md#type-env) | *a type of its own* |
 | type | [`module_`](../sig/HS_INFER.md#type-module_) | `{ast : HsAst.module, id : string, library : bool}` |
-| type | [`part`](../sig/HS_INFER.md#type-part) | `{classes : {key : string, kind : HsTypes.kind, methods : string list, supers : string list} list, cons : (string * {arity : int, fields : string list, tycon : string}) list, fields : (string * {cons : (string * int) list, ty : HsTypes.ty, tycon : string}) list, instances : {cls : string, ctx : {cls : string, ty : HsTypes.ty} list, derived : bool, home : string, id : string, tycon : string, vars : int} list, methods : (string * {cls : string, scheme : {ctx : {cls : string, ty : HsTypes.ty} list, ty : HsTypes.ty, vars : int}}) list, tycons : {cons : string list, key : string, kind : HsTypes.kind, newtype : bool, params : int, synonym : HsTypes.ty option} list, values : (string * {ctx : {cls : string, ty : HsTypes.ty} list, ty : HsTypes.ty, vars : int}) list}` |
+| type | [`part`](../sig/HS_INFER.md#type-part) | `{classes : {key : string, kind : HsTypes.kind, methods : string list, supers : string list} list, cons : (string * {arity : int, fields : string list, strict : bool list, tycon : string}) list, fields : (string * {cons : (string * int) list, ty : HsTypes.ty, tycon : string}) list, instances : {cls : string, ctx : {cls : string, ty : HsTypes.ty} list, derived : bool, home : string, id : string, tycon : string, vars : int} list, methods : (string * {cls : string, scheme : {ctx : {cls : string, ty : HsTypes.ty} list, ty : HsTypes.ty, vars : int}}) list, tycons : {cons : string list, key : string, kind : HsTypes.kind, newtype : bool, params : int, synonym : HsTypes.ty option} list, values : (string * {ctx : {cls : string, ty : HsTypes.ty} list, ty : HsTypes.ty, vars : int}) list}` |
 | val | [`check`](../sig/HS_INFER.md#val-check) | `{cycleDefault : cycleDefault, env : env, evidence : HsEvidence.table, fixity : string -> (HsAst.fixity * int) option, prelude : string * string -> string option, unit : module_ list} -> {derived : (string * string * HsAst.decl list) list, env : env, errors : ({file : string, start : int, stop : int} * string) list}` |
 | val | [`classes`](../sig/HS_INFER.md#val-classes) | `env -> HsClasses.env` |
 | val | [`extend`](../sig/HS_INFER.md#val-extend) | `env * part -> env` |
 | val | [`initial`](../sig/HS_INFER.md#val-initial) | `{primitives : string list} -> env` |
+| val | [`numberFrom`](../sig/HS_INFER.md#val-numberfrom) | `int -> unit` |
 | val | [`part`](../sig/HS_INFER.md#val-part) | `env * (string -> bool) -> part` |
 | val | [`renumber`](../sig/HS_INFER.md#val-renumber) | `int -> unit` |
+| val | [`setReaches`](../sig/HS_INFER.md#val-setreaches) | `(string * string -> bool) -> unit` |
 | val | [`valueScheme`](../sig/HS_INFER.md#val-valuescheme) | `env * string -> {ctx : {cls : string, ty : HsTypes.ty} list, ty : HsTypes.ty, vars : int} option` |
 
 ---

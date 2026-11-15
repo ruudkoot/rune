@@ -6,7 +6,10 @@
    Mid at --lint=2 and run on the VM at both levels, each printing
    NAME.expected and ending as NAME.exitcode says, 0 where there is none,
    a bottom anything else (hs/simplify/run/NAME); with NAME.stdin as its
-   standard input.
+   standard input. And at -O2 without cheap eagerness (--no-cheap-eagerness:
+   D51's C, on at -O2), on the interpreter and the VM, so that a let made a
+   case that raises or loops before it is demanded shows as a difference
+   from that (cheap.hs's bottom probes above all).
 
    A program with a line `-- fuel:` is compiled at -O2 again with the
    rewrites stopped after each of several counts (--fuel=N), every lint
@@ -15,7 +18,8 @@
    -O2 and run on the VM with each size as its standard input, the
    instructions at the second at most 2.2 times those at the first, so
    that a thunk copied where it runs once for each element, or eta that
-   moves its work under a lambda, shows as a square (hs/simplify/budget/NAME);
+   moves its work under a lambda, shows as a square (hs/simplify/budget/NAME;
+   at -O2 without cheap eagerness too);
    one with lines `-- dump: has NAME` or `-- dump: lacks NAME` has its Core
    at -O2 held to them, a value of that name there or not, what the
    simplifier must have made of it, which no run shows
@@ -24,11 +28,20 @@
    the run: compiled with --match=sestoft at -O0 and -O2 and run with IN1
    and with IN2 as its standard input, the objects of the first run at most
    those of the second and 16 more (hs/simplify/objects/NAME); one with a
-   line `-- sestoft:` is run again with --match=sestoft, Sestoft's trees
-   (D34's B), on Core's interpreter and the VM at -O0 and -O2, held to the
-   same NAME.expected and NAME.exitcode, the Report's order's result: B
-   forcing what A does not, or calling a method A does not, shows
-   (hs/simplify/sestoft/NAME).
+   line `-- sestoft:` is run again in the order of a match its level does
+   not take by default (D34, the owner's decision of 2026-11-15: Sestoft's
+   trees at -O2 and above, the Report's order below), --match=sestoft at
+   -O0 and --match=report at -O2, on Core's interpreter and the VM, held to
+   the same NAME.expected and NAME.exitcode, the Report's order's result,
+   which the run family holds the defaults to: each order meets each level,
+   and B forcing what A does not, or calling a method A does not, shows
+   (hs/simplify/sestoft/NAME); one with NAME.ghc.expected is a probe of eta
+   (D48): compiled at -O2 with no --eta, and with --eta=pedantic, it ends
+   as NAME.expected and NAME.exitcode say, the Report's meaning, the
+   pedantic rule being the default, and with --eta=ghc it prints
+   NAME.ghc.expected and ends in a value, the departure from the Report the
+   option is documented as, so that the probe tells the two rules apart
+   (hs/simplify/eta/NAME).
 
    Over the run programs of tests/hs/lang (nightly, held while their rows
    are Planned): what the VM prints at -O2 it printed at -O0, and both end
@@ -102,26 +115,34 @@ struct
         case onVm (p, ["-" ^ level], [], w, "vm." ^ level, stdin) of
           SOME r => judge (what ^ " (VM, -" ^ level ^ ")", p, w, r)
         | NONE => (fail (what ^ ": rhc does not compile it at -" ^ level ^ ": " ^ firstNonEmpty (w ^ "/vm." ^ level ^ ".c.err")); false)
+      val nocheap = ["-O2", "--no-cheap-eagerness"]
       val oks = [judge (what ^ " (interpreter, -O0)", p, w, interpret (p, ["-O0"], w, "interp.O0", stdin)),
                  judge (what ^ " (interpreter, -O2)", p, w, interpret (p, ["-O2"], w, "interp.O2", stdin)),
-                 vm "O0", vm "O2"]
+                 judge (what ^ " (interpreter, -O2 --no-cheap-eagerness)", p, w, interpret (p, nocheap, w, "interp.O2n", stdin)),
+                 vm "O0", vm "O2",
+                 case onVm (p, nocheap, [], w, "vm.O2n", stdin) of
+                   SOME r => judge (what ^ " (VM, -O2 --no-cheap-eagerness)", p, w, r)
+                 | NONE => (fail (what ^ ": rhc does not compile it at -O2 --no-cheap-eagerness: " ^ firstNonEmpty (w ^ "/vm.O2n.c.err")); false)]
     in if List.all (fn b => b) oks then rmTree w else () end
 
-  (* p under Sestoft's trees: what the run family holds A to, at -O0 and
-     -O2, on the interpreter and the VM *)
+  (* p in the order of a match its level does not take by default:
+     Sestoft's trees at -O0, the Report's order at -O2, on the interpreter
+     and the VM, held to what the run family holds the defaults to *)
   fun sestoftOne (p : Lang.program) () =
     let
       val w = workFor ("sestoft", #name p)
       val what = "hs/simplify/sestoft/" ^ #name p
       val stdin = stdinOf p
-      val b = "--match=sestoft"
+      fun other level = if level = "O0" then "--match=sestoft" else "--match=report"
       fun vm level =
-        case onVm (p, ["-" ^ level, b], [], w, "vm." ^ level, stdin) of
-          SOME r => judge (what ^ " (VM, -" ^ level ^ " " ^ b ^ ")", p, w, r)
-        | NONE => (fail (what ^ ": rhc does not compile it at -" ^ level ^ " " ^ b ^ ": " ^ firstNonEmpty (w ^ "/vm." ^ level ^ ".c.err")); false)
-      val oks = [judge (what ^ " (interpreter, -O0 " ^ b ^ ")", p, w, interpret (p, ["-O0", b], w, "interp.O0", stdin)),
-                 judge (what ^ " (interpreter, -O2 " ^ b ^ ")", p, w, interpret (p, ["-O2", b], w, "interp.O2", stdin)),
-                 vm "O0", vm "O2"]
+        case onVm (p, ["-" ^ level, other level], [], w, "vm." ^ level, stdin) of
+          SOME r => judge (what ^ " (VM, -" ^ level ^ " " ^ other level ^ ")", p, w, r)
+        | NONE => (fail (what ^ ": rhc does not compile it at -" ^ level ^ " " ^ other level ^ ": "
+                         ^ firstNonEmpty (w ^ "/vm." ^ level ^ ".c.err")); false)
+      fun interp level =
+        judge (what ^ " (interpreter, -" ^ level ^ " " ^ other level ^ ")", p, w,
+               interpret (p, ["-" ^ level, other level], w, "interp." ^ level, stdin))
+      val oks = [interp "O0", interp "O2", vm "O0", vm "O2"]
     in if List.all (fn b => b) oks then rmTree w else () end
 
   (* the counts of rewrites a program is stopped after *)
@@ -181,7 +202,8 @@ struct
                  fun level l =
                    let
                      val rbc = w ^ "/" ^ l ^ ".rbc"
-                     val cc = exec {cmd = [rhcPath (), "--lint=2", "-" ^ l, fromRoot (#src p), "-o", rbc], dir = SOME w, stdin = "",
+                     val flags = if l = "O2n" then ["-O2", "--no-cheap-eagerness"] else ["-" ^ l]
+                     val cc = exec {cmd = [rhcPath (), "--lint=2"] @ flags @ [fromRoot (#src p), "-o", rbc], dir = SOME w, stdin = "",
                                     stdout = w ^ "/" ^ l ^ ".c.err", stderr = w ^ "/" ^ l ^ ".c.err", timeout = 600}
                    in
                      if cc <> 0 then (fail (what ^ ": rhc does not compile it at -" ^ l ^ ": " ^ firstNonEmpty (w ^ "/" ^ l ^ ".c.err")); false)
@@ -193,7 +215,7 @@ struct
                                        ^ Int.toString x ^ " at the first: a lost share"); false)
                        | _ => (fail (what ^ ": at -" ^ l ^ " no count (" ^ w ^ ")"); false)
                    end
-               in if List.all level ["O0", "O2"] then rmTree w else () end
+               in if List.all level ["O0", "O2", "O2n"] then rmTree w else () end
            | _ => fail (what ^ ": its line -- budget: wants two sizes"))
       | _ => fail (what ^ ": no line -- budget: SIZE1 SIZE2")
     end
@@ -287,6 +309,39 @@ struct
       else ()
     end
 
+  (* an eta probe at -O2: with no --eta, on the VM and on Core's
+     interpreter, and with --eta=pedantic, what NAME.expected and
+     NAME.exitcode say; with --eta=ghc, NAME.ghc.expected and a value *)
+  fun etaOne (p : Lang.program) () =
+    let
+      val w = workFor ("eta", #name p)
+      val what = "hs/simplify/eta/" ^ #name p
+      val stdin = stdinOf p
+      fun compiled (flags, tag) =
+        case onVm (p, "-O2" :: flags, [], w, tag, stdin) of
+          SOME r => SOME r
+        | NONE => (fail (what ^ ": rhc does not compile it at " ^ String.concatWith " " ("-O2" :: flags) ^ ": "
+                         ^ firstNonEmpty (w ^ "/" ^ tag ^ ".c.err")); NONE)
+      fun asReport (flags, tag, how) =
+        case compiled (flags, tag) of
+          SOME r => judge (what ^ " (" ^ how ^ ")", p, w, r)
+        | NONE => false
+      val ghc =
+        case compiled (["--eta=ghc"], "ghc") of
+          SOME (out, c) =>
+            if out <> read (fromRoot (#base p ^ ".ghc.expected")) then
+              (fail (what ^ ": with --eta=ghc it printed otherwise than " ^ #base p ^ ".ghc.expected, the departure the option is documented as ("
+                     ^ w ^ ")"); false)
+            else if c <> 0 then
+              (fail (what ^ ": with --eta=ghc the status is " ^ Int.toString c ^ ", where a value is wanted (" ^ w ^ ")"); false)
+            else true
+        | NONE => false
+      val oks = [asReport ([], "default", "VM, -O2, no --eta"),
+                 judge (what ^ " (interpreter, -O2, no --eta)", p, w, interpret (p, ["-O2"], w, "interp.default", stdin)),
+                 asReport (["--eta=pedantic"], "pedantic", "VM, -O2 --eta=pedantic"),
+                 ghc]
+    in if List.all (fn b => b) oks then rmTree w else () end
+
   (* a run program of tests/hs/lang at -O0 and -O2 on the VM: the same
      output, and both a value or both a bottom. Each way's binary is
      prog.rbc in a directory of its own, the runner's name (ruling 33), so
@@ -323,6 +378,7 @@ struct
           | ("dump", SOME p) => dumpOne p ()
           | ("objects", SOME p) => objectsOne p ()
           | ("sestoft", SOME p) => sestoftOne p ()
+          | ("eta", SOME p) => etaOne p ()
           | ("lang", SOME p) => langOne p ()
           | _ => fail ("hs-simplify: no program " ^ name ^ " for " ^ kind))
     | _ => NONE
@@ -336,6 +392,7 @@ struct
     let
       val own = programs ()
       fun marking key = List.filter (fn (p : Lang.program) => not (null (marked (fromRoot (#src p), key)))) own
+      val probes = List.filter (fn (p : Lang.program) => exists (#base p ^ ".ghc.expected")) own
       fun family (kind, ps) = Test.tag "check" (Test.describe kind (List.map (fn (p : Lang.program) => job (kind, #name p)) ps))
       val lang =
         Test.tag "nightly"
@@ -348,7 +405,8 @@ struct
       List.foldl (fn (c, t) => Test.tag c t)
         (Test.tag "hs" (Test.describe "hs/simplify"
            [family ("run", own), family ("fuel", marking "fuel"), family ("budget", marking "budget"),
-            family ("dump", marking "dump"), family ("objects", marking "objects"), family ("sestoft", marking "sestoft"), lang]))
+            family ("dump", marking "dump"), family ("objects", marking "objects"), family ("sestoft", marking "sestoft"),
+            family ("eta", probes), lang]))
         covers
     end
 end

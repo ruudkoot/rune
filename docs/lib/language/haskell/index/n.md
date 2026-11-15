@@ -16,6 +16,7 @@
 - `noAnn` (val): [HS_AST](../sig/HS_AST.md#val-noann)
 - `node` (val): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#val-node)
 - `noSpan` (val): [HS_SOURCE](../sig/HS_SOURCE.md#val-nospan)
+- `numberFrom` (val): [HS_INFER](../sig/HS_INFER.md#val-numberfrom), [HS_TYPES](../sig/HS_TYPES.md#val-numberfrom)
 
 ---
 

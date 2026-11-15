@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 42 of 42 entries documented |
+| Documentation | 43 of 43 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/types\_sig.sml](../../../../../lib/language/haskell/types_sig.sml) |
 
@@ -72,6 +72,7 @@ sig
   val <a href="#val-spine">spine</a> : ty -&gt; ty * ty list
   val <a href="#val-newmeta">newMeta</a> : int * string -&gt; ty
   val <a href="#val-renumber">renumber</a> : int -&gt; unit
+  val <a href="#val-numberfrom">numberFrom</a> : int -&gt; unit
   val <a href="#val-repr">repr</a> : ty -&gt; ty
   val <a href="#val-zonk">zonk</a> : ty -&gt; ty
   val <a href="#val-metas">metas</a> : ty -&gt; meta ref list
@@ -356,6 +357,17 @@ number from `n`, where they have not passed it.
 
 What follows is then numbered alike however much came before it below
 `n` (rhc's saved world, a program checked by interfaces).
+
+### <a name="val-numberfrom"></a>`numberFrom`
+
+```sml
+val numberFrom : int -> unit
+```
+
+`numberFrom n` makes the next fresh unification and kind variables
+number from `n`, whatever came before.
+
+The caller sees that no variable it numbered at or past `n` stands.
 
 ### <a name="val-repr"></a>`repr`
 

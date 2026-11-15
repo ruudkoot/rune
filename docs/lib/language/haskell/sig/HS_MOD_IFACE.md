@@ -38,7 +38,7 @@ sig
   val <a href="#val-make">make</a> : {<a href="#fld-make.id">id</a> : string, <a href="#fld-make.exports">exports</a> : HsModules.entity list, <a href="#fld-make.defs">defs</a> : HsModules.def list,
               <a href="#fld-make.fixity">fixity</a> : string -&gt; (HsAst.fixity * int) option, <a href="#fld-make.env">env</a> : HsInfer.env} -&gt; t
   val <a href="#val-canonical">canonical</a> : t -&gt; (string * string) list
-  val <a href="#val-fingerprints">fingerprints</a> : (string -&gt; string) -&gt; t * (string -&gt; string option) -&gt; (string * string) list
+  val <a href="#val-fingerprints">fingerprints</a> : (string -&gt; string) -&gt; t list * (string -&gt; string option) -&gt; (string * string) list
 end
 </pre>
 
@@ -103,22 +103,24 @@ names. Two interfaces that a client reads alike have the same text.
 ### <a name="val-fingerprints"></a>`fingerprints`
 
 ```sml
-val fingerprints : (string -> string) -> t * (string -> string option) -> (string * string) list
+val fingerprints : (string -> string) -> t list * (string -> string option) -> (string * string) list
 ```
 
-`fingerprints hash (t, external)` is the fingerprint of each entity
-and instance of `t`, by its key or identity.
+`fingerprints hash (ts, external)` is the fingerprint of each entity
+and instance of the modules `ts`, by its key or identity.
 
-A type's constructors and fields and a class's methods have their
+The modules are those of one unit, an SCC of the module graph, taken
+together. A type's constructors and fields and a class's methods have their
 parent's.
 
 Items are taken in recursive groups (one mentions another, through a
-type, a class, a superclass, an instance's class, type or context): a
-group's fingerprint is `hash` of its members' canonical text and of
-the fingerprints of the entities outside the module they mention,
-`external key` (the key itself where that is NONE: a built-in type),
-so that it moves where what a client reads of it moves, and with what
-it mentions.
+type, a class, a superclass, an instance's class, type or context),
+over all of `ts`, so that a group that spans the modules of a cycle is
+one (H8): a group's fingerprint is `hash` of its members' canonical
+text and of the fingerprints of the entities outside `ts` they
+mention, `external key` (the key itself where that is NONE: a
+built-in type), so that it moves where what a client reads of it
+moves, and with what it mentions.
 
 ---
 
