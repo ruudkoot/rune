@@ -823,8 +823,8 @@ RHC_LIBRARY_MODULES := Array Char Complex CPUTime Directory IO Ix List Locale Ma
 bin/rhc.layer: bin/rhc.rbc bin/runevm $(RHC_SHARE)
 	mkdir -p build/rhc-layer
 	{ for m in $(RHC_LIBRARY_MODULES); do echo "import $$m"; done; printf 'main :: IO ()\nmain = return ()\n'; } > build/rhc-layer/Main.hs
-	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --units --store $@ --match=report build/rhc-layer/Main.hs -o build/rhc-layer/main.rbc < /dev/null
-	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --units --store $@ --match=sestoft build/rhc-layer/Main.hs -o build/rhc-layer/main.rbc < /dev/null
+	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --store $@ --match=report build/rhc-layer/Main.hs -o build/rhc-layer/main.rbc < /dev/null
+	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --store $@ --match=sestoft build/rhc-layer/Main.hs -o build/rhc-layer/main.rbc < /dev/null
 	bin/runevm bin/rhc.rbc --prune-store $@
 	touch $@
 bin/rhc: bin/rhc.rbc bin/rhc.layer bin/runevm Makefile
@@ -2232,8 +2232,12 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) FORCE \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
 	$(RUNE) --library test/runner --library json --library digest --library test/unit $(RUNNER_SRCS) -o $@
+# The runner's jobs run at RUNE_LINT=2 unless it is set, and run bin/rhc with
+# no store (RHC_STORE empty, the haskell98 roadmap's D58), so that none
+# writes a .rhc beside a test's program; a job that tests the store names
+# one of its own (--store) or unsets RHC_STORE in a directory of its own.
 bin/rune-test: bin/rune-test.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\n: "$${RUNE_LINT=2}"\nexport RUNE_LINT\nexec "$$d/runevm" "$$d/rune-test.rbc" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\n: "$${RUNE_LINT=2}"\nexport RUNE_LINT\nRHC_STORE=\nexport RHC_STORE\nexec "$$d/runevm" "$$d/rune-test.rbc" "$$@"\n' > $@
 	chmod +x $@
 
 # The syntax of Haskell 98 in lib/language/haskell (the haskell98 roadmap's

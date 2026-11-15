@@ -105,7 +105,7 @@ struct
      and their fingerprints, its desugaring's interface, what HsLint found
      of its modules alone where it was made at level 2, and its Core *)
   type unit_ = {name : string, ids : string list, mods : HsModIface.t list, prints : (string * string) list,
-                desugar : unit -> HsDesugar.interface, hslint : unit -> HsLint.library option, sum : string,
+                desugar : unit -> HsDesugar.interface, hslint : unit -> HsLint.library option, sum : unit -> string,
                 indexed : unit -> CoreUnits.unitCore}
 
   (* An entry's sections: its modules' interfaces (HsIface's), and its
@@ -266,7 +266,7 @@ struct
         | bytes => SOME (HsLint.decode bytes handle HsLint.Decode msg => raise Failed ("the entry of " ^ name ^ ": " ^ msg))
     in
       {name = name, ids = ids, mods = modules, prints = #prints own, desugar = once (fn () => desugarOf (parts desugarPart)),
-       hslint = once hslint, sum = sum, indexed = indexed}
+       hslint = once hslint, sum = fn () => sum, indexed = indexed}
     end
 
   (* HsLint at level 2 (ruling 66) on a unit made: its modules inferred
@@ -315,59 +315,88 @@ struct
   fun mainIn (own : string -> bool, roots : string list) : string option =
     List.find (fn m => own m andalso HsModules.moduleName m = "Main") roots
 
-  type options = {roots : string list, out : string, store : string option, layers : string list, show : bool,
-                  strings : CoreRuntime.strings, fault : CoreToMid.fault option,
-                  compile : Core.program * string -> int}
+  (* ---- bin/rhc's compile in units, its store and its snapshot ---- *)
 
-  fun compile (opts : options) : int =
+  (* A program as bin/rhc reads it (rulings 66 and 67, D58): each group of
+     its graph a unit, taken from the store where its entry stands (the
+     overlay, `store`, which a compile keeps its units in by default:
+     RhcStoreConfig.storeFor) or from a layer after it (`--layer`, then the
+     snapshot, bin/rhc.layer, made at make time), read only; the rest read
+     and named and checked from the interfaces of the units before it, as
+     a whole check names and checks them (a group after one with an error
+     named and not checked). What it gives: the graph of the groups made
+     (their nodes, and the diagnostics of finding them), the diagnostics of
+     their names and checking, the exports of the modules after the last
+     unit, and, for a program that checks, `lint`, HsLint on each unit made
+     after the parts of the units before it, at level 2; `keep`, each unit
+     made desugared after the interfaces of those before it and kept in the
+     store (its entry: its interfaces, its desugaring's, its fingerprints,
+     HsLint's part, its Core, and its usages, what its naming, checking and
+     desugaring read of the units before it, each with what it gave, against
+     which the entry is judged where it is found again); `link`, after
+     `keep`, what main reaches of all the units, the program's Core, which
+     a whole compile gives byte for byte once compiled; and the link's memo
+     where there is a store, the program's bytecode kept by the units'
+     entries. Without a store (`--no-store`) nothing is kept, and the units
+     are taken from the layers alone. *)
+  type memo = {find : unit -> string option, keep : string -> unit}
+  type front = {graph : G.graph, diags : G.diag list, exports : HsModules.entity list M.map,
+                lint : unit -> unit, keep : unit -> unit, link : unit -> Core.program, memo : memo option}
+
+  (* a unit made by `front`: its key, its nodes, its checking and what that
+     read, the answer a read gives now (its usage), the units before it,
+     its interfaces and fingerprints, and its desugaring, HsLint's part and
+     its entry's sum, made by `keep` and `lint` in the units' order *)
+  type made = {name : string, key : string, ids : string list, nodes : G.node list, r : N.result, reads : HsUsage.read list,
+               answer : HsUsage.read -> string, earlier : unit_ list, mods : HsModIface.t list, prints : prints,
+               desugared : (Core.program * HsDesugar.interface * HsUsage.read list) option ref,
+               linted : HsLint.library option ref, sum : string option ref}
+
+  fun front {roots : string list, dotted : bool, fixpoint : HsModules.fixpoint, check : HsInfer.cycleDefault option,
+             store : string option, layers : string list, strings : CoreRuntime.strings, show : bool} : front =
     let
-      (* the instructions run since the last mark, for --show-units *)
       val mark = ref (!Pass.instructions ())
       fun since () = let val n = !Pass.instructions () in (n - !mark) before mark := n end
-      fun counted what = if #show opts then what ^ ", " ^ Int.toString (since ()) ^ " instructions" else what
-      val fixpoint = HsModules.Least
-      val check = SOME HsInfer.PerModule
+      fun counted what = if show then what ^ ", " ^ Int.toString (since ()) ^ " instructions" else what
+      fun say (name, what) = if show then TextIO.output (TextIO.stdErr, "rhc: unit " ^ name ^ ": " ^ counted what ^ "\n") else ()
+      fun said what = if show then TextIO.output (TextIO.stdErr, "rhc: link: " ^ counted what ^ "\n") else ()
       val evidence = HsEvidence.empty ()
-      fun say (name, what) =
-        if #show opts then TextIO.output (TextIO.stdErr, "rhc: unit " ^ name ^ ": " ^ counted what ^ "\n") else ()
-      val extra = extraOf (#strings opts)
+      val extra = extraOf strings
       (* a unit's entries in the configuration of units, which no back end's
          setting divides; the link's in the whole one *)
       val config = RhcStoreConfig.unitConfiguration extra
       val linkConfig = RhcStoreConfig.configuration extra
       fun lookupIn config (key, holds) =
-        case #store opts of
-          SOME dir => SOME (RhcStore.find {overlay = dir, layers = #layers opts, config = config, key = key, holds = holds})
-        | NONE => if null (#layers opts) then NONE
-                  else SOME (RhcStore.findIn {layers = #layers opts, config = config, key = key, holds = holds})
+        case store of
+          SOME dir => SOME (RhcStore.find {overlay = dir, layers = layers, config = config, key = key, holds = holds})
+        | NONE => if null layers then NONE else SOME (RhcStore.findIn {layers = layers, config = config, key = key, holds = holds})
       val lookup = lookupIn config
-      (* an entry kept, and the sum of what it holds (UnitStore's); with
-         no store, the hash of its sections *)
+      (* an entry kept, and the sum of what it holds (UnitStore's); with no
+         store, the hash of its sections *)
       fun keepIn (config, settings) (key, usages, sections : RhcStore.sections) : string =
-        case #store opts of
+        case store of
           SOME dir =>
             RhcStore.store {dir = dir, settings = settings, config = config, key = key,
                             entry = {head = {usages = usages, exports = Pickle.hash (#iface sections),
                                              level = RhcStoreConfig.level ()},
                                      sections = sections}}
         | NONE => Pickle.hash (String.concatWith "\000" (#iface sections :: List.tabulate (#count sections, #parts sections)))
-      val keep = keepIn (config, RhcStoreConfig.unitSettings extra)
-      val memo = Option.map (fn dir => UnitStore.memoAt (dir, config)) (#store opts)
-      val reader = readerOf {memo = memo, lookup = lookup,
-                             keep = fn (k, sections) => if isSome (#store opts) then ignore (keep (k, [], sections)) else ()}
-      val g = G.scan {roots = #roots opts, dotted = false, known = M.empty, library = false, reader = reader}
-      val () = case List.filter (fn (d : G.diag) => not (#library d)) (#diags g) of
-                 d :: _ => raise Failed (#msg d)
-               | [] => ()
-      val () = if #show opts then TextIO.output (TextIO.stdErr, "rhc: " ^ counted "the graph read" ^ "\n") else ()
-      val leaves = leavesOf (#groups g)
-      val start = startOf (leaves, evidence)
-      fun step (found : G.found list, (done : unit_ list, prints : string M.map)) : unit_ list * string M.map =
+      val keepUnit = keepIn (config, RhcStoreConfig.unitSettings extra)
+      val statMemo = Option.map (fn dir => UnitStore.memoAt (dir, config)) store
+      (* what f reads of the units before, where there is a store to keep
+         it in *)
+      fun recorded f = if isSome store then RhcIface.recording f else (f (), [])
+      val reader = readerOf {memo = statMemo, lookup = lookup,
+                             keep = fn (k, sections) => if isSome store then ignore (keepUnit (k, [], sections)) else ()}
+      val plan = G.scan {roots = roots, dotted = dotted, known = M.empty, library = false, reader = reader}
+      val () = if show then TextIO.output (TextIO.stdErr, "rhc: " ^ counted "the graph read" ^ "\n") else ()
+      val start = startOf (leavesOf (#groups plan), evidence)
+      fun step (found : G.found list, (done : unit_ list, prints : string M.map, failed : bool, made : made list,
+                                       diags : G.diag list, exports)) =
         let
           val ids = List.map #id found
           val name = String.concatWith "+" ids
           val key = unitKey (name, found)
-          (* its modules parsed, where they are first asked for *)
           val nodes = once (fn () => List.map (fn (f : G.found) => #node f ()) found)
           val ifaces = List.concat (List.map #mods done)
           fun own home = List.exists (fn i => i = home) ids
@@ -383,169 +412,10 @@ struct
                       in nowCell := SOME s; s end
           fun current k = case HsUsage.fromKey k of SOME r => answerIn (now ()) r | NONE => "?"
           val holds = RhcStore.holds {level = RhcStoreConfig.level (), current = current}
-          fun made why =
+          fun make why =
             let
-              val ((s, r, (core, desugar)), reads) =
-                RhcIface.recording (fn () =>
-                  let
-                    val s = N.groups (N.extend (start ifaces, nodes ()), [nodes ()], fixpoint, check)
-                    val () = case List.filter (fn d => not (#library d)) (#diags s) of
-                               [] => ()
-                             | d :: _ => raise Failed (#msg d)
-                    val r : N.result = {modules = List.rev (#modules s), exports = #exports s, diags = #diags s,
-                                        types = SOME (#types s), evidence = evidence, derived = #derived s}
-                    (* the graph RhcDesugar.unit reads: the program's roots *)
-                    val graph = {groups = [nodes ()], roots = #roots g, diags = []}
-                  in (s, r, RhcDesugar.unit (List.map (fn (u : unit_) => #desugar u ()) done, ids, graph, r)) end)
-              (* HsLint at level 2, out of the recording (it reads no
-                 interface), and the target check of the unit's Core *)
-              val lint = hslintOf {modules = lintModules (own, r), main = mainIn (own, #roots g), r = r, earlier = done}
-              val () = if isSome lint then RhcLint.target core else ()
-              val mods = RhcIface.ofModules (s, ids)
-              (* the first unit reads its own source and rhc's leaves alone,
-                 which its key and the configuration hold *)
-              val usages = if null done then [] else List.map (fn r => (HsUsage.key r, answerIn (now ()) r)) reads
-              (* at -O2, what a client may inline or specialise of it (M23),
-                 where the unit is kept: a compile with no store keeps
-                 nothing, and the simplifier on each own unit would be work
-                 thrown away *)
-              val unfoldings = if isSome (#store opts) then RhcSimplify.unfoldingsOf core else []
-              val iface = HsIface.encode {modules = mods, unfoldings = unfoldings}
-              val own = printsFor (mods, prints)
-              (* its Core by its declarations, so that a link reads only what
-                 it reaches (CoreUnits.index) *)
-              val (index, texts) = CoreUnits.index core
-              val texts = Vector.fromList texts
-              fun part i =
-                if i = desugarPart then desugarText desugar
-                else if i = printsPart then printsText own
-                else if i = hslintPart then (case lint of SOME l => HsLint.encode l | NONE => "")
-                else if i = indexPart then index
-                else Vector.sub (texts, i - declsPart)
-              val sum = keep (key, usages, {iface = iface, parts = part, count = declsPart + Vector.length texts})
-            in
-              say (name, "compiled" ^ why);
-              {name = name, ids = ids, mods = mods, prints = #prints own, desugar = fn () => desugar,
-               hslint = fn () => lint, sum = sum, indexed = fn () => CoreUnits.InHand core}
-            end
-          fun taken (sections, sum) =
-            (say (name, "taken"); takenUnit {name = name, ids = ids, prints = prints} (sections, sum))
-          val u =
-            case lookup (key, holds) of
-              SOME (UnitStore.Found ({sections, ...}, sum)) => taken (sections, sum)
-            | SOME (UnitStore.FoundBehind ({sections, ...}, sum)) => taken (sections, sum)
-            | SOME (UnitStore.Missed why) => made (" (" ^ why ^ ")")
-            | NONE => made ""
-        in
-          (done @ [u], List.foldl (fn ((k, f), m) => M.insert (m, k, f)) prints (#prints u))
-        end
-      val (units, _) = List.foldl step ([], M.empty) (#groups g)
-      val () = Option.app UnitStore.memoWrite memo
-      val () =
-        if #show opts then
-          let val parsed = List.filter (fn (f : G.found) => #parsed f ()) (List.concat (#groups g))
-          in
-            TextIO.output (TextIO.stdErr, "rhc: parsed " ^ Int.toString (length parsed) ^ " of " ^
-                                          Int.toString (length (List.concat (#groups g))) ^ " modules" ^
-                                          String.concat (List.map (fn f => " " ^ #id f) parsed) ^ "\n")
-          end
-        else ()
-      (* the link, the roadmap's C: its memo keyed by the units' entries,
-         by the sum of each, which covers its Core, all the back end reads
-         (the runtime's is rhc's own, in the configuration), so that a link
-         taken reads and hashes no unit's Core *)
-      val linkKey = RhcStore.key ("link", List.map (fn (u : unit_) => (#name u, #sum u)) units)
-      fun reached () =
-        let
-          (* what main reaches of the units, each read only for what it
-             reaches *)
-          val p = CoreUnits.reachIndexed (CoreUnits.InHand (CoreRuntime.program (#strings opts)) :: List.map (fn (u : unit_) => #indexed u ()) units,
-                                          ["main"])
-                  handle CoreUnits.Error msg => raise Failed msg
-          val () = if Pass.linting' 0 then CoreLint.check p handle CoreLint.Error msg => raise Failed msg else ()
-        in p end
-      fun bytesOf f = (let val i = BinIO.openIn f in Byte.bytesToString (BinIO.inputAll i) before BinIO.closeIn i end)
-      fun write (f, b) = let val o' = BinIO.openOut f in BinIO.output (o', Byte.stringToBytes b); BinIO.closeOut o' end
-      fun said what = if #show opts then TextIO.output (TextIO.stdErr, "rhc: link: " ^ counted what ^ "\n") else ()
-    in
-      case lookupIn linkConfig (linkKey, RhcStore.holds {level = RhcStoreConfig.level (), current = fn _ => "?"}) of
-        SOME (UnitStore.Found ({sections, ...}, _)) => (said "taken"; write (#out opts, #parts sections 0); 0)
-      | _ =>
-          let
-            val p = reached ()
-            val () = said "reached"
-            val status = #compile opts (p, #out opts)
-          in
-            if status = 0 then
-              (ignore (keepIn (linkConfig, RhcStoreConfig.settings extra)
-                         (linkKey, [], {iface = "", parts = fn _ => bytesOf (#out opts), count = 1}));
-               said "compiled")
-            else ();
-            status
-          end
-    end
-
-  (* ---- bin/rhc's compile against its snapshot (ruling 67) ---- *)
-
-  (* A program as bin/rhc reads it: each group of its graph a unit, the
-     library's taken from the snapshot's layers where they are there
-     (bin/rhc.layer, made at make time: its interfaces, its desugaring's,
-     HsLint's part and its Core), the rest read and named and checked from
-     the interfaces of the units before it, as a whole check names and
-     checks them (a group after one with an error named and not checked).
-     Nothing is kept: there is no overlay. What it gives: the graph of the
-     groups made (their nodes, and the diagnostics of finding them), the
-     diagnostics of their names and checking, the exports of the modules
-     after the last unit, and two steps for a program that checks: `lint`,
-     HsLint on each unit made after the parts of the units before it, at
-     level 2; and `link`, each unit made desugared after the interfaces of
-     those before it and what main reaches of all of them, the program's
-     Core, which a whole compile gives byte for byte once compiled. *)
-  type front = {graph : G.graph, diags : G.diag list, exports : HsModules.entity list M.map,
-                lint : unit -> unit, link : unit -> Core.program}
-
-  (* a unit made by `front`: its nodes, its checking, the units before it,
-     and its desugaring and HsLint's part, made by `link` and `lint` in the
-     units' order *)
-  type made = {ids : string list, nodes : G.node list, r : N.result, earlier : unit_ list,
-               desugared : (Core.program * HsDesugar.interface) option ref, linted : HsLint.library option ref}
-
-  fun front {roots : string list, dotted : bool, fixpoint : HsModules.fixpoint, check : HsInfer.cycleDefault option,
-             layers : string list, strings : CoreRuntime.strings, show : bool} : front =
-    let
-      val mark = ref (!Pass.instructions ())
-      fun since () = let val n = !Pass.instructions () in (n - !mark) before mark := n end
-      fun counted what = if show then what ^ ", " ^ Int.toString (since ()) ^ " instructions" else what
-      fun say (name, what) = if show then TextIO.output (TextIO.stdErr, "rhc: unit " ^ name ^ ": " ^ counted what ^ "\n") else ()
-      val evidence = HsEvidence.empty ()
-      val config = RhcStoreConfig.unitConfiguration (extraOf strings)
-      fun lookup (key, holds) =
-        if null layers then NONE else SOME (RhcStore.findIn {layers = layers, config = config, key = key, holds = holds})
-      val reader = readerOf {memo = NONE, lookup = lookup, keep = fn _ => ()}
-      val plan = G.scan {roots = roots, dotted = dotted, known = M.empty, library = false, reader = reader}
-      val () = if show then TextIO.output (TextIO.stdErr, "rhc: " ^ counted "the graph read" ^ "\n") else ()
-      val start = startOf (leavesOf (#groups plan), evidence)
-      fun step (found : G.found list, (done : unit_ list, prints : string M.map, failed : bool, made : made list,
-                                       diags : G.diag list, exports)) =
-        let
-          val ids = List.map #id found
-          val name = String.concatWith "+" ids
-          val key = unitKey (name, found)
-          val nodes = once (fn () => List.map (fn (f : G.found) => #node f ()) found)
-          val ifaces = List.concat (List.map #mods done)
-          fun own home = List.exists (fn i => i = home) ids
-          fun answerIn s r = RhcIface.answer {state = s, fingerprint = fn k => M.find (prints, k), own = own} r
-          val nowCell : N.state option ref = ref NONE
-          fun now () =
-            case !nowCell of
-              SOME s => s
-            | NONE => let val s = N.groups (N.extend (start ifaces, nodes ()), [nodes ()], fixpoint, NONE)
-                      in nowCell := SOME s; s end
-          fun current k = case HsUsage.fromKey k of SOME r => answerIn (now ()) r | NONE => "?"
-          val holds = RhcStore.holds {level = RhcStoreConfig.level (), current = current}
-          fun make () =
-            let
-              val s = N.groups (N.extend (start ifaces, nodes ()), [nodes ()], fixpoint, if failed then NONE else check)
+              val (s, reads) =
+                recorded (fn () => N.groups (N.extend (start ifaces, nodes ()), [nodes ()], fixpoint, if failed then NONE else check))
               val r : N.result = {modules = List.rev (#modules s), exports = #exports s, diags = #diags s,
                                   types = if failed orelse not (isSome check) then NONE else SOME (#types s),
                                   evidence = evidence, derived = #derived s}
@@ -554,24 +424,34 @@ struct
               val own' = printsFor (mods, prints)
               val desugared = ref NONE
               val linted = ref NONE
+              val sum = ref NONE
               fun mine what f = fn () => case !desugared of SOME x => f x | NONE => raise Fail ("RhcDriver: " ^ name ^ "'s " ^ what)
               val u : unit_ =
                 {name = name, ids = ids, mods = mods, prints = #prints own', desugar = mine "desugaring" #2,
-                 hslint = fn () => !linted, sum = "", indexed = mine "Core" (fn (c, _) => CoreUnits.InHand c)}
+                 hslint = fn () => !linted,
+                 sum = fn () => case !sum of SOME x => x | NONE => raise Fail ("RhcDriver: " ^ name ^ "'s entry"),
+                 indexed = mine "Core" (fn (c, _, _) => CoreUnits.InHand c)}
             in
-              say (name, if failed then "named" else "checked");
-              (u, SOME {ids = ids, nodes = nodes (), r = r, earlier = done, desugared = desugared, linted = linted}, ds,
-               #exports s)
+              say (name, if failed then "named" else "compiled" ^ why);
+              (u, SOME {name = name, key = key, ids = ids, nodes = nodes (), r = r, reads = reads, answer = fn x => answerIn (now ()) x,
+                        earlier = done, mods = mods, prints = own', desugared = desugared, linted = linted, sum = sum},
+               ds, #exports s)
+            end
+          (* a unit taken: its modules' exports those its entry keeps *)
+          fun taken (sections, sum) =
+            let val u = takenUnit {name = name, ids = ids, prints = prints} (sections, sum)
+            in
+              say (name, "taken");
+              (u, NONE, [], List.foldl (fn (m : HsModIface.t, e) => M.insert (e, #id m, #exports m)) exports (#mods u))
             end
           val (u, m, ds, ex) =
-            if List.all #library found andalso not failed then
+            if failed then make ""
+            else
               case lookup (key, holds) of
-                SOME (UnitStore.Found ({sections, ...}, sum)) =>
-                  (say (name, "taken"); (takenUnit {name = name, ids = ids, prints = prints} (sections, sum), NONE, [], exports))
-              | SOME (UnitStore.FoundBehind ({sections, ...}, sum)) =>
-                  (say (name, "taken"); (takenUnit {name = name, ids = ids, prints = prints} (sections, sum), NONE, [], exports))
-              | _ => make ()
-            else make ()
+                SOME (UnitStore.Found ({sections, ...}, sum)) => taken (sections, sum)
+              | SOME (UnitStore.FoundBehind ({sections, ...}, sum)) => taken (sections, sum)
+              | SOME (UnitStore.Missed why) => make (if isSome store then " (" ^ why ^ ")" else "")
+              | NONE => make ""
         in
           (done @ [u], List.foldl (fn ((k, f), m) => M.insert (m, k, f)) prints (#prints u), failed orelse not (null ds),
            (case m of SOME x => made @ [x] | NONE => made), diags @ ds, ex)
@@ -592,22 +472,80 @@ struct
                     in linted := hslintOf {modules = lintModules (own, r), main = mainIn (own, #roots plan), r = r, earlier = earlier}
                     end)
           made
+      (* each unit made desugared, in order, and kept: the first unit reads
+         its own source and rhc's leaves alone, which its key and the
+         configuration hold, so it keeps no usage; once *)
+      val kept = ref false
+      fun keep () =
+        if !kept then ()
+        else
+          (kept := true;
+           List.app
+             (fn ({name, key, ids, nodes, r, reads, answer, earlier, mods, prints, desugared, linted, sum, ...} : made) =>
+                let
+                  val ((core, desugar), reads') =
+                    recorded (fn () =>
+                      RhcDesugar.unit (List.map (fn (u : unit_) => #desugar u ()) earlier, ids,
+                                       {groups = [nodes], roots = #roots plan, diags = []}, r))
+                  val () = desugared := SOME (core, desugar, reads')
+                  fun distinct (seen, [], acc) = List.rev acc
+                    | distinct (seen, x :: xs, acc) =
+                        let val k = HsUsage.key x
+                        in if M.member (seen, k) then distinct (seen, xs, acc) else distinct (M.insert (seen, k, ()), xs, x :: acc) end
+                  (* its entry, its sum what the link's memo is keyed by *)
+                  fun entry () =
+                    let
+                      val usages = if null earlier then []
+                                   else List.map (fn x => (HsUsage.key x, answer x)) (distinct (M.empty, reads @ reads', []))
+                      val (index, texts) = CoreUnits.index core
+                      val texts = Vector.fromList texts
+                      fun part i =
+                        if i = desugarPart then desugarText desugar
+                        else if i = printsPart then printsText prints
+                        else if i = hslintPart then (case !linted of SOME l => HsLint.encode l | NONE => "")
+                        else if i = indexPart then index
+                        else Vector.sub (texts, i - declsPart)
+                      (* at -O2, what a client may inline or specialise of
+                         it (M23), where the unit is kept *)
+                      val iface = HsIface.encode {modules = mods, unfoldings = RhcSimplify.unfoldingsOf core}
+                    in
+                      keepUnit (key, usages, {iface = iface, parts = part, count = declsPart + Vector.length texts})
+                    end
+                in
+                  if isSome store then sum := SOME (entry ()) else ()
+                end)
+             made;
+           Option.app UnitStore.memoWrite statMemo;
+           (* the store trimmed as Rune's is, where it is due (StorePolicy) *)
+           Option.app StorePolicy.trimAfter store)
       fun link () =
         let
-          val () =
-            List.app (fn ({ids, nodes, r, earlier, desugared, ...} : made) =>
-                        desugared := SOME (RhcDesugar.unit (List.map (fn (u : unit_) => #desugar u ()) earlier, ids,
-                                                            {groups = [nodes], roots = #roots plan, diags = []}, r)))
-              made
+          val () = keep ()
           val p = CoreUnits.reachIndexed (CoreUnits.InHand (CoreRuntime.program strings) :: List.map (fn (u : unit_) => #indexed u ()) units,
                                           ["main"])
                   handle CoreUnits.Error msg => raise Failed msg
         in
-          if show then TextIO.output (TextIO.stdErr, "rhc: link: " ^ counted "reached" ^ "\n") else ();
-          p
+          said "reached"; p
         end
+      (* the link's memo: keyed by the units' entries, by the sum of each,
+         which covers its Core and all the back end reads (the runtime's is
+         rhc's own, in the configuration), so that a link taken reads and
+         hashes no unit's Core *)
+      fun linkKey () = (keep (); RhcStore.key ("link", List.map (fn (u : unit_) => (#name u, #sum u ())) units))
+      val memo =
+        case store of
+          NONE => NONE
+        | SOME _ =>
+            SOME {find = fn () =>
+                           (case lookupIn linkConfig (linkKey (), RhcStore.holds {level = RhcStoreConfig.level (), current = fn _ => "?"}) of
+                              SOME (UnitStore.Found ({sections, ...}, _)) => (said "taken"; SOME (#parts sections 0))
+                            | _ => NONE),
+                  keep = fn bytes =>
+                           (ignore (keepIn (linkConfig, RhcStoreConfig.settings extra)
+                                      (linkKey (), [], {iface = "", parts = fn _ => bytes, count = 1}));
+                            said "compiled")}
     in
       {graph = {groups = List.map #nodes made, roots = #roots plan, diags = #diags plan}, diags = diags, exports = exports,
-       lint = lint, link = link}
+       lint = lint, keep = keep, link = link, memo = memo}
     end
 end

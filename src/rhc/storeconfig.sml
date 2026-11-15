@@ -35,6 +35,21 @@ struct
        ("intbits", Int.toString (!Target.intBits))]
     @ (if !Lower.checkCasts then [("check-casts", "1")] else [])
 
+  (* The store a compile of a program of Haskell keeps its units in (the
+     haskell98 roadmap's D58): the one --store names, else RHC_STORE's (an
+     empty one, none), else .rhc beside the program's root, its Main's
+     file, as Rune's .rune is beside its first input (StorePolicy); NONE
+     with --no-store, which keeps nothing *)
+  fun storeFor {given : string option, none : bool, root : string} : string option =
+    if none then NONE
+    else
+      case given of
+        SOME d => SOME d
+      | NONE =>
+          case OS.Process.getEnv "RHC_STORE" of
+            SOME d => if d = "" then NONE else SOME d
+          | NONE => SOME (OS.Path.joinDirFile {dir = OS.Path.dir root, file = ".rhc"})
+
   fun unitConfiguration (extra : (string * string) list) : string = UnitStore.configuration (RhcStore.hash, unitSettings extra)
   fun configuration (extra : (string * string) list) : string = UnitStore.configuration (RhcStore.hash, settings extra)
 end

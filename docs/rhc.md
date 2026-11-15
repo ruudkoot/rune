@@ -59,8 +59,16 @@ reads, names, checks and desugars the program's own modules alone, a group
 of its module graph at a time, each from the interfaces of those before it;
 its Core is what `main` reaches of the units, which compiles to the bytes a
 whole compile makes. At level 2 HsLint checks each unit after what it found
-of the units before, the library's kept in the snapshot. Nothing is
-written: there is no store of the program's own.
+of the units before, the library's kept in the snapshot.
+
+The program's own units are kept too, in a store of its own: `.rhc`
+beside the program's file, as Rune keeps a build's in `.rune`. A check, a
+run and a compile each keep the units they make, and take a unit from
+there the next time wherever everything it read of the units before it is
+as it was; a compile with `-o` keeps its bytecode too, by the units it
+links (the link's memo). With nothing edited every unit and the link are
+taken, and only an edited unit and the units that read what changed are
+made again.
 
 - `--whole` reads, checks and desugars the library as well, with the
   program, as the reference the snapshot is held to (`hs/snapshot/*` in
@@ -69,14 +77,24 @@ written: there is no store of the program's own.
 - The order of a match changes the library's Core, so the snapshot holds
   the library's units in each, the Report's for `-O0` and `-O1` and
   Sestoft's trees for `-O2` (below). `--strings=whole` changes it too, and
-  the snapshot holds none of its units: they are made at each compile.
-- `--units FILE.hs -o OUT` compiles each group of the module graph as a
-  unit kept in a store, `--store DIR`, and takes it from there at the next
-  compile where everything it read of the units before it is as it was;
-  `--layer DIR` adds a store read and never written, after `--store` and
+  the snapshot holds none of its units: they are made at the first
+  compile, and kept in the program's store (below).
+- `--store DIR` keeps the units in `DIR` in place of `.rhc`, and so does
+  the environment's `RHC_STORE`, where an empty one keeps none;
+  `--no-store` keeps nothing and takes the program's units from no store
+  (`--store` before `RHC_STORE`, `--no-store` before both). The tests run
+  with `RHC_STORE` empty ([testing.md](testing.md)). `--whole`, and the
+  options that go whole, keep nothing either.
+- `--layer DIR` adds a store read and never written, after the store and
   before the snapshot; `--show-units` says of each unit, and of the link,
-  whether it was compiled or taken. With nothing edited every unit and the
-  link are taken.
+  whether it was compiled or taken. `--units` is what every check and
+  compile of Haskell is, and says nothing more of one; of Core it compiles
+  each `--read-core` file apart (below).
+- The store is kept small as Rune's is: at most once a day a compile drops
+  what no compile has taken for a week, and past 4 GiB what was taken
+  least recently ([units.md](units.md), *The store*). Two compiles at once
+  on one store are safe, as two builds on one `.rune` are: an entry is
+  written whole or not at all, and each compile takes what it finds.
 - A store keeps one configuration for each rhc and set of the options its
   entries depend on. `rhc --prune-store DIR` drops every configuration of
   another rhc, file by file as the store's own trim drops what it drops;
@@ -164,8 +182,9 @@ of them is a bug of rhc's.
 
 | Option | What it does |
 |---|---|
-| `--units` | with `-o`, compile a program of Haskell a unit at a time, kept in the store (above); of Core, each `--read-core` file a unit |
-| `--store DIR` | with `--units`, the store a unit is kept in and taken from |
+| `--units` | of Core, with `-o`, each `--read-core` file a unit, compiled apart and linked; a program of Haskell is compiled a unit at a time without it |
+| `--store DIR` | the store a unit is kept in and taken from, in place of `.rhc` beside the program; of Core, with `--units` |
+| `--no-store` | keep nothing, and take the program's units from the layers and the snapshot alone |
 | `--layer DIR` | a store a unit is taken from and never kept in |
 | `--show-units` | say of each unit whether it was compiled or taken |
 | `--link=whole\|units` | with `--units` over Core, join the units' Core and compile what `main` reaches whole, or link each unit's code (the default) |
@@ -187,7 +206,8 @@ of them is a bug of rhc's.
 | `--help` | print the options |
 
 `RHC_INSTRUCTIONS`, set, has rhc print the bytecode instructions a command
-took on standard error.
+took on standard error. `RHC_STORE` names the store a program's units are
+kept in, in place of `.rhc`; empty, none (above).
 
 **The Core simplifier.** At `-O0` and `-O1` the Core is the desugaring's,
 the Report's translation taken literally. At `-O2` five passes rewrite it
@@ -301,5 +321,4 @@ where no default does: `--eta=ghc` breaks `seq` on a partial application
   instance binding a method not in scope, or a type synonym exported as
   `S(..)`; nor give chapter 21's I/O errors of a full device, a failed
   `hClose` and block buffering.
-- Keep a program's own units between compiles without `--units --store`,
-  or read a dump against the snapshot: the dumps read whole.
+- Read a dump against the snapshot or the store: the dumps read whole.
