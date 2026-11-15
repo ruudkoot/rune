@@ -5,13 +5,16 @@
    and empty until M23 (D44's C). The desugaring's part, its Core among
    it, is the desugaring's own text, which a client keeps beside this one:
    rhc's driver keeps it as a section of its own, read only where a unit
-   is desugared after it.
+   is desugared after it. The strictness section (M24) is each function's
+   strictness signature, by its Core name, in CoreStrict.show's text;
+   empty below -O2.
 
    Area: Languages *)
 signature HS_IFACE =
 sig
-  (* A unit's interface: its modules', and the unfoldings, none yet. *)
-  type t = {modules : HsModIface.t list, unfoldings : string list}
+  (* A unit's interface: its modules', the unfoldings, and the strictness
+     signatures. *)
+  type t = {modules : HsModIface.t list, unfoldings : string list, strictness : (string * string) list}
 
   (* What makes bytes no interface: where, and what. *)
   exception Bad of string

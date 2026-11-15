@@ -42,6 +42,9 @@
    NAME.ghc.expected and ends in a value, the departure from the Report the
    option is documented as, so that the probe tells the two rules apart
    (hs/simplify/eta/NAME).
+   A program with a line `-- also: FLAGS` runs at -O2 with FLAGS too, on
+   the interpreter and the VM, as the rest of run/NAME (M24's strictness
+   under GHC's eta rule, which sees through IO to its state token).
 
    Over the run programs of tests/hs/lang (nightly, held while their rows
    are Planned): what the VM prints at -O2 it printed at -O0, and both end
@@ -123,7 +126,21 @@ struct
                  case onVm (p, nocheap, [], w, "vm.O2n", stdin) of
                    SOME r => judge (what ^ " (VM, -O2 --no-cheap-eagerness)", p, w, r)
                  | NONE => (fail (what ^ ": rhc does not compile it at -O2 --no-cheap-eagerness: " ^ firstNonEmpty (w ^ "/vm.O2n.c.err")); false)]
-    in if List.all (fn b => b) oks then rmTree w else () end
+      (* `-- also: FLAGS`: -O2 with FLAGS too, each line a way *)
+      fun also (i, line) =
+        let
+          val flags = "-O2" :: String.tokens Char.isSpace line
+          val tag = "also" ^ Int.toString i
+          val how = " (" ^ String.concatWith " " flags ^ ")"
+        in
+          [judge (what ^ " (interpreter" ^ how ^ ")", p, w, interpret (p, flags, w, "interp." ^ tag, stdin)),
+           case onVm (p, flags, [], w, "vm." ^ tag, stdin) of
+             SOME r => judge (what ^ " (VM" ^ how ^ ")", p, w, r)
+           | NONE => (fail (what ^ ": rhc does not compile it" ^ how ^ ": " ^ firstNonEmpty (w ^ "/vm." ^ tag ^ ".c.err")); false)]
+        end
+      val alsos = List.concat (ListPair.map also (List.tabulate (length (marked (fromRoot (#src p), "also")), fn i => i),
+                                                  marked (fromRoot (#src p), "also")))
+    in if List.all (fn b => b) (oks @ alsos) then rmTree w else () end
 
   (* p in the order of a match its level does not take by default:
      Sestoft's trees at -O0, the Report's order at -O2, on the interpreter
@@ -288,7 +305,9 @@ struct
                   else
                     let
                       val at = i + Substring.size lead
-                      val ok = (at = 0 orelse edge (String.sub (text, at - 1)))
+                      (* a function strictness split (M24) is its worker, %w:NAME, too *)
+                      val ok = (at = 0 orelse edge (String.sub (text, at - 1))
+                                orelse (at >= 3 andalso String.substring (text, at - 3, 3) = "%w:"))
                                andalso (at + size n >= size text orelse edge (String.sub (text, at + size n)))
                     in ok orelse from (at + 1) end
                 end

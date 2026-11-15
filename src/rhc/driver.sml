@@ -172,6 +172,10 @@ struct
   fun extraOf (strings : CoreRuntime.strings) : (string * string) list =
     [("strings", case strings of CoreRuntime.Lazy => "lazy" | CoreRuntime.Whole => "whole"),
      ("match", case !HsMatch.order of HsMatch.Report => "report" | HsMatch.Sestoft => "sestoft"), ("driver", "hs")]
+    (* the interface's unfoldings and strictness signatures, which only
+       --unfoldings at -O2 writes: an entry with them shares with none
+       without *)
+    @ (if !RhcOptions.unfoldings then [("sections", "unfoldings")] else [])
 
   (* A module's header kept in the store: by the name it is read for, the
      way it is read and its text's hash, not by its file (ruling 67), so a
@@ -505,9 +509,14 @@ struct
                         else if i = hslintPart then (case !linted of SOME l => HsLint.encode l | NONE => "")
                         else if i = indexPart then index
                         else Vector.sub (texts, i - declsPart)
-                      (* at -O2, what a client may inline or specialise of
-                         it (M23), where the unit is kept *)
-                      val iface = HsIface.encode {modules = mods, unfoldings = RhcSimplify.unfoldingsOf core}
+                      (* with --unfoldings at -O2, what a client may inline
+                         or specialise of it (M23) and its functions'
+                         strictness signatures (M24); none by default, since
+                         no client reads them yet and the store is on by
+                         default (D58), so that the simplifier would run on
+                         each unit made for nothing *)
+                      val (unfoldings, strictness) = if !RhcOptions.unfoldings then RhcSimplify.sectionsOf core else ([], [])
+                      val iface = HsIface.encode {modules = mods, unfoldings = unfoldings, strictness = strictness}
                     in
                       keepUnit (key, usages, {iface = iface, parts = part, count = declsPart + Vector.length texts})
                     end

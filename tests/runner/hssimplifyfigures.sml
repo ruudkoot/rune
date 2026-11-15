@@ -22,7 +22,8 @@
    The ways are O0 and O2, each the level's defaults (the pedantic rule;
    the Report's order at -O0, Sestoft's trees at -O2 since the owner's
    decision on D34 of 2026-11-15), O2-report (D34's A at -O2), O2-ghc
-   (D48's D), O2-sestoft and O0-sestoft (D34's B), all of them where none
+   (D48's D), O2-sestoft and O0-sestoft (D34's B), O2-nostrict (M24's
+   strictness off, E3's L2 step against O2), all of them where none
    is named or where `all` is; and, where named, iO0 and iO2, the program
    run on Core's interpreter, whose sameness is to iO0's, and `stats`, a
    compile at -O2 under each eta rule that runs nothing and counts its eta
@@ -38,7 +39,8 @@ struct
   val limits = {addressSpace = SOME (6 * gib), cpuTime = NONE, fileSize = SOME gib, core = SOME 0}
 
   val ways = [("O0", ["-O0"]), ("O2", ["-O2"]), ("O2-report", ["-O2", "--match=report"]), ("O2-ghc", ["-O2", "--eta=ghc"]),
-              ("O2-sestoft", ["-O2", "--match=sestoft"]), ("O0-sestoft", ["-O0", "--match=sestoft"])]
+              ("O2-sestoft", ["-O2", "--match=sestoft"]), ("O0-sestoft", ["-O0", "--match=sestoft"]),
+              ("O2-nostrict", ["-O2", "--strictness=off"])]
   (* the ways on Core's interpreter, named and never all: iO0 and iO2, the
      program run by rhc itself, its output held to iO0's *)
   val interpreted = [("iO0", ["-O0"]), ("iO2", ["-O2"])]

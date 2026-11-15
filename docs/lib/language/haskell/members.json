@@ -372,7 +372,7 @@
      "kind": "val",
      "name": "passes",
      "spec": "val passes : unit -> (string * (options -> Core.program -> Core.program)) list",
-     "doc": "`passes ()` is each pass, by its name for --dump-after, in the order\nthey run: core-simplify, core-specialise, core-eta, core-cheap,\ncore-simplify-2.\n\n",
+     "doc": "`passes ()` is each pass, by its name for --dump-after, in the order\nthey run: core-simplify, core-specialise, core-eta, core-strict,\ncore-cheap, core-simplify-2.\n\n",
      "page": "sig/CORE_SIMPLIFY.md#val-passes"
     },
     {
@@ -416,6 +416,54 @@
      "spec": "val unfoldings : Core.program -> Core.decl list",
      "doc": "`unfoldings p` is the values of p a client of p's unit may inline or\nspecialise, as Core declarations.\n\nThey are its small functions, its dictionaries and its overloaded\nfunctions, each `(val x TYPE EXP)` of p, in p's order: HsIface's section\nof unfoldings (D44, M21), whose text is CoreText's.\n\n",
      "page": "sig/CORE_SIMPLIFY.md#val-unfoldings"
+    }
+   ]
+  },
+  "CORE_STRICT": {
+   "doc": "Strictness (the haskell98 roadmap's M24, D50's C): one backward analysis\nwith signatures, and its result in Core's types.\n\nA function's signature says, for each of its value parameters, whether\na call with all of them evaluates it, and whether such a call diverges.\nIt is found backwards from the body: a variable is strict in an\nexpression where evaluating the expression to its head evaluates the\nvariable, along every way it may go; a function the analysis knows is\ngiven its arguments' demands by its signature; a `case` evaluates its\nscrutinee and then one alternative; and a recursive group starts from\nthe most strict signatures and is weakened until it holds (Peyton Jones\net al. 2006, head strictness alone, no absence). It does not look inside\na data type.\n\nA precise exception (D50, D25): an I/O action may end the program, or\nraise what `catch` sees, so what the source evaluates after an action is\nnot evaluated before it. A `case` that takes an action's result apart\n(its alternative an unboxed tuple, or its scrutinee a primitive whose\nresult holds the state token) makes nothing strict, and nothing\ndivergent, of what its alternatives do: GHC's rule, Note \\[Precise\nexceptions and strictness analysis\\] (`GHC/Types/Demand.hs`).\n\nThe result goes into Core's types by a worker and a wrapper: a function\nof the top level strict in a parameter of a lifted type that is no\nnewtype's becomes a worker, `%w:f`, whose parameter is `!T`, and a\nwrapper `f`, of `f`'s type, which evaluates the parameter and calls the\nworker. The simplifier inlines the wrapper where `f` is applied, so the\ncaller evaluates the argument and passes its value: Core to Mid lowers\nthe parameter to `T` and not to `susp T` (D3), and Mid's `workers`\ntakes it from there; nothing changes in Rune (D50).\n\n",
+   "page": "sig/CORE_STRICT.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "strictness",
+     "spec": "type strictness = {params : bool list, bottom : bool}",
+     "doc": "A function's signature: for each value parameter, whether it is\nstrict, and whether a call of all of them diverges.\n\n",
+     "page": "sig/CORE_STRICT.md#type-strictness"
+    },
+    {
+     "kind": "val",
+     "name": "signatures",
+     "spec": "val signatures : Core.program -> strictness CoreMap.map",
+     "doc": "`signatures p` is the signature of each function of the top level of\n`p`, by its name.\n\n",
+     "page": "sig/CORE_STRICT.md#val-signatures"
+    },
+    {
+     "kind": "val",
+     "name": "program",
+     "spec": "val program : (unit -> bool) * Core.program -> Core.program",
+     "doc": "`program (spend, p)` is `p` with each function of the top level strict\nin a parameter a worker and a wrapper; `spend ()` is asked before each\n(the simplifier's fuel).\n\n",
+     "page": "sig/CORE_STRICT.md#val-program"
+    },
+    {
+     "kind": "val",
+     "name": "show",
+     "spec": "val show : strictness -> string",
+     "doc": "`show s` is a signature as text, `S` or `L` for each parameter and\n`b` after them where a call diverges.\n\n",
+     "page": "sig/CORE_STRICT.md#val-show"
+    },
+    {
+     "kind": "val",
+     "name": "read",
+     "spec": "val read : string -> strictness option",
+     "doc": "`read text` is the signature `show` wrote as `text`, or NONE where\n`text` is none of its.\n\n",
+     "page": "sig/CORE_STRICT.md#val-read"
+    },
+    {
+     "kind": "val",
+     "name": "enabled",
+     "spec": "val enabled : bool ref",
+     "doc": "`enabled` is whether `program` makes workers and wrappers: false for\n`--strictness=off`, the measurement's A.\n\n",
+     "page": "sig/CORE_STRICT.md#val-enabled"
     }
    ]
   },
@@ -2045,14 +2093,14 @@
    ]
   },
   "HS_IFACE": {
-   "doc": "HsIface, rhc's interface of a unit (the haskell98 roadmap's M21, D44):\nwhat a store keeps of a unit for a client, written and read back. Each\nof its modules' interfaces as the renamer and the checker make them\n(HsModIface). The unfoldings section is in the format from the start\nand empty until M23 (D44's C). The desugaring's part, its Core among\nit, is the desugaring's own text, which a client keeps beside this one:\nrhc's driver keeps it as a section of its own, read only where a unit\nis desugared after it.\n\n",
+   "doc": "HsIface, rhc's interface of a unit (the haskell98 roadmap's M21, D44):\nwhat a store keeps of a unit for a client, written and read back. Each\nof its modules' interfaces as the renamer and the checker make them\n(HsModIface). The unfoldings section is in the format from the start\nand empty until M23 (D44's C). The desugaring's part, its Core among\nit, is the desugaring's own text, which a client keeps beside this one:\nrhc's driver keeps it as a section of its own, read only where a unit\nis desugared after it. The strictness section (M24) is each function's\nstrictness signature, by its Core name, in CoreStrict.show's text;\nempty below -O2.\n\n",
    "page": "sig/HS_IFACE.md",
    "members": [
     {
      "kind": "type",
      "name": "t",
-     "spec": "type t = {modules : HsModIface.t list, unfoldings : string list}",
-     "doc": "A unit's interface: its modules', and the unfoldings, none yet.\n\n",
+     "spec": "type t = {modules : HsModIface.t list, unfoldings : string list, strictness : (string * string) list}",
+     "doc": "A unit's interface: its modules', the unfoldings, and the strictness\nsignatures.\n\n",
      "page": "sig/HS_IFACE.md#type-t"
     },
     {
@@ -3526,6 +3574,7 @@
   "CorePrimFamily": "CORE_PRIM_FAMILY",
   "CoreRuntime": "CORE_RUNTIME",
   "CoreSimplify": "CORE_SIMPLIFY",
+  "CoreStrict": "CORE_STRICT",
   "CoreText": "CORE_TEXT",
   "CoreToMid": "CORE_TO_MID",
   "CoreUnits": "CORE_UNITS",

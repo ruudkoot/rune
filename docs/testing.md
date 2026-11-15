@@ -913,7 +913,8 @@ seed rhc's lexer, its literate reader, its layout and its parser, CoreLint,
 Core's interpreter and Core's text reader, these last seen by `hs/core`'s
 jobs; HK01 to HK05 the checker, seen by `hs/hslint`'s; HD01 to HD03
 deriving; HM01 to HM03 desugaring, seen by `hs/desugar`'s; HU01 to HU11
-the holes of rhc's units, seen by `hs/units/holes` (*rhc in units*). F's parser
+the holes of rhc's units, seen by `hs/units/holes` (*rhc in units*); HW01 and
+HW02 strictness, its workers and wrappers, seen at -O2. F's parser
 mutants (`tests/runner/hssyntax.sml`) are the in-process kind.
 
 **rhc's metamorphic relations** (D55; `tests/runner/hsmeta.sml`). Pairs of

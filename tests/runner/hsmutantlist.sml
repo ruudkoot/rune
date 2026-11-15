@@ -124,6 +124,18 @@ struct
           "if #n oc = 1 andalso not (#arg oc) andalso (not (#lam oc) orelse B.isValue r') andalso B.tick \"inline-once\"",
           "if #n oc = 1 andalso not (#arg oc) andalso B.tick \"inline-once\"",
           ["hs/simplify/budget/share"]),
+     (* D's seeds of M24 (strictness, CoreStrict; W for workers): a lazy
+        argument marked strict, caught by the run of hs/simplify where -O2
+        would force what -O0 does not; and no precise exceptions, caught at
+        -O2 where a function that is split calls an I/O action's, the state
+        token a parameter, as in rhc's runtime's Core *)
+     one ("HW01", "strictness", "a lazy argument marked strict: every value parameter of a signature strict (M24)",
+          "corestrict.sml", "{params = List.map (fn (x, t) => isEval t orelse mem (x, #strict d)) ps, bottom = #div d}",
+          "{params = List.map (fn (x, t) => true) ps, bottom = #div d}",
+          ["hs/simplify/run/strict_lazy", "hs/simplify/run/strict_order"]),
+     one ("HW02", "strictness", "no precise exceptions: what an I/O action's alternatives do made strict before the action (D50, M24)",
+          "corestrict.sml", "          val da = if io then none else da", "          val da = da",
+          ["hs/core/vm/strict-order"]),
      (* E13's holes H1 to H9 (the haskell98 roadmap's section What a cache
         hit must satisfy), each a usage or a key of rhc's units dropped: each
         caught by its case of tests/hs/units/holes, the units' compile

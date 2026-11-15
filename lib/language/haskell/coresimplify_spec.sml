@@ -158,7 +158,10 @@ struct
                     val name =
                       case CoreMap.find (!memo, key) of
                         SOME n => SOME n
-                      | NONE => if budget f andalso B.tick "specialise" then SOME (copy (f, ov, tys, ds, key)) else NONE
+                      | NONE =>
+                          if budget f andalso not (S.losesEval (#binders ov, #body ov, List.map TyArg tys @ List.map ValArg ds))
+                             andalso B.tick "specialise"
+                          then SOME (copy (f, ov, tys, ds, key)) else NONE
                   in
                     case name of
                       SOME n => SOME (case rest of [] => Atom (Var n) | _ => App (Atom (Var n), rest))
@@ -247,7 +250,9 @@ struct
                       case CoreMap.find (!memoL, key) of
                         SOME n => SOME n
                       | NONE =>
-                          if !count < maxPerFunction andalso B.tick "specialise-local" then
+                          if !count < maxPerFunction
+                             andalso not (S.losesEval (#binders ov, #body ov, List.map TyArg tys @ List.map ValArg ds))
+                             andalso B.tick "specialise-local" then
                             let
                               val y = B.fresh x
                               val () = memoL := CoreMap.insert (!memoL, key, y)

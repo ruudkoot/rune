@@ -17,6 +17,12 @@ struct
      and total expression made a case (D51's C, the owner's of 2026-11-14);
      --no-cheap-eagerness turns it off *)
   val cheap = ref true
+  (* --unfoldings: at -O2, each unit's unfoldings and its functions'
+     strictness signatures written into its interface (M23, M24), which no
+     client reads yet, and the unit's configuration saying so, so that an
+     entry with them and one without do not share; off by default.
+     RhcSyntax sets it, with the level, before the units are made *)
+  val unfoldings = ref false
 
   type options =
     {readCore : string list,          (* --read-core FILE: Core text, read in order as one program *)
@@ -124,14 +130,18 @@ struct
     \                        default)\n\
     \  -O0, -O1, -O2         the level of Mid's optional passes (default: 1); at -O2 the\n\
     \                        Core simplifier too: core-simplify, core-specialise,\n\
-    \                        core-eta, core-cheap, core-simplify-2 (M23), and a match\n\
-    \                        by Sestoft's trees (--match=sestoft, D34)\n\
-    \  --eta=E              the Core simplifier's eta-expansion (D48): pedantic, the default,\n\
+    \                        core-eta, core-strict, core-cheap, core-simplify-2 (M23, M24, D51),\n\
+    \                        and a match by Sestoft's trees (--match=sestoft, D34)\n\
+    \  --eta=E               the Core simplifier's eta-expansion (D48): pedantic, the default,\n\
     \                        the Report's, only where the expression is a value already; or\n\
     \                        ghc, GHC's default, through a case and IO, which departs from the\n\
     \                        Report: seq of a partial application can converge where it must\n\
     \                        be a bottom (D55's bottom probe, tests/hs/simplify/eta.hs)\n\
+    \  --strictness=S        at -O2, on (default): workers and wrappers of the strict\n\
+    \                        parameters (M24); off, for E3's L2 step measured\n\
     \  --simplify-stats      the Core simplifier's rewrites, by kind, on standard error\n\
+    \  --unfoldings          at -O2, write each unit's unfoldings and strictness signatures\n\
+    \                        into its interface, which no client reads yet (M23, M24)\n\
     \  --no-cheap-eagerness  at -O2, leave a let of a cheap and total expression a\n\
     \                        suspension, which core-cheap makes a case (D51)\n\
     \  --fuel=N              make no more than N rewrites of the passes, Core's and Mid's\n\
@@ -217,8 +227,11 @@ struct
         | go ("--fault=force-behind-cast" :: rest) = (fault := SOME CoreToMid.ForceBehindCast; go rest)
         | go ("--eta=pedantic" :: rest) = (eta := CoreSimplify.Pedantic; go rest)
         | go ("--eta=ghc" :: rest) = (eta := CoreSimplify.Ghc; go rest)
+        | go ("--strictness=on" :: rest) = (CoreStrict.enabled := true; go rest)
+        | go ("--strictness=off" :: rest) = (CoreStrict.enabled := false; go rest)
         | go ("--simplify-stats" :: rest) = (simplifyStats := true; go rest)
         | go ("--no-cheap-eagerness" :: rest) = (cheap := false; go rest)
+        | go ("--unfoldings" :: rest) = go rest
         | go ("--fault=susp-type-arg" :: rest) = (fault := SOME CoreToMid.SuspTypeArg; go rest)
         | go ("--strings=lazy" :: rest) = (strings := CoreRuntime.Lazy; go rest)
         | go ("--strings=whole" :: rest) = (strings := CoreRuntime.Whole; go rest)

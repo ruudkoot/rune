@@ -47,7 +47,7 @@
 - `prims` (val): [CORE_PRIM](../sig/CORE_PRIM.md#val-prims)
 - `primType` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-primtype)
 - `program` (type): [CORE](../sig/CORE.md#type-program), [HS_DS_ENV](../sig/HS_DS_ENV.md#type-program)
-- `program` (val): [CORE_GEN](../sig/CORE_GEN.md#val-program), [CORE_RUNTIME](../sig/CORE_RUNTIME.md#val-program), [CORE_TO_MID](../sig/CORE_TO_MID.md#val-program), [HS_DESUGAR](../sig/HS_DESUGAR.md#val-program)
+- `program` (val): [CORE_GEN](../sig/CORE_GEN.md#val-program), [CORE_RUNTIME](../sig/CORE_RUNTIME.md#val-program), [CORE_STRICT](../sig/CORE_STRICT.md#val-program), [CORE_TO_MID](../sig/CORE_TO_MID.md#val-program), [HS_DESUGAR](../sig/HS_DESUGAR.md#val-program)
 - `programOn` (val): [HS_DESUGAR](../sig/HS_DESUGAR.md#val-programon)
 - `PSeq` (con): [HS_AST](../sig/HS_AST.md#con-pseq)
 - `PTuple` (con): [HS_AST](../sig/HS_AST.md#con-ptuple)

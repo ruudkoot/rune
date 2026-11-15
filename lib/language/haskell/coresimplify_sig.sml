@@ -43,8 +43,8 @@ sig
   type options = {spend : unit -> bool, whole : bool, eta : eta, cheap : bool}
 
   (* `passes ()` is each pass, by its name for --dump-after, in the order
-     they run: core-simplify, core-specialise, core-eta, core-cheap,
-     core-simplify-2. *)
+     they run: core-simplify, core-specialise, core-eta, core-strict,
+     core-cheap, core-simplify-2. *)
   val passes : unit -> (string * (options -> Core.program -> Core.program)) list
 
   (* `simplify opts p` is p simplified, its rounds run until one makes no

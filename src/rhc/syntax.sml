@@ -315,8 +315,9 @@ struct
               orelse String.isPrefix "--strings=" a orelse String.isPrefix "--steps=" a orelse String.isPrefix "--depth=" a
               orelse String.isPrefix "--match=" a orelse a = "--desugar-only" orelse a = "--desugar-units"
               orelse a = "--canonical-core"
-              orelse String.isPrefix "--eta=" a orelse a = "--simplify-stats" orelse a = "--no-cheap-eagerness"
-              orelse String.isPrefix "--fuel=" a orelse a = "--show-units"
+              orelse String.isPrefix "--eta=" a orelse String.isPrefix "--strictness=" a orelse a = "--simplify-stats"
+              orelse a = "--no-cheap-eagerness" orelse String.isPrefix "--fuel=" a orelse a = "--show-units"
+              orelse a = "--unfoldings"
               orelse option a
             fun check [] = ()
               | check ("-o" :: _ :: rest) = check rest
@@ -334,6 +335,8 @@ struct
                                          SOME "--match=sestoft" => HsMatch.Sestoft
                                        | SOME _ => HsMatch.Report
                                        | NONE => if level >= 2 then HsMatch.Sestoft else HsMatch.Report)
+            (* --unfoldings at -O2, which the unit's configuration holds *)
+            val () = RhcOptions.unfoldings := (List.exists (fn a => a = "--unfoldings") args andalso level >= 2)
             (* what is the compile's: the options not of the syntax and names *)
             fun own a =
               isSource a orelse isSome (modeOf a) orelse a = "--no-spans" orelse a = "--typecheck-only"

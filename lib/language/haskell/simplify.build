@@ -8,6 +8,8 @@ files
   coresimplify_simp.sml
   coresimplify_spec.sml
   coresimplify_eta.sml
+  corestrict_sig.sml
+  corestrict.sml
   coresimplify_cheap.sml
   coresimplify_sig.sml
   coresimplify.sml

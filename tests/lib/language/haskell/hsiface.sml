@@ -59,10 +59,15 @@ struct
                      "a constructor's strict fields read back as written")
       val () = need (List.exists (fn (k, t) => k = "v M MkU" andalso String.isSubstring " !. " t) (HsModIface.canonical back),
                      "and a strict field stands in what a client reads of the type")
-      val whole = {modules = [iface, back], unfoldings = ["an unfolding\nof two lines"]}
+      val whole = {modules = [iface, back], unfoldings = ["an unfolding\nof two lines"],
+                   strictness = [("M.f", "SLb"), ("%w:M.f", "SL"), ("M.g", "")]}
       val again = HsIface.decode (HsIface.encode whole)
       val () = need (HsIface.encode again = HsIface.encode whole andalso #unfoldings again = #unfoldings whole
                      andalso length (#modules again) = 2, "a unit's interface read back as written")
+      val () = need (#strictness again = #strictness whole, "its strictness signatures as they were (M24)")
+      val () = need (List.all (fn (_, s) => isSome (CoreStrict.read s)) (#strictness again)
+                     andalso CoreStrict.read "SLb" = SOME {params = [true, false], bottom = true},
+                     "and each one CoreStrict reads")
       (* "t M T" is named by a type, a constructor's tycon, a field's and an
          instance's, in both modules, and written once, its length first *)
       fun count (s, sub) =
@@ -75,7 +80,7 @@ struct
   fun refused () =
     let
       fun refuses s = (ignore (HsIface.decode s); false) handle HsIface.Bad _ => true
-      val text = HsIface.encode {modules = [iface], unfoldings = []}
+      val text = HsIface.encode {modules = [iface], unfoldings = [], strictness = []}
       val () = need (refuses (String.substring (text, 0, size text - 3)), "bytes cut short are refused")
       val () = need (refuses ("\009NotIfaces" ^ String.extract (text, 8, NONE)), "bytes of another mark are refused")
       val () = need (refuses (text ^ "\000"), "bytes past the end are refused")
