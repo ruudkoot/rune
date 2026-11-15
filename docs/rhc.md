@@ -169,6 +169,8 @@ of them is a bug of rhc's.
 | `--eta=E` | the Core simplifier's eta-expansion (D48): `pedantic`, the default, the Report's, or `ghc`, GHC's default, which departs from the Report (below) |
 | `--simplify-stats` | the Core simplifier's rewrites, by kind, on standard error |
 | `--no-cheap-eagerness` | at `-O2`, leave a let of a cheap and total expression a suspension, which the Core simplifier's `core-cheap` makes a case (D51) |
+| `--strictness=S` | at `-O2`, `on` (the default): workers and wrappers of the strict parameters (M24); `off`, for E3's L2 step |
+| `--unfoldings` | at `-O2`, write each unit's unfoldings and its functions' strictness signatures into its interface (M23, M24), which no client reads yet; off by default, an entry with them kept apart from one without in the store |
 | `--fuel=N` | make no more than N rewrites of the passes, Core's and Mid's, to find the one that breaks a program |
 | `--target=T` | the bytecode: `registers` (the default) or `stack` |
 | `--thunks=c` | suspensions in Mid by form C's primitives, the one form there is |
@@ -309,9 +311,10 @@ where no default does: `--eta=ghc` breaks `seq` on a partial application
   2010, no hierarchical module names but by `--dotted-names`, which reads a
   file, and no module of a library but the Report's: no `Foreign`, no
   `IORef`, no concurrency.
-- Analyse strictness (M24), or optimise a unit with what its imports
-  export: the Core simplifier works on a program's Core whole, and the
-  unfoldings a unit kept in a store gives at `-O2` no client reads yet.
+- Optimise a unit with what its imports export: the Core simplifier and
+  the strictness analysis work on a program's Core whole, and the
+  unfoldings and strictness signatures a unit can write (`--unfoldings`)
+  no client reads yet.
 - Meet the rows of `tests/hs/conformance.tsv` whose status is `Planned`,
   each waiting on a named piece of work. rhc does not yet refuse a
   record's construction that omits a strict field, an update whose labels

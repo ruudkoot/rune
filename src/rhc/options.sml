@@ -17,6 +17,12 @@ struct
      and total expression made a case (D51's C, the owner's of 2026-11-14);
      --no-cheap-eagerness turns it off *)
   val cheap = ref true
+  (* --unfoldings: at -O2, each unit's unfoldings and its functions'
+     strictness signatures written into its interface (M23, M24), which no
+     client reads yet, and the unit's configuration saying so, so that an
+     entry with them and one without do not share; off by default.
+     RhcSyntax sets it, with the level, before the units are made *)
+  val unfoldings = ref false
 
   type options =
     {readCore : string list,          (* --read-core FILE: Core text, read in order as one program *)
@@ -134,6 +140,8 @@ struct
     \  --strictness=S        at -O2, on (default): workers and wrappers of the strict\n\
     \                        parameters (M24); off, for E3's L2 step measured\n\
     \  --simplify-stats      the Core simplifier's rewrites, by kind, on standard error\n\
+    \  --unfoldings          at -O2, write each unit's unfoldings and strictness signatures\n\
+    \                        into its interface, which no client reads yet (M23, M24)\n\
     \  --no-cheap-eagerness  at -O2, leave a let of a cheap and total expression a\n\
     \                        suspension, which core-cheap makes a case (D51)\n\
     \  --fuel=N              make no more than N rewrites of the passes, Core's and Mid's\n\
@@ -223,6 +231,7 @@ struct
         | go ("--strictness=off" :: rest) = (CoreStrict.enabled := false; go rest)
         | go ("--simplify-stats" :: rest) = (simplifyStats := true; go rest)
         | go ("--no-cheap-eagerness" :: rest) = (cheap := false; go rest)
+        | go ("--unfoldings" :: rest) = go rest
         | go ("--fault=susp-type-arg" :: rest) = (fault := SOME CoreToMid.SuspTypeArg; go rest)
         | go ("--strings=lazy" :: rest) = (strings := CoreRuntime.Lazy; go rest)
         | go ("--strings=whole" :: rest) = (strings := CoreRuntime.Whole; go rest)
