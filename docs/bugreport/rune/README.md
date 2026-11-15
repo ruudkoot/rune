@@ -28,6 +28,10 @@ cache, [plans/build-cache-issues.md](../../plans/build-cache-issues.md)).
   fixed 2026-11-14 on `hs-l-reraise`: the re-raise is placed at the
   `handle`; `reraise.sml` reproduces it, `tests/lang/rt.trace_reraise` holds
   the fix).
+* [lsp-oracle-store-sigsegv](lsp-oracle-store-sigsegv/BUGREPORT.md): the
+  LSP oracle's stored run died of signal 11 after 805 s, on a store that a
+  machine restart had cut mid-write. Rebuilt, the store passed. Damage done by
+  hand in 19 ways did not bring it back (2026-11-14, not reproduced).
 
 [Fixes and validation](terminal-races-fixed.md) records the changes and
 deterministic regressions for all three causes.
