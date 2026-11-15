@@ -535,7 +535,10 @@ jobs. Rune's is `Lang.rune`; rhc's is `HsLang.rhc` (`tests/runner/hslang.sml`).
   `--accept`, the way `register` writes `.expected`. A compile writes
   `NAME/prog.rbc` in the run's directory (`Lang.suite`'s `binary`), so that
   `getProgName`, the bytecode file's base name (the lead's ruling 33), is
-  `prog` in every way, as in `hs/jit` and `hs/interp-vm`.
+  `prog` in every way, as in `hs/jit` and `hs/interp-vm`. `RUNE_HS_RHC_FLAGS`
+  gives every compile of the suite options before its own: with `-O2` the
+  suite runs at the level of the Core simplifier and Sestoft's trees (D34)
+  on both bytecodes.
 * **Tiers** (the roadmap's D56, B; the lead's rulings 45, 47 and 48). A program of
   `tests/hs/lang` runs in `check` in the three ways, with its two compiles
   and its check, unless `tests/hs/lang-nightly.txt` names it (a program
