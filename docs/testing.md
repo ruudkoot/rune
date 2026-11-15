@@ -990,6 +990,53 @@ The seeds for desugaring (clause order reversed, `~` made strict, a
 that `report/order`, `report/lazy` and `report/newtype` catch (HM01 to
 HM03 of rhc's mutants).
 
+**rhc's Core simplifier** (`tests/runner/hssimplify.sml`, `hs/simplify/*`; the
+roadmap's M23, D48, D49). rhc's optimiser on Core runs at `-O2`: its passes
+(`core-simplify`, `core-specialise`, `core-eta`, `core-simplify-2`) each
+through `Pass.stage`, with CoreLint and HsLint's target check after each at
+level 2 and Core's text read back at level 3. Each program of
+`tests/hs/simplify` runs on Core's interpreter at `-O0` and `-O2` and on the
+VM at both (`hs/simplify/run/NAME`), printing `NAME.expected` and ending as
+`NAME.exitcode` says, with `NAME.stdin` as its input; one with a line `--
+fuel:` is compiled at `-O2` with its rewrites stopped after each of several
+counts (`--fuel=N`), every lint holding and the output the same
+(`hs/simplify/fuel/NAME`); one with `-- budget: SIZE1 SIZE2` is a sharing
+budget, its instructions at the second size given on standard input at
+most 2.2 times those at the first, at `-O0` and `-O2`, so that a thunk
+copied into a lambda or work moved under one by eta shows
+(`hs/simplify/budget/NAME`); one with lines `-- dump: has NAME` or `--
+dump: lacks NAME` has the Core the passes leave held to them, a value of
+the name there or not (a copy at known dictionaries, an overloaded original
+dropped, no `fromInteger` left), what no run shows (`hs/simplify/dump/NAME`).
+`eta.hs` is D48's bottom probe (D55's): `seq` of a
+function whose lambda is behind a case, given bottom, is bottom under the
+pedantic rule, rhc's default (D48's C), which GHC's default (`--eta=ghc`,
+D48's D, an option outside the Report) breaks, printing `eta.ghc.expected`.
+A program with `NAME.ghc.expected` holds the default to the pedantic rule
+(`hs/simplify/eta/NAME`): compiled at `-O2` with no `--eta`, on the VM and
+on Core's interpreter, and with `--eta=pedantic`, it ends as
+`NAME.expected` and `NAME.exitcode` say, and with `--eta=ghc` it prints
+`NAME.ghc.expected` and ends in a value, so that the probe tells the two
+rules apart.
+Over the run programs of `tests/hs/lang` (nightly, held while their rows
+are `Planned`), the VM prints at `-O2` what it prints at `-O0` and ends
+alike (`hs/simplify/lang/NAME`), and so it does over the 188 vendored
+programs of the corpus and the ready lazy ports, prepared as
+`hs-corpus-run` and `hs-lazy-ports` prepare them
+(`tests/runner/hssimplifyfigures.sml`, `hs/simplify/corpus/ID` and
+`hs/simplify/lazy/PORT`, nightly). `bin/rune-test hs-simplify-figures SET
+ID OUT [WAY...]` measures one program of those sets for *Decisions on the
+numbers*: each way's output, and the instructions, bytes and objects of
+`runevm --count`, the suspensions made (`runevm-census`) and the
+instructions:u at tier 2 (`perf`), at `-O0` and `-O2`, with GHC's eta
+(D48's D) and Sestoft's trees (D34's B), on Core's interpreter where asked,
+and the eta rewrites under each rule (`stats`). The expected outputs are GHC 9.4.7's
+(`monad.hs` with the Functor and Applicative instances GHC's Monad wants).
+The seeds for the simplifier (a thunk copied into a lambda, eta through an
+expensive let, eta through a case under the pedantic rule, a specialisation
+given the wrong dictionaries, specialisation without fuel) are mutants of
+`lib/language/haskell/coresimplify_*.sml` (`tests/runner/hsmutantlist.sml`).
+
 **rhc's reducer** (`tests/runner/hsreduce.sml`). `bin/rune-test hs-reduce
 FILE -- CMD...` shrinks a Haskell program while CMD, given a candidate's
 path as its last argument, exits 0: delta debugging over the top-level

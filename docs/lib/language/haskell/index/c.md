@@ -44,6 +44,7 @@
 - `continue` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-continue)
 - `convert` (val): [HS_KINDS](../sig/HS_KINDS.md#val-convert)
 - `coreName` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-corename)
+- `counts` (val): [CORE_SIMPLIFY](../sig/CORE_SIMPLIFY.md#val-counts)
 - `CPlain` (con): [HS_AST](../sig/HS_AST.md#con-cplain)
 - `CRec` (con): [HS_AST](../sig/HS_AST.md#con-crec)
 - `current` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-current)

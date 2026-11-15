@@ -40,6 +40,8 @@
 - `Error` (exn): [CORE_LINT](../sig/CORE_LINT.md#exn-error), [CORE_TEXT](../sig/CORE_TEXT.md#exn-error), [CORE_UNITS](../sig/CORE_UNITS.md#exn-error), [HS_SOURCE](../sig/HS_SOURCE.md#exn-error)
 - `ESeq` (con): [HS_AST](../sig/HS_AST.md#con-eseq)
 - `ESig` (con): [HS_AST](../sig/HS_AST.md#con-esig)
+- `eta` (type): [CORE_SIMPLIFY](../sig/CORE_SIMPLIFY.md#type-eta)
+- `eta` (val): [CORE_SIMPLIFY](../sig/CORE_SIMPLIFY.md#val-eta)
 - `ETuple` (con): [HS_AST](../sig/HS_AST.md#con-etuple)
 - `EVar` (con): [HS_AST](../sig/HS_AST.md#con-evar)
 - `exact` (val): [HS_PRINT](../sig/HS_PRINT.md#val-exact)

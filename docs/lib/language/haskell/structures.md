@@ -21,6 +21,7 @@ the signature names and no others.
 | [`CorePrim`](str/CorePrim.md) | : | [`CORE_PRIM`](sig/CORE_PRIM.md) |  |  | [lib/language/haskell/coreprim.sml](../../../../lib/language/haskell/coreprim.sml) |
 | [`CorePrimFamily`](str/CorePrimFamily.md) | : | [`CORE_PRIM_FAMILY`](sig/CORE_PRIM_FAMILY.md) |  |  | [lib/language/haskell/coreprimfamily.sml](../../../../lib/language/haskell/coreprimfamily.sml) |
 | [`CoreRuntime`](str/CoreRuntime.md) | :> | [`CORE_RUNTIME`](sig/CORE_RUNTIME.md) |  |  | [lib/language/haskell/coreruntime.sml](../../../../lib/language/haskell/coreruntime.sml) |
+| [`CoreSimplify`](str/CoreSimplify.md) | : | [`CORE_SIMPLIFY`](sig/CORE_SIMPLIFY.md) |  |  | [lib/language/haskell/coresimplify.sml](../../../../lib/language/haskell/coresimplify.sml) |
 | [`CoreText`](str/CoreText.md) | : | [`CORE_TEXT`](sig/CORE_TEXT.md) |  |  | [lib/language/haskell/coretext.sml](../../../../lib/language/haskell/coretext.sml) |
 | [`CoreToMid`](str/CoreToMid.md) | : | [`CORE_TO_MID`](sig/CORE_TO_MID.md) |  |  | [lib/language/haskell/coretomid.sml](../../../../lib/language/haskell/coretomid.sml) |
 | [`CoreUnits`](str/CoreUnits.md) | :> | [`CORE_UNITS`](sig/CORE_UNITS.md) |  |  | [lib/language/haskell/coreunits.sml](../../../../lib/language/haskell/coreunits.sml) |

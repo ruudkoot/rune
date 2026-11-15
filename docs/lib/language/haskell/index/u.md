@@ -4,6 +4,7 @@
 
 - `UNDERSCORE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-underscore)
 - `unfold` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-unfold)
+- `unfoldings` (val): [CORE_SIMPLIFY](../sig/CORE_SIMPLIFY.md#val-unfoldings)
 - `unify` (val): [HS_TYPES](../sig/HS_TYPES.md#val-unify)
 - `unifyKind` (val): [HS_TYPES](../sig/HS_TYPES.md#val-unifykind)
 - `Unit` (con): [CORE_PRIM_FAMILY](../sig/CORE_PRIM_FAMILY.md#con-unit)

@@ -40,6 +40,17 @@ files and errors of the system's, over `CoreFiles`, the interpreter's files;
 clock, time zone and randomness, which Directory, System, Time, CPUTime and
 Random read (the roadmap's M18), each over a primitive of Mid's.
 
+`CoreSimplify` is rhc's optimiser (`simplify.build`, the roadmap's M23;
+D47-D49), on Core at -O2: a simplifier that inlines, reduces cases of what
+it knows and floats lets, keeping every binding's sharing and every bottom;
+specialisation of overloaded functions, local ones too, at the constant
+dictionaries they are given, under fuel, so that a method selected from a
+dictionary it knows is the instance's function; folding of primitives and of
+`fromInteger` and `fromRational` of literals; and eta-expansion where the
+expression is a value already (D48's pedantic rule), with GHC's default as an
+option for measurement. Its `unfoldings` are what a unit's interface gives
+its clients to inline (D44).
+
 The syntax (`syntax.build`, the roadmap's M11) reads a file of Haskell 98 to
 a tree that keeps all of it. `HsLiterate` gives a literate file's program
 text, the length of the file; `HsLexer` makes it tokens, each with the

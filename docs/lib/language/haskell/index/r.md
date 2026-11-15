@@ -26,6 +26,7 @@
 - `reservedId` (val): [HS_TOKEN](../sig/HS_TOKEN.md#val-reservedid)
 - `reservedOp` (val): [HS_TOKEN](../sig/HS_TOKEN.md#val-reservedop)
 - `reset` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-reset)
+- `resetCounts` (val): [CORE_SIMPLIFY](../sig/CORE_SIMPLIFY.md#val-resetcounts)
 - `resolve` (val): [HS_FIXITY](../sig/HS_FIXITY.md#val-resolve)
 - `restore` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-restore), [HS_DS_ENV](../sig/HS_DS_ENV.md#val-restore), [HS_LAYOUT](../sig/HS_LAYOUT.md#val-restore)
 - `Rhs` (con): [HS_AST](../sig/HS_AST.md#con-rhs)

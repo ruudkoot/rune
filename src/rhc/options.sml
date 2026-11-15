@@ -5,6 +5,15 @@ structure RhcOptions =
 struct
   exception Usage of string
 
+  (* --eta=pedantic|ghc: the Core simplifier's eta rule (D48), the
+     pedantic (C), the default, the Report's, or GHC's default (D), an
+     option outside the Report, which breaks seq on a partial application
+     (the owner's decision of 2026-11-14) *)
+  val eta = ref CoreSimplify.Pedantic
+  (* --simplify-stats: the Core simplifier's rewrites, by kind, on
+     standard error *)
+  val simplifyStats = ref false
+
   type options =
     {readCore : string list,          (* --read-core FILE: Core text, read in order as one program *)
      typecheckOnly : bool,            (* stop after the checks *)
@@ -106,7 +115,16 @@ struct
     \  --link=whole|units    with --units, join the units' Core and compile what main\n\
     \                        reaches whole (whole), or link each unit's code (units, the\n\
     \                        default)\n\
-    \  -O0, -O1, -O2         the level of Mid's optional passes (default: 1)\n\
+    \  -O0, -O1, -O2         the level of Mid's optional passes (default: 1); at -O2 the\n\
+    \                        Core simplifier too: core-simplify, core-specialise,\n\
+    \                        core-eta, core-simplify-2 (M23)\n\
+    \  --eta=E               the Core simplifier's eta-expansion (D48): pedantic, the default,\n\
+    \                        the Report's, only where the expression is a value already; or\n\
+    \                        ghc, GHC's default, through a case and IO, which departs from the\n\
+    \                        Report: seq of a partial application can converge where it must\n\
+    \                        be a bottom (D55's bottom probe, tests/hs/simplify/eta.hs)\n\
+    \  --simplify-stats      the Core simplifier's rewrites, by kind, on standard error\n\
+    \  --fuel=N              make no more than N rewrites of the passes, Core's and Mid's\n\
     \  --target=T            the bytecode: registers (default) or stack\n\
     \  --thunks=c            suspensions in Mid by form C's primitives, the one form there is\n\
     \  --fault=F             for the tests of what catches it, a fault of Core to Mid made\n\
@@ -184,13 +202,20 @@ struct
         | go ("--thunks=c" :: rest) = go rest
         | go ("--fault=thunk-in-slot" :: rest) = (fault := SOME CoreToMid.ThunkInSlot; go rest)
         | go ("--fault=force-behind-cast" :: rest) = (fault := SOME CoreToMid.ForceBehindCast; go rest)
+        | go ("--eta=pedantic" :: rest) = (eta := CoreSimplify.Pedantic; go rest)
+        | go ("--eta=ghc" :: rest) = (eta := CoreSimplify.Ghc; go rest)
+        | go ("--simplify-stats" :: rest) = (simplifyStats := true; go rest)
         | go ("--fault=susp-type-arg" :: rest) = (fault := SOME CoreToMid.SuspTypeArg; go rest)
         | go ("--strings=lazy" :: rest) = (strings := CoreRuntime.Lazy; go rest)
         | go ("--strings=whole" :: rest) = (strings := CoreRuntime.Whole; go rest)
         | go (arg :: rest) =
             (case (after ("--lint=", arg), after ("--dump-after=", arg), after ("--steps=", arg),
                    after ("--depth=", arg), after ("--generate-core=", arg)) of
-               (SOME l, _, _, _, _) =>
+               (NONE, NONE, NONE, NONE, NONE) =>
+                 (case after ("--fuel=", arg) of
+                    SOME n => Pass.fuel := SOME (count ("--fuel", 0, n))
+                  | NONE => raise Usage ("unknown option or argument: " ^ arg))
+             | (SOME l, _, _, _, _) =>
                  (case Pass.levelOf l of
                     SOME n => if l = "off" orelse CharVector.all Char.isDigit l andalso n >= 0 andalso n <= 3
                               then Pass.lintGiven := SOME n
@@ -199,8 +224,7 @@ struct
              | (_, SOME s, _, _, _) => Pass.dumpAfter := !Pass.dumpAfter @ stages s
              | (_, _, SOME n, _, _) => steps := SOME (count ("--steps", 1, n))
              | (_, _, _, SOME n, _) => depth := count ("--depth", 1, n)
-             | (_, _, _, _, SOME n) => generate := SOME (count ("--generate-core", 0, n))
-             | _ => raise Usage ("unknown option or argument: " ^ arg);
+             | (_, _, _, _, SOME n) => generate := SOME (count ("--generate-core", 0, n));
              go rest)
     in
       go args;

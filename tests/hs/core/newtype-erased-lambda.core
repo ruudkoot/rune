@@ -1,0 +1,16 @@
+; run:
+; A let of a newtype bound to a lambda cast into it, where the newtype is
+; erased (always applied to all its parameters): Core to Mid lowers the
+; lambda at its own type, a function, not at the newtype's. The Core
+; simplifier leaves this shape of IO's actions once nothing names IO
+; unapplied, a dictionary of Monad IO dropped.
+(newtype N () MkN (-> Int Int))
+(val twice N
+  (let (g N (cast (\ ((y Int)) (case y v (_ (prim int_add v v)))) N))
+  g))
+(val main (-> World (utuple World `()`))
+  (\ ((w0 World))
+    (case ((cast twice (-> Int Int)) 21) r
+      (_ (case (prim int_eq r 42) b
+           ((True) (case (prim print_str "ok\n" w0) w1 (_ (let (unit `()` (con `()`)) (utuple w1 unit)))))
+           ((False) (case (prim print_str "no\n" w0) w1 (_ (let (unit `()` (con `()`)) (utuple w1 unit))))))))))

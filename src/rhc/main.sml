@@ -16,7 +16,7 @@ struct
   exception Failed
 
   (* the stages there are, for --dump-after: rhc's, then those from Mid on *)
-  val stages = ["read", "desugar", "coretomid"] @ MidPipeline.stageNames MidPipeline.standardPasses
+  val stages = ["read", "desugar"] @ RhcSimplify.names () @ ["coretomid"] @ MidPipeline.stageNames MidPipeline.standardPasses
 
   fun version () = print ("rhc " ^ Config.version ^ " (identity " ^ Config.identity ^ ")\n")
 
@@ -48,17 +48,7 @@ struct
     end
 
   (* Core's text read back, at level 3: print, read, print is the identity *)
-  fun roundTrip (p : Core.program) =
-    let
-      val text = CoreText.show p
-      val again = CoreText.parse text
-                  handle CoreText.Error (line, msg) =>
-                    raise Error.Bug ("Core's text does not read back, at line " ^ Int.toString line ^ ": " ^ msg)
-    in
-      if again <> p then raise Error.Bug "Core's text reads back as another program"
-      else if CoreText.show again <> text then raise Error.Bug "Core's text printed again is other text"
-      else ()
-    end
+  val roundTrip = RhcSimplify.roundTrip
 
   (* the program of the files, read in order, each a unit, after what it
      reaches of rhc's runtime (CoreRuntime): the units joined, an import
@@ -384,6 +374,8 @@ struct
       (* HsLint's target check at level 2: the Core at the translation of
          its source types (RhcLint.target, D54) *)
       val () = RhcLint.target p
+      (* at -O2, the Core simplifier (M23) *)
+      val p = RhcSimplify.run ([file], true, p)
       val status =
         if not (null only) then 0
         else
@@ -478,6 +470,9 @@ struct
                 val () = Pass.startup ()
                 val p = readCore (#strings opts, #readCore opts, not (#typecheckOnly opts))
                 val () = lint (#readCore opts, p)
+                (* at -O2, the Core simplifier (M23), on a program to run or
+                   compile *)
+                val p = if #typecheckOnly opts then p else RhcSimplify.run (#readCore opts, true, p)
                 val () =
                   if #typecheckOnly opts orelse isSome (#output opts)
                      orelse List.exists (fn Core.Val ("main", _, _) => true | _ => false) p then ()
