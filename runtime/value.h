@@ -82,8 +82,15 @@ _Static_assert(K_IND < 16, "a kind fits four bits, which is what the header keep
    its code has said BLACKHOLE, having read what it captured first. Under
    evaluation the collector follows none of its fields, which is how the
    captures of a thunk that runs are let go (D12), and a second ENTER is a
-   loop. */
-enum { THUNK_UNEVALUATED = 0, THUNK_BLACKHOLE = 1 };
+   loop. A selector (the haskell98 roadmap's D17, C: Wadler's rule) is
+   unevaluated too, THUNK_SELECTOR + i: a suspension whose code gives field
+   i of the tuple its first capture holds, which thunk_selector marked; a
+   collection gives a field that points to one that field of the tuple,
+   once the tuple is evaluated (runtime/gc/gc.h). Below 256, since the
+   JIT's BLACKHOLE writes the low byte alone. */
+enum { THUNK_UNEVALUATED = 0, THUNK_BLACKHOLE = 1, THUNK_SELECTOR = 3 };
+/* a suspension's state unevaluated: its code not yet run, a selector's too */
+static inline int thunk_unevaluated(unsigned contag) { return contag == THUNK_UNEVALUATED || contag >= THUNK_SELECTOR; }
 /* A K_IND's contag: what the suspension's was (an update keeps it), or
    IND_RUNNING once a collection found a frame running it as its closure
    (gc_pin_running, runtime/gc/copy.c). Lazy ML's
@@ -352,7 +359,7 @@ static inline uint32_t obj_scanned_fields(const Obj *o) {
    closure's, or a suspension's until its code says BLACKHOLE */
 static inline int obj_has_env(const Obj *o) {
     int k = obj_kind(o);
-    return k == K_CLOSURE || (k == K_THUNK && o->contag == THUNK_UNEVALUATED);
+    return k == K_CLOSURE || (k == K_THUNK && thunk_unevaluated(o->contag));
 }
 /* A fresh closure becomes a suspension of the same fields, in place
    (thunk_make): the kind rewritten beside the collector's bits. */

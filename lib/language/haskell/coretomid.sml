@@ -1266,6 +1266,10 @@ struct
           | "ref_get" => midAs ("ref_get", "(" ^ S ^ " ref) -> " ^ S, S)
           | "ref_set" => midAs ("ref_set", "((" ^ S ^ " ref) * " ^ S ^ ") -> unit", "unit")
           | "real_world" => deliver (env, c, "()", res)
+          | "sel_mark" =>
+              (case tys of
+                 [a, b] => midAs ("thunk_selector", "(" ^ slotTy env a ^ " * " ^ slotTy env b ^ " * int) -> unit", "unit")
+               | _ => raise Fail "CoreToMid: sel_mark's types")
           | "raise" => atomSlots (env, atoms, ps, fn [e] => "(raise " ^ e ^ ")" | _ => raise Fail "raise")
           | "raise_io" => atomSlots (env, atoms, ps, fn (e :: _) => "(raise " ^ e ^ ")" | _ => raise Fail "raise_io")
           | "exn_error" => atomSlots (env, atoms, ps, fn [s] => out ("exn", "(mkexn grtErrorCall " ^ s ^ ")") | _ => raise Fail "exn_error")

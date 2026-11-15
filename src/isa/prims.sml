@@ -923,7 +923,9 @@ struct
          {name = "thunk_self_update", arity = 1, ty = "'a -> unit", effects = anything,
           doc = "In a suspension's code: the suspension running becomes an indirection to the value. Each target makes it UPDATE; no primitive runs."},
          {name = "any_check", arity = 1, ty = "'a -> 'a", effects = anything,
-          doc = "Its argument, which a fatal error stops where it is a suspension or an indirection: what a compile with --check-casts puts after each cast whose result is no suspension, which says that the value is evaluated (docs/ir.md, Suspensions)."}]]
+          doc = "Its argument, which a fatal error stops where it is a suspension or an indirection: what a compile with --check-casts puts after each cast whose result is no suspension, which says that the value is evaluated (docs/ir.md, Suspensions)."},
+         {name = "thunk_selector", arity = 3, ty = "'a susp * 'b susp * int -> unit", effects = anything,
+          doc = "Wadler's rule (the haskell98 roadmap's D17, C): the first, the suspension of a selector a pattern binding of a lazy front end made, of field i, the third, of the tuple the second holds, marked a selector (THUNK_SELECTOR + i, runtime/value.h), which a collection gives that field of the tuple once the tuple is evaluated; nothing where the suspension is not unevaluated or its first capture is not the tuple. SML makes none; last, so that no other primitive's number moves."}]]
 
   (* The compiler's own primitives, which Translate makes for the code of
      functors, of dynamic modules' slots and of open constructors, and

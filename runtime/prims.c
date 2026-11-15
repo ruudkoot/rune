@@ -2414,6 +2414,22 @@ static int p_any_check(VM *vm) {
         vm_fatal(vm, "a suspension where a cast says the value is evaluated (any_check)");
     return ret(vm, 1, v);
 }
+/* thunk_selector (the haskell98 roadmap's D17, C: Wadler's rule): s, the
+   suspension of a selector of field i of the tuple t that a pattern binding
+   made, marked a selector (THUNK_SELECTOR + i, value.h), which a collection
+   gives that field of the tuple once the tuple is evaluated (gc.h,
+   gc_select). Only a suspension unevaluated whose first capture is t itself
+   -- its code the selector's -- and a field the contag can name (below
+   256, which the JIT's BLACKHOLE needs); else nothing, and the selector is
+   a suspension as any other. ARG(2) is s, ARG(1) t, ARG(0) i. */
+static int p_thunk_selector(VM *vm) {
+    Value s = ARG(2), t = ARG(1);
+    int64_t i = val_imm(ARG(0));
+    if (val_is_ptr(s) && obj_kind(val_ptr(s)) == K_THUNK && obj_contag(val_ptr(s)) == THUNK_UNEVALUATED
+        && obj_len(val_ptr(s)) >= 2 && obj_field(val_ptr(s), 1) == t && i >= 0 && THUNK_SELECTOR + i < 256)
+        val_ptr(s)->contag = (uint16_t)(THUNK_SELECTOR + i);
+    return ret(vm, 3, mk_unit());
+}
 
 /* One frame as (name, file, line, column), built on the VM stack: every
    allocation here can collect, and the strings must survive the next one. */

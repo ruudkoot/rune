@@ -40,6 +40,7 @@
 - `tupleArity` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-tuplearity)
 - `tupleCon` (val): [HS_TYPES](../sig/HS_TYPES.md#val-tuplecon)
 - `tupleData` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-tupledata)
+- `tupleForm` (val): [HS_MATCH](../sig/HS_MATCH.md#val-tupleform)
 - `TUTuple` (con): [CORE](../sig/CORE.md#con-tutuple)
 - `TVar` (con): [CORE](../sig/CORE.md#con-tvar), [HS_AST](../sig/HS_AST.md#con-tvar)
 - `ty` (type): [CORE](../sig/CORE.md#type-ty), [HS_AST](../sig/HS_AST.md#type-ty), [HS_TYPES](../sig/HS_TYPES.md#type-ty)
