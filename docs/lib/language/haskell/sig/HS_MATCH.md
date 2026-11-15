@@ -22,10 +22,10 @@ structure HsMatch :> HS_MATCH
 | [`HsMatch`](../str/HsMatch.md) |  | [lib/language/haskell/match.sml](../../../../../lib/language/haskell/match.sml) |
 
 Pattern matching in the Report's order (the haskell98 roadmap's M15,
-D34), and decision trees in Sestoft's order as an option.
+D34), and decision trees in Sestoft's order.
 
-The rules of 3.17.3 are taken literally, at `-O0`; the trees are built
-for D34's measurement.
+The rules of 3.17.3 are taken literally at `-O0` and `-O1`; the trees
+are rhc's at `-O2` and above (D34, the owner's decision of 2026-11-15).
 
 The Report's order: the clauses one after another, and in each the
 patterns from left to right, each from the outside in (3.17.2). A
@@ -86,8 +86,8 @@ How clauses are matched.
 val order : order ref
 ```
 
-[`order`](#val-order) is the order of every match: [`Report`](#con-report), `-O0`'s, unless rhc is
-told otherwise.
+[`order`](#val-order) is the order of every match: [`Report`](#con-report) unless set; rhc sets it
+by `--match`, or by the level, [`Sestoft`](#con-sestoft) at `-O2` and above.
 
 ### <a name="type-occurrence"></a>`occurrence`
 
