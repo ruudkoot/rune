@@ -357,7 +357,22 @@ struct
      with what it reaches of rhc's runtime, checked by CoreLint, and run on
      the Core interpreter or, with -o, compiled; `args` are the options of
      the command line that are not the syntax's *)
-  fun haskell (file : string) (args : string list, desugar : CoreRuntime.strings -> Core.program) : int =
+  fun bytesOf f = let val i = BinIO.openIn f in Byte.bytesToString (BinIO.inputAll i) before BinIO.closeIn i end
+  fun writeBytes (f, b) = let val o' = BinIO.openOut f in BinIO.output (o', Byte.stringToBytes b); BinIO.closeOut o' end
+
+  (* whether a compile's bytecode is the link's memo's to keep or give
+     (RhcDriver.front, D58): not where a stage is dumped, measured or
+     stopped at, nor where an option the memo's configuration does not
+     hold shapes the passes (RhcStoreConfig.settings) *)
+  fun memoFits (args : string list) : bool =
+    null (!Pass.dumpAfter)
+    andalso not (List.exists (fn a => List.exists (fn b => a = b) ["--desugar-only", "--desugar-units", "--canonical-core",
+                                                                    "--pass-stats", "--simplify-stats", "--no-cheap-eagerness"]
+                                      orelse List.exists (fn p => String.isPrefix p a) ["--eta=", "--fuel=", "--fault="])
+                   args)
+
+  fun haskell (file : string) (args : string list, desugar : CoreRuntime.strings -> Core.program,
+                               memo : RhcDriver.memo option) : int =
     let
       val (args, byLevel) = matchOptions args
       (* --desugar-only: as far as Core and CoreLint, and run nothing *)
@@ -377,6 +392,14 @@ struct
                                                               ^ String.concatWith ", " stages ^ ")"))
                         (!Pass.dumpAfter)
       val () = Pass.startup ()
+      (* -o where the store holds the link of the same units at the same
+         configuration: its bytecode, and no stage run *)
+      val memo = case #output opts of SOME _ => if memoFits args then memo else NONE | NONE => NONE
+    in
+      case (#output opts, Option.mapPartial (fn m => #find m ()) memo) of
+        (SOME out, SOME bytes) => (writeBytes (out, bytes); Pass.finish (); 0)
+      | _ =>
+    let
       val p =
         Pass.stage {name = "desugar", showIn = NONE, show = showCore,
                     check = Pass.checkAt ("desugar", 3) roundTrip, size = List.length} desugar (#strings opts)
@@ -391,13 +414,19 @@ struct
         if not (null only) then 0
         else
           case #output opts of
-            SOME out => compile (opts, p, out)
+            SOME out =>
+              let val status = compile (opts, p, out)
+              in
+                (case memo of SOME m => if status = 0 then #keep m (bytesOf out) else () | NONE => ());
+                status
+              end
           | NONE =>
               (* the program's name, command_name's: the .hs file (ruling 33),
                  as the VM's is its bytecode's *)
               (CorePrimSys.program := {name = file, args = !programArgs}; interpret (opts, p))
     in
       Pass.finish (); status
+    end
     end
     handle RhcOptions.Usage msg => (eprint ("rhc: " ^ msg ^ "\n" ^ "rhc --help says what rhc takes\n"); 1)
          | Failed => 1
@@ -441,7 +470,6 @@ struct
                 dir ^ "\n");
          0)
     | _ =>
-    if List.exists (fn a => a = "--units") args andalso List.exists isHaskell args then haskellUnits args else
     case RhcSyntax.command args of
       SOME syntax =>
         let
@@ -509,30 +537,6 @@ struct
        | NONE => ());
       status
     end
-
-  and isHaskell a = String.isSuffix ".hs" a orelse String.isSuffix ".lhs" a
-
-  (* a program of Haskell in units (M21f): its files, and rhc's options for
-     the rest; each group of its graph a unit, kept in --store and taken
-     from there, the link the roadmap's C (RhcDriver) *)
-  and haskellUnits (args : string list) : int =
-    let
-      val (roots, rest) = List.partition isHaskell args
-      (* --hslint-claims=FILE: claims HsLint's check of each unit made at
-         level 2 is held to, as a whole compile's *)
-      val (claimed, rest) = List.partition (String.isPrefix "--hslint-claims=") rest
-      val () = List.app (fn a => RhcLint.claims := SOME (String.extract (a, size "--hslint-claims=", NONE))) claimed
-      val (rest, byLevel) = matchOptions rest
-      val opts = RhcOptions.parse rest
-      val () = byLevel ()
-      val out = case #output opts of SOME f => f | NONE => raise RhcOptions.Usage "--units compiles: give -o FILE"
-      val () = Pass.startup ()
-      val status =
-        RhcDriver.compile {roots = roots, out = out, store = #store opts,
-                           layers = #layers opts @ (case !snapshot of SOME d => [d] | NONE => []), show = #showUnits opts,
-                           strings = #strings opts, fault = #fault opts, compile = fn (p, f) => compile (opts, p, f)}
-        handle RhcDriver.Failed msg => (eprint ("rhc: error: " ^ msg ^ "\n"); 1)
-    in Pass.finish (); status end
 
   fun main (_ : string, args : string list) : int =
     counted args

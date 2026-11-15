@@ -5266,6 +5266,7 @@ Every change to Rune is graded on the brief's scale: **large**, optimal for Hask
 | D55 | Generators and metamorphic relations | Both, with rhc's mutants | decided: B |
 | D56 | Budget | The 188 programs under 1 s in `make check`, in 3 of `Lang.ways`' 18 ways, the rest nightly; K from E5 | decided: B; 38% accepted |
 | D57 | What "ready for lazy ML" means | A checklist of six, run by E14: the pin, a MidLint rule, stack force, the spec's programs, flag off, `susp` documented | decided: C; run again on form C |
+| D58 | Whether rhc keeps a store by default | Not asked at G0; raised on 2026-11-15 | decided: C, `.rhc` |
 
 **G0 is passed.** It needed D1-D6, D11-D13 and D36, which fix the boundary between Core and Mid, the thunk and the layout
 of the libraries, each expensive to reverse once code stands on it. The owner decided them with the rest on 2026-11-09.
@@ -7257,6 +7258,16 @@ Items 2, 3 and 6 are Haskell's too, and land in M9. Items 1, 4 and 5 are M26's, 
 **What would reopen it.** The extension being scheduled, when this checklist becomes its first milestone.
 
 **Decided (owner, 2026-11-09).** C, as recommended: a checklist that has been run. E14 ran it on form G, and the owner took form C, so M26 runs it again on form C: the pin, the MidLint rule, the stack target's force, the spec's 10 programs, flag off, and `susp` documented. Lazy ML's reading under C is E2's `CmX`, without `BLACKHOLE` and without release.
+
+### D58. Whether rhc keeps a store by default
+
+**Question.** D43 shares Rune's store and D45 freezes the library into a snapshot, but neither says what a plain `bin/rhc FILE.hs` keeps. As M21 built it, it keeps nothing: the program's own units are made again at every compile, and so are the library's wherever the snapshot holds none (`--strings=whole`, or an order the level does not take by default), at about the cost of `--whole` each time. `--units --store DIR` keeps both, the library's included (`--strings=whole` on hello: 618M instructions the first compile, its units taken at 1.7M the second).
+
+- **A. Opt-in, as M21 left it.**
+- **B. A store by default, Rune's `.rune`.** One budget for both languages' entries.
+- **C. A store by default, rhc's own `.rhc`,** found as Rune finds `.rune` (beside the first input, `--store DIR` another, `--no-store` none), with the snapshot read after it as now; tests that want no store say so, or are given one of their own.
+
+**Decided (owner, 2026-11-15).** C: rhc keeps a store by default, under `.rhc` rather than `.rune`, and tests that do not want one pass `--no-store` or an isolated store.
 
 ## The milestones
 

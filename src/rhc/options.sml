@@ -27,7 +27,8 @@ struct
      generate : int option,           (* --generate-core=SEED: print a generated program *)
      output : string option,          (* -o FILE: compile to bytecode, through Mid, in place of running *)
      units : bool,                    (* --units: with -o, each --read-core file a unit, compiled apart and linked *)
-     store : string option,           (* --store DIR: with --units, the store a unit is kept in and taken from *)
+     store : string option,           (* --store DIR: with --units, the store a unit is kept in and taken from;
+                                         --no-store, none (a program of Haskell's: RhcSyntax) *)
      layers : string list,            (* --layer DIR: a store a unit is taken from and never kept in *)
      showUnits : bool,                (* --show-units: say of each unit whether it was compiled or taken *)
      linkWhole : bool,                (* --link=whole: the units' Core joined, what main reaches compiled whole *)
@@ -44,14 +45,16 @@ struct
     \       rhc --dump-names [NAME OPTION...] FILE.hs...\n\
     \       rhc --dump-types | --dump-evidence | --dump-derived [NAME OPTION...] FILE.hs\n\
     \       rhc --dump-hslint [NAME OPTION...] FILE.hs\n\
-    \       rhc --units [--store DIR] [--layer DIR] [--show-units] FILE.hs -o OUT\n\
+    \       rhc [--store DIR | --no-store] [--layer DIR] [--show-units] FILE.hs [-o OUT]\n\
     \       rhc --prune-store DIR | --identity | --hslint-rules | --lint-rules\n\
     \rhc is the Haskell 98 compiler of the haskell98 roadmap (docs/rhc.md). It\n\
     \reads a program of Haskell, a file and the modules it imports, checks it,\n\
     \desugars it to Core, its typed lazy intermediate language, and runs that\n\
     \on Core's interpreter or with -o compiles it to Rune's bytecode, the\n\
     \library's units taken from the snapshot bin/rhc names; and it reads Core\n\
-    \text, checks it and runs or compiles it.\n\
+    \text, checks it and runs or compiles it. A check or a compile of a\n\
+    \program keeps its units in a store, .rhc beside FILE.hs (RHC_STORE names\n\
+    \another, and an empty one none), and takes them from there the next time.\n\
     \\n\
     \  --parse-only          read FILE.hs (or .lhs, a literate file) and stop\n\
     \  --print               print it with every block in braces\n\
@@ -106,12 +109,12 @@ struct
     \  -o FILE               compile to bytecode, through Mid, in place of running\n\
     \  -- ARG...             the arguments of the program, where rhc runs it on Core's\n\
     \                        interpreter (getArgs), as runevm takes them after its file\n\
-    \  --units               with -o, a program of Haskell compiled a unit at a time, each\n\
-    \                        group of its module graph, kept in the store and taken from\n\
-    \                        it (M21); of Core, each --read-core file a unit, after rhc's\n\
-    \                        runtime's, compiled apart and linked\n\
-    \  --store DIR           with --units, keep each unit in the store DIR and take it\n\
-    \                        from there where what it read is as it was\n\
+    \  --units               with -o, each --read-core file a unit, after rhc's runtime's,\n\
+    \                        compiled apart and linked; a program of Haskell is compiled\n\
+    \                        a unit at a time, each group of its module graph, without it\n\
+    \  --store DIR           keep each unit in the store DIR, not .rhc, and take it from\n\
+    \                        there where what it read is as it was; of Core, with --units\n\
+    \  --no-store            keep nothing, and take the units from the layers alone\n\
     \  --prune-store DIR     drop from the store DIR every configuration another rhc made,\n\
     \                        which make does to bin/rhc.layer after each build of rhc\n\
     \  --layer DIR           a store a unit is taken from and never kept in\n\
@@ -177,6 +180,7 @@ struct
       val output = ref NONE
       val units = ref false
       val store = ref NONE
+      val noStore = ref false
       val layers = ref []
       val showUnits = ref false
       val linkWhole = ref false
@@ -197,6 +201,7 @@ struct
         | go ("-o" :: file :: rest) = (output := SOME file; go rest)
         | go ("--units" :: rest) = (units := true; go rest)
         | go ("--store" :: d :: rest) = (store := SOME d; go rest)
+        | go ("--no-store" :: rest) = (noStore := true; go rest)
         | go ["--store"] = raise Usage "--store takes a directory"
         | go ("--layer" :: d :: rest) = (layers := !layers @ [d]; go rest)
         | go ["--layer"] = raise Usage "--layer takes a directory"
@@ -242,7 +247,7 @@ struct
     in
       go args;
       {readCore = !readCore, typecheckOnly = !typecheckOnly, steps = !steps, depth = !depth,
-       lintRules = !lintRules, generate = !generate, output = !output, units = !units, store = !store, layers = !layers,
+       lintRules = !lintRules, generate = !generate, output = !output, units = !units, store = if !noStore then NONE else !store, layers = !layers,
        showUnits = !showUnits, linkWhole = !linkWhole, fault = !fault,
        strings = !strings, help = !help, version = !version}
     end

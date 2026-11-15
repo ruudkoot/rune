@@ -30,7 +30,9 @@
    `compile`, which RhcMain sets: it runs it on Core's interpreter, or with
    `-o OUT` compiles it. Both take the library's units from bin/rhc's
    snapshot (`--snapshot DIR`, RhcDriver.front: D45's A, ruling 67) and
-   read, check and desugar the program's own modules a unit at a time;
+   read, check and desugar the program's own modules a unit at a time,
+   kept in the program's store, .rhc beside FILE.hs, and taken from there
+   the next time (D58: `--store DIR`, `--no-store`, RHC_STORE);
    `--whole` reads the library too, as do the options that shape its
    reading, and the views read whole. An error of the program's is a
    diagnostic, `FILE:LINE:COL: error: MESSAGE`, on standard error, each in
@@ -84,10 +86,31 @@ struct
   val whole = ref false
   val strings = ref CoreRuntime.Lazy
 
+  (* the store a check or a compile keeps its units in and takes them from
+     first (D58; RhcStoreConfig.storeFor): --store DIR, and --no-store,
+     which keeps none; the stores --layer names, read only, before the
+     snapshot; and --show-units, which says of each unit and of the link
+     whether it was compiled or taken. --units is what every such compile
+     is, and says nothing more *)
+  val storeGiven : string option ref = ref NONE
+  val noStore = ref false
+  val ownLayers : string list ref = ref []
+
+  fun storeArgs (args : string list) : string list =
+    case args of
+      "--store" :: d :: rest => (storeGiven := SOME d; storeArgs rest)
+    | ["--store"] => raise RhcOptions.Usage "--store takes a directory"
+    | "--layer" :: d :: rest => (ownLayers := !ownLayers @ [d]; storeArgs rest)
+    | ["--layer"] => raise RhcOptions.Usage "--layer takes a directory"
+    | "--no-store" :: rest => (noStore := true; storeArgs rest)
+    | "--units" :: rest => storeArgs rest
+    | a :: rest => a :: storeArgs rest
+    | [] => []
+
   (* what a program that checks becomes, given the options of the command
      line that are not this structure's and its desugaring at a way of
      making string literals: RhcMain's, which runs or compiles it *)
-  val compile : (string list * (CoreRuntime.strings -> Core.program) -> OS.Process.status) ref =
+  val compile : (string list * (CoreRuntime.strings -> Core.program) * RhcDriver.memo option -> OS.Process.status) ref =
     ref (fn _ => OS.Process.failure)
 
   fun readBytes path =
@@ -122,12 +145,19 @@ struct
          --whole and with the options that shape the library's reading
          (--names=greatest, --cycle-default=scc), which go whole; with
          --by-interface each group from the interfaces before it, the
-         library read (RhcIface, M21); the views, whole *)
+         library read (RhcIface, M21); the views, whole. Such a check or
+         compile keeps its units in the store (D58), where one is (`store`),
+         and takes them from there first, then from --layer's and the
+         snapshot *)
+      val units =
+        (mode = Check andalso not (!RhcIface.byInterface) orelse mode = Compile) andalso not (!whole)
+        andalso !fixpoint = HsModules.Least andalso check = SOME HsInfer.PerModule
+      val store = if units then RhcStoreConfig.storeFor {given = !storeGiven, none = !noStore, root = hd files} else NONE
       val front =
-        if (mode = Check andalso not (!RhcIface.byInterface) orelse mode = Compile) andalso not (!whole)
-           andalso !fixpoint = HsModules.Least andalso check = SOME HsInfer.PerModule
-        then SOME (RhcDriver.front {roots = files, dotted = !dotted, fixpoint = !fixpoint, check = check, layers = !layers,
-                                    strings = !strings, show = false})
+        if units
+        then SOME (RhcDriver.front {roots = files, dotted = !dotted, fixpoint = !fixpoint, check = check, store = store,
+                                    layers = !ownLayers @ !layers, strings = !strings,
+                                    show = List.exists (fn a => a = "--show-units") rest})
         else NONE
       val (g, r) =
         case front of
@@ -187,14 +217,22 @@ struct
                    checker accepted: a unit at a time against the snapshot,
                    whole otherwise (RhcLint; its records are #evidence r) *)
                 ((case front of SOME f => #lint f () | NONE => RhcLint.check (g, r, perGroup));
-                 if mode = Check then OS.Process.success
+                 if mode = Check then
+                   (* a check keeps its units too, desugared, where there
+                      is a store *)
+                   ((case (front, store) of
+                       (SOME f, SOME _) =>
+                         (#keep f () handle Fail msg => raise Error.Bug ("rhc's desugaring fails, a bug of rhc's: " ^ msg))
+                     | _ => ());
+                    OS.Process.success)
                  else (!compile) (rest, fn strings' =>
                                    case front of
                                      (* what main reaches of the units, the program's
                                         Core (its strings' form the snapshot's) *)
                                      SOME f => if strings' = !strings then #link f () handle RhcDriver.Failed msg => raise Error.Bug msg
                                                else raise Error.Bug "rhc's strings' form is not the one its units are of"
-                                   | NONE => RhcDesugar.program (g, r, strings')))
+                                   | NONE => RhcDesugar.program (g, r, strings'),
+                                  case front of SOME f => #memo f | NONE => NONE))
     end
     handle HsSource.Error (span, msg) => (eprint (message (hd files, span, msg) ^ "\n"); OS.Process.failure)
          | RhcDriver.Failed msg => (eprint ("rhc: error: " ^ msg ^ "\n"); OS.Process.failure)
@@ -242,6 +280,7 @@ struct
       else
         SOME (fn () =>
           let
+            val args = storeArgs args
             val spans = not (List.exists (fn a => a = "--no-spans") args)
             fun option a =
               case a of
@@ -277,7 +316,7 @@ struct
               orelse String.isPrefix "--match=" a orelse a = "--desugar-only" orelse a = "--desugar-units"
               orelse a = "--canonical-core"
               orelse String.isPrefix "--eta=" a orelse String.isPrefix "--strictness=" a orelse a = "--simplify-stats"
-              orelse a = "--no-cheap-eagerness" orelse String.isPrefix "--fuel=" a
+              orelse a = "--no-cheap-eagerness" orelse String.isPrefix "--fuel=" a orelse a = "--show-units"
               orelse option a
             fun check [] = ()
               | check ("-o" :: _ :: rest) = check rest

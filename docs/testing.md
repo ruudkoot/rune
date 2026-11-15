@@ -511,6 +511,14 @@ record `Lang.suite`, which says where its programs are and what their files
 end with, who compiles and runs them, and its tags, and `Lang.tree` makes its
 jobs. Rune's is `Lang.rune`; rhc's is `HsLang.rhc` (`tests/runner/hslang.sml`).
 
+A compile of rhc's keeps its units in a store, `.rhc` beside the program,
+unless `RHC_STORE` is empty ([rhc.md](rhc.md)), and `bin/rune-test` sets
+`RHC_STORE` empty for itself and its jobs, so that no test writes a store
+in `tests/hs` and every compile of a test's is made from its sources. A job
+that tests the store names one of its own, `--store DIR` in its own
+directory (`hs/units/*`, `hs/hslint/faults`'s units), or unsets
+`RHC_STORE` there (`hs/units/default`, `hs/units/concurrent`).
+
 * **Programs.** A program is a file `NAME.hs` or `NAME.lhs`, or a directory
   `NAME` with a `Main.hs` or `Main.lhs` in it, whose other modules rhc finds
   beside it. Its siblings are named from `NAME` in both cases, beside the
@@ -1235,7 +1243,7 @@ is `hs/units/warm` with `--link=whole`, the roadmap's C (*rhc's units* in
 link joins the units' Core, keeps what `main` reaches and compiles it whole
 or takes it from the link memo; each step's program is also byte for byte
 what a whole compile of the same files gives. `hs/units/drive` is rhc's
-driver over a program of Haskell (`rhc --units FILE.hs --store DIR
+driver over a program of Haskell (`rhc FILE.hs --store DIR
 --show-units`): `tests/hs/units/drive`'s Main and Lib, copies edited, each
 step with the library's unit, Lib's, Main's and the link compiled or taken
 as it should, what it prints, and its program byte for byte `rhc Main.hs`'s
@@ -1272,7 +1280,16 @@ any order (`RHC_UNITS_SEED`, else the day's, which the log says).
 made is a layer, read only; hello compiled with `--layer` and an overlay of
 its own takes the library's unit from it, parses none of its modules and
 compiles Main and the link alone, its program byte for byte the whole
-compile's, and the layer is not written. Core in
+compile's, and the layer is not written. `hs/units/default` is the store a
+compile keeps by default (the roadmap's D58), `RHC_STORE` unset in a
+directory of the job's: a plain compile keeps `.rhc` beside Main.hs and
+nothing else, the next takes every unit and the link from it, byte for
+byte, as does one with `--units`; a check keeps its units, which a run and
+a compile then take; `--no-store` and an empty `RHC_STORE` write nothing,
+and `RHC_STORE` names the store written. `hs/units/concurrent` runs two
+compiles at once on one `.rhc`, twice: both compile, to one program, a
+plain compile's, and a third takes every unit and the link from what they
+kept. Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an
