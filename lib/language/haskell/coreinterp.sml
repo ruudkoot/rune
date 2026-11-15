@@ -209,6 +209,7 @@ struct
         | ("ref_get", [r, _]) => Return (VUTuple (Vector.fromList [cell world, !(refOf r)]))
         | ("ref_set", [r, x, _]) => (refOf r := x; Return world)
         | ("real_world", []) => Return world
+        | ("sel_mark", _) => Return world   (* the collector's rule, D17's C: nothing to the interpreter *)
         | ("raise", _) => Throw (exnOf (one args))
         | ("raise_io", [e, _]) => Throw (exnOf e)
         | ("exn_error", _) => Return (exn ("ErrorCall", str (one args)))

@@ -40,6 +40,30 @@ sig
   (* What is matched: an atom of Core and its type. *)
   type occurrence = Core.atom * Core.ty
 
+  (* `tupleForm n` is whether a pattern binding or a lazy pattern of `n`
+     variables takes the tuple form (the roadmap's D17, C).
+
+     The tuple of the variables' components is bound once, and each variable
+     is its selector, which the collector reduces once the tuple is
+     evaluated (Wadler 1987); otherwise rule (d), each variable a match of
+     its own. *)
+  val tupleForm : int -> bool
+
+  (* `plainTuple p` is whether `p` is a tuple of variables alone, whose
+     value is the tuple of their components already. *)
+  val plainTuple : HsAst.pat -> bool
+
+  (* `selector (t, tupleTy, vs, i)` is the selector of the i-th of the
+     variables `vs` from `t`, the tuple of their components: its i-th field.
+
+     `vs` are Core names and types, and `tupleTy` the tuple's type. *)
+  val selector : string * Core.ty * (string * Core.ty) list * int -> HsDsCore.texp
+
+  (* `marks (t, tupleTy, vs, body)` is `body` after each of the selectors
+     `vs` of the tuple `t` is marked one for the collector (sel_mark,
+     the VM's thunk_selector). *)
+  val marks : string * Core.ty * (string * Core.ty) list * HsDsCore.texp -> HsDsCore.texp
+
   (* A clause: its patterns, and its right-hand side, made in the scope of
      the patterns' variables and given what to do where its guards all
      fail. *)

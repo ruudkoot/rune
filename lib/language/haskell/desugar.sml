@@ -29,6 +29,10 @@ struct
   fun nameSpan (A.Name ({span, ...}, _)) = span
 
   val boolTy = Core.TCon "Bool"
+
+  (* the selectors of the tuple form a group's pattern bindings made, to be
+     marked for the collector once they are (the roadmap's D17, C; Mt.marks) *)
+  val pendingMarks : (string * Core.ty * (string * Core.ty) list) list ref = ref []
   fun listTy t = Core.TApp (Core.TCon "[]", t)
   fun elemOf t = case C.lazyTy t of Core.TApp (Core.TCon "[]", e) => e | t' => raise Untyped ("a list of " ^ CoreText.showTy t')
   fun lazyOpt (SOME t) = SOME (C.lazyTy t) | lazyOpt NONE = NONE
@@ -728,7 +732,11 @@ struct
      variables the checker generalised, by a type lambda over the
      variables of all of them. The value's type is its right-hand side's,
      since a wildcard of the pattern says nothing of it, and is known once
-     the value is made, before its variables are *)
+     the value is made, before its variables are. One of two variables or
+     more and no type variable takes the tuple form instead (the roadmap's
+     D17, C): its value the tuple of the variables' components, made once,
+     and each variable its selector, marked for the collector, which gives
+     a selector's field once the tuple is evaluated (Wadler 1987) *)
   and patternBinding (env, pat, r, coreOf) =
     let
       val vars = Mt.variables pat
@@ -786,8 +794,33 @@ struct
           ((x, SOME t, mk), (v, x, t))
         end
       val vs = ListPair.map varDef (vars, records)
+      fun tupleBinding () =
+        let
+          val n = length vars
+          val vts = List.map (fn rec_ => recordType (env, rec_)) records
+          val tup = T.tupleCon n
+          val tupleTy = Core.apply (Core.TCon tup, vts)
+          val names = List.map coreOf vars
+          val sel = ListPair.zip (names, vts)
+          fun found env3 v =
+            case V.lookup (env3, nameText v) of
+              SOME (a, at) => (Core.Atom a, at)
+            | NONE => bug "a pattern binding's variable"
+          val () = pendingMarks := (tname, tupleTy, sel) :: !pendingMarks
+          fun tupleDef env' =
+            if Mt.plainTuple pat then valueDef env'
+            else
+              C.atom (valueDef env', fn occ =>
+                C.atom (C.fail ("exn_pattern", "irrefutable pattern failed", tupleTy), fn (fa, ft) =>
+                  Mt.pattern (env', occ, pat, fn env3 => C.con (tup, vts, List.map (found env3) vars), (Core.Atom fa, ft))))
+        in
+          ((tname, SOME tupleTy, tupleDef)
+           :: List.tabulate (n, fn i => (List.nth (names, i), SOME (List.nth (vts, i)), fn _ => Mt.selector (tname, tupleTy, sel, i))),
+           ListPair.map (fn (v, (x, t)) => (v, x, t)) (vars, sel))
+        end
     in
-      ((tname, NONE, valueDef) :: List.map #1 vs, List.map #2 vs)
+      if Mt.tupleForm (length vars) andalso null gvars then tupleBinding ()
+      else ((tname, NONE, valueDef) :: List.map #1 vs, List.map #2 vs)
     end
 
   (* a group of local declarations (3.12, 4.5.1): by dependency, a `let`
@@ -808,13 +841,16 @@ struct
         let
           val members = List.map (fn key => valOf (M.find (byKey, key))) g
           val recursive = length g > 1 orelse List.exists (fn d => d = hd g) (deps (hd g))
+          val () = pendingMarks := []
           val parts = List.map (fn b => definitions (env, b, nameText)) members
+          val marking = !pendingMarks
           val defs = List.concat (List.map #1 parts)
           val binds = List.concat (List.map #2 parts)
           val envB = List.foldl (fn ((n, x, t), e) => V.bind (e, nameText n, Core.Var x, t)) env binds
           (* a pattern binding's own value is a name of Core's alone *)
           val envR = if recursive then envB else env
-          val body = k envB
+          (* the tuple form's selectors marked before the body (D17's C) *)
+          val body = List.foldl (fn ((t, tt, sel), b) => Mt.marks (t, tt, sel, b)) (k envB) marking
           (* in order: a pattern binding's value before its variables *)
           fun made scope = List.map (fn (x, t, mk) => let val e = mk scope in (x, getOpt (t, C.lazyTy (#2 e)), e) end) defs
         in

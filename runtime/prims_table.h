@@ -440,6 +440,7 @@ enum Prim {
   PRIM_thunk_blackhole = 434,
   PRIM_thunk_self_update = 435,
   PRIM_any_check = 436,
+  PRIM_thunk_selector = 437,
   PRIM__COUNT
 };
 
@@ -881,6 +882,7 @@ static const char *const prim_names[] = {
   "thunk_blackhole",
   "thunk_self_update",
   "any_check",
+  "thunk_selector",
 };
 
 static const unsigned char prim_arity[] = {
@@ -1321,6 +1323,7 @@ static const unsigned char prim_arity[] = {
   1,
   1,
   1,
+  3,
 };
 
 /* what each primitive's result is (the representations of
@@ -1764,6 +1767,7 @@ static const unsigned char prim_result[] = {
   8,
   8,
   0,
+  8,
 };
 
 #define RUNE_PRIM_LIST(X) \
@@ -2203,6 +2207,7 @@ static const unsigned char prim_result[] = {
   X(thunk_force) \
   X(thunk_blackhole) \
   X(thunk_self_update) \
-  X(any_check)
+  X(any_check) \
+  X(thunk_selector)
 
 #endif

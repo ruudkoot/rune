@@ -878,7 +878,14 @@ its own, and forcing one is one step.
   `UPDATE` ([bytecode.md](bytecode.md)). A suspension is the closure `thunk_make` was
   given, made a `K_THUNK` in place (or a copy of one that captures nothing, which may
   be shared); `UPDATE` makes it an indirection to its value (`K_IND`), which a force
-  reads and the collector shortcuts. A suspension forced while its code runs is a loop,
+  reads and the collector shortcuts. A selector (the roadmap's D17, C: Wadler's rule)
+  is a suspension a pattern binding of two variables or more, or a lazy pattern of
+  them, makes of each variable, whose code takes field i of the tuple of their
+  components, its first capture: `thunk_selector` marks it so (`THUNK`'s state
+  `3 + i`), and the collector gives what points to it that field of the tuple once the
+  tuple is evaluated, following a chain of them as far as it goes, so that a field the
+  program no longer reads does not keep the tuple, and what the tuple's other fields
+  hold, alive. A suspension forced while its code runs is a loop,
   and so is one that code left by a raise: `ENTER` raises the builtin exception `Loop`
   on every engine, which a program may handle, and which rhc's top level takes for an
   uncaught `NonTermination` (`<<loop>>`): status 1, the handles flushed (chapter 23;
@@ -899,7 +906,8 @@ its own, and forcing one is one step.
   collection that shortcuts) nor where the value is a suspension or an indirection
   itself, looked at through its forwarding pointer (`ind_may_shortcut`: a field that
   held the outer of an `'a susp susp` must not come to hold the inner, whose force
-  would run it). `tests/thunks`' kernels `k_outlive`, `k_outlive_int`,
+  would run it); nor, the same way, the field of a selector's tuple that is a
+  suspension or an indirection. `tests/thunks`' kernels `k_outlive`, `k_outlive_int`,
   `k_outlive_raise`, `k_outlive_three`, `outlive_nullary` and `k_nested` hold each on
   every engine.
 * **What holds it** (the roadmap's D57, M26, whose checklist of six this is):

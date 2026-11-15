@@ -11,6 +11,39 @@ struct
 
   type occurrence = Core.atom * Core.ty
 
+  (* ---- Selectors (the roadmap's D17, C: Wadler's rule) ---- *)
+
+  (* a pattern binding and a lazy pattern of two variables or more take the
+     tuple form: the tuple of the variables' components bound once, and
+     each variable its selector, which the collector reduces once the
+     tuple is evaluated (Wadler 1987); one of fewer, rule (d) *)
+  fun tupleForm n = n >= 2
+
+  (* a tuple of variables alone, `(x, y)`: its value is the tuple of the
+     components already, which the selectors take apart with no match *)
+  fun plainTuple (A.P (_, A.PTuple ps)) = List.all (fn A.P (_, A.PVar _) => true | _ => false) ps
+    | plainTuple (A.P (_, A.PParen p)) = plainTuple p
+    | plainTuple _ = false
+
+  (* the selector of the i-th of the variables `vs` (Core names and types)
+     from `t`, the tuple of their components: its i-th field *)
+  fun selector (t : string, tupleTy : Core.ty, vs : (string * Core.ty) list, i : int) : C.texp =
+    C.caseCon (Core.Var t, tupleTy, [(HsTypes.tupleCon (length vs), fn fields => C.var (List.nth (fields, i)))], NONE)
+
+  (* each selector of the tuple t marked one for the collector
+     (sel_mark, thunk_selector: field i of t), after the selectors are made
+     and before what they scope over *)
+  fun marks (t, tupleTy, vs, (body, bt)) =
+    let
+      val w = C.fresh "w"
+      val indexed = ListPair.zip (List.tabulate (length vs, fn i => i), vs)
+      fun mark ((i, (x, xt)), b) =
+        Core.Case (Core.Prim ("sel_mark", [xt, tupleTy], [Core.Var x, Core.Var t, Core.Lit (Core.LInt (IntInf.fromInt i)), Core.Var w]),
+                   "_", [Core.AltDefault b])
+    in
+      (Core.Case (Core.Prim ("real_world", [], []), w, [Core.AltDefault (List.foldr mark body indexed)]), bt)
+    end
+
   type clause = A.pat list * (V.env * C.texp -> C.texp)
 
   fun nameText (A.Name (_, {name, ...})) = name
@@ -75,6 +108,35 @@ struct
     | A.PAs (v, q) => pattern (V.bind (env, nameText v, a, t), occ, q, success, failure)
     | A.PLazy q =>
         if lazy q then pattern (env, occ, q, success, failure)
+        else if tupleForm (length (variables q)) then
+          (* the tuple of the variables' components, made once when one is
+             forced, and each variable its selector, marked (D17's C) *)
+          let
+            val vars = variables q
+            val n = length vars
+            val vts = List.map (fn v => varType (env, v)) vars
+            val tup = HsTypes.tupleCon n
+            val tupleTy = Core.apply (Core.TCon tup, vts)
+            val t = C.fresh "tup"
+            val names = List.map (fn _ => C.fresh "s") vars
+            fun found env' v =
+              case V.lookup (env', nameText v) of
+                SOME (a', t') => (Core.Atom a', t')
+              | NONE => raise Fail "HsMatch: a variable of a lazy pattern"
+            val m = C.atom (C.fail ("exn_pattern", "irrefutable pattern failed", tupleTy),
+                            fn (fa, ft) => pattern (env, occ, q, fn env' => C.con (tup, vts, List.map (found env') vars),
+                                                    (Core.Atom fa, ft)))
+            val vs = ListPair.zip (names, vts)
+            val env' = ListPair.foldl (fn (v, (x, xt), e) => V.bind (e, nameText v, Core.Var x, xt)) env (vars, vs)
+            fun selectors tv =
+              List.foldr (fn ((y, yt, e), b) => C.let_ (y, yt, e, b))
+                         (marks (tv, tupleTy, vs, success env'))
+                         (List.tabulate (n, fn i => let val (y, yt) = List.nth (vs, i) in (y, yt, selector (tv, tupleTy, vs, i)) end))
+          in
+            case (plainTuple q, #1 occ) of
+              (true, Core.Var x) => selectors x
+            | _ => C.let_ (t, tupleTy, m, selectors t)
+          end
         else
           (* rule (d): each variable a match of its own, made when forced *)
           let

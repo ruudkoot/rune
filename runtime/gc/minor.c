@@ -145,45 +145,28 @@ static Obj *promote(VM *vm, Obj *o) {
     return n;
 }
 
-/* The young indirection shortcut where the program has lazy ML's
-   suspensions (Program's reruns): the field given what it holds (D18)
-   where it may be (ind_may_shortcut), along a chain of at most IND_HOPS; 0
-   where the field comes to hold what is not young. Out of line, out of the
-   way of every other program's scan. */
-#if defined(__GNUC__)
-__attribute__((noinline))
-#endif
-static int shortcut_guarded(VM *vm, Value *v) {
-    for (int hops = 0; hops < IND_HOPS && ind_may_shortcut(*v); hops++) {
-        *v = obj_fields(val_ptr(*v))[0];
-        if (!val_is_ptr(*v) || !gc_in_nursery(vm, val_ptr(*v))) return 0;
-    }
-    return 1;
-}
-
 /* A field's promotion: what it holds, where young, copied out of the
-   nursery; an indirection shortcut first, the field given what it holds
-   (D18) -- through the guard and past the pin where the program has lazy
-   ML's suspensions (guard: Program's reruns; shortcut_guarded), which no
-   program of SML or Haskell has. In line where the scan of an object runs
-   it field by field (scan_object, scan_range), which asks reruns once an
-   object and runs a loop of each, so that with guard 0 the code is what
-   it was before M26; out of line (promote_value) elsewhere, as the C
-   compiler chose before M26. With the guard in line it chose otherwise,
-   and every program paid a call a field (+1.3% instructions on SML's
-   queens). */
+   nursery; a young indirection or selector shortcut first (D18; D17's C:
+   gc_shortcut_walk, gc.h), entered only for a suspension or an
+   indirection, one comparison, out of line -- through the guard and past
+   the pin where the program has lazy ML's suspensions (guard: Program's
+   reruns), which no program of SML or Haskell has. In line where the scan
+   of an object runs it field by field (scan_object, scan_range), which
+   asks reruns once an object and runs a loop of each; out of line
+   (promote_value) elsewhere, as the C compiler chose before M26. With the
+   guard in line it chose otherwise, and every program paid a call a field
+   (+1.3% instructions on SML's queens). The comparison costs SML's
+   collections about 2% of their instructions, and a whole run 0.01%
+   (D17's C, measured). */
 #if defined(__GNUC__)
 __attribute__((always_inline))
 #endif
 static inline int promote_field(VM *vm, Value *v, int guard) {
     if (!val_is_ptr(*v) || !gc_in_nursery(vm, val_ptr(*v))) return 0;
-    if (guard) {
-        if (obj_kind(val_ptr(*v)) == K_IND && !shortcut_guarded(vm, v)) return 0;
-    } else
-        for (int hops = 0; hops < IND_HOPS && obj_kind(val_ptr(*v)) == K_IND; hops++) {
-            *v = obj_fields(val_ptr(*v))[0];
-            if (!val_is_ptr(*v) || !gc_in_nursery(vm, val_ptr(*v))) return 0;
-        }
+    if (obj_kind(val_ptr(*v)) >= K_THUNK) {
+        gc_shortcut_walk(vm, v, 1, 1, guard);
+        if (!val_is_ptr(*v) || !gc_in_nursery(vm, val_ptr(*v))) return 0;
+    }
     *v = mk_ptr(promote(vm, val_ptr(*v)));
     return 1;
 }

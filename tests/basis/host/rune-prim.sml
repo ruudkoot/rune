@@ -1591,6 +1591,7 @@ struct
   fun thunk_force (_ : 'a susp) : 'a = raise Fail "thunk_force: Rune's alone"
   fun thunk_blackhole () : unit = raise Fail "thunk_blackhole: Rune's alone"
   fun thunk_self_update (_ : 'a) : unit = raise Fail "thunk_self_update: Rune's alone"
+  fun thunk_selector (_ : 'a susp, _ : 'b susp, _ : int) : unit = raise Fail "thunk_selector: Rune's alone"
   fun any_check (x : 'a) : 'a = x
   fun rt_version () = unsupported ""
   fun rt_trace (_ : int) : (string * string * int * int) list = unsupported []

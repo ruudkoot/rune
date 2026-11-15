@@ -96,7 +96,9 @@ struct
        ("ref_new", "(forall (a) (-> a " ^ io "!(Ref a)" ^ "))", "a new cell, holding a value it does not force"),
        ("ref_get", "(forall (a) (-> !(Ref a) " ^ io "a" ^ "))", "what a cell holds"),
        ("ref_set", "(forall (a) (-> !(Ref a) a World World))", "puts a value in a cell, unforced"),
-       ("real_world", "World", "a state token, for an action run where none is passed")]
+       ("real_world", "World", "a state token, for an action run where none is passed"),
+       ("sel_mark", "(forall (a b) (-> a b !Int World World))",
+        "Wadler's rule (the roadmap's D17, C): the first, a pattern binding's selector of the field the third names of the second, its tuple, marked for the collector, which gives that field of the tuple once the tuple is evaluated")]
     @ [("raise", "(forall (a) (-> !Exn a))", "raises an exception"),
        ("raise_io", "(forall (a) (-> !Exn " ^ io "a" ^ "))", "an action that raises an exception, ioError's"),
        ("exn_error", unary ("Str", "Exn"), "the exception error raises, ErrorCall"),

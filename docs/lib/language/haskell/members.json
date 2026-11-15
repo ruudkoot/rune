@@ -235,7 +235,7 @@
      "kind": "val",
      "name": "prims",
      "spec": "val prims : prim list",
-     "doc": "`prims` is every primitive, in the order of this list:\n\n- on `Int`: `int_add`, `int_sub`, `int_mul`, `int_quot`, `int_rem`,\n  `int_div`, `int_mod`, `int_neg`, and the comparisons `int_eq`,\n  `int_ne`, `int_lt`, `int_le`, `int_gt`, `int_ge`;\n- on `Integer`: the same, `integer_add` to `integer_ge`, and\n  `integer_from_int`, `integer_to_int`;\n- on `Char`: `char_ord`, `char_chr`, and `char_eq` to `char_ge`;\n- on `Double`: `double_add`, `double_sub`, `double_mul`, `double_div`,\n  `double_neg`, `double_eq` to `double_ge`, `double_from_int` and\n  `double_to_str`; then the elementary functions `double_sqrt`,\n  `double_exp`, `double_log`, `double_sin`, `double_cos`, `double_tan`,\n  `double_atan`, `double_sinh`, `double_cosh`, `double_tanh` and\n  `double_atan2`; the conversions to `Int` `double_truncate`,\n  `double_round` (to even at a half), `double_ceiling`, `double_floor`;\n  the classes `double_is_nan`, `double_is_infinite`,\n  `double_is_negative_zero`, `double_is_denormalized`;\n  `double_decode` and `double_encode`, a mantissa of 53 bits; and\n  `double_pow`;\n- on `Float`, a `Double` that binary32 represents, every result of\n  arithmetic rounded to binary32 by Mid's `real_to_single` (D23):\n  `float_add`, `float_sub`, `float_mul`, `float_div`, `float_neg`,\n  `float_eq` to `float_ge`, `float_from_int`, `float_from_double`,\n  `float_to_double`, `float_to_str`, and the functions of `Double`\n  from the elementary ones on, `float_sqrt` to `float_encode`, a\n  mantissa of 24 bits;\n- on `Str`: `str_size`, `str_byte`, `str_concat`, `str_from_char`,\n  `str_extract`, `str_eq`;\n- on `Arr a`, an array of cells each holding a value, unforced, as\n  `Ref a` does one: `arr_new`, `arr_set`, `arr_read`, `arr_get`,\n  `arr_size`;\n- I/O: `print_str`, `print_err`, `exit`; the handles of files, 0 to 2\n  standard input, output and error, `h_open`, `h_close`, `h_read`,\n  `h_write`, `h_flush`, `h_error`; `interleave`, which defers an\n  action until its value is forced (D25's one interleaving\n  primitive); `ref_new`, `ref_get`, `ref_set`, `real_world`;\n- exceptions: `raise`, `raise_io`, `exn_error`, `exn_io`, `exn_io_full`,\n  `exn_io_code`, `exn_io_file`, `exn_io_handle`, `exn_pattern`,\n  `exn_kind`, `exn_name`, `exn_message` and `catch`;\n- then each family's, in the order of `families`.\n\n",
+     "doc": "`prims` is every primitive, in the order of this list:\n\n- on `Int`: `int_add`, `int_sub`, `int_mul`, `int_quot`, `int_rem`,\n  `int_div`, `int_mod`, `int_neg`, and the comparisons `int_eq`,\n  `int_ne`, `int_lt`, `int_le`, `int_gt`, `int_ge`;\n- on `Integer`: the same, `integer_add` to `integer_ge`, and\n  `integer_from_int`, `integer_to_int`;\n- on `Char`: `char_ord`, `char_chr`, and `char_eq` to `char_ge`;\n- on `Double`: `double_add`, `double_sub`, `double_mul`, `double_div`,\n  `double_neg`, `double_eq` to `double_ge`, `double_from_int` and\n  `double_to_str`; then the elementary functions `double_sqrt`,\n  `double_exp`, `double_log`, `double_sin`, `double_cos`, `double_tan`,\n  `double_atan`, `double_sinh`, `double_cosh`, `double_tanh` and\n  `double_atan2`; the conversions to `Int` `double_truncate`,\n  `double_round` (to even at a half), `double_ceiling`, `double_floor`;\n  the classes `double_is_nan`, `double_is_infinite`,\n  `double_is_negative_zero`, `double_is_denormalized`;\n  `double_decode` and `double_encode`, a mantissa of 53 bits; and\n  `double_pow`;\n- on `Float`, a `Double` that binary32 represents, every result of\n  arithmetic rounded to binary32 by Mid's `real_to_single` (D23):\n  `float_add`, `float_sub`, `float_mul`, `float_div`, `float_neg`,\n  `float_eq` to `float_ge`, `float_from_int`, `float_from_double`,\n  `float_to_double`, `float_to_str`, and the functions of `Double`\n  from the elementary ones on, `float_sqrt` to `float_encode`, a\n  mantissa of 24 bits;\n- on `Str`: `str_size`, `str_byte`, `str_concat`, `str_from_char`,\n  `str_extract`, `str_eq`;\n- on `Arr a`, an array of cells each holding a value, unforced, as\n  `Ref a` does one: `arr_new`, `arr_set`, `arr_read`, `arr_get`,\n  `arr_size`;\n- I/O: `print_str`, `print_err`, `exit`; the handles of files, 0 to 2\n  standard input, output and error, `h_open`, `h_close`, `h_read`,\n  `h_write`, `h_flush`, `h_error`; `interleave`, which defers an\n  action until its value is forced (D25's one interleaving\n  primitive); `ref_new`, `ref_get`, `ref_set`, `real_world`;\n  `sel_mark`, which marks a pattern binding's selector for the\n  collector (the roadmap's D17, C: Wadler's rule);\n- exceptions: `raise`, `raise_io`, `exn_error`, `exn_io`, `exn_io_full`,\n  `exn_io_code`, `exn_io_file`, `exn_io_handle`, `exn_pattern`,\n  `exn_kind`, `exn_name`, `exn_message` and `catch`;\n- then each family's, in the order of `families`.\n\n",
      "page": "sig/CORE_PRIM.md#val-prims"
     },
     {
@@ -2655,6 +2655,34 @@
      "spec": "type occurrence = Core.atom * Core.ty",
      "doc": "What is matched: an atom of Core and its type.\n\n",
      "page": "sig/HS_MATCH.md#type-occurrence"
+    },
+    {
+     "kind": "val",
+     "name": "tupleForm",
+     "spec": "val tupleForm : int -> bool",
+     "doc": "`tupleForm n` is whether a pattern binding or a lazy pattern of `n`\nvariables takes the tuple form (the roadmap's D17, C).\n\nThe tuple of the variables' components is bound once, and each variable\nis its selector, which the collector reduces once the tuple is\nevaluated (Wadler 1987); otherwise rule (d), each variable a match of\nits own.\n\n",
+     "page": "sig/HS_MATCH.md#val-tupleform"
+    },
+    {
+     "kind": "val",
+     "name": "plainTuple",
+     "spec": "val plainTuple : HsAst.pat -> bool",
+     "doc": "`plainTuple p` is whether `p` is a tuple of variables alone, whose\nvalue is the tuple of their components already.\n\n",
+     "page": "sig/HS_MATCH.md#val-plaintuple"
+    },
+    {
+     "kind": "val",
+     "name": "selector",
+     "spec": "val selector : string * Core.ty * (string * Core.ty) list * int -> HsDsCore.texp",
+     "doc": "`selector (t, tupleTy, vs, i)` is the selector of the i-th of the\nvariables `vs` from `t`, the tuple of their components: its i-th field.\n\n`vs` are Core names and types, and `tupleTy` the tuple's type.\n\n",
+     "page": "sig/HS_MATCH.md#val-selector"
+    },
+    {
+     "kind": "val",
+     "name": "marks",
+     "spec": "val marks : string * Core.ty * (string * Core.ty) list * HsDsCore.texp -> HsDsCore.texp",
+     "doc": "`marks (t, tupleTy, vs, body)` is `body` after each of the selectors\n`vs` of the tuple `t` is marked one for the collector (sel\\_mark,\nthe VM's thunk\\_selector).\n\n",
+     "page": "sig/HS_MATCH.md#val-marks"
     },
     {
      "kind": "type",
