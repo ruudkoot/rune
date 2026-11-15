@@ -1,13 +1,19 @@
 ; run: --read-core tests/hs/core/lib/base.core
 ; M24, D50's precise exceptions: f evaluates x only after an I/O action, the state token its parameter, so strictness
-; may not evaluate x before the action. The line is printed, then the error ends the program, at every level, the
-; simplifier's -O2 among them, where f, recursive, is not inlined and its analysis would make it a worker strict in x
-; without the rule.
+; may not say f strict in x. The line is printed, then the error ends the program, at every level. f, of an unboxed
+; tuple, is never split; h, recursive and of a World, is (strict in k), and were f strict in x, h would be strict in
+; y and its wrapper would evaluate y before the action: at -O2 (hs/core/vm/strict-order) the error would come first.
 (val f (-> Int Int World (utuple World Unit))
   (\ ((k Int) (x Int) (w World))
     (case k j
       (0 (case (putStrLn "before" w) r ((utuple w1 _) (case x v (_ (printInt v w1))))))
       (_ (case (prim int_sub j 1) j1 (_ (f j1 x w)))))))
+(val h (-> Int Int World World)
+  (\ ((k Int) (y Int) (w World))
+    (case k j
+      (0 (case (f 2 y w) r ((utuple w1 _) w1)))
+      (_ (case (prim int_sub j 1) j1 (_ (h j1 y w)))))))
 (val main (-> World (utuple World Unit))
   (\ ((w World))
-    (let (n Int (error @Int "after")) (f 2 n w))))
+    (let (n Int (error @Int "after"))
+      (case (h 1 n w) w1 (_ (let (u Unit (con Unit)) (utuple w1 u)))))))

@@ -28,14 +28,16 @@ of its modules' interfaces as the renamer and the checker make them
 and empty until M23 (D44's C). The desugaring's part, its Core among
 it, is the desugaring's own text, which a client keeps beside this one:
 rhc's driver keeps it as a section of its own, read only where a unit
-is desugared after it.
+is desugared after it. The strictness section (M24) is each function's
+strictness signature, by its Core name, in CoreStrict.show's text;
+empty below -O2.
 
 ## Interface
 
 <pre>
 signature HS_IFACE =
 sig
-  type <a href="#type-t">t</a> = {<a href="#fld-t.modules">modules</a> : HsModIface.t list, <a href="#fld-t.unfoldings">unfoldings</a> : string list}
+  type <a href="#type-t">t</a> = {<a href="#fld-t.modules">modules</a> : HsModIface.t list, <a href="#fld-t.unfoldings">unfoldings</a> : string list, <a href="#fld-t.strictness">strictness</a> : (string * string) list}
   exception <a href="#exn-bad">Bad</a> of string
   val <a href="#val-encode">encode</a> : t -&gt; string
   val <a href="#val-decode">decode</a> : string -&gt; t
@@ -47,15 +49,17 @@ end
 ### <a name="type-t"></a>`t`
 
 ```sml
-type t = {modules : HsModIface.t list, unfoldings : string list}
+type t = {modules : HsModIface.t list, unfoldings : string list, strictness : (string * string) list}
 ```
 
-A unit's interface: its modules', and the unfoldings, none yet.
+A unit's interface: its modules', the unfoldings, and the strictness
+signatures.
 
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-t.modules"></a>`modules` | `HsModIface.t list` |  |
 | <a name="fld-t.unfoldings"></a>`unfoldings` | `string list` |  |
+| <a name="fld-t.strictness"></a>`strictness` | `(string * string) list` |  |
 
 ### <a name="exn-bad"></a>`Bad`
 

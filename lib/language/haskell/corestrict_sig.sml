@@ -46,8 +46,11 @@ sig
   val program : (unit -> bool) * Core.program -> Core.program
 
   (* `show s` is a signature as text, `S` or `L` for each parameter and
-     `b` after them where a call diverges; `read` reads it back. *)
+     `b` after them where a call diverges. *)
   val show : strictness -> string
+
+  (* `read text` is the signature `show` wrote as `text`, or NONE where
+     `text` is none of its. *)
   val read : string -> strictness option
 
   (* `enabled` is whether `program` makes workers and wrappers: false for

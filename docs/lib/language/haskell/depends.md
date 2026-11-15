@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's index records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 242 requirements between the 80 files become 108 arrows.
+library and not a wall of lines: the 247 requirements between the 82 files become 111 arrows.
 The order in which the library loads its files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -23,7 +23,7 @@ one need a file of the other.
 
 ```mermaid
 flowchart LR
-  a0["Languages<br>(78)"]
+  a0["Languages<br>(80)"]
   a1["Collections<br>(2)"]
   a0 -- 5 --> a1
 ```
@@ -98,18 +98,20 @@ flowchart TD
   n65["CoreGen"]
   n66(["CORE_TO_MID"])
   n67["CoreToMid"]
-  n68(["CORE_SIMPLIFY"])
-  n69["CoreSimplify"]
-  n70(["HS_LINT"])
-  n71["HsLint"]
-  n72(["HS_DS_CORE"])
-  n73["HsDsCore"]
-  n74(["HS_DS_ENV"])
-  n75["HsDsEnv"]
-  n76(["HS_MATCH"])
-  n77["HsMatch"]
-  n78(["HS_DESUGAR"])
-  n79["HsDesugar"]
+  n68(["CORE_STRICT"])
+  n69["CoreStrict"]
+  n70(["CORE_SIMPLIFY"])
+  n71["CoreSimplify"]
+  n72(["HS_LINT"])
+  n73["HsLint"]
+  n74(["HS_DS_CORE"])
+  n75["HsDsCore"]
+  n76(["HS_DS_ENV"])
+  n77["HsDsEnv"]
+  n78(["HS_MATCH"])
+  n79["HsMatch"]
+  n80(["HS_DESUGAR"])
+  n81["HsDesugar"]
   n1 --> n0
   n3 --> n2
   n5 --> n4
@@ -195,23 +197,26 @@ flowchart TD
   n67 --> n57
   n68 --> n49
   n69 --> n68
-  n69 --> n51
+  n69 --> n57
   n70 --> n49
-  n70 --> n43
   n71 --> n70
+  n71 --> n69
   n72 --> n49
-  n73 --> n51
+  n72 --> n43
   n73 --> n72
-  n74 --> n73
-  n74 --> n43
+  n74 --> n49
+  n75 --> n51
   n75 --> n74
   n76 --> n75
+  n76 --> n43
   n77 --> n76
-  n78 --> n49
-  n78 --> n43
-  n79 --> n57
+  n78 --> n77
   n79 --> n78
-  n79 --> n77
+  n80 --> n49
+  n80 --> n43
+  n81 --> n57
+  n81 --> n80
+  n81 --> n79
 ```
 
 It also needs Collections (5).

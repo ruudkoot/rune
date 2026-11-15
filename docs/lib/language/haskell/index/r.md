@@ -11,7 +11,7 @@
 - `reach` (val): [CORE_UNITS](../sig/CORE_UNITS.md#val-reach)
 - `reachIndexed` (val): [CORE_UNITS](../sig/CORE_UNITS.md#val-reachindexed)
 - `read` (type): [HS_USAGE](../sig/HS_USAGE.md#type-read)
-- `read` (val): [HS_USAGE](../sig/HS_USAGE.md#val-read)
+- `read` (val): [CORE_STRICT](../sig/CORE_STRICT.md#val-read), [HS_USAGE](../sig/HS_USAGE.md#val-read)
 - `record` (type): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#type-record)
 - `records` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-records)
 - `Refused` (exn): [HS_LINT](../sig/HS_LINT.md#exn-refused)
