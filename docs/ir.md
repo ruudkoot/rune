@@ -1330,7 +1330,9 @@ against 234M; plans/correctness/linting.md, M2):
 * **Handlers:** every way into a block has the same handlers pushed, and a
   function returns, or calls in tail position, with none.
 * **Calls:** a known call is of a function of the program, with as many
-  arguments as it has parameters; a closure is only of a function of one.
+  arguments as it has parameters; a closure is of a function of one
+  parameter at least, and one of k is entered by a call of k arguments
+  (`CallN`, D15 C).
 * **Closures:** a closure is given a value for each its function captures,
   and the function reads each of them (`Env i`, `i` below their number).
   Each function numbers its variables from 0, so one of another function

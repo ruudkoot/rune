@@ -894,15 +894,16 @@ struct
       fun rune (n, flags) =
         exec {cmd = ["bin/rune", "--no-prelude"] @ flags @ ["-o", f (n ^ ".rbc"), "tests/ir/mid.sml"], dir = NONE, stdin = "",
               stdout = f (n ^ ".out"), stderr = f (n ^ ".err"), timeout = 300}
-      val optional = "expand, shake, lift, workers, simplify, refs, trees, inline, specialise, equality, results"
+      val optional = "expand, shake, lift, workers, simplify, refs, uncurry, trees, inline, specialise, equality, results"
       val stages = "lex, select, parse, elaborate, translate, mid, midcanon, expand, shake, lift, workers, simplify, refs, "
-                   ^ "lower, stack, registers, emit, all"
+                   ^ "uncurry, lower, stack, registers, emit, all"
       val refused =
         [("passes", ["--passes=shake,nosuchpass"], "rune: --passes=P,... requires an optional pass of " ^ optional ^ ", not nosuchpass"),
          ("passes-stage", ["--passes=lower"], "rune: --passes=P,... requires an optional pass of " ^ optional ^ ", not lower"),
          ("dump-after", ["--dump-after=nosuchpass"], "rune: --dump-after=P requires a stage of " ^ stages ^ ", not nosuchpass"),
          ("dump-before", ["--dump-before=nosuchpass"], "rune: --dump-before=P requires a stage of " ^ stages ^ ", not nosuchpass")]
       val taken = [("none", ["--passes="]), ("some", ["--passes=shake,simplify,inline"]), ("dump", ["--dump-after=simplify"]),
+                   ("uncurry", ["--passes=uncurry", "--dump-after=uncurry"]),
                    ("all", ["--dump-before=all", "--dump-after=all"])]
     in
       List.app (fn (n, flags, msg) =>
@@ -914,7 +915,8 @@ struct
                   if rune (n, flags) = 0 then ()
                   else fail ("compiler.pass-names: " ^ n ^ ": refused: " ^ firstLine (f (n ^ ".err"))))
                taken;
-      if contains (f "dump.out", "(* after simplify *)") then () else fail "compiler.pass-names: --dump-after=simplify printed no dump"
+      if contains (f "dump.out", "(* after simplify *)") then () else fail "compiler.pass-names: --dump-after=simplify printed no dump";
+      if contains (f "uncurry.out", "(* after uncurry *)") then () else fail "compiler.pass-names: --dump-after=uncurry printed no dump"
     end
 
   (* ---- a client of the compiler from Mid on (the haskell98 roadmap's M4):
@@ -933,9 +935,9 @@ struct
         exec {cmd = ["bin/rune", "--build", "tests/compiler/" ^ b ^ ".build", "-o", f (b ^ ".rbc")], dir = NONE, stdin = "",
               stdout = f (b ^ ".cerr"), stderr = f (b ^ ".cerr"), timeout = 600}
       val lists =
-        [("none", "shake lift workers simplify refs shake", []), ("remove", "shake lift simplify shake", []),
-         ("insert", "shake lift client workers simplify refs shake", ["client saw 2 functions"]),
-         ("replace", "shake lift workers simplify refs shake", [])]
+        [("none", "shake lift workers simplify refs uncurry shake", []), ("remove", "shake lift simplify uncurry shake", []),
+         ("insert", "shake lift client workers simplify refs uncurry shake", ["client saw 2 functions"]),
+         ("replace", "shake lift workers simplify refs uncurry shake", [])]
       fun client (b, e) =
         exec {cmd = ["/usr/bin/env", "RUNE_LINT=3", "bin/runevm", f (b ^ ".rbc"), e, f (b ^ "-" ^ e ^ ".rbc")], dir = NONE,
               stdin = "", stdout = f (b ^ "-" ^ e ^ ".out"), stderr = f (b ^ "-" ^ e ^ ".err"), timeout = 300}
