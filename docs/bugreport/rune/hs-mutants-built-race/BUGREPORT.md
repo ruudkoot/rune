@@ -2,8 +2,9 @@
 
 Found 2026-11-14, in the lead's `make test-rhc-mutants`, where four of rhc's
 mutants ended in an uncaught `OS.SysErr` that the trace put in
-`RuneStreamIOFn.flushOut`. Status: fixed 2026-11-14 on `hs-l`
-(`015bfa058`, `d6a6d9e08`). The trace's wrong place is a bug of its own, not fixed:
+`RuneStreamIOFn.flushOut`. Status: fixed 2026-11-14 on `hs-l`, and the same race
+in Rune's compiler mutants too (`015bfa058`, `d6a6d9e08`; `c5c3cf584`). The
+trace's wrong place is a bug of its own, not fixed:
 [handler-reraise-position](../handler-reraise-position/BUGREPORT.md).
 
 ## What happened
@@ -175,10 +176,56 @@ Checked: `race.sh` with both: the mutant CAUGHT, the built job PASS. And
 `make test-rhc-mutants` at `-j 6`: 79 of 79 PASS, `final` too, 35 CAUGHT and 1
 EQUIVALENT (run `20261114-113722-109622`).
 
-## Not this bug, but alike
+## The same in Rune's compiler mutants
 
-Rune's own compiler mutants (`tests/runner/compilermutants.sml`) have the
+Rune's own compiler mutants (`tests/runner/compilermutants.sml`) had the
 same layout: `compiler-mutants/built-ID` and `compiler-mutants/ID` both
-build in `compiler-mutants/ID`. There built-ID is in `make check` and ID in
-`make test-compiler-mutants`, so the two meet only in a run that selects
-both. Not changed.
+built in `RUN/compiler-mutants/ID`, and built-ID removed it at its start and
+its end. There built-ID is in `make check` and ID in `make
+test-compiler-mutants`, so the two meet only in a run that selects both.
+When they meet, the mutant's job does not stop: its compiles fail on the
+missing compiler, and it writes a verdict made of those failures.
+
+Tested in the shape of `race.sh`, with E01, the corpus cut to 2 items a part
+(`COMPILER_MUTANTS_QUICK=2`). After `prepare` and the good parts, the mutant
+starts; its built job starts 2 s after the mutant has built its compiler,
+in the same run directory
+(`~/.cache/claude-rune-drafts/haskell98/impl/l/sigtest/cmrace.sh`):
+
+| `bin/rune-test` | E01's verdict | Its built job |
+|---|---|---|
+| `3251b5ce0`'s | exit 0: `LINT E01 ...: differs on 17 of 20; stops the compiler on 15; ...; bootstrap: stops: exit 2: runevm: .../compiler-mutants/E01/rune.rbc: cannot open file` | PASS |
+| fixed | exit 0: `LINT E01 ...: differs on 1 of 20; stops the compiler on 0; ...; lint: lint after astlint 1 (of 1); ...; bootstrap: differs; stage three the same` | PASS, in `built-E01` |
+
+With the old runner the verdict is still LINT for E01, by chance: the lint
+that caught it was a compile that could not open the mutant's compiler. A
+mutant that no check sees would have been recorded as caught.
+
+**The fix** (`c5c3cf584`): `build (m, dir)` as in `HsMutants`. ID's job and
+cache-ID's build in `ID`, built-ID's in `built-ID`. The cache mutants have
+no built job, so nothing else builds in their directories, but they share
+the directories' names with the compiler mutants. `prepare` now fails where
+an id is two mutants', in one list or across both.
+
+**Checked:** the race shape above, and `make test-compiler-mutants` at
+`-j 4`, which passed 142 of 143 (run `20261114-220205-691943`):
+
+- **The compiler mutants:** 54 LINT, 9 OTHER, 2 UNCAUGHT and 3 UNEXERCISED.
+- **The cache mutants:** 55 CAUGHT and 1 ARGUED, so `cache-final` passes.
+- **The one failure** is `final`'s "no lint catches M05 any more". M05 is
+  now UNEXERCISED: it differs on 0 of 964 items.
+- **Not this fix's failure.** The runner from before the fix (`3251b5ce0`)
+  gives M05 the same verdict on the same good tables.
+- **The cause is haskell98 M29 (`22c7b2caf`).** M05 folds a `ConTag` of a
+  known nullary constructor one too high. Before M29 that fold ran: built
+  from h98-ref's sources (`f4dde7dda`), the mutant stops 90 of tests/lang's
+  370 programs at `--lint=2`, in "lint after shapes" ("a Decon of
+  constructor 1 of vN, whose tag is 0"). M29's `tagTest` in ToMid turns a
+  match's tag test into a Mid `Case`, so no `ConTag` of a nullary constructor
+  reaches Simplify any more, and the folded line is never run.
+- **M05 retargeted** (`1fec23aa7`): the same mistake where M29 moved the tests,
+  Simplify's fold of a `Case` of a known tag (`Con0 (tag, _) => SOME (tag +
+  1)`, simplify.sml:1375). With prepare, its built job, the good parts and
+  `final` (`COMPILER_MUTANTS=M05`, run `20261115-093941-1750814`), 19 of 19
+  pass: `LINT M05`, differing on 217 of 964 items, caught by "lint after
+  shapes" on 100 of the 160 linted, the old M05's lint.

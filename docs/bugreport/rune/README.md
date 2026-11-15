@@ -20,7 +20,9 @@ cache, [plans/build-cache-issues.md](../../plans/build-cache-issues.md)).
   rhc's mutants in `make test-rhc-mutants` ended in an uncaught `SysErr`,
   "in RuneStreamIOFn.flushOut". A mutant's built job, run beside it, had
   removed their shared directory. Not the tool shell's exit, which was
-  tested (2026-11-14, fixed 2026-11-14 on `hs-l`; `race.sh` reproduces it).
+  tested. Rune's compiler mutants had the same race, which wrote wrong
+  verdicts (2026-11-14, both fixed 2026-11-14 on `hs-l`; `race.sh`
+  reproduces it).
 * [handler-reraise-position](handler-reraise-position/BUGREPORT.md): an
   exception a handler does not match is raised again with the position of
   the end of the handler's last rule. At -O1 that can be in an inlined
