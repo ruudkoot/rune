@@ -77,8 +77,9 @@ made again.
 - The order of a match changes the library's Core, so the snapshot holds
   the library's units in each, the Report's for `-O0` and `-O1` and
   Sestoft's trees for `-O2` (below). `--strings=whole` changes it too, and
-  the snapshot holds none of its units: they are made at the first
-  compile, and kept in the program's store (below).
+  so does `--unfoldings` at `-O2` (its units' interfaces), and the snapshot
+  holds none of their units: they are made at the first compile, and kept
+  in the program's store (below).
 - `--store DIR` keeps the units in `DIR` in place of `.rhc`, and so does
   the environment's `RHC_STORE`, where an empty one keeps none;
   `--no-store` keeps nothing and takes the program's units from no store
