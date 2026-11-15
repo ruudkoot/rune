@@ -26,6 +26,10 @@ cache, [plans/build-cache-issues.md](../../plans/build-cache-issues.md)).
   the end of the handler's last rule. At -O1 that can be in an inlined
   function, so the trace names a function that never ran (2026-11-14, not
   fixed; `reraise.sml` reproduces it).
+* [lsp-oracle-store-sigsegv](lsp-oracle-store-sigsegv/BUGREPORT.md): the
+  LSP oracle's stored run died of signal 11 after 805 s, on a store that a
+  machine restart had cut mid-write. Rebuilt, the store passed. Damage done by
+  hand in 19 ways did not bring it back (2026-11-14, not reproduced).
 
 [Fixes and validation](terminal-races-fixed.md) records the changes and
 deterministic regressions for all three causes.
