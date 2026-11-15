@@ -148,6 +148,7 @@ of them is a bug of rhc's.
 | `-O0`, `-O1`, `-O2` | the level of Mid's optional passes (default 1); at `-O2` the Core simplifier's too (below) |
 | `--eta=E` | the Core simplifier's eta-expansion (D48): `pedantic`, the default, the Report's, or `ghc`, GHC's default, which departs from the Report (below) |
 | `--simplify-stats` | the Core simplifier's rewrites, by kind, on standard error |
+| `--no-cheap-eagerness` | at `-O2`, leave a let of a cheap and total expression a suspension, which the Core simplifier's `core-cheap` makes a case (D51) |
 | `--fuel=N` | make no more than N rewrites of the passes, Core's and Mid's, to find the one that breaks a program |
 | `--target=T` | the bytecode: `registers` (the default) or `stack` |
 | `--thunks=c` | suspensions in Mid by form C's primitives, the one form there is |
@@ -187,21 +188,25 @@ of them is a bug of rhc's.
 took on standard error.
 
 **The Core simplifier.** At `-O0` and `-O1` the Core is the desugaring's,
-the Report's translation taken literally. At `-O2` four passes rewrite it
+the Report's translation taken literally. At `-O2` five passes rewrite it
 before Core to Mid (M23; [ir.md](ir.md), *Above Mid*): `core-simplify`
 (inlining, case of a known constructor, case of case, let floating, and
 literals folded, `fromInteger` and `fromRational` at a known type among
 them), `core-specialise` (an overloaded function copied at the dictionaries
-a call gives it, the instance's methods then selected), `core-eta` and
-`core-simplify-2`. Each is a stage: `--dump-after` names it, `--pass-stats`
-times it, and the lint checks what it makes. Eta-expansion follows the
-pedantic rule by default: a binding gains a lambda only where its
-expression is a value already, so that no `seq` can tell. `--eta=ghc` takes
-GHC's default instead, through a `case` and the I/O state, which departs
-from the Report: `seq` of a partial application can converge where 6.2 says
-it is a bottom (D55's bottom probe, `tests/hs/simplify/eta.hs`, which
-`hs/simplify/eta/eta` holds the default to). It is an option to measure
-against, not a conformance mode (the owner's decision of 2026-11-14).
+a call gives it, the instance's methods then selected), `core-eta`,
+`core-cheap` (a let of a cheap and total expression on values already
+evaluated made a case, which makes no suspension: a comparison, `Double`
+arithmetic, never `Int` arithmetic, which may raise, nor a call; D51;
+`--no-cheap-eagerness` leaves it a let) and `core-simplify-2`. Each is a
+stage: `--dump-after` names it, `--pass-stats` times it, and the lint checks
+what it makes. Eta-expansion follows the pedantic rule by default: a binding
+gains a lambda only where its expression is a value already, so that no
+`seq` can tell. `--eta=ghc` takes GHC's default instead, through a `case`
+and the I/O state, which departs from the Report: `seq` of a partial
+application can converge where 6.2 says it is a bottom (D55's bottom probe,
+`tests/hs/simplify/eta.hs`, which `hs/simplify/eta/eta` holds the default
+to). It is an option to measure against, not a conformance mode (the owner's
+decision of 2026-11-14).
 
 ## The library
 

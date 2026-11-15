@@ -917,17 +917,19 @@ its own, and forcing one is one step.
 rhc optimises its own Core before Core to Mid, at `-O2` (the haskell98
 roadmap's M23, D47-D49; `lib/language/haskell/coresimplify_sig.sml`), and
 Mid's passes run below it unchanged. Its passes are rhc's stages,
-`core-simplify`, `core-specialise`, `core-eta` and `core-simplify-2`, each
-through `Pass.stage` with CoreLint and HsLint's target check after it at
-level 2 and asking `Pass.spend` before each rewrite. What each keeps of Core:
-every binder distinct; every rewrite well typed alone, so that the lints hold
-at any `--fuel`; a binding copied into a lambda only where it is a value,
-so that no thunk runs twice; nothing evaluated that was not, `case` being the
-only force; and eta only where the expression is a value already (the
-pedantic rule), so that `seq` sees what it saw. A specialised copy of an
-overloaded function, or of a dictionary function, is a value of the top level
-of its own, named `f{T,...}`; with the whole program a value `main` does not
-reach goes.
+`core-simplify`, `core-specialise`, `core-eta`, `core-cheap` and
+`core-simplify-2`, each through `Pass.stage` with CoreLint and HsLint's
+target check after it at level 2 and asking `Pass.spend` before each rewrite.
+What each keeps of Core: every binder distinct; every rewrite well typed
+alone, so that the lints hold at any `--fuel`; a binding copied into a lambda
+only where it is a value, so that no thunk runs twice; nothing evaluated that
+was not, `case` being the only force, but for `core-cheap`'s lets (D51): a
+cheap and total expression on values already evaluated, which can neither
+raise nor loop, made a case (`--no-cheap-eagerness` leaves them); and eta
+only where the expression is a value already (the pedantic rule), so that
+`seq` sees what it saw. A specialised copy of an overloaded function, or of a
+dictionary function, is a value of the top level of its own, named
+`f{T,...}`; with the whole program a value `main` does not reach goes.
 
 ### Mid as text
 

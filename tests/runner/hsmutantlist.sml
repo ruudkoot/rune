@@ -117,6 +117,13 @@ struct
           "              SOME rep => C.atom (C.cast ((Core.Atom a, t), rep),\n" ^
           "                                  fn occ' => C.force ((Core.Atom (#1 occ'), #2 occ'), fn (v, vt) => pattern (env, (Core.Var v, vt), hd ps, success, failure)))",
           ["hs/desugar/report/newtype"]),
+     (* P's seeds of M23 (the Core simplifier; D51: what stops a copy of a
+        thunk), the first of P's HS01 to HS06 *)
+     one ("HS01", "simplifier", "a thunk copied into a lambda: a binding used once inside a lambda is inlined there though it is no value",
+          "coresimplify_simp.sml",
+          "if #n oc = 1 andalso not (#arg oc) andalso (not (#lam oc) orelse B.isValue r') andalso B.tick \"inline-once\"",
+          "if #n oc = 1 andalso not (#arg oc) andalso B.tick \"inline-once\"",
+          ["hs/simplify/budget/share"]),
      (* E13's holes H1 to H9 (the haskell98 roadmap's section What a cache
         hit must satisfy), each a usage or a key of rhc's units dropped: each
         caught by its case of tests/hs/units/holes, the units' compile

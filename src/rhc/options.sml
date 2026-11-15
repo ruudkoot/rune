@@ -13,6 +13,10 @@ struct
   (* --simplify-stats: the Core simplifier's rewrites, by kind, on
      standard error *)
   val simplifyStats = ref false
+  (* whether the Core simplifier's core-cheap runs at -O2, a let of a cheap
+     and total expression made a case (D51's C, the owner's of 2026-11-14);
+     --no-cheap-eagerness turns it off *)
+  val cheap = ref true
 
   type options =
     {readCore : string list,          (* --read-core FILE: Core text, read in order as one program *)
@@ -117,13 +121,15 @@ struct
     \                        default)\n\
     \  -O0, -O1, -O2         the level of Mid's optional passes (default: 1); at -O2 the\n\
     \                        Core simplifier too: core-simplify, core-specialise,\n\
-    \                        core-eta, core-simplify-2 (M23)\n\
-    \  --eta=E               the Core simplifier's eta-expansion (D48): pedantic, the default,\n\
+    \                        core-eta, core-cheap, core-simplify-2 (M23)\n\
+    \  --eta=E              the Core simplifier's eta-expansion (D48): pedantic, the default,\n\
     \                        the Report's, only where the expression is a value already; or\n\
     \                        ghc, GHC's default, through a case and IO, which departs from the\n\
     \                        Report: seq of a partial application can converge where it must\n\
     \                        be a bottom (D55's bottom probe, tests/hs/simplify/eta.hs)\n\
     \  --simplify-stats      the Core simplifier's rewrites, by kind, on standard error\n\
+    \  --no-cheap-eagerness  at -O2, leave a let of a cheap and total expression a\n\
+    \                        suspension, which core-cheap makes a case (D51)\n\
     \  --fuel=N              make no more than N rewrites of the passes, Core's and Mid's\n\
     \  --target=T            the bytecode: registers (default) or stack\n\
     \  --thunks=c            suspensions in Mid by form C's primitives, the one form there is\n\
@@ -205,6 +211,7 @@ struct
         | go ("--eta=pedantic" :: rest) = (eta := CoreSimplify.Pedantic; go rest)
         | go ("--eta=ghc" :: rest) = (eta := CoreSimplify.Ghc; go rest)
         | go ("--simplify-stats" :: rest) = (simplifyStats := true; go rest)
+        | go ("--no-cheap-eagerness" :: rest) = (cheap := false; go rest)
         | go ("--fault=susp-type-arg" :: rest) = (fault := SOME CoreToMid.SuspTypeArg; go rest)
         | go ("--strings=lazy" :: rest) = (strings := CoreRuntime.Lazy; go rest)
         | go ("--strings=whole" :: rest) = (strings := CoreRuntime.Whole; go rest)
