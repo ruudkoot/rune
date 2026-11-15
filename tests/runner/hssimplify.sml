@@ -23,7 +23,12 @@
    B, Sestoft's trees, to making nothing for a match that does not fail on
    the run: compiled with --match=sestoft at -O0 and -O2 and run with IN1
    and with IN2 as its standard input, the objects of the first run at most
-   those of the second and 16 more (hs/simplify/objects/NAME).
+   those of the second and 16 more (hs/simplify/objects/NAME); one with a
+   line `-- sestoft:` is run again with --match=sestoft, Sestoft's trees
+   (D34's B), on Core's interpreter and the VM at -O0 and -O2, held to the
+   same NAME.expected and NAME.exitcode, the Report's order's result: B
+   forcing what A does not, or calling a method A does not, shows
+   (hs/simplify/sestoft/NAME).
 
    Over the run programs of tests/hs/lang (nightly, held while their rows
    are Planned): what the VM prints at -O2 it printed at -O0, and both end
@@ -99,6 +104,23 @@ struct
         | NONE => (fail (what ^ ": rhc does not compile it at -" ^ level ^ ": " ^ firstNonEmpty (w ^ "/vm." ^ level ^ ".c.err")); false)
       val oks = [judge (what ^ " (interpreter, -O0)", p, w, interpret (p, ["-O0"], w, "interp.O0", stdin)),
                  judge (what ^ " (interpreter, -O2)", p, w, interpret (p, ["-O2"], w, "interp.O2", stdin)),
+                 vm "O0", vm "O2"]
+    in if List.all (fn b => b) oks then rmTree w else () end
+
+  (* p under Sestoft's trees: what the run family holds A to, at -O0 and
+     -O2, on the interpreter and the VM *)
+  fun sestoftOne (p : Lang.program) () =
+    let
+      val w = workFor ("sestoft", #name p)
+      val what = "hs/simplify/sestoft/" ^ #name p
+      val stdin = stdinOf p
+      val b = "--match=sestoft"
+      fun vm level =
+        case onVm (p, ["-" ^ level, b], [], w, "vm." ^ level, stdin) of
+          SOME r => judge (what ^ " (VM, -" ^ level ^ " " ^ b ^ ")", p, w, r)
+        | NONE => (fail (what ^ ": rhc does not compile it at -" ^ level ^ " " ^ b ^ ": " ^ firstNonEmpty (w ^ "/vm." ^ level ^ ".c.err")); false)
+      val oks = [judge (what ^ " (interpreter, -O0 " ^ b ^ ")", p, w, interpret (p, ["-O0", b], w, "interp.O0", stdin)),
+                 judge (what ^ " (interpreter, -O2 " ^ b ^ ")", p, w, interpret (p, ["-O2", b], w, "interp.O2", stdin)),
                  vm "O0", vm "O2"]
     in if List.all (fn b => b) oks then rmTree w else () end
 
@@ -297,6 +319,7 @@ struct
           | ("budget", SOME p) => budgetOne p ()
           | ("dump", SOME p) => dumpOne p ()
           | ("objects", SOME p) => objectsOne p ()
+          | ("sestoft", SOME p) => sestoftOne p ()
           | ("lang", SOME p) => langOne p ()
           | _ => fail ("hs-simplify: no program " ^ name ^ " for " ^ kind))
     | _ => NONE
@@ -322,7 +345,7 @@ struct
       List.foldl (fn (c, t) => Test.tag c t)
         (Test.tag "hs" (Test.describe "hs/simplify"
            [family ("run", own), family ("fuel", marking "fuel"), family ("budget", marking "budget"),
-            family ("dump", marking "dump"), family ("objects", marking "objects"), lang]))
+            family ("dump", marking "dump"), family ("objects", marking "objects"), family ("sestoft", marking "sestoft"), lang]))
         covers
     end
 end
