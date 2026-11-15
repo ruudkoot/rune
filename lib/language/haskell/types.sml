@@ -99,6 +99,7 @@ struct
   fun newMeta (level, home) = (counter := !counter + 1; TMeta (ref (Free {id = !counter, level = level, home = home})))
 
   fun renumber n = (if !counter < n then counter := n else (); if !kcounter < n then kcounter := n else ())
+  fun numberFrom n = (counter := n; kcounter := n)
 
   fun zonk t =
     case repr t of

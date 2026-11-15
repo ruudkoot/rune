@@ -41,7 +41,7 @@ struct
   (* ---- printing ---- *)
 
   val builtinNames = List.map (fn (c : Types.tycon) => (#stamp c, #name c)) Types.builtinTycons
-  fun isBuiltin stamp = stamp = Ty.arrowStamp orelse List.exists (fn (s, _) => s = stamp) builtinNames
+  fun isBuiltin stamp = stamp = Ty.arrowStamp orelse stamp = Ty.lazyArrowStamp orelse List.exists (fn (s, _) => s = stamp) builtinNames
   val reserved = "unit" :: "exncon" :: List.map #2 builtinNames
 
   fun defaultTy (c : Literal.const) : Ty.ty =
@@ -290,13 +290,13 @@ struct
   exception Syntax of string
 
   datatype token =
-      LP | RP | LB | RB | LBRACE | RBRACE | COLON | COMMA | ARROW | STAR
+      LP | RP | LB | RB | LBRACE | RBRACE | COLON | COMMA | ARROW | LAZYARROW | STAR
     | ID of string | TYVAR of string | NUM of string | STR of string | CHR of int | ABBREV of string
 
   fun tokenText t =
     case t of
       LP => "(" | RP => ")" | LB => "[" | RB => "]" | LBRACE => "{" | RBRACE => "}"
-    | COLON => ":" | COMMA => "," | ARROW => "->" | STAR => "*"
+    | COLON => ":" | COMMA => "," | ARROW => "->" | LAZYARROW => "~>" | STAR => "*"
     | ID s => s | TYVAR s => s | NUM s => s | STR s => "\"" ^ String.toString s ^ "\"" | CHR _ => "#\"...\"" | ABBREV s => s
 
   (* The tokens of a text, each with the offset it starts at. *)
@@ -338,6 +338,8 @@ struct
           in
             if Char.isSpace c then go (i + 1, acc)
             else if c = #"(" andalso i + 1 < n andalso at (i + 1) = #"*" then go (comment (i + 2, 0), acc)
+            (* the lazy arrow's name, (~>) (ruling 65) *)
+            else if c = #"~" andalso i + 1 < n andalso at (i + 1) = #">" then go (i + 2, (LAZYARROW, i) :: acc)
             else
               case c of
                 #"(" => go (i + 1, (LP, i) :: acc)
@@ -485,6 +487,8 @@ struct
           SOME (ID n) => (ignore (next ()); postfix [named (n, args)])
         (* the arrow as a type name, (->), after the types it is given *)
         | SOME LP => if peek2 () = SOME ARROW then (ignore (next ()); ignore (next ()); eat RP; postfix [arrowNamed args])
+                     else if peek2 () = SOME LAZYARROW
+                     then (ignore (next ()); ignore (next ()); eat RP; postfix [lazyArrowNamed args])
                      else (case args of [t] => t | _ => fail "a type name after a list of types")
         | SOME (TYVAR s) =>
             (ignore (next ()); postfix [Ty.app (if String.isPrefix "'_" s then Ty.var (tyvarId s) else Ty.gen (tyvarId s), args)])
@@ -509,11 +513,14 @@ struct
              | NONE => raise Syntax ("an undeclared type " ^ n ^ where' ()))
       (* the arrow as a type name: given both, the function type; given
          fewer, a type only as an argument, as another name given fewer *)
-      and arrowNamed args =
+      and arrowNamed args = namedArrow (Ty.arrowNameText, Ty.arrowName) args
+      (* the lazy arrow (ruling 65): given both, `a susp -> b` *)
+      and lazyArrowNamed args = namedArrow (Ty.lazyArrowNameText, Ty.lazyArrowName) args
+      and namedArrow (text, make) args =
         let
           val k = List.length args
-          val msg = "the type (->) takes 2 arguments, not " ^ Int.toString k ^ where' ()
-          val t = Ty.arrowName args
+          val msg = "the type " ^ text ^ " takes 2 arguments, not " ^ Int.toString k ^ where' ()
+          val t = make args
         in
           if k > 2 then raise Syntax msg
           else if k < 2 then (IntTable.insert (partials, Ty.id t, msg); t)
@@ -532,6 +539,7 @@ struct
            followed by [ is *)
         | LP =>
             if peek () = SOME ARROW then (ignore (next ()); eat RP; [arrowNamed []])
+            else if peek () = SOME LAZYARROW then (ignore (next ()); eat RP; [lazyArrowNamed []])
             else if peek () = SOME (ID "forall") andalso peek2 () = SOME LB then
               let
                 val () = ignore (next ())

@@ -65,6 +65,27 @@ struct
      | _ => ();
      files := List.map (fn (k, f) => if k = h then (k, Closed) else (k, f)) (!files))
 
+  (* close, saying whether the system's close succeeded, the failure kept;
+     the handle is closed either way *)
+  fun closeOk h =
+    let
+      val ok =
+        case (h > 2, descriptorOf h) of
+          (true, SOME fd) => ((Posix.IO.close fd; true) handle e as OS.SysErr _ => (failed e; false))
+        | _ => true
+    in
+      files := List.map (fn (k, f) => if k = h then (k, Closed) else (k, f)) (!files); ok
+    end
+
+  (* what a handle holds written: the interpreter writes a file at once, so
+     only the standard output and error hold anything *)
+  fun flush h =
+    let
+      fun out s = (TextIO.flushOut s; true) handle IO.Io {cause = e as OS.SysErr _, ...} => (failed e; false)
+    in
+      case h of 1 => out TextIO.stdOut | 2 => out TextIO.stdErr | _ => true
+    end
+
   (* at most n bytes, waiting for one; "" at the end, and from a handle that
      is closed or none *)
   fun read (h, n) =

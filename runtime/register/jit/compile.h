@@ -104,7 +104,7 @@ AsmLabel *jit_label(Jit *j, uint32_t pc);
 AsmLabel *jit_fatal(Jit *j, int what, int32_t a, int32_t b, int rcx_arg);
 /* an allocation's slow path: the object of n fields made by the helper,
    then filled and stored by fill, as the fast path did */
-enum { FILL_LIST, FILL_ONE, FILL_CLOSURE, FILL_NEWEXN, FILL_MKEXN };
+enum { FILL_LIST, FILL_ONE, FILL_CLOSURE, FILL_NEWEXN, FILL_MKEXN, FILL_SUSP };
 AsmLabel *jit_alloc_slow(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d, int32_t a, int32_t b, const uint8_t *L);
 /* fill the object in rax as fill says, then R(d) := it */
 void jit_fill(Jit *j, int kind, int fill, uint32_t n, int32_t d, int32_t a, int32_t b, const uint8_t *L);

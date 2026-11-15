@@ -318,9 +318,12 @@ struct
     | ETyped (e, _, _, _) => transExp e
     | EAndalso (a, b, _, _) => If (transExp a, transExp b, falseExp)
     | EOrelse (a, b, _, _) => If (transExp a, trueExp, transExp b)
-    | EHandle (e, rules, _, _) =>
+    | EHandle (e, rules, sp, _) =>
+        (* an exception no rule matches is raised again from the handler,
+           at the handle: without a position of its own, it would take the
+           last rule's, inlined code's too (docs/bugreport/rune/handler-reraise-position) *)
         let val x = MatchComp.freshVar ()
-        in Handle (transExp e, x, MatchComp.compileMatch (x, transRules rules, Raise (Var x))) end
+        in Handle (transExp e, x, MatchComp.compileMatch (x, transRules rules, Mark (sp, Raise (Var x)))) end
     | ERaise (e, _, _) => Raise (transExp e)
     | EIf (c, t, e, _, _) => If (transExp c, transExp t, transExp e)
     | EWhile (c, b, _, _) =>

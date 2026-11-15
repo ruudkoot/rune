@@ -1,6 +1,6 @@
 # structure CoreUnits
 
-[Haskell 98 front end](../README.md) &rsaquo; [Structures](../structures.md) &rsaquo; **CoreUnits**
+[Haskell 98 front end](../README.md) &rsaquo; Languages &rsaquo; [Structures](../structures.md) &rsaquo; **CoreUnits**
 
 |  |  |
 | --- | --- |

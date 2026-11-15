@@ -16,6 +16,22 @@ cache, [plans/build-cache-issues.md](../../plans/build-cache-issues.md)).
 * [terminal-tests-under-load](terminal-tests-under-load/BUGREPORT.md):
   the three causes above, with the repeated-run evidence that distinguished
   a lost resize from an incorrect redraw (fixed 2026-10-29).
+* [hs-mutants-built-race](hs-mutants-built-race/BUGREPORT.md): four of
+  rhc's mutants in `make test-rhc-mutants` ended in an uncaught `SysErr`,
+  "in RuneStreamIOFn.flushOut". A mutant's built job, run beside it, had
+  removed their shared directory. Not the tool shell's exit, which was
+  tested (2026-11-14, fixed 2026-11-14 on `hs-l`; `race.sh` reproduces it).
+* [handler-reraise-position](handler-reraise-position/BUGREPORT.md): an
+  exception a handler does not match is raised again with the position of
+  the end of the handler's last rule. At -O1 that can be in an inlined
+  function, so the trace names a function that never ran (2026-11-14,
+  fixed 2026-11-14 on `hs-l-reraise`: the re-raise is placed at the
+  `handle`; `reraise.sml` reproduces it, `tests/lang/rt.trace_reraise` holds
+  the fix).
+* [lsp-oracle-store-sigsegv](lsp-oracle-store-sigsegv/BUGREPORT.md): the
+  LSP oracle's stored run died of signal 11 after 805 s, on a store that a
+  machine restart had cut mid-write. Rebuilt, the store passed. Damage done by
+  hand in 19 ways did not bring it back (2026-11-14, not reproduced).
 
 [Fixes and validation](terminal-races-fixed.md) records the changes and
 deterministic regressions for all three causes.

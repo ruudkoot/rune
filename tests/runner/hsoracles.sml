@@ -73,6 +73,16 @@ struct
                   timeout = timeout, changes = []})
   fun ghcRun log (dir, stdin, args, timeout) =
     call log {cmd = (dir ^ "/Main.ghc") :: args, dir = dir, stdin = stdin, timeout = timeout, changes = []}
+  (* rhc as a judge of E7's conformance tests (G2's line "conformance98
+     green, or each failure a recorded reading"): a module but Main
+     checked (--typecheck-only), a program compiled to bytecode at rhc's
+     default level and run on the register VM *)
+  fun rhcPath () = env ("RUNE_HS_RHC", fromRoot "bin/rhc")
+  fun rhcBuild log (dir, main, libmod, timeout) =
+    ok (call log {cmd = [rhcPath (), main] @ (if libmod then ["--typecheck-only"] else ["-o", "Main.rbc"]), dir = dir,
+                  stdin = "", timeout = timeout, changes = []})
+  fun rhcRun log (dir, stdin, timeout) =
+    call log {cmd = [fromRoot "bin/runevm", "Main.rbc"], dir = dir, stdin = stdin, timeout = timeout, changes = []}
   fun hugsEnv () = [("HUGSDIR", hugsDir () ^ "/hugsdir"), ("HUGSFLAGS", "")]
   (* Hugs loads and checks a program at its prompt, and an ERROR says it
      refused *)
@@ -272,6 +282,7 @@ struct
         | "hugs" => if hugsCheck log (d, "Main.hs", ["+98"], 120) then SOME (hugsRun log (d, "Main.hs", "", [], 60)) else NONE
         | "nhc98" => if nhcBuild log (d, ["-98"], 300) then SOME (nhcRun log (d, "", [], 60)) else NONE
         | "mhs" => if mhsBuild log (d, "Main.hs", false, 600) then SOME (mhsRun log (d, "", 60)) else NONE
+        | "rhc" => if rhcBuild log (d, "Main.hs", false, 600) then SOME (rhcRun log (d, "", 60)) else NONE
         | _ => raise Failed ("no oracle " ^ oracle)
     in
       case r of
@@ -336,6 +347,7 @@ struct
                     fn () => ghcRun log (w, stdin, [], 60))
         | "hugs" => (hugsCheck log (w, "Main.hs", ["+98"], 120), fn () => hugsRun log (w, "Main.hs", stdin, [], 60))
         | "nhc98" => (nhcBuild log (w, ["-98"], 300), fn () => nhcRun log (w, stdin, [], 60))
+        | "rhc" => (rhcBuild log (w, "Main.hs", libmod, 300), fn () => rhcRun log (w, stdin, 60))
         | _ => (mhsBuild log (w, "Main.hs", libmod, 300), fn () => mhsRun log (w, stdin, 60))
       val got =
         if not built then "reject"
@@ -424,7 +436,7 @@ struct
         else []
     in rmTree work; main :: opened @ ext end
     handle e as Failed _ => raise e
-         | e => (note (out () ^ "/" ^ oracle ^ "/logs/" ^ #id c ^ ".exn", exnMessage e ^ "\n");
+         | e => (note (out () ^ "/" ^ oracle ^ "/logs/" ^ #id c ^ ".exn", exnText e ^ "\n");
                  [{oracle = oracle, id = #id c, label = "judge", got = "harness-error", want = "", passed = false}])
 
   fun judge (oracle, set) =
@@ -523,7 +535,7 @@ struct
                  | b => b ^ "/" ^ HsCorpus.field row (oracle ^ "_rc") ^ "/" ^ HsCorpus.field row (oracle ^ "_out")
     in rmTree work; {oracle = oracle, id = id, label = "run", got = got, want = want, passed = got = want} : outcome end
     handle e as Failed _ => raise e
-         | e => (note (out () ^ "/" ^ oracle ^ "/logs/" ^ HsCorpus.field row "id" ^ ".exn", exnMessage e ^ "\n");
+         | e => (note (out () ^ "/" ^ oracle ^ "/logs/" ^ HsCorpus.field row "id" ^ ".exn", exnText e ^ "\n");
                  {oracle = oracle, id = HsCorpus.field row "id", label = "run", got = "harness-error", want = "", passed = false})
 
   fun runSet (oracle, set) =
@@ -574,7 +586,13 @@ struct
       (Test.describe ""
         [Test.tag "nightly" (Test.describe "hs-oracles"
            (Test.requires ["hs-ghc"] (job ("@ghc-shim", ["hs-oracle", "ghc-shim"], [], 3600, 3000))
-            :: List.map oracleTree oracles)),
+            :: List.map oracleTree oracles
+            (* rhc on E7's conformance tests, as the oracles are judged, its
+               failures explained by lines of way rhc (G2) *)
+            @ [Test.requires ["rhc", "hs-corpus"]
+                 (Test.describe "rhc"
+                    [job ("conformance", ["hs-oracle", "conformance", "rhc"], [], 3600, 2000),
+                     job ("@stale", ["hs-oracle", "stale", "rhc"], ["hs-oracles/rhc/conformance"], 300, 100)])])),
          Test.describe "hs-corpus"
            [inProcess ("data", ["hs-corpus-data"], ["check", "quick"]),
             inProcess ("source", ["hs-source"], ["check", "quick"]),

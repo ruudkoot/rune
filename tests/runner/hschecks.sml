@@ -232,7 +232,8 @@ struct
       val reject = HsCorpus.rows "reject.tsv"
       val runs = HsCorpus.rows "run.tsv"
       val readingsText = read (fromRoot "tests/hs/readings.md")
-      fun has (r : Expectations.line) = #category r <> "" andalso member (#way r) ("*" :: HsOracles.oracles)
+      (* the oracles' ways, and rhc's on E7's conformance tests (G2) *)
+      fun has (r : Expectations.line) = #category r <> "" andalso member (#way r) ("*" :: "rhc" :: HsOracles.oracles)
       val () = List.app (fn l => need (has l, Expectations.describe l ^ ": no oracle " ^ #way l)) ls
       val () = List.app (fn l => need (isSome (#label l) andalso member (valOf (#label l)) (conformanceLabels @ recordedLabels),
                                         Expectations.describe l ^ ": a line names its label, conformance, judge, open, ext or run")) ls
@@ -336,6 +337,11 @@ struct
               (need (List.exists (fn id => Expectations.glob (#path l, id)) both,
                      what ^ ": names no program of accept.tsv that both judges accept");
                need (member word ["reject", "crash", "timeout", "harness-error"], what ^ ": the outcome is reject, crash or timeout"))
+          | SOME "levels" =>
+              (* G2's runs of the nofib run set at -O0 and -O2 (tests/runner/hscorpusrun.sml) *)
+              (need (List.exists (fn id => Expectations.glob (#path l, id)) (HsCorpusRun.levelsIds ()),
+                     what ^ ": names no program of the nofib run set GHC ran right (run.tsv)");
+               need (member word ["compile", "exit", "diff"], what ^ ": the outcome of a corpus run is compile, exit or diff"))
           | SOME "sestoft" =>
               (* ruling 59's way of D56's 188 (tests/runner/hscorpusrun.sml) *)
               (need (List.exists (fn id => Expectations.glob (#path l, id)) (List.map (fn r => HsCorpus.field r "id") (HsCorpusRun.d56 ())),
@@ -352,7 +358,7 @@ struct
                 (need (List.exists (fn id => Expectations.glob (#path l, id)) (List.map (fn r => HsCorpus.field r "id") (HsCorpusRun.d56 ())),
                        what ^ ": names no run of D56's 188 (licences.tsv) nor a ready -lazy port");
                  need (member word ["compile", "exit", "diff"], what ^ ": the outcome of a corpus run is compile, exit or diff"))
-          | _ => need (false, what ^ ": the label is check, run or sestoft")
+          | _ => need (false, what ^ ": the label is check, run, sestoft or levels")
         end
       val () = List.app one ls
       val bench = fromRoot "examples/benchmarks"

@@ -14,7 +14,7 @@ struct
   type module_ = {id : string, ast : A.module, library : bool}
 
   (* a constructor: its type, its fields by position ("" for none) *)
-  type coninfo = {tycon : string, arity : int, fields : string list}
+  type coninfo = {tycon : string, arity : int, fields : string list, strict : bool list}
 
   (* a field: its type, the constructors it is in, at which position *)
   type fieldinfo = {tycon : string, ty : T.ty, cons : (string * int) list}
@@ -79,11 +79,12 @@ struct
     else NONE
 
   fun builtinConInfo name : coninfo option =
-    if name = "()" then SOME {tycon = "()", arity = 0, fields = []}
-    else if name = "[]" then SOME {tycon = "[]", arity = 0, fields = []}
-    else if name = ":" then SOME {tycon = "[]", arity = 2, fields = ["", ""]}
+    if name = "()" then SOME {tycon = "()", arity = 0, fields = [], strict = []}
+    else if name = "[]" then SOME {tycon = "[]", arity = 0, fields = [], strict = []}
+    else if name = ":" then SOME {tycon = "[]", arity = 2, fields = ["", ""], strict = [false, false]}
     else if size name >= 3 andalso String.isPrefix "(," name then
-      SOME {tycon = name, arity = size name - 1, fields = List.tabulate (size name - 1, fn _ => "")}
+      SOME {tycon = name, arity = size name - 1, fields = List.tabulate (size name - 1, fn _ => ""),
+            strict = List.tabulate (size name - 1, fn _ => false)}
     else NONE
 
   fun initial {primitives} : env =
@@ -132,6 +133,7 @@ struct
   fun fresh prefix = (counter := !counter + 1; prefix ^ Int.toString (!counter))
 
   fun renumber n = (if !counter < n then counter := n else (); T.renumber n)
+  fun numberFrom n = (counter := n; T.numberFrom n)
 
   (* the environment of the unit being checked *)
   val genv : env ref = ref (initial {primitives = []})
@@ -227,6 +229,12 @@ struct
 
   (* ---- types equal, and the dictionary of a predicate ---- *)
 
+  (* the names of `ns` that stand twice, by `keyOf`, each at its second place *)
+  fun twice keyOf ns =
+    #2 (List.foldl (fn (n, (seen, dups)) => let val k = keyOf n
+                                            in if List.exists (fn x => x = k) seen then (seen, dups @ [n]) else (k :: seen, dups) end)
+          ([], []) ns)
+
   fun eqTy (a, b) =
     case (T.repr a, T.repr b) of
       (T.TCon x, T.TCon y) => x = y
@@ -263,13 +271,35 @@ struct
     "no instance of `" ^ T.nameOfKey cls ^ "` for `" ^ (case readable [T.zonk ty] of [t] => T.show t | _ => T.show ty) ^ "`" ^
     (if origin = "" then "" else ", which " ^ origin ^ " needs") ^ (if binding = "" then "" else " in `" ^ binding ^ "`")
 
+  (* 5.4: an instance is in scope in a module only where a chain of
+     imports leads from it to the module that declares the instance (R26).
+     `reaches (m, n)` is whether one leads from `m` to `n`, `m` itself
+     among them; the driver sets it from the graph of the program's
+     modules, every instance in scope everywhere where it does not *)
+  val reaches : (string * string -> bool) ref = ref (fn _ => true)
+  fun setReaches f = reaches := f
+
+  (* an instance at a module: NONE where there is none, or where the
+     module's imports do not reach the one that declares it *)
+  fun instanceAt (h, cls, tc) =
+    case C.findInstance (#classes (!genv), cls, tc) of
+      SOME i => if h = "" orelse !reaches (h, #home i) then SOME i else NONE
+    | NONE => NONE
+
+  fun outOfScope (h, cls, tc) =
+    case C.findInstance (#classes (!genv), cls, tc) of
+      SOME i => if h = "" orelse !reaches (h, #home i) then ""
+                else ": the instance " ^ Mo.moduleName (#home i) ^ " declares is not in scope in " ^ Mo.moduleName h ^
+                     ", from which no chain of imports leads to it (5.4, R26)"
+    | NONE => ""
+
   (* `byInstance (p, span)`: the instance's dictionary for p, its
      context's predicates as new wanted ones, or NONE where p's type is
      headed by no constructor *)
   fun byInstance ({cls, ty} : T.pred, span, h, origin, binding) : (idict * wanted list) option =
     case T.spine ty of
       (T.TCon tc, args) =>
-        (case C.findInstance (#classes (!genv), cls, tc) of
+        (case instanceAt (h, cls, tc) of
            SOME {id, vars, ctx, ...} =>
              if vars <> length args then raise Fail (span, noInstance ({cls = cls, ty = ty}, origin, binding))
              else
@@ -279,7 +309,7 @@ struct
                in
                  SOME (IInst (id, args, List.map #cell subs), subs)
                end
-         | NONE => raise Fail (span, noInstance ({cls = cls, ty = ty}, origin, binding)))
+         | NONE => raise Fail (span, noInstance ({cls = cls, ty = ty}, origin, binding) ^ outOfScope (h, cls, tc)))
     | _ => NONE
 
   (* Solving: what can be solved now by instances and givens is; the rest,
@@ -317,13 +347,14 @@ struct
     let val num = preludeClass "Num"
     in cls = num orelse List.exists (fn s => s = num) (C.superclasses (#classes (!genv), cls)) end
 
-  (* whether every predicate holds at t, by instances alone *)
-  fun holdsAt (preds : T.pred list, t) =
+  (* whether every predicate holds at t, by instances alone, those in
+     scope in the module `h` *)
+  fun holdsAt (h, preds : T.pred list, t) =
     let
       fun holds {cls, ty} =
         case T.spine ty of
           (T.TCon tc, args) =>
-            (case C.findInstance (#classes (!genv), cls, tc) of
+            (case instanceAt (h, cls, tc) of
                SOME {vars, ctx, ...} =>
                  vars = length args andalso List.all (fn {cls, ty} => holds {cls = cls, ty = T.substGen (args, ty)}) ctx
              | NONE => false)
@@ -365,7 +396,7 @@ struct
                     (case !cycle of PerGroup => ": under --cycle-default=scc a cycle has one default" | PerModule => ""));
          true)
       else
-        case List.find (fn t => holdsAt (preds, t)) (defaultsFor m) of
+        case List.find (fn t => holdsAt (m, preds, t)) (defaultsFor m) of
           NONE => false
         | SOME t =>
             let
@@ -630,6 +661,10 @@ struct
            val ct = lookupValue c
            val (args, res) = arrows ct
            val info = conInfo c
+           (* 3.17.1: a record pattern names each field once *)
+           val () = List.app (fn f => err (nameSpan f, "the pattern of `" ^ nameText c ^ "` names the field `" ^ nameText f ^
+                                                       "` twice (3.17.1)"))
+                      (twice nameKey (List.map #1 fs))
          in
            List.app
              (fn (f, fp) =>
@@ -942,12 +977,43 @@ struct
                   | NONE => ()
                 end)
              fs;
+           (* 3.15.2: a construction names each field once *)
+           List.app (fn f => err (nameSpan f, "the construction of `" ^ nameText c ^ "` names the field `" ^ nameText f ^
+                                              "` twice (3.15.2)"))
+             (twice nameKey (List.map #1 fs));
+           (* 3.15.2: a strict field left out of a construction is an error *)
+           (case info of
+              SOME {fields, strict, ...} =>
+                let
+                  val given = List.map (fn (f, _) => nameKey f) fs
+                  val missing = List.filter (fn (fk, s) => s andalso not (List.exists (fn g => g = fk) given))
+                                  (ListPair.zip (fields, strict))
+                in
+                  case missing of
+                    [] => ()
+                  | (fk, _) :: _ =>
+                      if fk = "" then
+                        err (span, "the construction `" ^ nameText c ^ " {}` leaves out a strict field of `" ^ nameText c ^
+                                   "`, where a strict field must be given (3.15.2)")
+                      else
+                        err (span, "the construction of `" ^ nameText c ^ "` leaves out its strict field `" ^ T.nameOfKey fk ^
+                                   "` (3.15.2)")
+                end
+            | NONE => ());
            res
          end
      | A.ERecUpd (e, fs) =>
          let
            val te = exp e
          in
+           (* 3.15.3: no field twice in one update *)
+           ignore (List.foldl (fn ((f, _), seen) =>
+                                 let val k = nameKey f
+                                 in
+                                   if List.exists (fn s => s = k) seen then
+                                     (err (nameSpan f, "the update names the field `" ^ nameText f ^ "` twice (3.15.3)"); seen)
+                                   else k :: seen
+                                 end) [] fs);
            case fs of
              [] => te
            | (f0, _) :: _ =>
@@ -975,6 +1041,15 @@ struct
                                    else []
                                | _ => [])
                             cons)
+                     (* 3.15.3: a constructor of the type has every field the update names *)
+                     val () =
+                       if List.exists (fn ck =>
+                                         case M.find (#cons (!genv), ck) of
+                                           SOME {fields, ...} => List.all (fn u => List.exists (fn f => f = u) fields) updated
+                                         | NONE => false) cons
+                       then ()
+                       else err (span, "no constructor of `" ^ T.nameOfKey tycon ^ "` has every field this update names: " ^
+                                       String.concatWith ", " (List.map (fn (f, _) => "`" ^ nameText f ^ "`") fs) ^ " (3.15.3)")
                      val tin = List.tabulate (params, fn _ => newMeta ())
                      val tout = List.tabulate (params, fn i => if List.exists (fn k => k = i) kept then List.nth (tin, i) else newMeta ())
                    in
@@ -1463,6 +1538,30 @@ struct
 
   fun typeVarNames vs = List.map (fn A.Name (_, {name, ...}) => name) vs
 
+
+  (* 4.2.1, 4.2.2, 4.2.3: a declaration's type variables are distinct, a
+     constructor's fields distinct, a field shared by constructors of one
+     type at one type *)
+  fun declWellFormed (A.D (_, x)) =
+    let
+      fun params (c, vs) =
+        List.app (fn v => err (nameSpan v, "the type variable `" ^ nameText v ^ "` is a parameter of `" ^ nameText c ^
+                                           "` twice, where they must be distinct (4.2.1)"))
+          (twice nameText vs)
+      fun fieldsOnce (A.C (_, A.CRec (k, fs))) =
+            List.app (fn f => err (nameSpan f, "the field `" ^ nameText f ^ "` stands twice in the constructor `" ^ nameText k ^
+                                               "`, where a constructor's fields are distinct (4.2.1)"))
+              (twice nameText (List.concat (List.map (fn A.Field (_, vs, _, _) => vs) fs)))
+        | fieldsOnce _ = ()
+    in
+      case x of
+        A.DData (_, c, vs, cs, _) => (params (c, vs); List.app fieldsOnce cs)
+      | A.DNewtype (_, c, vs, k, _) => (params (c, vs); fieldsOnce k)
+      | A.DType (c, vs, _) => params (c, vs)
+      | _ => ()
+    end
+
+
   fun varIndex names n =
     case List.find (fn (m, _) => m = n) (ListPair.zip (names, List.tabulate (length names, fn i => i))) of
       SOME (_, i) => T.TGen i
@@ -1475,6 +1574,13 @@ struct
     | A.CRec (n, fs) =>
         let val each = List.concat (List.map (fn A.Field (_, vs, _, t) => List.map (fn v => (v, t)) vs) fs)
         in (n, List.map #2 each, List.map (SOME o #1) each) end
+
+  (* which of a constructor's fields are strict, `!` *)
+  fun constrStrict (A.C (_, x)) =
+    case x of
+      A.CPlain (_, args) => List.map #1 args
+    | A.CInfix ((l, _), _, (r, _)) => [l, r]
+    | A.CRec (_, fs) => List.concat (List.map (fn A.Field (_, vs, b, _) => List.map (fn _ => b) vs) fs)
 
   (* the constructors and fields of `data` and `newtype` *)
   fun dataDecl (h, A.D ({span, ...}, x)) =
@@ -1505,7 +1611,12 @@ struct
                     let val fk = nameKey f
                     in
                       case M.find (m, fk) of
-                        SOME {tycon, ty, cons} => M.insert (m, fk, {tycon = tycon, ty = ty, cons = cons @ [(ckey, 0)]})
+                        SOME {tycon, ty, cons} =>
+                          (if eqTy (ty, ft) then ()
+                           else err (nameSpan f, "the field `" ^ nameText f ^ "` has two types in the constructors of `" ^
+                                                 nameText c ^ "`, `" ^ T.show ty ^ "` and `" ^ T.show ft ^
+                                                 "`, where a field shared by constructors has one (4.2.1)");
+                           M.insert (m, fk, {tycon = tycon, ty = ty, cons = cons @ [(ckey, 0)]}))
                       | NONE => M.insert (m, fk, {tycon = tycon, ty = ft, cons = [(ckey, 0)]})
                     end
                 | (NONE, _, m) => m)
@@ -1517,7 +1628,8 @@ struct
               (M.insert (values, ckey, scheme)) (fieldNames, fts)
         in
           genv := {values = values', tycons = tycons, classes = classes,
-                   cons = M.insert (cons, ckey, {tycon = tycon, arity = length fts, fields = fields}), fields = fs', methods = methods}
+                   cons = M.insert (cons, ckey, {tycon = tycon, arity = length fts, fields = fields, strict = constrStrict k}),
+                   fields = fs', methods = methods}
         end
     in
       List.app one cs
@@ -1551,6 +1663,12 @@ struct
                          val () = (K.checkContext kenv mc; K.checkType kenv (mt, T.KStar)) handle HsSource.Error e => err e
                          val own = {vars = length names, ctx = K.contextPreds (#tycons (!genv), varIndex names) mc,
                                     ty = K.convert (#tycons (!genv), varIndex names) mt}
+                         (* 4.3.1: a method's type mentions its class's variable *)
+                         val () =
+                           if List.exists (fn n => n = vname) (K.tyVars mt) then ()
+                           else List.app (fn m => err (nameSpan m, "the type of the method `" ^ nameText m ^
+                                                                   "` does not mention the class's variable `" ^ vname ^ "` (4.3.1)"))
+                                  ms
                          val () =
                            if List.exists (fn {ty, ...} => (case T.repr ty of T.TGen 0 => true | _ => false)) (#ctx own) then
                              err (span, "a method's context constrains its class's variable `" ^ vname ^ "` (4.3.1)")
@@ -1690,14 +1808,15 @@ struct
   fun deriveContexts derived =
     let
       exception NoInstance of T.pred
-      fun reduce (p as {cls, ty} : T.pred) : T.pred list =
+      (* the instances in scope in the module `h` that derives *)
+      fun reduce h (p as {cls, ty} : T.pred) : T.pred list =
         case T.spine ty of
           (T.TGen _, []) => [p]
         | (T.TGen _, _) => raise NoInstance p
         | (T.TCon tc, args) =>
-            (case C.findInstance (#classes (!genv), cls, tc) of
+            (case instanceAt (h, cls, tc) of
                SOME {ctx, vars, ...} =>
-                 if vars = length args then List.concat (List.map (fn {cls, ty} => reduce {cls = cls, ty = T.substGen (args, ty)}) ctx)
+                 if vars = length args then List.concat (List.map (fn {cls, ty} => reduce h {cls = cls, ty = T.substGen (args, ty)}) ctx)
                  else raise NoInstance p
              | NONE => raise NoInstance p)
         | _ => raise NoInstance p
@@ -1715,11 +1834,11 @@ struct
             let
               val changed =
                 List.foldl
-                  (fn ({id, cls, vars, fields, span, dataCtx, ...}, changed) =>
+                  (fn ({id, cls, vars, fields, span, dataCtx, home = h, ...}, changed) =>
                      if List.exists (fn f => f = id) (!failed) then changed
                      else
                        let
-                         val ctx = simplify (dataCtx @ List.concat (List.map (fn f => reduce {cls = cls, ty = f}) fields))
+                         val ctx = simplify (dataCtx @ List.concat (List.map (fn f => reduce h {cls = cls, ty = f}) fields))
                                    handle NoInstance p =>
                                      (failed := id :: !failed;
                                       err (span, "`" ^ T.nameOfKey cls ^ "` cannot be derived: no instance for `" ^
@@ -1868,7 +1987,7 @@ struct
                     handle HsSource.Error e => (err e; []) | Fail e => (err e; [])
           val num = preludeClass "Num"
         in
-          List.app (fn t => if holdsAt ([{cls = num, ty = t}], t) then () else
+          List.app (fn t => if holdsAt ("", [{cls = num, ty = t}], t) then () else
                               err (span, "the default type `" ^ T.show t ^ "` is not an instance of `Num` (4.3.4)")) tys;
           if M.member (!defaultsOf, h) then err (span, "two `default` declarations in one module (4.3.4)")
           else defaultsOf := M.insert (!defaultsOf, h, (tys, true))
@@ -1897,7 +2016,34 @@ struct
       val () = List.app err kerrs
       val () = let val {values, classes, cons, fields, methods, ...} = !genv
                in genv := {values = values, tycons = tenv, classes = classes, cons = cons, fields = fields, methods = methods} end
+      val () = List.app (fn (_, d) => declWellFormed d) decls
       val () = List.app (fn d => (classDecl (#1 d, #2 d, classKinds) handle Fail e => err e | HsSource.Error e => err e)) decls
+      (* 4.3.1: the superclass relation is acyclic; a class of a cycle loses
+         its superclasses, so that nothing after loops *)
+      val () =
+        List.app
+          (fn (_, A.D ({span, ...}, A.DClass (_, c, _, _))) =>
+                let
+                  val key = K.keyOf c
+                  fun supersOf k = case C.findClass (#classes (!genv), k) of SOME {supers, ...} => supers | NONE => []
+                  fun reaches (k, seen) =
+                    List.exists (fn s => s = key orelse (not (List.exists (fn x => x = s) seen) andalso reaches (s, s :: seen)))
+                      (supersOf k)
+                in
+                  if reaches (key, [key]) then
+                    (err (nameSpan c, "the class `" ^ nameText c ^ "` is its own superclass, where the superclass relation " ^
+                                      "must not be cyclic (4.3.1)");
+                     case C.findClass (#classes (!genv), key) of
+                       SOME {key, methods, kind, ...} =>
+                         let val {values, tycons, classes, cons, fields, methods = ms} = !genv
+                         in genv := {values = values, tycons = tycons, cons = cons, fields = fields, methods = ms,
+                                     classes = C.addClass (classes, {key = key, supers = [], methods = methods, kind = kind})}
+                         end
+                     | NONE => ())
+                  else ()
+                end
+            | _ => ())
+          decls
       val () = List.app (fn (h, d as A.D (_, x)) => case x of
                                                       A.DData _ => (dataDecl (h, d) handle Fail e => err e | HsSource.Error e => err e)
                                                     | A.DNewtype _ => (dataDecl (h, d) handle Fail e => err e | HsSource.Error e => err e)

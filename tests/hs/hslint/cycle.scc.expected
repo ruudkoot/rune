@@ -1,7 +1,7 @@
 TYPE	A	f :: Num a => a -> [Char]
-TYPE	B	g :: Num a => a -> [Char]
 TYPE	A	n :: Int
 TYPE	A	x :: Int
+TYPE	B	g :: Num a => a -> [Char]
 TYPE	B	m :: Double
 SIGNED	Main	main :: IO ()
 DEFAULT	B	7:1	Fractional a -> Double

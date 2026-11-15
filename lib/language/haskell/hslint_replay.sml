@@ -732,7 +732,10 @@ struct
       List.app group (List.rev (!(#decls src)));
       List.app sccGroups groups;
       List.app methods (List.rev (!(#instances src)));
-      List.app slots (!E.classDecls);
+      (* the classes of the modules replayed: a unit's before it were
+         replayed with it *)
+      List.app slots (List.filter (fn {module, ...} : E.classDecl => List.exists (fn {id, ...} : E.module => id = module) modules)
+                        (!E.classDecls));
       fault := ""
     end
 

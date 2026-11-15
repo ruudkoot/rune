@@ -440,7 +440,10 @@ struct
         A.D (a,
           case x of
             A.DSig (vs, c, t) => A.DSig (List.map topName vs, context c, ty t)
-          | A.DFixity (f, p, ops) => A.DFixity (f, p, List.map (fn A.VarOp n => A.VarOp (topName n) | A.ConOp n => A.ConOp (topName n)) ops)
+          (* 4.3.1: a class's fixity declarations are of its methods *)
+          | A.DFixity (f, p, ops) =>
+              A.DFixity (f, p, List.map (fn A.VarOp n => (ignore (methodOf (cls, n)); A.VarOp (topName n))
+                                          | A.ConOp n => (ignore (methodOf (cls, n)); A.ConOp (topName n))) ops)
           | A.DFun (f, r) => let val (f', r') = equation (M.empty, fn n => methodOf (cls, n)) (f, r) in A.DFun (f', r') end
           | A.DPat (p, r) => A.DPat (pat (fn n => methodOf (cls, n)) p, rhs M.empty r)
           | _ => x)
@@ -449,14 +452,27 @@ struct
       List.map one ds
     end
 
+  (* 4.3.2: an instance binds only the methods in scope, by whatever name *)
+  fun inScopeMethod (cls : Mo.entity option, n) =
+    (case cls of
+       SOME c =>
+         let val k = Mo.key {space = Mo.Value, home = #home c, name = nameOf n}
+         in
+           if M.foldl (fn (_, es, found) => found orelse List.exists (fn e => Mo.key e = k) es) false (!theScope) then ()
+           else err (spanOf n, "the instance binds `" ^ nameOf n ^ "`, a method of the class `" ^ #name c ^
+                               "` that is not in scope (4.3.2)")
+         end
+     | NONE => ();
+     methodOf (cls, n))
+
   fun instanceBody (cls, ds) =
     let
       val _ = groupBinders ds
       fun one (A.D (a, x)) =
         A.D (a,
           case x of
-            A.DFun (f, r) => let val (f', r') = equation (M.empty, fn n => methodOf (cls, n)) (f, r) in A.DFun (f', r') end
-          | A.DPat (p, r) => A.DPat (pat (fn n => methodOf (cls, n)) p, rhs M.empty r)
+            A.DFun (f, r) => let val (f', r') = equation (M.empty, fn n => inScopeMethod (cls, n)) (f, r) in A.DFun (f', r') end
+          | A.DPat (p, r) => A.DPat (pat (fn n => inScopeMethod (cls, n)) p, rhs M.empty r)
           | _ => x)
     in
       List.map one ds
@@ -517,6 +533,21 @@ struct
         in
           (List.foldl (fn (n, s) => addV (s, n)) sv (ks @ List.rev (#1 fs)), addV (st, c))
         end
+      (* 4.4.2: one fixity declaration for a name, a class's for its
+         methods among them *)
+      fun fixNames ds = List.concat (List.map (fn A.D (_, A.DFixity (_, _, ops)) =>
+                                                    List.map (fn A.VarOp n => n | A.ConOp n => n) ops
+                                                | _ => []) ds)
+      val topFix = List.foldl (fn (n, s) => M.insert (s, nameOf n, ())) M.empty (fixNames decls)
+      val _ =
+        List.foldl
+          (fn (A.D (_, A.DClass (_, _, _, SOME body)), s) =>
+                List.foldl (fn (n, s) =>
+                              if M.member (s, nameOf n) then (err (spanOf n, "two fixity declarations for `" ^ nameOf n ^ "`"); s)
+                              else M.insert (s, nameOf n, ()))
+                  s (fixNames body)
+            | (_, s) => s)
+          topFix decls
     in
       ignore (List.foldl one (seenV, M.empty) decls);
       checkSignatures decls

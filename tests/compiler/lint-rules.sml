@@ -617,6 +617,21 @@ struct
       sameThrough ("the arrow given one type",
                    {name = 84, label = NONE, tyvars = [], params = [(85, Ty.arrow (Ty.int, Ty.int))], result = Ty.arrow (Ty.int, Ty.int),
                     body = M.Return (M.App (M.Global (63, [Ty.arrowName [Ty.int], Ty.int]), [M.Var (85, [])]))});
+      (* the lazy arrow (ruling 65): given both, `a susp -> b` *)
+      midP ("the lazy arrow given one type where a value's type is wanted", [valR (67, Ty.lazyArrowName [Ty.int], M.Atom M.Unit)],
+            "gives type name (~>) 1 arguments, of its 2");
+      report ("forms: the lazy arrow given both is the function type of a suspension",
+              Ty.equal (Ty.lazyArrowName [Ty.int, Ty.string], Ty.arrow (Ty.con (#stamp Types.suspTycon, "susp", [Ty.int]), Ty.string))
+              andalso Ty.equal (Ty.subst (IntMap.insert (IntMap.empty, 78, Ty.lazyArrowName [Ty.int])) (Ty.app (gm, [Ty.string])),
+                                Ty.arrow (Ty.con (#stamp Types.suspTycon, "susp", [Ty.int]), Ty.string)), "");
+      report ("forms: a type variable applied matches a function of a suspension at the lazy arrow",
+              case Ty.match (Ty.app (gm, [ga]), Ty.arrow (Ty.con (#stamp Types.suspTycon, "susp", [Ty.int]), Ty.string)) of
+                SOME m => (case IntMap.find (m, 78) of SOME t => Ty.equal (t, Ty.lazyArrowName [Ty.int]) | NONE => false)
+              | NONE => false, "");
+      sameThrough ("the lazy arrow given one type",
+                   {name = 86, label = NONE, tyvars = [], params = [(87, Ty.arrow (Ty.con (#stamp Types.suspTycon, "susp", [Ty.int]), Ty.int))],
+                    result = Ty.arrow (Ty.con (#stamp Types.suspTycon, "susp", [Ty.int]), Ty.int),
+                    body = M.Return (M.App (M.Global (63, [Ty.lazyArrowName [Ty.int], Ty.int]), [M.Var (87, [])]))});
       checked ("forms: the arrow as a type name through Mid's text",
                fn () => MidText.roundTrip [M.Funs [ident 51], M.Funs [over],
                                            valR (66, Ty.arrow (Ty.int, Ty.int),
@@ -633,6 +648,10 @@ struct
      textP ("the arrow given one type where a value's type is wanted", "(val g1 : int (->) (return (prim unsafe_cast 1 : int -> int (->))))",
             "the type (->) takes 2 arguments, not 1");
      textP ("the arrow given both, the function type", "(val g1 : (int, int) (->) (return (prim unsafe_cast 1 : int -> int -> int)))", "");
+     textP ("the lazy arrow given one type where a value's type is wanted", "(val g1 : int (~>) (return (prim unsafe_cast 1 : int -> int (~>))))",
+            "the type (~>) takes 2 arguments, not 1");
+     textP ("the lazy arrow given both, the function type of a suspension",
+            "(val g1 : (int, int) (~>) (return (prim unsafe_cast 1 : int -> int susp -> int)))", "");
      textP ("an abstract type given two arguments for one",
             "(abstract box 1)\n(val g1 : (int, int) box (return (prim unsafe_cast 1 : int -> (int, int) box)))",
             "the type box takes 1 argument, not 2");

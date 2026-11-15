@@ -80,7 +80,13 @@ struct
        alone ("test-lsp-protocol", [], ["src/lsp/*", "lib/lsp/*", "lib/jsonrpc/*", "tests/lsp/*", "tools/lsp/*", "runelsp.build"]),
        alone ("test-compiler-state", [], ["lib/compiler/*", "tests/lib/compiler/*", "tests/compiler/*", "tools/compiler/*"]),
        alone ("test-lsp-bench", [], ["tools/lsp/*", "tests/lsp/*"]),
-       step ("test-lsp-oracle", {cpus = 1, memory = 2000, pools = [], after = []}, [],
+       (* the oracle's three runs, three jobs (tests/lsp/README.md): each
+          about 700 to 900 s of CPU, its peak memory measured *)
+       step ("test-lsp-oracle-walk", {cpus = 1, memory = 3200, pools = [], after = []}, [],
+             ["lib/compiler/api/*", "lib/compiler/driver/unitbasis.sml", "tools/lsp/*", "tests/lsp/oracle/*"]),
+       step ("test-lsp-oracle-focus", {cpus = 1, memory = 2000, pools = [], after = []}, [],
+             ["lib/compiler/api/*", "lib/compiler/driver/unitbasis.sml", "tools/lsp/*", "tests/lsp/oracle/*"]),
+       step ("test-lsp-oracle-store", {cpus = 1, memory = 2000, pools = [], after = []}, [],
              ["lib/compiler/api/*", "lib/compiler/driver/unitbasis.sml", "tools/lsp/*", "tests/lsp/oracle/*"]),
        (* the scale target (D28): what the load cannot move in make check,
           its times nightly *)
@@ -175,7 +181,7 @@ struct
   (* built when asked, not when the runner starts: a command of a job
      (bin/rune-test hs-roundtrip-one ...) needs none of it *)
   fun tests () = List.foldl (fn (path, tree) => Test.tag ("covers:" ^ path) tree)
-    (Test.describe "" [make, expected, Lang.tests (), Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, HsCore.tree (), TerminalJobs.tree, Protocols.tree, Portability.tree, ForeignModelJobs.tree, FfiJobs.tree, Canary.tests, CompilerMutants.tree (), HsLang.tree (), HsRoundTrip.tree (), HsConformance.tree (), HsSyntax.tree (), HsNames.tree (), HsMutants.tree (), HsMeta.tree (), HsGen.tree (), HsReduce.tree (), HsInterpVm.tree (), HsOracles.tree (), HsLibrary.tree (), HsPerf.tree (), HsLintJobs.tree (), HsRhcCorpus.tree (), HsLazyPorts.tree (), HsCorpusRun.tree (), HsUnits.tree (), Thunks.tree, HsWorldJobs.tree (), HsIfaceJobs.tree (), HsDesugarJobs.tree (), HsSimplifyJobs.tree (), HsSimplifyFigures.tree ()]) broadInputs
+    (Test.describe "" [make, expected, Lang.tests (), Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, HsCore.tree (), TerminalJobs.tree, Protocols.tree, Portability.tree, ForeignModelJobs.tree, FfiJobs.tree, Canary.tests, CompilerMutants.tree (), HsLang.tree (), HsRoundTrip.tree (), HsConformance.tree (), HsSyntax.tree (), HsNames.tree (), HsMutants.tree (), HsMeta.tree (), HsGen.tree (), HsReduce.tree (), HsInterpVm.tree (), HsOracles.tree (), HsLibrary.tree (), HsPerf.tree (), HsLintJobs.tree (), HsRhcCorpus.tree (), HsLazyPorts.tree (), HsCorpusRun.tree (), HsUnits.tree (), Thunks.tree, HsSnapshotJobs.tree (), HsIfaceJobs.tree (), HsDesugarJobs.tree (), HsSimplifyJobs.tree (), HsSimplifyFigures.tree ()]) broadInputs
 
   fun requirements () =
     let val rows = Test.leaves (tests ())
@@ -239,7 +245,7 @@ val () =
       case HsSimplifyFigures.command args of SOME action => action () | NONE =>
       case HsPerf.command args of SOME action => action () | NONE =>
       case HsLintJobs.command args of SOME action => action () | NONE =>
-      case HsWorldJobs.command args of SOME action => action () | NONE =>
+      case HsSnapshotJobs.command args of SOME action => action () | NONE =>
       case HsIfaceJobs.command args of SOME action => action () | NONE =>
       case WindowsJobs.command args of SOME action => action () | NONE =>
       case Benchmarks.command args of SOME action => action () | NONE =>

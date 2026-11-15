@@ -159,8 +159,15 @@ void gc_queue(VM *vm, Obj *o);              /* an old object whose fields a coll
    a full one marks it -- the field that pointed to it given what it holds
    -- along a chain of at most IND_HOPS of them (D18); the copier of
    --nursery 0 copies it as it is, and the low-pause collector's cycle marks
-   it as it is */
+   it as it is. Where a function of the program says UPDATE and not
+   BLACKHOLE (Program's reruns: lazy ML's suspensions), not one a frame
+   runs, nor one whose value is a suspension or an indirection
+   (ind_may_shortcut, runtime/value.h; D57, M26). */
 #define IND_HOPS 16
+/* the indirections the frames from low up run as their closures pinned
+   (IND_RUNNING), before a collection that shortcuts: where the program
+   reruns, a lazy ML suspension's code may outlive its own update (copy.c) */
+void gc_pin_running(VM *vm, size_t low);
 void gc_born(VM *vm, Obj *o);               /* a large object with fields, made: scanned whole by the next minor */
 static inline int gc_in_nursery(const VM *vm, const void *p) {
     return vm->gc.nursery && (uintptr_t)((const char *)p - vm->alloc.from) < (uintptr_t)vm->alloc.size;
@@ -316,6 +323,59 @@ void log_pass_end(VM *vm, const PassMark *m, const char *kind, int64_t pause);
    those below it have not changed since the last. */
 #define OTHER_ROOTS(vm, V, O) OTHER_ROOTS_FROM(vm, V, O, 0)
 
+/* caf.c: CAF tables (the haskell98 roadmap's D19, B): in a program with
+   suspensions a full collection keeps a global only where code that may
+   still run reads it, as GHC's static reference tables have it. Each
+   collector: caf_begin (0: every global a root, as OTHER_ROOTS has them);
+   caf_frames, with the stack's roots after it; caf_back, and caf_roots for
+   OTHER_ROOTS; caf_code for each object marked whose code may run
+   (caf_runs, caf_code_due); then the frames' closures (caf_aside), each
+   marked the frames' alone (caf_only_add), taking its function's table
+   where a later reference reaches it (caf_only_take); caf_end. */
+typedef struct CafTables CafTables;
+typedef struct CafAside { Value *slot; Obj **root; Value was; } CafAside;
+int caf_begin(VM *vm);
+void caf_frames(VM *vm, void (*visit)(VM *, Value *), int defer);
+void caf_frames_forget(void);
+int caf_frames_reuse(FrameRef **out, size_t *n);
+void caf_back(VM *vm);
+size_t caf_aside(CafAside **out);
+void caf_roots(VM *vm, void (*visit)(VM *, Value *), void (*visit_obj)(VM *, Obj **));
+void caf_code(VM *vm, Obj *o, void (*visit)(VM *, Value *));
+void caf_end(VM *vm);
+int caf_cycle_begin(VM *vm, void (*shade)(VM *, Value *));
+void caf_note(VM *vm, uint32_t g);
+void caf_note_written(VM *vm);
+void caf_stats(VM *vm, FILE *out);
+/* what may run: a closure, or a suspension not yet evaluated */
+static inline int caf_runs(const Obj *o) {
+    return obj_kind(o) == K_CLOSURE || (obj_kind(o) == K_THUNK && o->contag == THUNK_UNEVALUATED);
+}
+/* a closure the frames alone hold so far in a collection: a bit of the
+   header's free byte (Obj.pad), set and cleared within the collection
+   (caf_end clears what is left) */
+#define CAF_ONLY 1
+static inline void caf_only_add(Obj *o) { o->pad |= CAF_ONLY; }
+static inline int caf_only_has(const Obj *o) { return o->pad & CAF_ONLY; }
+static inline int caf_only_take(Obj *o) { if (!(o->pad & CAF_ONLY)) return 0; o->pad &= (uint8_t)~CAF_ONLY; return 1; }
+/* what caf_code reads first, in the collector's loop: whether an object's
+   function's table is still to be taken in this collection (a group that
+   reaches no global never is) */
+typedef struct CafFast { uint32_t nfuncs; const uint32_t *scc; const uint64_t *sccepoch; uint64_t epoch; } CafFast;
+extern CafFast caf_fast;
+static inline int caf_code_due(const Obj *o) {
+    Value fv = OBJ_FIELDS(o)[0];
+    if (!val_is_imm(fv)) return 0;
+    int64_t fid = val_int(fv);
+    if (fid < 0 || (uint64_t)fid >= caf_fast.nfuncs) return 0;
+    return caf_fast.sccepoch[caf_fast.scc[fid]] < caf_fast.epoch;
+}
+/* each instruction set's walk of a function's code from pc, and from every
+   handler it installs: each global it reads, each function it calls by
+   name or makes a closure of; -1 where it cannot */
+int isa_caf_walk(const Program *p, uint32_t fi, uint32_t pc, void (*global)(void *, uint32_t),
+                 void (*callee)(void *, uint32_t), void *ctx);
+
 /* The stack below a frame's registers, from at up to where they begin
    (gc_stack_roots, minor.c's minor_stack): the slots below its header,
    visited; and of a header (runtime/register's: FrameRef.closure_slot,
@@ -377,7 +437,13 @@ static inline void minor_globals(VM *vm, void (*take)(VM *, Value *)) {
     } while (0)
 #define OTHER_ROOTS_FROM(vm, V, O, frame0) \
     do { \
-        for (uint32_t i_ = 0; i_ < (vm)->prog.nglobals; i_++) V(&(vm)->globals[i_]); \
+        for (uint32_t g_ = 0; g_ < (vm)->prog.nglobals; g_++) V(&(vm)->globals[g_]); \
+        OTHER_ROOTS_BUT_GLOBALS(vm, V, O, frame0); \
+    } while (0)
+/* the roots but the globals: a full collection that keeps a global only
+   where live code reaches it (caf.c, caf_roots) */
+#define OTHER_ROOTS_BUT_GLOBALS(vm, V, O, frame0) \
+    do { \
         for (uint32_t i_ = 0; i_ < (vm)->prog.nconsts; i_++) V(&(vm)->prog.consts[i_]); \
         if (!isa_frame_header) { /* (runtime/register's closures are in the stack: native-frames.md, M4) */ \
           FrameRef *f_; size_t n_ = vm_frames_from((vm), (frame0), &f_); \

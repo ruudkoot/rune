@@ -69,7 +69,11 @@ struct
             List.map (fn c =>
                         let val arity = case M.find (cons, c) of SOME {arity, ...} => Int.toString arity | NONE => "?"
                             val fields = case M.find (cons, c) of SOME {fields, ...} => String.concatWith "," fields | NONE => ""
-                        in "  con " ^ c ^ " " ^ arity ^ " [" ^ fields ^ "] " ^ valueText c ^ fixOf c end)
+                            val strict =
+                              case M.find (cons, c) of
+                                SOME {strict, ...} => String.concat (List.map (fn true => "!" | false => ".") strict)
+                              | NONE => ""
+                        in "  con " ^ c ^ " " ^ arity ^ " [" ^ fields ^ "] " ^ strict ^ " " ^ valueText c ^ fixOf c end)
               (#cons tc)
           val fieldLines =
             List.map (fn (f, {ty = t, cons = cs, ...}) =>
@@ -136,11 +140,11 @@ struct
       List.foldl insert [] xs
     end
 
-  fun fingerprints hash (t, external) =
+  fun fingerprints hash (ts, external) =
     let
-      val its = items t
+      val its = List.concat (List.map items ts)
       val byKey = List.foldl (fn (i : item, m) => M.insert (m, #key i, i)) M.empty its
-      (* each key of the module to the item that holds it *)
+      (* each key of the modules to the item that holds it *)
       val owner = List.foldl (fn ({key, members, ...} : item, s) => List.foldl (fn (m, s) => M.insert (s, m, key)) (M.insert (s, key, key)) members)
                     M.empty its
       fun local_ k = M.find (owner, k)

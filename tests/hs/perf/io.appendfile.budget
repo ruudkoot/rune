@@ -1,0 +1,5 @@
+# rhc's policy (D55; tests/runner/hsperf.sml): appending to a file n times costs n times one append, the locks of
+# 21.2.3 looking through the handles open; looking through every handle ever made, it is quadratic (ratio about 4).
+a: 2000
+b: 1000
+ratio: 2.5

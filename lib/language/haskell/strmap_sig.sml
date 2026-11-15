@@ -3,7 +3,7 @@
    trees, inserting only), so that a fold visits the keys in order and a
    result does not depend on the order things were added.
 
-   Area: Languages *)
+   Area: Collections *)
 signature HS_STRING_MAP =
 sig
   (* A map from strings to values of type `'a`. *)

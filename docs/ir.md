@@ -18,6 +18,7 @@ ones still to come, is [plans/middle-end.md](plans/middle-end.md).
 | `workers` | `Mid` | `Mid`, tupled and curried functions split into workers and wrappers (`lib/compiler/core/workers.sml`), from `-O1` | `MidLint` |
 | `simplify` | `Mid` | `Mid`, shrunk (`lib/compiler/core/simplify.sml`), from `-O1` | `MidLint` |
 | `refs` | `Mid` | `Mid`, a loop's local refs as values (`lib/compiler/core/refs.sml`), from `-O1` | `MidLint` |
+| `uncurry` | `Mid` | `Mid`, curried functions given n-ary twins, and chains of calls through a closure made one call of their arguments (`Uncurry` in `lib/compiler/core/workers.sml`; D15 C), from `-O1` | `MidLint` |
 | `lower` | `Mid` | `Low` (`lib/compiler/backend/low.sml`, by `Lower`) | `LowLint`, `LowShapes` |
 | `stack` | `Low` | instruction lists (`lib/compiler/backend/stack.sml`), with `--target=stack` | the loader's checks and `RbcCheck` (`StackCheck`) |
 | `registers` | `Low` | instruction lists of the register bytecode (`lib/compiler/backend/regs.sml`), the default target | `RegVerify` |
@@ -625,8 +626,9 @@ top level a list of definitions (decision D1 of the plan).
   of the program after each declaration of the top level (`Lambda.Rest`),
   and `ToMid` splits it there.
 * **Functions** take a list of parameters. One of other than one
-  parameter (a worker) is only called, with an argument for each, and
-  never used as a value.
+  parameter (a worker, a twin) is called with an argument for each, or
+  used as a value of the curried type of its parameters, a closure of that
+  many (D15 C: *Calls through a closure* of [bytecode.md](bytecode.md)).
 * **`Case`** tests the tag of a datatype's value: an arm for each tag it
   tests, and a default where the value has none of theirs, or none where
   the arms are every tag (decision D8 of
@@ -686,7 +688,11 @@ than two (Haskell's `(->)`, which an instance head may name: ruling 60),
 in the text `(->)` and `int (->)`, so that `int 'm` at `int (->)` is `int ->
 int`, the arrow given both being the function type itself (`Ty.arrowName`,
 `Ty.arrowStamp`; MidLint holds it to two, as a type name to its
-parameters); and `Forall`, the polymorphic
+parameters), and for the lazy arrow `(~>)` (ruling 65), which given both is
+`a susp -> b`, so that a front end whose function types take a suspension
+(rhc's Core) gives it where Haskell's `(->)` is given (`Ty.lazyArrowName`); a
+type variable applied matches a function type at `(~>)` where its argument
+is a suspension, at `(->)` otherwise; and `Forall`, the polymorphic
 type of a field (a dictionary's method; in the text `(forall ['b] 'b ->
 'b)`), which binds its own variables. A forall is the same type as one that
 differs from it only in the names it binds (`Ty.equal`), and a
@@ -733,8 +739,10 @@ function would take it apart, since a parameter's type is no forall;
   parameter is no polymorphic use either); Core to Mid holds its own text to
   it at lint level 2 (`CoreToMid.checking`), and `--fault=susp-type-arg` is
   its mutant (`tests/hs/core/fault-susp-type-arg.core`).
-* **Calls:** a function of other than one parameter is only called, with
-  an argument for each, and never used as a value.
+* **Calls:** a function of other than one parameter is called with an
+  argument for each, or is a value of the curried type of its parameters;
+  a call of an unknown function of several arguments, `App (f, [a1, ..,
+  an])`, is checked against `f`'s type taken n times (`Uncurry` makes them).
 * **Cases:** the value a `Case` tests is a datatype's; each arm is a
   constructor of it, once; and one with no default has an arm of every
   constructor.
@@ -876,23 +884,52 @@ its own, and forcing one is one step.
   uncaught `NonTermination` (`<<loop>>`): status 1, the handles flushed (chapter 23;
   the roadmap's ruling 58). Haskell 98's errors end the program (the roadmap's D12),
   so no suspension is put back.
+* **Lazy ML's reading** (the roadmap's D57, M26; E2's `CmX`): a suspension whose code
+  says `thunk_self_update v` and never `thunk_blackhole` does not go under evaluation,
+  since a lazy ML body may run again: a force of it from inside its own code runs it
+  again, a raise leaves it to run again, and a body may outlive its own update -- the
+  inner run updates it and returns, and the outer run goes on with its frame's closure
+  an indirection, and updates it again, its value the one that stands. So `UPDATE` of a
+  closure that is an indirection already writes it again; `Low.hoistEnv` reads what
+  such code captured at its entry too, since after the inner run's update the collector
+  follows the closure's first field alone; and where a function of the program says
+  `UPDATE` and not `BLACKHOLE` (`Program`'s `reruns`, so never in SML's or Haskell's),
+  the collector gives what points to an indirection its value neither where a frame
+  runs that indirection (it is pinned, `IND_RUNNING`, by `gc_pin_running` before each
+  collection that shortcuts) nor where the value is a suspension or an indirection
+  itself, looked at through its forwarding pointer (`ind_may_shortcut`: a field that
+  held the outer of an `'a susp susp` must not come to hold the inner, whose force
+  would run it). `tests/thunks`' kernels `k_outlive`, `k_outlive_int`,
+  `k_outlive_raise`, `k_outlive_three`, `outlive_nullary` and `k_nested` hold each on
+  every engine.
+* **What holds it** (the roadmap's D57, M26, whose checklist of six this is):
+  the pin and the shortcut's guard, by those kernels; the rules `MidLint` adds,
+  above; force on both targets, `tests/ir/susp.sml` at `-O2` on the register
+  target and `susp-stack.sml` at `-O0` on the stack target, each a dump of every
+  stage; a program with no primitive of suspensions keeps its bytes, `susp`
+  bound only where `--allow-prim` names it; and this section. The rest of
+  `tests/thunks`, run by `tests/runner/thunks.sml` on every engine and tier, are
+  E2's kernels under `--allow-prim` (`knot`, `chain`, `cast`, `image` with
+  suspensions in a saved image, and the rest).
 
 ### Above Mid: rhc's Core simplifier
 
 rhc optimises its own Core before Core to Mid, at `-O2` (the haskell98
 roadmap's M23, D47-D49; `lib/language/haskell/coresimplify_sig.sml`), and
 Mid's passes run below it unchanged. Its passes are rhc's stages,
-`core-simplify`, `core-specialise`, `core-eta` and `core-simplify-2`, each
-through `Pass.stage` with CoreLint and HsLint's target check after it at
-level 2 and asking `Pass.spend` before each rewrite. What each keeps of Core:
-every binder distinct; every rewrite well typed alone, so that the lints hold
-at any `--fuel`; a binding copied into a lambda only where it is a value,
-so that no thunk runs twice; nothing evaluated that was not, `case` being the
-only force; and eta only where the expression is a value already (the
-pedantic rule), so that `seq` sees what it saw. A specialised copy of an
-overloaded function, or of a dictionary function, is a value of the top level
-of its own, named `f{T,...}`; with the whole program a value `main` does not
-reach goes.
+`core-simplify`, `core-specialise`, `core-eta`, `core-cheap` and
+`core-simplify-2`, each through `Pass.stage` with CoreLint and HsLint's
+target check after it at level 2 and asking `Pass.spend` before each rewrite.
+What each keeps of Core: every binder distinct; every rewrite well typed
+alone, so that the lints hold at any `--fuel`; a binding copied into a lambda
+only where it is a value, so that no thunk runs twice; nothing evaluated that
+was not, `case` being the only force, but for `core-cheap`'s lets (D51): a
+cheap and total expression on values already evaluated, which can neither
+raise nor loop, made a case (`--no-cheap-eagerness` leaves them); and eta
+only where the expression is a value already (the pedantic rule), so that
+`seq` sees what it saw. A specialised copy of an overloaded function, or of a
+dictionary function, is a value of the top level of its own, named
+`f{T,...}`; with the whole program a value `main` does not reach goes.
 
 ### Mid as text
 
@@ -954,7 +991,7 @@ said here.
 |---|---|---|
 | Names | every binder's stamp from `Stamp.fresh`, bound once in the program | `MidLint` |
 | Types | Mid is System F (*Mid*, above) | `MidLint` |
-| Calls | a function has a parameter; one of other than one is only called, with an argument for each, and is a function of the top level: `Lower` stops at a local one at `-O0`, where no pass lifts it (`Lift` runs from `-O1`) | `MidLint`, and `Lower` for a local one |
+| Calls | a function has a parameter; one of other than one is called with an argument for each, or is a value of its parameters' curried type, and is a function of the top level: `Lower` stops at a local one at `-O0`, where no pass lifts it (`Lift` runs from `-O1`) | `MidLint`, and `Lower` for a local one |
 | The top level | `Val`, `Funs` and `Do` in order; a global defined once; a `Do` lists what it sets | `MidLint`, and the VM for a global read before it is set |
 | Recursion | only functions are recursive | `MidLint`, and the datatype's shape |
 | Strictness | `Let` is strict and in order, and a variable of a datatype's type is evaluated: `ConTag` and `Decon` read it as it is, a step nothing uses may go (`Prims.removable`), and tier 2 trusts its representation | nothing: the types alone, by `Lower.repOfTy`, so a value not yet evaluated must have a type that is no datatype |
@@ -977,6 +1014,25 @@ which primitives make, are numbered as `runtime/value.h` numbers them.
 `MidPipeline.midStage`, which makes Mid with the lint at the boundary;
 `MidPipeline.lowOfMid` with its list of passes; `MidPipeline.targetStage`;
 and `Emit.writeFileAs` with `MidPipeline.fingerprint ()`.
+
+**rhc's Core**, the language above Mid of the second front end that uses
+this layer ([rhc.md](rhc.md); D1 and D2 of
+[plans/language/haskell98.md](plans/language/haskell98.md)), is rhc's own,
+in `lib/language/haskell` and documented with that library: what it is
+([CORE](lib/language/haskell/sig/CORE.md): System F with a type variable
+applied, lazy `let` and `letrec`, and `case` the one place a value is
+forced), its text ([CORE_TEXT](lib/language/haskell/sig/CORE_TEXT.md)),
+its lint's rules ([CORE_LINT](lib/language/haskell/sig/CORE_LINT.md)), its
+interpreter ([CORE_INTERP](lib/language/haskell/sig/CORE_INTERP.md)), its
+units ([CORE_UNITS](lib/language/haskell/sig/CORE_UNITS.md)) and Core to
+Mid ([CORE_TO_MID](lib/language/haskell/sig/CORE_TO_MID.md)), which writes
+Mid's text, which rhc reads with `MidText.parse` and hands to
+`MidPipeline.midStage`. Its stages are `read` or `desugar` (Core,
+CoreLint at every level, and its text read back at level 3) and
+`coretomid` (Mid's text), names `--dump-after` takes as it takes Mid's
+passes'. What rhc's Mid has that SML's does not -- suspensions, `Case`
+from every match, a type variable applied and the arrows as type names, a
+forall in a dictionary's field -- is in *Mid* and *Suspensions* above.
 
 ## Matches
 
@@ -1033,7 +1089,9 @@ does.
   the other at every use, at the types the use gives it (M12), so that
   the passes that know a function of the top level know it through the
   alias: `List.foldl f b l` is then a call of the worker, which
-  `specialise` copies for `f`.
+  `specialise` copies for `f`. An alias of a function of other than one
+  parameter, a twin `uncurry` left as a value, stays: a call through it is
+  a call through a closure (`tests/ir/shake-nary-alias.mid`).
 * **`lift`** (lambda lifting): a group of local functions none of which
   escapes -- each is only ever called, by name -- becomes a group of the
   top level. What the group captured it is given instead, as parameters
@@ -1126,6 +1184,18 @@ does.
   and the refs are not made; the copies' own calls are rewritten so in
   turn. A ref used under a handler is left, since a raise would leave its
   value where the handler cannot see it.
+* **`uncurry`** (eval/apply proper, the haskell98 roadmap's D15 C, from
+  `-O1`): a curried function -- one that makes a function and returns it,
+  n deep, with nothing between but steps that may be done later and again
+  -- gets a twin of all n levels' parameters (or, where its innermost
+  body calls a worker of the top level with them all, in order, that
+  worker), and its uses as a value become the twin's, a closure of n
+  parameters; calls through a closure in a row, each applying what
+  the last gave, at once, become one call of them all, eight at most. A
+  closure given to `thunk_make`, a foreign callback or the runtime stays
+  one of one parameter. How the engines call through such a closure is
+  *Calls through a closure* of [bytecode.md](bytecode.md)
+  (`tests/ir/uncurry.sml`, `tests/ir/uncurry-worker.mid`).
 * **`inline`** (in `simplify`, M10): a call of a function of the top level
   of no more than 12 nodes that does not call itself, and does not always
   raise -- a call on the way to an error costs nothing worth saving -- is
@@ -1227,7 +1297,11 @@ leaves implicit is explicit.
   `TailCallK`), by the function's id, with an argument for each of its
   parameters and no closure: such a function captures nothing and names
   itself as its global. A function has a list of parameters; one of other
-  than one parameter is only ever called so, and is made no closure.
+  than one parameter is called so, or made a closure of that many
+  parameters (`CLOSUREN`, `ARITY`).
+* **Calls through a closure:** of one argument, `Call` (and `TailCall`); of
+  several, `CallN` (and `TailCallN`), which test the closure's parameters
+  (D15 C).
 * **Results in globals** (the optional pass `results`, from `-O1`, for the
   whole program and not where the debugger reads it;
   [plans/performance.md](plans/performance.md), M8): a function of the top
@@ -1464,7 +1538,7 @@ holds the link to refusing; a unit so made is not stored in the cache.
 
 * **`make test-ir`** (`ir/*` of `tests/runner/tools.sml`): each `tests/ir/NAME.sml`
   is compiled without the Basis Library, and each `tests/ir/NAME.mid` read
-  as Mid, with the lint at level 3, Mid's text read back after every stage. The first line asks for a dump
+  as Mid and compiled as a whole program (`-o`), with the lint at level 3, Mid's text read back after every stage. The first line asks for a dump
   (`(* dump: --dump-after=PASS *)`), which is compared with `NAME.expected`
   and reviewed line by line like any `.expected` file, or says with what
   the compiler must stop (`(* fail: MESSAGE *)`), for a program a lint must

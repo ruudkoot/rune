@@ -14,8 +14,9 @@
      has one to pop, and a function returns, or calls in tail position,
      with none;
    * calls: a known call (CallK) is of a function of the program, with an
-     argument for each of its parameters; a function with other than one
-     parameter is never made a closure, since a closure is called with one;
+     argument for each of its parameters; a function of k parameters made
+     a closure is entered by a call of k arguments (D15 C: CallN, the
+     register target's), of one by a Call;
    * closures: a closure is given a value for each its function captures,
      and the function reads each of them (Env i, i below their number) --
      one it never reads it read some other way, as a variable of another
@@ -60,11 +61,13 @@ struct
                       ^ Int.toString (List.length args) ^ " arguments")
       fun closure (where', f, vs) =
         case (IntMap.find (arity, f), IntMap.find (captures, f)) of
-          (SOME 1, SOME n) =>
+          (SOME _, SOME n) =>
+            (* a function of k parameters too, called through its closure by a
+               call of k arguments (D15 C) *)
             if n = List.length vs then ()
             else bug (where' ^ ": a closure of f" ^ Int.toString f ^ ", which captures " ^ Int.toString n
                       ^ " values, given " ^ Int.toString (List.length vs))
-        | (SOME n, _) => bug (where' ^ ": a closure of f" ^ Int.toString f ^ ", which has " ^ Int.toString n ^ " parameters")
+        | (SOME _, NONE) => bug (where' ^ ": a closure of f" ^ Int.toString f ^ ", which captures nothing known")
         | (NONE, _) => bug (where' ^ ": a closure of no function f" ^ Int.toString f)
 
       fun func (f as {id, params, ncaptured, nvars, blocks, ...} : func) =
@@ -200,6 +203,7 @@ struct
                   | Switch (_, cases, d) => (List.app (fn (_, l) => goto (l, [])) cases; goto (d, []))
                   | Return _ => if depth = 0 then () else bug (here ^ ": a return with a handler pushed")
                   | TailCall _ => if depth = 0 then () else bug (here ^ ": a tail call with a handler pushed")
+                  | TailCallN _ => if depth = 0 then () else bug (here ^ ": a tail call with a handler pushed")
                   | TailCallK (f, args) =>
                       (known (here, f, args);
                        if depth = 0 then () else bug (here ^ ": a tail call with a handler pushed"))
@@ -403,6 +407,7 @@ struct
                          | NONE => bug (here ^ ": " ^ g s ^ " read where no call of a function that leaves results comes just before"))
                     | Def (x, CallK (f, _)) => scan (rest, Option.map (fn ss => (f, ss)) (leaves f), SOME (x, SOME f), [])
                     | Def (x, Call _) => scan (rest, NONE, SOME (x, NONE), [])
+                    | Def (x, CallN _) => scan (rest, NONE, SOME (x, NONE), [])
                     | Def (_, SetGlobal (s, _)) => scan (rest, NONE, last, s :: sets)
                     | _ => scan (rest, NONE, last, sets)
               val (last, sets) = scan (instrs, NONE, NONE, [])
@@ -422,6 +427,7 @@ struct
                   if fieldsOf f = SOME n then ()
                   else bug (here ^ ": a tail call of f" ^ Int.toString f ^ ", which returns no " ^ Int.toString n ^ " fields")
               | (SOME _, TailCall _) => bug (here ^ ": a tail call through a closure")
+              | (SOME _, TailCallN _) => bug (here ^ ": a tail call through a closure")
               | _ => ()
             end
         in

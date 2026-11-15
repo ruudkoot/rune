@@ -10,10 +10,13 @@
    (its tokens, its tree, its check), against what the good rhc says. An
    output that differs exercises the mutant. What must see it are the jobs
    it names, run as they are in a tree of the root's files in which bin/rhc is
-   the mutant's (links but for bin/rhc.rbc, bin/rhc.img and tests/out, so
-   that the mutant goes the whole way, RhcWorld): one of them failing
+   the mutant's (links but for bin/rhc.rbc, bin/rhc.layer and tests/out,
+   so that the mutant goes the whole way, the library's units made by it,
+   not taken from the good rhc's snapshot): one of them failing
    is CAUGHT; none, UNCAUGHT, or UNEXERCISED where no output differs; a
-   mutant that does not build is STILLBORN. Each but CAUGHT fails its job,
+   mutant that does not build is STILLBORN; one that names no job, its note
+   arguing that no program tells it from rhc (`equivalent: ...`), is
+   EQUIVALENT once it builds. Each but CAUGHT fails its job,
    and a job named that does not run (no such job, or one held while its
    rows are Planned) fails it too: an UNCAUGHT mutant is a missing test or a
    redundant line of code, settled as one or the other.
@@ -55,8 +58,12 @@ struct
       need (code = 0, "scripts/plan-files.sh rhc.plan failed: " ^ firstNonEmpty (out ^ ".err"));
       String.tokens Char.isSpace (read out)
     end
-  fun build (m : mutant) =
-    CompilerMutants.buildFrom {id = #id m, edits = #edits m, srcs = sources (#id m), dir = dirOf (#id m), out = "rhc.rbc"}
+  (* a mutant built in a directory of its own, dirOf dir, which the build
+     empties first: ID's job builds in ID and built-ID's in built-ID, since
+     the tier may run the two at once, and in one directory each removed the
+     other's files (docs/bugreport/rune/hs-mutants-built-race) *)
+  fun build (m : mutant, dir) =
+    CompilerMutants.buildFrom {id = #id m, edits = #edits m, srcs = sources dir, dir = dirOf dir, out = "rhc.rbc"}
 
   (* ---- the corpus *)
   val sample = 160
@@ -87,7 +94,7 @@ struct
         List.app (fn e => if List.exists (fn x => x = e) except then ()
                           else Posix.FileSys.symlink {old = root ^ "/" ^ dir ^ e, new = t ^ "/" ^ dir ^ e})
                  (entries (root ^ "/" ^ dir))
-      val () = (link ("", ["bin", "tests"]); link ("bin/", ["rhc.rbc", "rhc.img"]); link ("tests/", ["out"]))
+      val () = (link ("", ["bin", "tests"]); link ("bin/", ["rhc.rbc", "rhc.layer"]); link ("tests/", ["out"]))
       val code = exec {cmd = ["cp", rbc, t ^ "/bin/rhc.rbc"], dir = NONE, stdin = "", stdout = "", stderr = "", timeout = 60}
     in need (code = 0, "cannot copy " ^ rbc); t end
 
@@ -123,7 +130,8 @@ struct
     in
       List.app (fn (m : mutant) =>
                   (need (length (List.filter (fn (n : mutant) => #id n = #id m) ms) = 1, #id m ^ " is twice");
-                   need (not (null (#caughtBy m)), #id m ^ " names no job to catch it");
+                   need (not (null (#caughtBy m)) orelse String.isPrefix "equivalent: " (#note m),
+                         #id m ^ " names no job to catch it, and its note argues no equivalence");
                    List.app (fn {file, old, ...} =>
                                (need (List.exists (fn s => s = file) srcs, #id m ^ ": " ^ file ^ " is no file of rhc.plan");
                                 need (length (CompilerMutants.places (read (fromRoot file), old)) = 1,
@@ -134,9 +142,9 @@ struct
     end
 
   fun builtJob id () =
-    let val (rbc, status) = build (named id)
+    let val (rbc, status) = build (named id, "built-" ^ id)
     in
-      rmTree (dirOf id);
+      rmTree (dirOf ("built-" ^ id));
       need (isSome rbc, id ^ " no longer compiles: " ^ status);
       say ("PASS hs-mutants: " ^ id ^ " builds\n")
     end
@@ -150,13 +158,15 @@ struct
     let
       val m = named id
       val d = dirOf id
-      val (rbc, status) = build m
+      val (rbc, status) = build (m, id)
       fun verdict text = (mkdirs (dirOf "verdicts"); write (dirOf "verdicts/" ^ id, text ^ "\n"); say (text ^ "\n"))
       val what = id ^ " (" ^ #stage m ^ ": " ^ #note m ^ ")"
     in
       case rbc of
         NONE => (verdict ("STILLBORN " ^ what ^ ": " ^ status); raise Failed (id ^ " no longer compiles: " ^ status))
       | SOME rbc =>
+          if null (#caughtBy m) then verdict ("EQUIVALENT " ^ what)
+          else
           let
             val goodLines = lines (read (dirOf "good.tsv"))
             val mine = outputs (rbc, d ^ "/scratch")
@@ -193,14 +203,19 @@ struct
 
   fun treeCommand id () =
     let val m = named id
-        val (rbc, status) = build m
+        val (rbc, status) = build (m, id)
     in
       need (isSome rbc, id ^ " does not build: " ^ status);
       say ("hs-mutants: " ^ id ^ "'s tree is " ^ mutantTree (dirOf id, valOf rbc)
            ^ "\n  run a job against it: RUNE_TEST_ROOT=THAT THAT/bin/rune-test run JOB, with RUNE_TEST_RUN unset\n")
     end
 
+  (* a job that stops says why in a FAIL line: Failed's reason, or any other
+     exception by Sh.exnText (an OS.SysErr of a file, say), rather than end
+     uncaught, with a trace that names the end of this handler's rule
+     (docs/bugreport/rune/handler-reraise-position) *)
   fun protect f () = f () handle Failed why => say ("FAIL hs-mutants: " ^ why ^ "\n")
+                               | e => say ("FAIL hs-mutants: " ^ exnText e ^ "\n")
   fun command args =
     case args of
       ["hs-mutants-prepare"] => SOME (protect prepare)

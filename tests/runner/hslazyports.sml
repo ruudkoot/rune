@@ -98,8 +98,8 @@ struct
       {id = id, label = "run", got = got, said = said, passed = got = "ok", judged = true,
        want = "nofib's output is " ^ #expected r} : HsRhcCorpus.outcome
     end
-    handle e => (note (out () ^ "/logs/lazy/" ^ #port r ^ ".exn", exnMessage e ^ "\n");
-                 {id = "lazy/" ^ #port r, label = "run", got = "harness-error", said = exnMessage e, passed = false,
+    handle e => (note (out () ^ "/logs/lazy/" ^ #port r ^ ".exn", exnText e ^ "\n");
+                 {id = "lazy/" ^ #port r, label = "run", got = "harness-error", said = exnText e, passed = false,
                   judged = true, want = "nofib's output"})
 
   fun runPort port =
