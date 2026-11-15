@@ -6,7 +6,7 @@ A node is one file of the library, named by the modules it declares; a family of
 one file declares, such as the five of `Int8`, is one node. An arrow from one node to another
 means that the first needs the second to compile, as the library's index records it. An arrow
 that a path of other arrows already implies is left out, so that what is left is the shape of the
-library and not a wall of lines: the 241 requirements between the 80 files become 108 arrows.
+library and not a wall of lines: the 242 requirements between the 80 files become 108 arrows.
 The order in which the library loads its files makes the graph acyclic: every arrow points at a
 file that is compiled earlier.
 
@@ -24,8 +24,8 @@ one need a file of the other.
 ```mermaid
 flowchart LR
   a0["Languages<br>(78)"]
-  a1["Not in an area<br>(2)"]
-  a1 -- 2 --> a0
+  a1["Collections<br>(2)"]
+  a0 -- 5 --> a1
 ```
 
 ## Languages
@@ -54,8 +54,6 @@ flowchart TD
   n19["HsDump"]
   n20(["HS_USAGE"])
   n21["HsUsage"]
-  n22(["HS_STRING_MAP"])
-  n23["HsStringMap"]
   n24(["HS_MODULES"])
   n25["HsModules"]
   n26(["HS_FIXITY"])
@@ -84,6 +82,8 @@ flowchart TD
   n49["Core"]
   n50(["CORE_TEXT"])
   n51["CoreText"]
+  n52(["CORE_UNITS"])
+  n53["CoreUnits"]
   n54(["CORE_PRIM_FAMILY"])
   n55["CorePrimFamily"]
   n56(["CORE_PRIM"])
@@ -136,9 +136,7 @@ flowchart TD
   n18 --> n13
   n19 --> n18
   n21 --> n20
-  n23 --> n22
   n24 --> n13
-  n24 --> n23
   n25 --> n24
   n25 --> n21
   n26 --> n13
@@ -146,18 +144,15 @@ flowchart TD
   n28 --> n25
   n29 --> n28
   n31 --> n30
-  n31 --> n23
   n33 --> n32
   n34 --> n33
   n35 --> n34
-  n35 --> n23
   n35 --> n21
   n36 --> n1
   n36 --> n33
   n37 --> n36
   n37 --> n35
   n38 --> n13
-  n38 --> n23
   n38 --> n33
   n39 --> n38
   n39 --> n25
@@ -175,6 +170,9 @@ flowchart TD
   n49 --> n48
   n50 --> n49
   n51 --> n50
+  n52 --> n49
+  n53 --> n52
+  n53 --> n51
   n55 --> n54
   n56 --> n49
   n56 --> n55
@@ -204,7 +202,6 @@ flowchart TD
   n72 --> n49
   n73 --> n51
   n73 --> n72
-  n73 --> n23
   n74 --> n73
   n74 --> n43
   n75 --> n74
@@ -217,16 +214,16 @@ flowchart TD
   n79 --> n77
 ```
 
-## Not in an area
+It also needs Collections (5).
+
+## Collections
 
 ```mermaid
 flowchart TD
-  n52(["CORE_UNITS"])
-  n53["CoreUnits"]
-  n53 --> n52
+  n22(["HS_STRING_MAP"])
+  n23["HsStringMap"]
+  n23 --> n22
 ```
-
-It also needs Languages (2).
 
 ---
 

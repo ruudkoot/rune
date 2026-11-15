@@ -84,6 +84,15 @@ _Static_assert(K_IND < 16, "a kind fits four bits, which is what the header keep
    captures of a thunk that runs are let go (D12), and a second ENTER is a
    loop. */
 enum { THUNK_UNEVALUATED = 0, THUNK_BLACKHOLE = 1 };
+/* A K_IND's contag: what the suspension's was (an update keeps it), or
+   IND_RUNNING once a collection found a frame running it as its closure
+   (gc_pin_running, runtime/gc/copy.c). Lazy ML's
+   suspension does not go under evaluation, so its code may outlive its own
+   update -- a force of it from inside updated it first -- and writes it
+   again through its frame's closure (UPDATE): such an indirection is never
+   given what it holds, or the second update would be lost or written over
+   the first value (the haskell98 roadmap's D57, M26; E14). */
+enum { IND_RUNNING = 2 };
 
 struct Obj {
     uint8_t kind;
@@ -282,6 +291,7 @@ static inline int obj_kind(const Obj *o) { return o->kind; }
 #endif
 static inline uint32_t obj_len(const Obj *o) { return o->len; }
 static inline uint16_t obj_contag(const Obj *o) { return o->contag; }
+static inline void obj_set_contag(Obj *o, uint16_t c) { o->contag = c; }
 /* the header of a fresh object; the fields are the caller's to fill */
 static inline void obj_init(Obj *o, int kind, uint16_t contag, uint32_t len) {
     o->kind = (uint8_t)kind;
@@ -424,5 +434,26 @@ Value mk_box_vm(struct VM *vm, uint64_t bits);   /* the K_BOX of a number that h
 static inline int obj_forwarded(const Obj *o) { return obj_kind(o) == K_FORWARD; }
 static inline Obj *obj_forwarding(const Obj *o) { Obj *n; memcpy(&n, obj_bytes_c(o), sizeof n); return n; }
 static inline void obj_forward(Obj *o, Obj *to) { o->kind = K_FORWARD; memcpy(OBJ_BYTES(o), &to, sizeof to); }
+
+/* Whether the collector may give a field that points to v what v holds:
+   v an indirection no frame runs (IND_RUNNING), whose value is no
+   suspension and no indirection itself -- looked at through its forwarding
+   pointer where this collection has copied it already. A suspension's
+   value may be a suspension ('a susp susp, which lazy ML has and Haskell
+   cannot make): a field that held the outer must not come to hold the
+   inner, whose force would then run it (the haskell98 roadmap's D57, M26;
+   E2's kernels/nested.sml). Asked only where a function of the program
+   says UPDATE and not BLACKHOLE (Program's reruns); elsewhere every
+   indirection is shortcut, as before. */
+static inline int ind_may_shortcut(Value v) {
+    const Obj *o = val_ptr(v);
+    if (obj_kind(o) != K_IND || obj_contag(o) == IND_RUNNING) return 0;
+    Value w = OBJ_FIELDS(o)[0];
+    if (!val_is_ptr(w)) return 1;
+    const Obj *t = val_ptr(w);
+    if (obj_forwarded(t)) t = obj_forwarding(t);
+    int k = obj_kind(t);
+    return k != K_THUNK && k != K_IND;
+}
 
 #endif

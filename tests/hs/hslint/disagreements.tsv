@@ -1,4 +1,1 @@
 program	why
-errors/cls.fixity.both	a fixity declaration in a class and another at the top level for one method: a check of names and fixity (M12), not of types, which rhc does not make yet
-errors/cls.fixity.nonmethod	a fixity declaration in a class for what is not its method: a check of names and fixity (M12), not of types
-errors/cls.inst.body.notinscope	an instance binding a method that is not in scope: a check of names (M12), not of types

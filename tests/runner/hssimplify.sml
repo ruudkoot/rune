@@ -19,7 +19,13 @@
    one with lines `-- dump: has NAME` or `-- dump: lacks NAME` has its Core
    at -O2 held to them, a value of that name there or not, what the
    simplifier must have made of it, which no run shows
-   (hs/simplify/dump/NAME).
+   (hs/simplify/dump/NAME); one with NAME.ghc.expected is a probe of eta
+   (D48): compiled at -O2 with no --eta, and with --eta=pedantic, it ends
+   as NAME.expected and NAME.exitcode say, the Report's meaning, the
+   pedantic rule being the default, and with --eta=ghc it prints
+   NAME.ghc.expected and ends in a value, the departure from the Report the
+   option is documented as, so that the probe tells the two rules apart
+   (hs/simplify/eta/NAME).
    A program with a line `-- also: FLAGS` runs at -O2 with FLAGS too, on
    the interpreter and the VM, as the rest of run/NAME (M24's strictness
    under GHC's eta rule, which sees through IO to its state token).
@@ -224,6 +230,39 @@ struct
       else ()
     end
 
+  (* an eta probe at -O2: with no --eta, on the VM and on Core's
+     interpreter, and with --eta=pedantic, what NAME.expected and
+     NAME.exitcode say; with --eta=ghc, NAME.ghc.expected and a value *)
+  fun etaOne (p : Lang.program) () =
+    let
+      val w = workFor ("eta", #name p)
+      val what = "hs/simplify/eta/" ^ #name p
+      val stdin = stdinOf p
+      fun compiled (flags, tag) =
+        case onVm (p, "-O2" :: flags, [], w, tag, stdin) of
+          SOME r => SOME r
+        | NONE => (fail (what ^ ": rhc does not compile it at " ^ String.concatWith " " ("-O2" :: flags) ^ ": "
+                         ^ firstNonEmpty (w ^ "/" ^ tag ^ ".c.err")); NONE)
+      fun asReport (flags, tag, how) =
+        case compiled (flags, tag) of
+          SOME r => judge (what ^ " (" ^ how ^ ")", p, w, r)
+        | NONE => false
+      val ghc =
+        case compiled (["--eta=ghc"], "ghc") of
+          SOME (out, c) =>
+            if out <> read (fromRoot (#base p ^ ".ghc.expected")) then
+              (fail (what ^ ": with --eta=ghc it printed otherwise than " ^ #base p ^ ".ghc.expected, the departure the option is documented as ("
+                     ^ w ^ ")"); false)
+            else if c <> 0 then
+              (fail (what ^ ": with --eta=ghc the status is " ^ Int.toString c ^ ", where a value is wanted (" ^ w ^ ")"); false)
+            else true
+        | NONE => false
+      val oks = [asReport ([], "default", "VM, -O2, no --eta"),
+                 judge (what ^ " (interpreter, -O2, no --eta)", p, w, interpret (p, ["-O2"], w, "interp.default", stdin)),
+                 asReport (["--eta=pedantic"], "pedantic", "VM, -O2 --eta=pedantic"),
+                 ghc]
+    in if List.all (fn b => b) oks then rmTree w else () end
+
   (* a run program of tests/hs/lang at -O0 and -O2 on the VM: the same
      output, and both a value or both a bottom. Each way's binary is
      prog.rbc in a directory of its own, the runner's name (ruling 33), so
@@ -258,6 +297,7 @@ struct
           | ("fuel", SOME p) => fuelOne p ()
           | ("budget", SOME p) => budgetOne p ()
           | ("dump", SOME p) => dumpOne p ()
+          | ("eta", SOME p) => etaOne p ()
           | ("lang", SOME p) => langOne p ()
           | _ => fail ("hs-simplify: no program " ^ name ^ " for " ^ kind))
     | _ => NONE
@@ -271,6 +311,7 @@ struct
     let
       val own = programs ()
       fun marking key = List.filter (fn (p : Lang.program) => not (null (marked (fromRoot (#src p), key)))) own
+      val probes = List.filter (fn (p : Lang.program) => exists (#base p ^ ".ghc.expected")) own
       fun family (kind, ps) = Test.tag "check" (Test.describe kind (List.map (fn (p : Lang.program) => job (kind, #name p)) ps))
       val lang =
         Test.tag "nightly"
@@ -283,7 +324,7 @@ struct
       List.foldl (fn (c, t) => Test.tag c t)
         (Test.tag "hs" (Test.describe "hs/simplify"
            [family ("run", own), family ("fuel", marking "fuel"), family ("budget", marking "budget"),
-            family ("dump", marking "dump"), lang]))
+            family ("dump", marking "dump"), family ("eta", probes), lang]))
         covers
     end
 end

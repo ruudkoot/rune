@@ -51,7 +51,7 @@ struct
   val testKinds = ["accept", "reject", "run", "none"]
   val statuses = ["Supported", "Partial", "Planned"]
   val sources = ["hand", "generated"]
-  val grounds = ["wrong", "contradictory", "ambiguous", "cannot be implemented"]
+  val grounds = ["wrong", "contradictory", "ambiguous", "conceded by the Report"]
   (* E9's readings, which its readings.md in the drafts holds; those after
      have their headings in tests/hs/readings.md *)
   val readings = 54
@@ -417,7 +417,7 @@ struct
                table [(accept, "status", "Supported"), (run, "status", "Partial"), (reject, "status", "Supported"),
                       (run, "deviation", "lang/" ^ run ^ "_pin"), (reject2, "status", "Supported"),
                       (reject2, "deviation", "accept/" ^ reject2 ^ "_taken")]
-               @ [("tests/hs/deviations.tsv", deviationsHead ^ run ^ "\tcannot be implemented\tlang/" ^ run ^ "_pin\tpinned\n"
+               @ [("tests/hs/deviations.tsv", deviationsHead ^ run ^ "\tconceded by the Report\tlang/" ^ run ^ "_pin\tpinned\n"
                                                 ^ reject2 ^ "\tcontradictory\taccept/" ^ reject2 ^ "_taken\ttaken\n")],
                [("accept/" ^ accept ^ "_op", "-- an accepted program", NONE),
                 ("lang/" ^ run ^ "_pin", "-- rows: " ^ runReading ^ " deviation", SOME ""),
@@ -438,12 +438,12 @@ struct
       attempt ("a-deviation-without-a-note", table [(run, "deviation", "lang/" ^ run ^ "_pin")],
                [("lang/" ^ run ^ "_pin", "-- rows: " ^ runReading ^ " deviation", SOME "")], "rule 4");
       attempt ("a-note-without-a-deviation",
-               [("tests/hs/deviations.tsv", deviationsHead ^ run ^ "\tcannot be implemented\tlang/" ^ run ^ "_pin\tparse-error(t)\n")],
+               [("tests/hs/deviations.tsv", deviationsHead ^ run ^ "\tconceded by the Report\tlang/" ^ run ^ "_pin\tparse-error(t)\n")],
                [], "rule 4");
       attempt ("a-pin-of-no-deviation", [], [("lang/" ^ run ^ "_loose", "-- rows: deviation", SOME "")], "rule 4");
       attempt ("a-pin-that-says-nothing",
                table [(run, "deviation", "lang/" ^ run ^ "_quiet")]
-               @ [("tests/hs/deviations.tsv", deviationsHead ^ run ^ "\tcannot be implemented\tlang/" ^ run ^ "_quiet\tparse-error(t)\n")],
+               @ [("tests/hs/deviations.tsv", deviationsHead ^ run ^ "\tconceded by the Report\tlang/" ^ run ^ "_quiet\tparse-error(t)\n")],
                [("lang/" ^ run ^ "_quiet", "-- no deviation said", SOME "")], "rule 4");
       attempt ("a-ground-of-no-kind",
                table [(run, "deviation", "lang/" ^ run ^ "_pin")]

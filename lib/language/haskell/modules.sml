@@ -230,6 +230,15 @@ struct
                                                   "`, which is not in scope")
                     else if length ts > 1 then report (span, "an export list names `" ^ nameOf c ^ "`, which is ambiguous")
                     else ()
+                  (* 5.2: a synonym is exported by its name alone *)
+                  val () =
+                    case sub of
+                      NONE => ()
+                    | SOME _ =>
+                        if List.exists (fn t => case defOf (key t) of SOME {sort = Synonym, ...} => true | _ => false) ts then
+                          report (span, "an export list names the synonym `" ^ nameOf c ^
+                                        "` with a list of its own, which a synonym does not have (5.2)")
+                        else ()
                   val subs =
                     case sub of
                       NONE => []

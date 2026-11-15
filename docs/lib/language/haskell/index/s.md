@@ -17,6 +17,7 @@
 - `setForced` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-setforced)
 - `setLevel` (val): [HS_TYPES](../sig/HS_TYPES.md#val-setlevel)
 - `setNote` (val): [HS_USAGE](../sig/HS_USAGE.md#val-setnote)
+- `setReaches` (val): [HS_INFER](../sig/HS_INFER.md#val-setreaches)
 - `SExp` (con): [HS_AST](../sig/HS_AST.md#con-sexp)
 - `shape` (type): [HS_DS_CORE](../sig/HS_DS_CORE.md#type-shape)
 - `shared` (val): [CORE_TO_MID](../sig/CORE_TO_MID.md#val-shared)

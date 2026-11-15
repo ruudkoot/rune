@@ -86,6 +86,8 @@ struct
      pass ("workers", fn m => Workers.program (targetInfo ()) m),
      pass ("simplify", fn m => Simplify.program (simplifyOptions ()) m),
      pass ("refs", Refs.program),
+     (* D15 C: calls of n arguments, which every engine tests the arity of (Uncurry) *)
+     {name = "uncurry", from = 1, run = Uncurry.program, gate = fn () => true},
      {name = "shake", from = 1, run = Shake.program,
       gate = fn () => !Pass.whole andalso Pass.enabled ("simplify", 1) andalso partEnabled "inline"}]
   fun passNames (ps : midPass list) : string list = List.map #name ps

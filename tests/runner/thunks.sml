@@ -33,13 +33,31 @@
    the lint refuses it at -O2; results' suspensions, read back from where
    a function's results return a datatype, are forced at every level; and
    castin's values cast into suspensions and forced in a suspension's code,
-   cast there or where the closure is made, pass RegVerify at every level. *)
+   cast there or where the closure is made, pass RegVerify at every level;
+   and caf's top-level list, which no code reads once it is walked, is let
+   go (the CAF tables, runtime/gc/caf.c: the haskell98 roadmap's D19): the
+   live at the end the same at n = 1000 and 2000 on both VMs, interpreted
+   and at tier 2, under every collector -- the full collection, the copier
+   and the low-pause collector's cycle, a collection at every allocation --
+   and greater at 2000 with every global a root (--caf-tables off).
+
+   And the kernels of lazy ML's reading (the haskell98 roadmap's D57, M26),
+   whose suspension never goes under evaluation: k_outlive, k_outlive_int,
+   k_outlive_raise, k_outlive_three and outlive_nullary, a body that outlives
+   its own update, which the collector's pin keeps written (gc_pin_running),
+   and k_nested, a suspension of a suspension, which its guard keeps apart
+   (ind_may_shortcut); ordinary kernels, every build and every way. *)
 structure Thunks =
 struct
   open Sh
 
   val kernels = ["chain", "tailchain", "knot", "share", "reenter", "barrier", "image", "last", "leak", "wrongslot", "cast", "forget",
-                 "results", "castin", "loopcatch"]
+                 "results", "castin", "loopcatch", "caf",
+                 (* lazy ML's reading (D57, M26): a body that outlives its own
+                    update, and a suspension of a suspension *)
+                 "k_outlive", "k_outlive_int", "k_outlive_raise", "k_outlive_three", "outlive_nullary", "k_nested",
+                 (* suspensions of closures that capture nothing, made beside them (M9b) *)
+                 "nullary_make"]
   fun source k = "tests/thunks/" ^ k ^ ".sml"
   fun args k = words (fromRoot ("tests/thunks/" ^ k ^ ".args"))
 
@@ -240,10 +258,86 @@ struct
                [("O0", ["-O0"]), ("O2", ["-O2"])]
     end
 
+  (* caf's top-level list let go: the live at the end (--stats), a
+     collection at every allocation, the same at 1000 and 2000 under each
+     collector where the tables are taken, and more at 2000 where every
+     global is a root *)
+  fun cafLive (dir, name, vm, opts, rbc, n) =
+    let
+      val d = dir ^ "/live-" ^ name
+      val () = scratch d
+      val _ = exec {cmd = [fromRoot vm] @ opts @ ["--stats", rbc, n],
+                    dir = SOME d, stdin = "", stdout = d ^ "/stdout", stderr = d ^ "/stderr", timeout = 600}
+      (* runevm's line: "... semispace N bytes, L live, ..." *)
+      val (prefix, at) = Substring.position " live," (Substring.full (read (d ^ "/stderr")))
+    in if Substring.isEmpty at then NONE else Int.fromString (Substring.string (Substring.taker Char.isDigit prefix)) end
+  fun caf () =
+    let
+      val k = "caf"
+      val () = ordinary k
+      val dir = run ^ "/thunks/" ^ k ^ "/live"
+      val () = scratch dir
+      val cafCollectors = [("full", ["--gc-stress", "1", "--gc-stress-full"]),
+                           ("copy", ["--nursery", "0", "--old-space", "copy", "--gc-stress", "1"]),
+                           ("lowpause", ["--gc", "low-pause", "--gc-stress", "1", "--gc-stress-cycles"])]
+      fun check (b, vm, rbc) (w, opts) =
+        let
+          fun live tag mode n = cafLive (dir, b ^ "-" ^ w ^ "-" ^ tag ^ "-" ^ n, vm, ["--caf-tables", mode] @ opts, rbc, n)
+        in
+          case (live "on" "auto" "1000", live "on" "auto" "2000", live "off" "off" "1000", live "off" "off" "2000") of
+            (SOME x, SOME y, SOME u, SOME v) =>
+              (if x = y then ()
+               else fail (k, b ^ " " ^ w ^ ": keeps " ^ Int.toString ((y - x) div 1000) ^ " bytes an element of the CAF (live at the end "
+                             ^ Int.toString x ^ " at 1000, " ^ Int.toString y ^ " at 2000)");
+               if v > u then () else fail (k, b ^ " " ^ w ^ ": with every global a root, the live at the end grows no more ("
+                                               ^ Int.toString u ^ " at 1000, " ^ Int.toString v ^ " at 2000): the test sees nothing"))
+          | _ => fail (k, b ^ " " ^ w ^ ": no live in --stats")
+        end
+      val rways = List.concat (List.map (fn (c, copts) => [("off-" ^ c, "--jit=off" :: copts), ("opt-" ^ c, ["--jit=all", "--jit-tier=2"] @ copts)])
+                                        cafCollectors)
+    in
+      List.app (fn b => case compile (k, dir, b, true) of SOME rbc => List.app (check (#1 b, "bin/runevm", rbc)) rways | NONE => ())
+               [("O0", ["-O0"]), ("O2", ["-O2"])];
+      List.app (fn b => case compile (k, dir, b, true) of SOME rbc => List.app (check (#1 b, "bin/runevm-stack", rbc)) cafCollectors | NONE => ())
+               [("S0", ["--target=stack", "-O0"]), ("S2", ["--target=stack", "-O2"])]
+    end
+
   (* D18: a chain of 10^7 suspensions forced from its head fits the default stack *)
+  (* thunk_make in line in compiled code (haskell98 M9b), at tier 1 and at
+     tier 2: run with every function compiled, --jit-stats counts the
+     primitives the code called in C, an in-line one's slow path among
+     them, and thunk_make is not one: chain's suspensions are of closures
+     that capture (made in place), nullary_make's of closures that capture
+     nothing (made beside them, an allocation in line) *)
+  fun inLine k =
+    let
+      val dir = run ^ "/thunks/" ^ k ^ "/inline"
+      val () = scratch dir
+    in
+      case compile (k, dir, ("O1", []), false) of
+        SOME rbc =>
+          List.app (fn (w, opts) =>
+                      let val (code, _, err) = runIn (dir, w, "bin/runevm", opts @ ["--jit-stats"], rbc, args k)
+                          val called = List.filter (String.isSubstring "primitives called from code") (lines (read err))
+                          (* the count after the word thunk_make on that line, 0 where it is not there *)
+                          fun countAfter [] = 0
+                            | countAfter ("thunk_make" :: n :: _) = getOpt (Int.fromString n, 0)
+                            | countAfter (_ :: rest) = countAfter rest
+                          val calls = List.foldl (fn (l, a) => a + countAfter (String.tokens Char.isSpace l)) 0 called
+                      in
+                        if code <> 0 then fail (k, "--jit-stats " ^ w ^ ": exit " ^ Int.toString code ^ ": " ^ firstNonEmpty err)
+                        else if calls > 0 then
+                          fail (k, w ^ ": the code calls thunk_make in C " ^ Int.toString calls ^ " times: " ^ String.concatWith " " called)
+                        else ()
+                      end)
+                   [("tier1", ["--jit=all"]), ("tier2", ["--jit=all", "--jit-tier=2"])]
+      | NONE => ()
+    end
+
   fun chain () =
     let
       val () = ordinary "chain"
+      val () = inLine "chain"
       val dir = run ^ "/thunks/chain/deep"
       val () = scratch dir
     in
@@ -323,6 +417,8 @@ struct
     | "last" => retains k
     | "leak" => retains k
     | "chain" => chain ()
+    | "nullary_make" => (ordinary k; inLine k)
+    | "caf" => caf ()
     | "wrongslot" => wrongslot ()
     | _ => ordinary k
 

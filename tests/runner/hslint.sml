@@ -36,16 +36,22 @@
 
    - `hs/hslint/faults`: each rule of HsLint's comparison, of its replay
      and of its target check refuses its fault (as `astlintFaults` holds
-     AstLint's), from the saved world, where HsLint takes its inference of
-     the library from the world, and whole (`--whole`), where it infers the
-     library too: tests/hs/hslint/faults.hs, desugared, its checker's
+     AstLint's), against bin/rhc's snapshot, where HsLint takes its
+     inference of the library from the parts of the snapshot's units,
+     whole (`--whole`), where it infers the library too, and in units with
+     a store (`--units`, one of its own each time), where it takes them
+     from the snapshot's entries too (rulings 66 and 67):
+     tests/hs/hslint/faults.hs, desugared, its checker's
      records replayed and held to the second inference, its Core held to
      it, and held by `--hslint-claims` to its own expected dump, is
      accepted, and with RHC_HSLINT_FAULT=RULE, which reads the first claim,
      record or Core type RULE checks corrupted, refused with `lint after
      hslint` and `[RULE]`; and the faults are the rules `bin/rhc
-     --hslint-rules` names, both ways.
+     --hslint-rules` names, all three ways.
 
+   - `hs/hslint/lint-level`: the run's RUNE_LINT is 2, in make check and
+     nightly, so that G2's line (HsLint, CoreLint and MidLint clean at level
+     2 over every suite) is not passed by a run that does not look.
    - `hs/hslint/levels`: each fixture the dump infers, built (`-o`) at
      level 2, HsLint's checks with it, and at level 0: the same status and
      bytes, since no check changes what rhc makes.
@@ -260,15 +266,28 @@ struct
     let
       val out = run ^ "/hs-hslint/faults"
       val () = mkdirs out
-      (* from the saved world, HsLint taking its inference of the library
-         from it, or whole (`--whole`), inferring the library too: each fault
-         refused both ways *)
-      fun rhcWith (fault, file, whole) =
-        execEnv (fn e => if fault = "" then unsetEnv ["RHC_HSLINT_FAULT"] e else setEnv ("RHC_HSLINT_FAULT", fault) e)
-          {cmd = [fromRoot "bin/rhc"] @ (if whole then ["--whole"] else []) @
-                 ["--lint=2", "--desugar-only", "--hslint-claims=" ^ faultClaims, faultProgram],
-           dir = SOME root, stdin = "", stdout = file, stderr = file, timeout = 600}
-      val ways = [(false, ""), (true, ".whole")]
+      (* against the snapshot, HsLint taking its inference of the library
+         from the parts of its units, whole (`--whole`), inferring the
+         library too, or in units with a store (`--units`), one of its own
+         each time so that the program's unit is made: each fault refused
+         all three ways *)
+      datatype way = Snapshot | Whole | Units
+      fun rhcWith (fault, file, way) =
+        let
+          val store = file ^ ".store"
+          val () = rmTree store
+        in
+          execEnv (fn e => if fault = "" then unsetEnv ["RHC_HSLINT_FAULT"] e else setEnv ("RHC_HSLINT_FAULT", fault) e)
+            {cmd = [fromRoot "bin/rhc"] @
+                   (case way of
+                      Snapshot => ["--desugar-only"]
+                    | Whole => ["--whole", "--desugar-only"]
+                    | Units => ["--units", "--store", store, "-o", file ^ ".rbc"]) @
+                   ["--lint=2", "--hslint-claims=" ^ faultClaims, faultProgram],
+             dir = SOME root, stdin = "", stdout = file, stderr = file, timeout = 600}
+          before rmTree store
+        end
+      val ways = [(Snapshot, ""), (Whole, ".whole"), (Units, ".units")]
       val listed = out ^ "/rules"
       val _ = exec {cmd = [fromRoot "bin/rhc", "--hslint-rules"], dir = SOME root, stdin = "", stdout = listed,
                     stderr = listed ^ ".err", timeout = 300}
@@ -282,14 +301,14 @@ struct
       List.app (fn f => if List.exists (fn r => r = f) rules then ()
                         else fail ("hs/hslint/faults: the fault " ^ f ^ " is no rule of bin/rhc --hslint-rules")) faults;
       List.app
-        (fn (whole, way) =>
-           (if rhcWith ("", clean ^ way, whole) = 0 then ()
+        (fn (how, way) =>
+           (if rhcWith ("", clean ^ way, how) = 0 then ()
             else fail ("hs/hslint/faults: the program is refused with its own claims" ^ way ^ ": " ^ firstLine (clean ^ way));
             List.app
               (fn f =>
                  let
                    val file = out ^ "/" ^ f ^ way ^ ".out"
-                   val status = rhcWith (f, file, whole)
+                   val status = rhcWith (f, file, how)
                    val text = read file
                  in
                    if status = 0 then fail ("hs/hslint/faults: " ^ f ^ way ^ ": accepted")
@@ -344,6 +363,19 @@ struct
         inferred
     end
 
+  (* ---- G2's line: every suite under RUNE_LINT=2 ---- *)
+
+  (* the run's lint level: the roadmap's G2 holds HsLint, CoreLint and
+     MidLint clean at level 2 over every suite, which bin/rune-test's own
+     RUNE_LINT=2 gives every job; a run that sets it otherwise checks less,
+     and says so here rather than pass G2's line by not looking *)
+  fun lintLevel () =
+    case env ("RUNE_LINT", "") of
+      "2" => ()
+    | v => fail ("hs/hslint/lint-level: this run's RUNE_LINT is " ^ (if v = "" then "unset" else v) ^
+                 ", and G2 holds HsLint, CoreLint and MidLint clean at level 2 over every suite " ^
+                 "(bin/rune-test sets RUNE_LINT=2 unless told otherwise)")
+
   (* ---- the tree ---- *)
 
   fun job (name, cmd, timeout) =
@@ -384,6 +416,7 @@ struct
               (Test.describe ""
                  (List.map (Test.tag "check")
                     (dumps @ [job ("faults", cmd ^ "hs-hslint-faults", 1200), job ("levels", cmd ^ "hs-hslint-levels", 1800)])
+                  @ [Test.tag "check" (Test.tag "nightly" (job ("lint-level", cmd ^ "hs-hslint-lint-level", 60)))]
                   @ expect "accept" @ expect "lang" @ expect "errors")))]
     end
 
@@ -392,6 +425,7 @@ struct
       ["hs-hslint-dump", name, mode] => SOME (fn () => dumpOne (name, mode))
     | ["hs-hslint-faults"] => SOME faultsAll
     | ["hs-hslint-levels"] => SOME levelsAll
+    | ["hs-hslint-lint-level"] => SOME lintLevel
     | ["hs-hslint-expect", kind, name] => SOME (fn () => expectOne (kind, name))
     | ["hs-hslint-expect-shard", kind, "sample"] => SOME (fn () => expectSample kind)
     | ["hs-hslint-expect-shard", kind, kn] =>

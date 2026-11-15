@@ -172,19 +172,27 @@ struct
     in
       List.app
         (fn {group, ifaces, ...} : turn =>
-           List.app
-             (fn (i : HsModIface.t) =>
-                let
-                  val mine = HsModIface.fingerprints Pickle.hash (i, fn k => M.find (!fps, k))
-                  val () = fps := List.foldl (fn ((k, f), m) => M.insert (m, k, f)) (!fps) mine
-                in
-                  if List.all #library group then ()
-                  else
-                    (print ("IFACE\t" ^ #id i ^ "\n");
-                     List.app (fn (k, t) => print ("TEXT\t" ^ k ^ "\t" ^ escape t ^ "\n")) (HsModIface.canonical i);
-                     List.app (fn (k, f) => print ("FP\t" ^ k ^ "\t" ^ f ^ "\n")) mine)
-                end)
-             ifaces)
+           let
+             (* the group's fingerprints, by recursive group over all its
+                modules, as the driver's (M22) *)
+             val ours = HsModIface.fingerprints Pickle.hash (ifaces, fn k => M.find (!fps, k))
+             val () = fps := List.foldl (fn ((k, f), m) => M.insert (m, k, f)) (!fps) ours
+           in
+             if List.all #library group then ()
+             else
+               List.app
+                 (fn (i : HsModIface.t) =>
+                    let val canon = HsModIface.canonical i
+                    in
+                      print ("IFACE\t" ^ #id i ^ "\n");
+                      List.app (fn (k, t) => print ("TEXT\t" ^ k ^ "\t" ^ escape t ^ "\n")) canon;
+                      List.app (fn (k, _) => case List.find (fn (k', _) => k' = k) ours of
+                                               SOME (_, f) => print ("FP\t" ^ k ^ "\t" ^ f ^ "\n")
+                                             | NONE => ())
+                        canon
+                    end)
+                 ifaces
+           end)
         ts
     end
 

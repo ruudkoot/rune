@@ -1,0 +1,5 @@
+(* fail: the type (~>) takes 2 arguments, not 1 *)
+(* The lazy arrow as a type name given fewer than two arguments is a type only as an argument (ruling 65), as the
+   arrow is: a value of it is refused. *)
+(val g1 : int (~>)
+  (return (prim unsafe_cast 1 : int -> int (~>))))

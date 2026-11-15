@@ -404,7 +404,10 @@ struct
   (* a program compiled by a compiler, its siblings named from b: Rune's
      by bin/rune, and another language's by its own (rhc's, whose program
      may be a directory: tests/runner/hslang.sml) *)
-  fun jitOneWith (compiler, b, src) =
+  (* counts: whether the modes' instruction counts are held to each other
+     too, which a program whose path depends on its run (the clock) cannot
+     be: its output alone is compared then *)
+  fun jitOneOf counts (compiler, b, src) =
     let
       val n = String.translate (fn #"/" => "_" | c => str c) b
       val dir = jitDir () ^ "/" ^ n
@@ -435,6 +438,14 @@ struct
              .restore; a program that writes files where it runs here stops,
              the same in every mode) *)
           fun exited (mode, k) = List.exists (fn l => l = "exit " ^ k) (lines (read (f ("stderr." ^ mode))))
+          (* a mode's standard error, but for --count's line where counts
+             are not compared *)
+          fun errs mode =
+            if counts then f ("stderr." ^ mode)
+            else (write (f ("errs." ^ mode),
+                         String.concat (List.map (fn l => l ^ "\n")
+                                          (List.filter (not o String.isPrefix "runevm: count:") (lines (read (f ("stderr." ^ mode)))))));
+                  f ("errs." ^ mode))
           val unstarted = List.find (fn (mode, _, _) => exited (mode, "126") orelse exited (mode, "127")) jitModes
           val silent = size (read (b ^ ".expected")) > 0 andalso not (exists (b ^ ".restore"))
                        andalso size (read (f "stdout.off")) = 0 andalso exited ("off", "0")
@@ -449,16 +460,17 @@ struct
                             if mode = "off" then ()
                             else if not (same (f "stdout.off", f ("stdout." ^ mode))) then
                               say ("FAIL jit." ^ n ^ ": prints differently with " ^ what ^ ": " ^ difference (f "stdout.off", f ("stdout." ^ mode)) ^ "\n")
-                            else if not (same (f "count.off", f ("count." ^ mode))) then
+                            else if counts andalso not (same (f "count.off", f ("count." ^ mode))) then
                               say ("FAIL jit." ^ n ^ ": counts " ^ read (f "count.off") ^ " interpreted, " ^ read (f ("count." ^ mode))
                                    ^ " with " ^ what ^ "\n")
-                            else if not (same (f "stderr.off", f ("stderr." ^ mode))) then
+                            else if not (same (errs "off", errs mode)) then
                               say ("FAIL jit." ^ n ^ ": standard error differs with " ^ what ^ ": "
-                                   ^ difference (f "stderr.off", f ("stderr." ^ mode)) ^ "\n")
+                                   ^ difference (errs "off", errs mode) ^ "\n")
                             else ())
                          jitModes
         end
     end
+  val jitOneWith = jitOneOf true
   fun jitOne src = jitOneWith ("bin/rune", base src, src)
 
   (* the probe: one program, run as each of the others is, interpreted and
@@ -1343,6 +1355,7 @@ struct
     | ["rbccheck-one", kind] => SOME (fn () => rbccheckOne kind)
     | ["jit-one", src] => SOME (fn () => jitOne src)
     | ["jit-one-with", compiler, b, src] => SOME (fn () => jitOneWith (compiler, b, src))
+    | ["jit-one-output", compiler, b, src] => SOME (fn () => jitOneOf false (compiler, b, src))
     | ["jit-probe"] => SOME jitProbe
     | ["jit-every-opcode"] => SOME jitEveryOpcode
     | ["jit-fatal", which] => SOME (fn () => jitFatal which)

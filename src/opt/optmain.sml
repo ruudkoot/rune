@@ -82,7 +82,7 @@ struct
   exception Refused of string * string
 
   fun load (path : string) : Rbc.program =
-    Rbc.readFile path handle Rbc.Bad msg => raise Refused (path, msg)
+    Rbc.withApply (Rbc.readFile path) handle Rbc.Bad msg => raise Refused (path, msg)
 
   fun check (path : string) : Rbc.program * RbcCheck.facts =
     let val p = load path
@@ -119,7 +119,8 @@ struct
   fun translate (path : string) : OS.Process.status =
     let
       val data = Rbc.readBytes path handle Rbc.Bad msg => raise Refused (path, msg)
-      val p = Rbc.read data handle Rbc.Bad msg => raise Refused (path, msg)
+      (* with the general path's functions, which the runtime adds as it loads the program (D15 C) *)
+      val p = Rbc.withApply (Rbc.read data) handle Rbc.Bad msg => raise Refused (path, msg)
       val f = RbcCheck.check p handle RbcCheck.Refused msg => raise Refused (path, msg)
       val exe = case !output of SOME o' => o' | NONE => withoutRbc path
       val asm = if !assembly then (case !output of SOME o' => o' | NONE => withoutRbc path ^ ".s") else exe ^ ".s"

@@ -1,6 +1,6 @@
 # signature HS_STRING_MAP
 
-[Haskell 98 front end](../README.md) &rsaquo; Languages &rsaquo; **HS_STRING_MAP**
+[Haskell 98 front end](../README.md) &rsaquo; Collections &rsaquo; **HS_STRING_MAP**
 
 |  |  |
 | --- | --- |

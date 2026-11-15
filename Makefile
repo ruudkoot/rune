@@ -176,7 +176,7 @@ FFI_FLAGS := -DRUNE_FFI=$(FFI_ENABLED) $(if $(filter 1,$(FFI_ENABLED)),$(if $(FF
 FFI_LIBS := $(if $(filter 1,$(FFI_ENABLED)),$(if $(FFI_PREFIX),$(FFI_PREFIX)/lib/libffi.a,$(shell pkg-config --libs libffi)) $(if $(filter posix,$(SYS)),-ldl))
 FFI_INPUTS := $(if $(and $(filter 1,$(FFI_ENABLED)),$(FFI_PREFIX)),$(wildcard $(FFI_PREFIX)/include/ffi.h $(FFI_PREFIX)/include/ffitarget.h $(FFI_PREFIX)/lib/libffi.a $(FFI_PREFIX)/rune-ffi-dependency.json))
 build/librune/foreign.o bin/runevm bin/runevm-stack bin/runevm-asan bin/runevm-stack-asan: $(FFI_INPUTS)
-RT_SRCS := runtime/callback.c runtime/foreign.c runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
+RT_SRCS := runtime/callback.c runtime/foreign.c runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/gc/caf.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
 VM_HDRS := runtime/callback.h runtime/foreign.h runtime/foreign_prim.h runtime/intinf.h runtime/vm.h runtime/frames_array.inc runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
 RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)
@@ -475,13 +475,22 @@ bin/rune-lsp-replay.rbc: $(RUNE) tests/lsp/client.sml tools/lsp/seconds.sml tool
 	$(RUNE) --build tools/lsp/replay.build -o $@
 ORACLE = bin/runevm --jit=opt --equality-work 1000000000 --heap-limit
 ORACLE_PATHS = placed,walked,rebound,loaded,cutoff,broken,failed,cancelled,query
-.PHONY: test-lsp-oracle test-lsp-oracle-corpora
-test-lsp-oracle: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
+# The oracle on the compiler's own build, in three runs that are three targets,
+# so that make check runs them as three jobs of one CPU each: as one job they
+# took about 2,300 s of CPU and passed 3,600 s of wall under make check's load
+# (tests/lsp/README.md). test-lsp-oracle is all three.
+.PHONY: test-lsp-oracle test-lsp-oracle-walk test-lsp-oracle-focus test-lsp-oracle-store test-lsp-oracle-corpora
+test-lsp-oracle: test-lsp-oracle-walk test-lsp-oracle-focus test-lsp-oracle-store
+test-lsp-oracle-walk: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
 	@mkdir -p build/lsp
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
 	  --scenarios tests/lsp/oracle/rune.tsv --out build/lsp/oracle-rune.jsonl --require placed,walked,rebound,cutoff,failed,cancelled,query
+test-lsp-oracle-focus: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
+	@mkdir -p build/lsp
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
 	  --scenarios tests/lsp/oracle/rune.tsv --focus --out build/lsp/oracle-rune-focus.jsonl --share --require $(ORACLE_PATHS),opened,shared,byneed
+test-lsp-oracle-store: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
+	@mkdir -p build/lsp
 	rm -rf build/lsp/store
 	$(RUNE) --units -O0 --build rune.build --cache-dir build/lsp/store -o build/lsp/store.rbc 2>/dev/null
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
@@ -793,24 +802,29 @@ src/rhc/config.sml: FORCE | $(VERSIONGEN)
 bin/rhc.rbc: $(RUNE) rhc.build $(SOURCES_RHC) src/main/rhc-main.sml
 	@mkdir -p bin
 	$(RUNE) --build rhc.build -o $@
-# rhc's saved world (the roadmap's D45, its B; src/rhc/world.sml): rhc with
-# its library read, named and checked, saved as a VM image as
-# bin/rune-repl.img is, made again when rhc, the VM or a file of share/rhc
-# changes, with bin/rhc.img.identity beside it, the identity of the rhc
-# that made it (Config, a digest of rhc.plan's closure). bin/rhc restores it
-# where that is bin/rhc.rbc's (bin/rhc.identity), and reads and checks
-# only a program's own modules; `bin/rhc --whole`, or a library or --share
-# other than the image's, goes the whole way. The directory it names is
-# the one bin/rhc gives, $(CURDIR)/bin/../share/rhc. It is made at
-# RUNE_LINT=2, so that HsLint replays every record of the library once,
-# which a program from the world replays only for the modules it reaches.
+# rhc's snapshot (D45's A, rulings 66 and 67; docs/units.md, rhc's units):
+# the library of share/rhc compiled once into a store, which bin/rhc names
+# as a layer, read only (--snapshot), so that a check or a compile takes
+# the library's units from it and reads, checks and desugars a program's
+# own modules alone. Made from a Main that imports every module of the
+# library, at RUNE_LINT=2, so that its entries, HsLint's part of each unit
+# among them, stand for a compile at any level; a unit's entry holds no
+# code, so one snapshot serves every target. The directory it names is the
+# one bin/rhc gives, $(CURDIR)/bin/../share/rhc. The store is kept between
+# makes, an entry keyed by rhc's configuration and the library's texts,
+# and after each make holds the configurations of the rhc that made it
+# alone (--prune-store drops the others, file by file as the store's trim
+# drops what it drops).
 RHC_SHARE := $(shell find share/rhc -type f 2>/dev/null)
-bin/rhc.identity: bin/rhc.rbc bin/runevm
-	bin/runevm bin/rhc.rbc --identity > $@
-bin/rhc.img: bin/rhc.rbc bin/runevm $(RHC_SHARE)
-	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --make-world $@ < /dev/null
-bin/rhc: bin/rhc.rbc bin/rhc.identity bin/rhc.img bin/runevm Makefile
-	printf '#!/bin/sh\nd=$$(cd "$$(dirname "$$0")" && pwd -P)\na=; b=\n[ -f "$$d/rhc.identity" ] && read -r a < "$$d/rhc.identity"\n[ -f "$$d/rhc.img.identity" ] && read -r b < "$$d/rhc.img.identity"\nif [ -n "$$a" ] && [ "$$a" = "$$b" ] && [ -f "$$d/rhc.img" ]; then exec "$$d/runevm" --restore "$$d/rhc.img" -- --share "$$d/../share/rhc" "$$@"; fi\nexec "$$d/runevm" "$$d/rhc.rbc" --share "$$d/../share/rhc" "$$@"\n' > $@
+RHC_LIBRARY_MODULES := Array Char Complex CPUTime Directory IO Ix List Locale Maybe Monad Numeric Random Ratio System Time
+bin/rhc.layer: bin/rhc.rbc bin/runevm $(RHC_SHARE)
+	mkdir -p build/rhc-layer
+	{ for m in $(RHC_LIBRARY_MODULES); do echo "import $$m"; done; printf 'main :: IO ()\nmain = return ()\n'; } > build/rhc-layer/Main.hs
+	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --units --store $@ build/rhc-layer/Main.hs -o build/rhc-layer/main.rbc < /dev/null
+	bin/runevm bin/rhc.rbc --prune-store $@
+	touch $@
+bin/rhc: bin/rhc.rbc bin/rhc.layer bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(cd "$$(dirname "$$0")" && pwd -P)\nl=; [ -d "$$d/rhc.layer" ] && l="--snapshot $$d/rhc.layer"\nexec "$$d/runevm" "$$d/rhc.rbc" --share "$$d/../share/rhc" $$l "$$@"\n' > $@
 	chmod +x $@
 check-tools: bin/rhc
 
@@ -2209,7 +2223,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/hsconformance.sml tests/runner/hslang.sml tests/runner/hsroundtrip.sml \
                tests/runner/hssyntax.sml tests/runner/hsnames.sml tests/runner/hslibrary.sml tests/runner/hsmutantlist.sml tests/runner/hsmutants.sml \
                tests/runner/hsmeta.sml tests/runner/hsgen.sml tests/runner/hsreduce.sml tests/runner/hsinterp.sml tests/runner/hsdesugar.sml tests/runner/hssimplify.sml tests/runner/hsperf.sml tests/runner/hslint.sml tests/runner/hssource.sml tests/runner/hscorpus.sml \
-               tests/runner/hsoracles.sml tests/runner/hsrhccorpus.sml tests/runner/hslazyports.sml tests/runner/hscorpusrun.sml tests/runner/hssimplifyfigures.sml tests/runner/hsworld.sml tests/runner/hsiface.sml tests/runner/hschecks.sml tests/runner/hsunits.sml \
+               tests/runner/hsoracles.sml tests/runner/hsrhccorpus.sml tests/runner/hslazyports.sml tests/runner/hscorpusrun.sml tests/runner/hssimplifyfigures.sml tests/runner/hssnapshot.sml tests/runner/hsiface.sml tests/runner/hschecks.sml tests/runner/hsunits.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) FORCE \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)

@@ -14,7 +14,9 @@
    D12). One whose output is the runtime's and not Core's says so on a line
    `-- interp: no: REASON`: Core's interpreter writes a file at once, with no
    buffer, so a program that shows a handle's buffering is the VM's alone
-   (lang/lib.r.io.buffer.line_shown). A program is held while every row it tests is Planned, as the
+   (lang/lib.r.io.buffer.line_shown), and so does one the interpreter cannot
+   run in its 600 s (lang/lib.r.char.table.other.upper_unicode); a run that
+   times out is reported as one, not compared. A program is held while every row it tests is Planned, as the
    suite's own jobs are (HsConformance). *)
 structure HsInterpVm =
 struct
@@ -79,7 +81,11 @@ struct
                              stderr = f "vm.err", timeout = 600}
               fun ends c = if c = 0 then "a value" else "a bottom"
             in
-              if read (f "interp.out") <> read (f "vm.out") then
+              if ic = 124 then
+                say ("FAIL " ^ #name p ^ ": the interpreter ran out of its 600 s, so nothing is compared (a program it cannot run "
+                     ^ "in time says `-- interp: no: REASON`)\n")
+              else if vc = 124 then say ("FAIL " ^ #name p ^ ": the VM ran out of its 600 s\n")
+              else if read (f "interp.out") <> read (f "vm.out") then
                 say ("FAIL " ^ #name p ^ ": the VM printed otherwise than the interpreter (" ^ work ^ "/interp.out, vm.out)\n")
               else if (ic = 0) <> (vc = 0) then
                 say ("FAIL " ^ #name p ^ ": the interpreter ended in " ^ ends ic ^ ", the VM in " ^ ends vc ^ "\n")
