@@ -352,6 +352,76 @@ struct
 
   fun used (b : string) = b <> "_" andalso #n (occ b) > 0
 
+  (* whether the lambda of binders bs and body, given args, a type binder a
+     newtype, has a case that the copy would make one on the newtype, its
+     binder used: newtypeCase makes it a case on what the newtype wraps, the
+     binder the scrutinee or a cast, of the newtype's lazy type, and where
+     the binder was wanted evaluated, `!a` at the newtype (a strict field, a
+     strict worker's parameter), no atom of Core is. Such a lambda is not
+     copied there, and its call stays one: a value of a type binder, a field
+     or what a call gives, whose type is not known here, may be of the
+     newtype *)
+  fun losesEval (bs : binder list, body : exp, args : arg list) : bool =
+    let
+      fun newtypeAt t = case spine (stripEval t) of
+                          (TCon c, _) => CoreMap.member (#newtypes (!dt), c)
+                        | _ => false
+      fun given (TyBinder (a, _) :: bs, TyArg t :: args, ns) = given (bs, args, if newtypeAt t then a :: ns else ns)
+        | given (_ :: bs, _ :: args, ns) = given (bs, args, ns)
+        | given (_, _, ns) = ns
+      val ns = given (bs, args, [])
+      fun maybe t = case spine (stripEval t) of
+                      (TVar a, _) => List.exists (fn n => n = a) ns
+                    | _ => false
+      fun occurs (x, e) =
+        let
+          fun atom (Var y) = y = x
+            | atom (Lit _) = false
+          fun go e =
+            case e of
+              Atom a => atom a
+            | App (f, args) => go f orelse List.exists (fn ValArg a => atom a | TyArg _ => false) args
+            | Lam (_, b) => go b
+            | Let (_, _, r, b) => go r orelse go b
+            | LetRec (bs, b) => List.exists (fn (_, _, r) => go r) bs orelse go b
+            | Case (s, _, alts) => go s orelse List.exists (go o B.altRhs) alts
+            | Con (_, _, xs) => List.exists atom xs
+            | Prim (_, _, xs) => List.exists atom xs
+            | UTuple xs => List.exists atom xs
+            | Cast (e, _) => go e
+        in go e end
+      (* m: each local variable, whether it may be of the newtype *)
+      fun bind (m, x, b) = CoreMap.insert (m, x, b)
+      fun binders (m, bs) = List.foldl (fn (ValBinder (x, t), m) => bind (m, x, maybe t) | (_, m) => m) m bs
+      fun go (m, e) =
+        case e of
+          Lam (bs, b) => go (binders (m, bs), b)
+        | Let (x, t, r, b) => go (m, r) orelse go (bind (m, x, maybe t), b)
+        | LetRec (bs, b) =>
+            let val m' = List.foldl (fn ((x, t, _), m) => bind (m, x, maybe t)) m bs
+            in List.exists (fn (_, _, r) => go (m', r)) bs orelse go (m', b) end
+        | Case (s, b, alts) =>
+            let
+              val sMaybe =
+                case s of
+                  Atom (Var x) => getOpt (CoreMap.find (m, x), false)
+                | App _ => true
+                | _ => false
+              val m' = bind (m, b, sMaybe)
+            in
+              (sMaybe andalso b <> "_" andalso List.exists (fn a => occurs (b, B.altRhs a)) alts)
+              orelse go (m, s)
+              orelse List.exists (fn AltCon (_, xs, r) => go (List.foldl (fn (x, m) => bind (m, x, true)) m' xs, r)
+                                   | AltUTuple (xs, r) => go (List.foldl (fn (x, m) => bind (m, x, true)) m' xs, r)
+                                   | a => go (m', B.altRhs a)) alts
+            end
+        | App (f, _) => go (m, f)
+        | Cast (e, _) => go (m, e)
+        | _ => false
+    in
+      not (null ns) andalso go (binders (CoreMap.empty, bs), body)
+    end
+
   fun mapRhs f alt =
     case alt of
       AltCon (c, xs, r) => AltCon (c, xs, f r)
@@ -427,7 +497,7 @@ struct
   and app (env : env, f : exp, args : arg list) : exp =
     case f of
       Lam (bs, body) =>
-        if B.tick "beta" then beta (env, bs, body, args) else App (exp env f, args)
+        if not (losesEval (bs, body, args)) andalso B.tick "beta" then beta (env, bs, body, args) else App (exp env f, args)
     | Atom (Var x) =>
         if CoreMap.member (#inl env, x) then rebuild (env, var (env, x), args)
         else (case atom env (Var x) of
@@ -483,7 +553,7 @@ struct
               (* small alone: a lambda bound once is put where it is used by
                  its let, which goes; one copied here keeps its binding *)
               if length (#stack env) < maxDepth andalso saturates (bs, args)
-                 andalso B.sizeUpTo inlineSize body <= inlineSize
+                 andalso B.sizeUpTo inlineSize body <= inlineSize andalso not (losesEval (bs, body, args))
                  andalso inlining () andalso B.tick "inline-local"
               then beta (copyEnv (env, "" :: #stack env), bs, body, args)
               else plain
@@ -494,7 +564,7 @@ struct
               case CoreMap.find (!globals, y) of
                 SOME {body = Lam (bs, body), size, breaker = false, ...} =>
                   if size <= inlineSize andalso length (#stack env) < maxDepth andalso saturates (bs, args)
-                     andalso inlinableLam (env, bs, body)
+                     andalso inlinableLam (env, bs, body) andalso not (losesEval (bs, body, args))
                      andalso not (List.exists (fn s => s = y) (#stack env)) andalso inlining () andalso B.tick "inline"
                   then beta (copyEnv (env, y :: #stack env), bs, body, args)
                   else plain
@@ -510,8 +580,9 @@ struct
           App (g, xs) => if B.tick "app-flatten" then rebuild (env, g, xs @ args) else App (f, args)
         | Atom (Var y) => headVar (env, y, args)
         | Lam (bs, body) =>
-            if B.tick "beta" then beta ({sub = CoreMap.empty, tys = [], inl = CoreMap.empty, known = #known env,
-                                         types = #types env, rename = false, stack = #stack env}, bs, body, args)
+            if not (losesEval (bs, body, args)) andalso B.tick "beta"
+            then beta ({sub = CoreMap.empty, tys = [], inl = CoreMap.empty, known = #known env,
+                        types = #types env, rename = false, stack = #stack env}, bs, body, args)
             else App (f, args)
         | Let (x, t, r, b) => if B.tick "app-let" then Let (x, t, r, rebuild (env, b, args)) else App (f, args)
         | LetRec (bs, b) => if B.tick "app-let" then LetRec (bs, rebuild (env, b, args)) else App (f, args)

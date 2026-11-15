@@ -372,7 +372,7 @@
      "kind": "val",
      "name": "passes",
      "spec": "val passes : unit -> (string * (options -> Core.program -> Core.program)) list",
-     "doc": "`passes ()` is each pass, by its name for --dump-after, in the order\nthey run: core-simplify, core-specialise, core-eta, core-cheap,\ncore-simplify-2.\n\n",
+     "doc": "`passes ()` is each pass, by its name for --dump-after, in the order\nthey run: core-simplify, core-specialise, core-eta, core-strict,\ncore-cheap, core-simplify-2.\n\n",
      "page": "sig/CORE_SIMPLIFY.md#val-passes"
     },
     {
