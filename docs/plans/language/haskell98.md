@@ -85,7 +85,7 @@ Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation be
 | M22. SCC keys | S | M | D30, D36 | done: a unit's modules fingerprinted by recursive groups over all of them; a body edit in a cycle compiles no client; a split cycle recompiles none whose reads are unchanged |
 | M23. Core simplifier, known dictionaries | P | L | D47, D48, D49 | built on its branch, to merge after G2: at `-O2` the corpus runs in 0.28 of `-O0`'s instructions and makes 0.31 of its suspensions (0.04 of its suspensions copied by the collector), alike everywhere; D48 decided |
 | M24. Strictness | P | M | D50 | under way on its branch, to merge after G2 |
-| M25. What measurement justifies | P | | D15-D17, D19, D51 | under way: D3, D9, D16 and D24 measured and decided; D15's C and D19's B decided and ready to land after G2; D17's C decided, to land; D34's B tuned, for the owner; D51 decided, on at `-O2` |
+| M25. What measurement justifies | P | | D15-D17, D19, D51 | under way: D3, D9, D16 and D24 measured and decided; D15's C and D19's B decided and ready to land after G2; D17's C decided, to land; D34 decided, B at `-O2`; D51 decided, on at `-O2` |
 | M26. Ready for lazy ML | Z | | D57 | done, ahead of G2: the checklist's six lines each shown by a test; the collector's pin and guard only where a program reruns a suspension (Haskell 1.0002, SML 1.002 at most) |
 | M27. Retire | | S | | under way: `docs/rhc.md` and the architecture's rhc section written |
 | M28. `Ty` with application and forall | A | L | D4 | done; the arrow as a type name and the lazy arrow `(~>)` with it (rulings 60, 65) |
@@ -5242,7 +5242,7 @@ Every change to Rune is graded on the brief's scale: **large**, optimal for Hask
 | D31 | Checker structure and evidence records | In the manner of `Witness`; unification plus kinds, context reduction, dependency analysis, MR, defaulting, derived contexts; no OutsideIn | decided: A |
 | D32 | Monomorphism and defaulting | The readings R18, R20, R21 | decided: as recommended |
 | D33 | Deriving | On the renamed AST, chapter 10's text the specification | decided: C |
-| D34 | Desugaring and match compilation | rhc's own, to Core; `-O0` keeps the Report's order; Sestoft-order trees optional | A stands; B measured, to be tuned |
+| D34 | Desugaring and match compilation | rhc's own, to Core; `-O0` keeps the Report's order; Sestoft-order trees optional | decided: B at `-O2` and above, A below |
 | D35 | Hierarchical names | Refused by default, a documented flag for the corpus | decided: B |
 | D36 | Library layout | The literal layout: the Report's graph compiled as one unit; the merged form a fallback, built only if the joined checker runs late | decided: A |
 | D37 | Prelude overlay and licence | A listed overlay; `share/rhc/haskell98/LICENSE`, marked modified | decided: code B, licence A |
@@ -6602,6 +6602,8 @@ The libraries do not need any of this: E16 finds no `default` declaration in the
 
 **Measured, and to be tuned (owner, 2026-11-14): "tune it first".** B was measured again after M23's simplifier (branch `hs-p`, `586ca210e`), both at `-O2` on the 164 corpus programs both ways right: `--count` 0.839 of A in total, 0.934 by geomean (median 0.991); instructions at tier 2 0.907 in total, 0.939 by geomean, 18 programs worse by over 1% (up to 14%, mostly derived `Read` and conformance98's `read` and `lex`); bytes 0.819. Suspensions 0.761 in total, but `pretty` makes 17.6 times as many and `clausify` 3.9 times; at `-O0` B makes 26% more in all (jhc's `Primes` 95 times). Decision trees should change the order of tests, not what is suspended, so the rise is found and mended first; then A or B. A stands meanwhile (`impl/p/figures-ef4ba1f1b.txt` in the drafts).
 
+**Tuned and decided (owner, 2026-11-15): B at `-O2` and above.** Tuned on branch `hs-p-d34` (`55aab1f75`): the "no match" raise is written at a tree's failing leaves rather than bound lazily at its head, which built a suspension at every entry of a match; a clause the tree cannot take apart is left out only where the Report's order would fail it forcing nothing; and M23's case-of-case copies under a budget, which helps A too. B against A then, on the 169 corpus programs at `-O2`: `--count` 0.805 (geomean 0.921), tier 2 0.886, suspensions made 0.691, copied 0.494, no program worse by over 1% in instructions or suspensions made, one at tier 2 (`drvrun006` 1.07, the JIT's: B is lowest with it off); the compile 1.006 and the bytecode 0.982. `hs/simplify/sestoft` holds B to A where a tree could force what the Report does not, or call a method it does not: a user `==` that diverges under literal patterns, n+k with a diverging `>=`, a refutable column after a bottom one, guards, arity under `seq`, lazy patterns, and the rule that leaves a clause out. B is `-O2`'s default; `-O0` and `-O1` keep A, the Report's translation, where conformance runs; `--match=report` and `--match=sestoft` stay options (`impl/p/` in the drafts).
+
 ### D35. Hierarchical names
 
 **Question.** `modid` is one `conid` (R7, R34), so `Data.List` is outside the language. What does rhc do with it? Rune: none.
@@ -7912,6 +7914,7 @@ The owner took nine decisions on measurement: build the option, measure it, and 
 - *On:* the run set at `-O0` in M19, and again after M23's simplifier, with match-heavy programs named.
 - *Figures:* VM instructions at tier 2 and `--count`, not code size: Pettersson 1992's automaton gave no reduction in size. Compile time too.
 - *Measured, to be tuned (2026-11-14):* B fewer instructions in total, but more suspensions where it should make none; mended first, then A or B (D34's section).
+- *Tuned, decided (2026-11-15):* B at `-O2` and above, A below (D34's section).
 
 **D48: D, GHC's default eta, against C.**
 - *Built:* an option of M23's simplifier, eta through `case` as GHC's default has it; in M23.
