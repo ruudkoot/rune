@@ -14,9 +14,9 @@
      has one to pop, and a function returns, or calls in tail position,
      with none;
    * calls: a known call (CallK) is of a function of the program, with an
-     argument for each of its parameters; a function of k parameters made
-     a closure is entered by a call of k arguments (D15 C: CallN, the
-     register target's), of one by a Call;
+     argument for each of its parameters; a function made a closure has a
+     parameter at least, and one of k parameters is entered by a call of k
+     arguments (D15 C: CallN), of one by a Call;
    * closures: a closure is given a value for each its function captures,
      and the function reads each of them (Env i, i below their number) --
      one it never reads it read some other way, as a variable of another
@@ -61,7 +61,8 @@ struct
                       ^ Int.toString (List.length args) ^ " arguments")
       fun closure (where', f, vs) =
         case (IntMap.find (arity, f), IntMap.find (captures, f)) of
-          (SOME _, SOME n) =>
+          (SOME 0, _) => bug (where' ^ ": a closure of f" ^ Int.toString f ^ ", which has no parameter")
+        | (SOME _, SOME n) =>
             (* a function of k parameters too, called through its closure by a
                call of k arguments (D15 C) *)
             if n = List.length vs then ()
