@@ -183,11 +183,17 @@ struct
        [(si,
          "      | \"int_lt\" => intCmp IntInf.<\n",
          "      | \"int_lt\" => intCmp IntInf.<=\n")]),
-     m ("M05", "constant folding", "simplify", si ^ ":500",
-        "a known nullary constructor's tag folded one too high", "",
+     (* M05's site was the fold of a ConTag of a nullary constructor (then
+        :500), which haskell98 M29 (22c7b2caf) made dead: ToMid makes a
+        match's tag test a Case, so no such ConTag reaches Simplify, and the
+        mutant was UNEXERCISED. Here is the same mistake in the fold of a
+        Case of a known tag, where the tests went; the shapes lint sees it,
+        as it saw the old one *)
+     m ("M05", "constant folding", "simplify", si ^ ":1375",
+        "a known nullary constructor's tag folded one too high, in a Case of it", "",
        [(si,
-         "             (Con0 (tag, _), _) => if spend () then Atom (Const (Literal.CInt (IntInf.fromInt tag), Ty.int)) else r",
-         "             (Con0 (tag, _), _) => if spend () then Atom (Const (Literal.CInt (IntInf.fromInt (tag + 1)), Ty.int)) else r")]),
+         "              Con0 (tag, _) => SOME tag\n",
+         "              Con0 (tag, _) => SOME (tag + 1)\n")]),
      m ("M06", "effect dropped", "simplify", si ^ ":105",
         "every primitive taken for removable: one whose value is unused goes, effects too", "",
        [(si,
