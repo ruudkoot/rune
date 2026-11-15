@@ -15,7 +15,10 @@
    way, whether rhc compiled it, the run's status, whether it printed the
    program's expected output and what -O0 printed, then instructions,
    bytes, objects, suspensions, instructions:u and suspensions copied (-
-   where not measured).
+   where not measured). `bin/rune-test hs-simplify-compile SET ID OUT
+   [WAY...]` prepares the program alike and only compiles it, a line a way:
+   the set, the id, the way, whether rhc compiled it, the compile's
+   instructions:u and the bytecode's bytes (D34's compile time and size).
    The ways are O0, O2 (the pedantic rule, the Report's order), O2-ghc
    (D48's D), O2-sestoft and O0-sestoft (D34's B), all of them where none
    is named or where `all` is; and, where named, iO0 and iO2, the program
@@ -60,7 +63,33 @@ struct
     let val digits = String.tokens (fn c => not (Char.isDigit c)) s
     in case digits of d :: _ => d | [] => "-" end
 
+  (* hs-simplify-compile: each way compiled and nothing run, the compile's
+     instructions:u (perf) and the bytecode's bytes its line: set, id, way,
+     compiled, instructions, bytes *)
+  val compileOnly = ref false
+
+  fun compileWays (set, id, p : prog, out, chosen) =
+    let
+      fun one (name, flags) =
+        let
+          val rbcDir = #dir p ^ "/way"
+          val () = (rmTree rbcDir; mkdirs rbcDir)
+          val rbc = rbcDir ^ "/" ^ OS.Path.base (OS.Path.file (#main p)) ^ ".rbc"
+          fun f x = #dir p ^ "/" ^ name ^ "." ^ x
+          val cs = call (["perf", "stat", "-x", ",", "-e", "instructions:u", "-o", f "cperf", rhc (), #main p] @ flags @ ["-o", rbc],
+                         #dir p, "", f "c.out", f "c.err", 1800)
+          val instr =
+            case List.find (fn l => String.isSubstring "instructions" l) (lines (read (f "cperf"))) of
+              SOME l => (case String.fields (fn c => c = #",") l of n :: _ => n | [] => "-")
+            | NONE => "-"
+          val bytes = if cs = 0 andalso exists rbc then Int.toString (Position.toInt (OS.FileSys.fileSize rbc)) else "-"
+        in append (out, String.concatWith "\t" [set, id, name, if cs = 0 then "yes" else "no", instr, bytes] ^ "\n") end
+      val selected = if null chosen orelse List.exists (fn m => m = "all") chosen then ways
+                     else List.filter (fn (n, _) => List.exists (fn m => m = n) chosen) ways
+    in List.app one selected end
+
   fun measure (set, id, p : prog, out, chosen) =
+    if !compileOnly then compileWays (set, id, p, out, chosen) else
     let
       val runevm = fromRoot "bin/runevm"
       val census = fromRoot "bin/runevm-census"
@@ -298,5 +327,12 @@ struct
     | "hs-simplify-figures" :: "lang" :: name :: out :: chosen => SOME (fn () => lang (name, out, chosen))
     | "hs-simplify-figures" :: "corpus" :: id :: out :: chosen => SOME (fn () => corpus (id, out, chosen))
     | "hs-simplify-figures" :: "lazy" :: port :: out :: chosen => SOME (fn () => lazy (port, out, chosen))
+    | "hs-simplify-compile" :: set :: id :: out :: chosen =>
+        SOME (fn () => (compileOnly := true;
+                        case set of
+                          "lang" => lang (id, out, chosen)
+                        | "corpus" => corpus (id, out, chosen)
+                        | "lazy" => lazy (id, out, chosen)
+                        | _ => say ("FAIL hs-simplify-compile: no set " ^ set ^ "\n")))
     | _ => NONE
 end
