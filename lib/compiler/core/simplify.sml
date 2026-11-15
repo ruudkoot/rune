@@ -1364,7 +1364,9 @@ struct
        function, or a variable in an arm of a Case of it -- goes to its arm,
        or to the default; an arm of a tag the variable has not -- in the
        default of a Case of it with an arm of that tag -- goes, and a Case
-       left with no arm is its default *)
+       left with no arm is its default. A Case with no default keeps every
+       arm, those not reached too: it has an arm of every tag (MidLint),
+       which dropping one would break (ruling 71) *)
     | Case (a, arms, d) =>
         let
           val a = substAtom (env, a)
@@ -1408,7 +1410,7 @@ struct
           case taken of
             SOME e => if spend () then simp (c, env, e) else kept (arms, d)
           | NONE =>
-              if List.length live = List.length arms orelse not (spend ()) then kept (arms, d)
+              if List.length live = List.length arms orelse not (isSome d) orelse not (spend ()) then kept (arms, d)
               else
                 case (live, d) of
                   ([], SOME e) => simp (c, env, e)

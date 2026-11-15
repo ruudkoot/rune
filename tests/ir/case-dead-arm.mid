@@ -1,0 +1,24 @@
+(* run: alone *)
+(* A Case with no default, of a variable whose tag is known not to be one of its arms' (ruling 71; rhc's
+   List.maximumBy, Sestoft's tree and M24's worker): in the else of a Case of v1 with an arm of tag 0, after a
+   print, a Case of v1 with an arm of each tag and no default. Simplify knows its arm of tag 0 is not reached,
+   and keeps it: a Case with no default has an arm of every tag (MidLint), which dropping the arm broke. The
+   print keeps the inner Case from being the outer one's default, which would join the two. *)
+(datatype abc () (0 "A") (1 "B") (2 "C"))
+(funs
+  (fn g5 ((v1 : abc)) : string
+    (case v1
+      (0 (return "a\n"))
+      (else
+        (let (v2 : unit) (prim print "not a: " : string -> unit)
+        (case v1
+          (0 (return "never\n"))
+          (1 (return "b\n"))
+          (2 (return "c\n"))))))))
+(val g1 : unit
+  (let (v3 : string) (app g5 (con0 0 : abc))
+  (let (v4 : unit) (prim print v3 : string -> unit)
+  (let (v5 : string) (app g5 (con0 1 : abc))
+  (let (v6 : unit) (prim print v5 : string -> unit)
+  (let (v7 : string) (app g5 (con0 2 : abc))
+  (return (prim print v7 : string -> unit))))))))
