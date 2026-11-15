@@ -443,6 +443,7 @@ void ms_store_nth(Masm *m, int base, uint32_t i, int32_t s);        /* the i-th 
 void ms_slot_addr(Masm *m, int r, int32_t s);                       /* r := the address of R(s) */
 void ms_fill_units(Masm *m, int base, uint32_t from, uint32_t to);  /* the values from..to-1 at base := unit */
 void ms_field_from_nth(Masm *m, int obj, uint32_t i, int base, uint32_t k);   /* field i of the object in obj := the k-th value at base */
+void ms_field_from_field(Masm *m, int obj, uint32_t i, int src, uint32_t k);  /* field i of the fresh object in obj := field k of the object in src (a fill: no barrier) */
 void ms_slot_from_nth_raw(Masm *m, int32_t d, int base, uint32_t k);
 void ms_scale_index(Masm *m, int r);                               /* r := r * the size of a value: a count of values or registers as bytes */   /* the slot of R(d) := the k-th value at base, the slot itself whatever home d has (a callee's registers) */
 

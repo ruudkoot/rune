@@ -1888,6 +1888,11 @@ void ms_field_from_nth(Masm *m, int obj, uint32_t i, int base, uint32_t k) {
     as_fld(&m->a, F_S0, base, (int32_t)(VALUE_SIZE * k));
     as_fst(&m->a, obj, FIELD_OFF(i), F_S0);
 }
+void ms_field_from_field(Masm *m, int obj, uint32_t i, int src, uint32_t k) {
+    if (i >= m->nfields) bug("a field the object does not have", i, m->nfields);
+    as_fld(&m->a, F_S0, src, FIELD_OFF(k));
+    as_fst(&m->a, obj, FIELD_OFF(i), F_S0);
+}
 void ms_scale_index(Masm *m, int r) { as_shl_ri(&m->a, r, VALUE_SHIFT); }
 void ms_slot_from_nth_raw(Masm *m, int32_t d, int base, uint32_t k) {
     as_fld(&m->a, F_S0, base, (int32_t)(VALUE_SIZE * k));

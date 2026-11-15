@@ -699,6 +699,16 @@ void jit_fill(Jit *j, int kind, int fill, uint32_t n, int32_t d, int32_t a, int3
         as_ld64(&m->a, R_S1, VMR, (int32_t)offsetof(VM, prog.consts));
         ms_field_from_nth(m, R_S0, 0, R_S1, (uint32_t)a);
         break;
+    case FILL_SUSP: {
+        /* field 0 is that of the closure in a, its function: a suspension of
+           a closure that captures nothing (prims.c, p_thunk_make), the
+           closure read after the allocation, which may have moved it */
+        uint32_t nfields = m->nfields;
+        ms_load_bits(m, R_S1, a);
+        m->nfields = nfields;   /* the fresh object in rax is still the one being filled */
+        ms_field_from_field(m, R_S0, 0, R_S1, 0);
+        break;
+    }
     case FILL_MKEXN: {
         /* the constructor in a, which must be one, and the payload in b: the
            test after the allocation, as the interpreter's */
