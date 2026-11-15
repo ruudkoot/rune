@@ -66,8 +66,10 @@ written: there is no store of the program's own.
   program, as the reference the snapshot is held to (`hs/snapshot/*` in
   [testing.md](testing.md)). The options that change how the library is
   read go whole too: `--names=greatest`, `--cycle-default=scc`.
-- `--match=sestoft` and `--strings=whole` change the library's Core, so the
-  snapshot holds none of their units and they are made at each compile.
+- The order of a match changes the library's Core, so the snapshot holds
+  the library's units in each, the Report's for `-O0` and `-O1` and
+  Sestoft's trees for `-O2` (below). `--strings=whole` changes it too, and
+  the snapshot holds none of its units: they are made at each compile.
 - `--units FILE.hs -o OUT` compiles each group of the module graph as a
   unit kept in a store, `--store DIR`, and takes it from there at the next
   compile where everything it read of the units before it is as it was;
@@ -152,7 +154,7 @@ of them is a bug of rhc's.
 | `--fuel=N` | make no more than N rewrites of the passes, Core's and Mid's, to find the one that breaks a program |
 | `--target=T` | the bytecode: `registers` (the default) or `stack` |
 | `--thunks=c` | suspensions in Mid by form C's primitives, the one form there is |
-| `--match=M` | the order of a match: `report`, the Report's, a clause after another (the default), or `sestoft`, decision trees, for D34's measurement |
+| `--match=M` | the order of a match: `report`, the Report's, a clause after another, the default at `-O0` and `-O1`; or `sestoft`, decision trees that make no test the tests made decide, the default at `-O2` and above (D34, below) |
 | `--strings=S` | a string literal's list: `lazy`, a cell as it is read (the default), or `whole`, for D24's measurement |
 | `--fault=F` | a fault of Core to Mid made on purpose, for the tests of what catches it |
 | `--steps=N` | stop the interpreter after N steps, a bottom |
@@ -207,6 +209,18 @@ application can converge where 6.2 says it is a bottom (D55's bottom probe,
 `tests/hs/simplify/eta.hs`, which `hs/simplify/eta/eta` holds the default
 to). It is an option to measure against, not a conformance mode (the owner's
 decision of 2026-11-14).
+
+At `-O2` a match is compiled by Sestoft's trees (D34, the owner's decision
+of 2026-11-15): the clauses become one decision tree, which makes no test
+the tests already made decide, in place of the Report's order, a clause
+tried after another, each falling to the next. Both force what the
+Report's order forces (3.17.2: left to right, top to bottom, guards in
+order, `~p` lazy, a literal and n+k by the type's `==` and `>=`), and
+`hs/simplify/sestoft` holds each to the other's result at every level. On
+the corpus at `-O2` the trees run in 0.81 of the instructions and make
+0.69 of the suspensions; their code is a little smaller and its compile
+within 1%. `--match=report` keeps the Report's order at `-O2`, and
+`--match=sestoft` takes the trees at `-O0` and `-O1`.
 
 ## The library
 

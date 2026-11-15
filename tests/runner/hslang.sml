@@ -86,10 +86,15 @@ struct
         else if late (#name p) then ["nightly"]
         else ["check"] @ (if kind = "lang/register" then ["quick"] else [])
 
+  (* RUNE_HS_RHC_FLAGS: options every compile of the suite takes, before
+     its own, none where it is unset: `-O2` runs the suite at the level of
+     the Core simplifier and Sestoft's trees (D34) on both bytecodes *)
+  val rhcFlags = case OS.Process.getEnv "RUNE_HS_RHC_FLAGS" of SOME f => if f = "" then "" else " " ^ f | NONE => ""
+
   val rhc : Lang.suite =
     {group = "hs", lang = "tests/hs/lang", errors = "tests/hs/errors", accept = SOME "tests/hs/accept",
      suffixes = suffixes, mains = mains,
-     compilers = [("stack", "bin/rhc --target=stack", "hs"), ("register", "bin/rhc", "hs")],
+     compilers = [("stack", "bin/rhc" ^ rhcFlags ^ " --target=stack", "hs"), ("register", "bin/rhc" ^ rhcFlags, "hs")],
      (* a program is refused before any code is made, so one compiler
         judges it *)
      errorCompilers = [("register", "bin/rhc", "hs")],

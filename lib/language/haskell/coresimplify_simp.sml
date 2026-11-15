@@ -72,6 +72,9 @@ struct
   (* the size of a case's alternatives copied into a case it scrutinises *)
   val caseSize = 12
   val caseKnownSize = 200
+  (* the most a case of case may add by its copies, beyond the alternatives
+     once *)
+  val caseCopySize = 60
   (* how deep inlining goes inside what was inlined, and how many bodies
      are inlined into one declaration in a round *)
   val maxDepth = 8
@@ -835,8 +838,26 @@ struct
         | Atom (Var x) => (case knownOf (env, x) of SOME (KCon _) => true | SOME (KIs _) => true | _ => false)
         | _ => false
       val unknown = List.length (List.filter (fn a => not (isKnown (B.altRhs a))) alts2)
+      (* what the copies add: an alternative of the output whose value is
+         known takes the one alternative it selects, any other all of them;
+         each copy is simplified apart, so that what it calls is inlined
+         into each (D34: lexLitChar's fall-through copied into both
+         branches of an &&, and isUpper's into four) *)
+      fun altSize a = B.sizeUpTo caseKnownSize (B.altRhs a) + 1
+      val largest = List.foldl (fn (a, n) => Int.max (altSize a, n)) 0 alts
+      fun selected r =
+        let
+          val picked =
+            case r of
+              Con (c, _, _) => pickCon (c, alts)
+            | Atom (Lit l) => pickLit (l, alts)
+            | Atom (Var x) => (case knownOf (env, x) of SOME (KCon (c, _, _)) => pickCon (c, alts)
+                                                    | SOME (KIs (c, _, _)) => pickCon (c, alts) | _ => NONE)
+            | _ => NONE
+        in case picked of SOME a => altSize a | NONE => largest end
+      val copies = List.foldl (fn (a, n) => n + (if isKnown (B.altRhs a) then selected (B.altRhs a) else size)) 0 alts2
     in
-      length alts2 <= 8 andalso (size <= caseSize orelse unknown <= 1 andalso size <= caseKnownSize)
+      length alts2 <= 8 andalso (size <= caseSize orelse unknown <= 1 andalso size <= caseKnownSize andalso copies - size <= caseCopySize)
     end
 
   (* a case kept: its alternatives with what each tells of the scrutinee *)

@@ -828,8 +828,17 @@ struct
       low ("a jump back with another number of handlers",
            [block (0, [Def (1, Unit)], Goto (1, [])), block (1, [Push 3], Goto (2, [])), block (2, [], Goto (1, [])),
             blockP (3, [4], [], Return 4)], "handlers where it has");
+      (* a closure of a function of k parameters is one a call of k
+         arguments enters (D15 C: CLOSUREN, CallN), with a value for each its
+         function captures; and a function made a closure has a parameter,
+         since a call enters a closure with one at least *)
       lowP ("a closure of a function of two parameters", [top0 [Def (2, Closure (5, []))], funcR (5, [0, 1], 4, 0, [block (0, [], Return 0)], [])],
-            "which has 2 parameters");
+            "");
+      lowP ("a closure of a function of two parameters, a value it captures not given",
+            [top0 [Def (2, Closure (5, []))], funcR (5, [0, 1], 4, 1, [block (0, [Def (2, Env 0)], Return 2)], [])],
+            "which captures 1 values, given 0");
+      lowP ("a closure of a function of no parameter", [top0 [Def (2, Closure (5, []))], funcR (5, [], 4, 0, [block (0, [Def (0, Unit)], Return 0)], [])],
+            "which has no parameter");
       lowP ("a closure of no function", [top0 [Def (2, Closure (99, []))]], "a closure of no function f99");
       lowP ("a value captured and never read", [funcR (5, [0], 4, 1, [block (0, [], Return 0)], [])], "env 0 is captured and never read");
       Pass.whole := true;

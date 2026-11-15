@@ -807,7 +807,10 @@ bin/rhc.rbc: $(RUNE) rhc.build $(SOURCES_RHC) src/main/rhc-main.sml
 # as a layer, read only (--snapshot), so that a check or a compile takes
 # the library's units from it and reads, checks and desugars a program's
 # own modules alone. Made from a Main that imports every module of the
-# library, at RUNE_LINT=2, so that its entries, HsLint's part of each unit
+# library, in each order of a match, which a unit's configuration holds
+# (D34: the Report's at -O0 and -O1, Sestoft's trees at -O2 and above, so
+# that a compile at any level finds the library's units), at RUNE_LINT=2,
+# so that its entries, HsLint's part of each unit
 # among them, stand for a compile at any level; a unit's entry holds no
 # code, so one snapshot serves every target. The directory it names is the
 # one bin/rhc gives, $(CURDIR)/bin/../share/rhc. The store is kept between
@@ -820,7 +823,8 @@ RHC_LIBRARY_MODULES := Array Char Complex CPUTime Directory IO Ix List Locale Ma
 bin/rhc.layer: bin/rhc.rbc bin/runevm $(RHC_SHARE)
 	mkdir -p build/rhc-layer
 	{ for m in $(RHC_LIBRARY_MODULES); do echo "import $$m"; done; printf 'main :: IO ()\nmain = return ()\n'; } > build/rhc-layer/Main.hs
-	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --units --store $@ build/rhc-layer/Main.hs -o build/rhc-layer/main.rbc < /dev/null
+	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --units --store $@ --match=report build/rhc-layer/Main.hs -o build/rhc-layer/main.rbc < /dev/null
+	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --units --store $@ --match=sestoft build/rhc-layer/Main.hs -o build/rhc-layer/main.rbc < /dev/null
 	bin/runevm bin/rhc.rbc --prune-store $@
 	touch $@
 bin/rhc: bin/rhc.rbc bin/rhc.layer bin/runevm Makefile

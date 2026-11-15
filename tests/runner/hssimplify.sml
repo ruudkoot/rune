@@ -23,7 +23,19 @@
    one with lines `-- dump: has NAME` or `-- dump: lacks NAME` has its Core
    at -O2 held to them, a value of that name there or not, what the
    simplifier must have made of it, which no run shows
-   (hs/simplify/dump/NAME); one with NAME.ghc.expected is a probe of eta
+   (hs/simplify/dump/NAME); one with `-- objects: IN1 <= IN2` holds D34's
+   B, Sestoft's trees, to making nothing for a match that does not fail on
+   the run: compiled with --match=sestoft at -O0 and -O2 and run with IN1
+   and with IN2 as its standard input, the objects of the first run at most
+   those of the second and 16 more (hs/simplify/objects/NAME); one with a
+   line `-- sestoft:` is run again in the order of a match its level does
+   not take by default (D34, the owner's decision of 2026-11-15: Sestoft's
+   trees at -O2 and above, the Report's order below), --match=sestoft at
+   -O0 and --match=report at -O2, on Core's interpreter and the VM, held to
+   the same NAME.expected and NAME.exitcode, the Report's order's result,
+   which the run family holds the defaults to: each order meets each level,
+   and B forcing what A does not, or calling a method A does not, shows
+   (hs/simplify/sestoft/NAME); one with NAME.ghc.expected is a probe of eta
    (D48): compiled at -O2 with no --eta, and with --eta=pedantic, it ends
    as NAME.expected and NAME.exitcode say, the Report's meaning, the
    pedantic rule being the default, and with --eta=ghc it prints
@@ -130,6 +142,26 @@ struct
                                                   marked (fromRoot (#src p), "also")))
     in if List.all (fn b => b) (oks @ alsos) then rmTree w else () end
 
+  (* p in the order of a match its level does not take by default:
+     Sestoft's trees at -O0, the Report's order at -O2, on the interpreter
+     and the VM, held to what the run family holds the defaults to *)
+  fun sestoftOne (p : Lang.program) () =
+    let
+      val w = workFor ("sestoft", #name p)
+      val what = "hs/simplify/sestoft/" ^ #name p
+      val stdin = stdinOf p
+      fun other level = if level = "O0" then "--match=sestoft" else "--match=report"
+      fun vm level =
+        case onVm (p, ["-" ^ level, other level], [], w, "vm." ^ level, stdin) of
+          SOME r => judge (what ^ " (VM, -" ^ level ^ " " ^ other level ^ ")", p, w, r)
+        | NONE => (fail (what ^ ": rhc does not compile it at -" ^ level ^ " " ^ other level ^ ": "
+                         ^ firstNonEmpty (w ^ "/vm." ^ level ^ ".c.err")); false)
+      fun interp level =
+        judge (what ^ " (interpreter, -" ^ level ^ " " ^ other level ^ ")", p, w,
+               interpret (p, ["-" ^ level, other level], w, "interp." ^ level, stdin))
+      val oks = [interp "O0", interp "O2", vm "O0", vm "O2"]
+    in if List.all (fn b => b) oks then rmTree w else () end
+
   (* the counts of rewrites a program is stopped after *)
   val fuels = [0, 1, 3, 10, 40, 150, 600, 2500]
 
@@ -153,6 +185,21 @@ struct
     in
       case List.find (String.isPrefix "runevm: count: ") lines of
         SOME l => Int.fromString (String.extract (l, size "runevm: count: ", NONE))
+      | NONE => NONE
+    end
+
+  (* the objects a run makes, from runevm --count's line `N instructions,
+     B bytes, O objects` *)
+  fun objectsOf (rbc, w, tag, stdin) =
+    let
+      val _ = exec {cmd = [fromRoot "bin/runevm", "--count", rbc], dir = SOME w, stdin = stdin, stdout = w ^ "/" ^ tag ^ ".out",
+                    stderr = w ^ "/" ^ tag ^ ".err", timeout = 600}
+      val lines = String.fields (fn c => c = #"\n") (read (w ^ "/" ^ tag ^ ".err"))
+      fun ahead (a :: (b :: rest)) = if String.isPrefix "objects" b then Int.fromString a else ahead (b :: rest)
+        | ahead _ = NONE
+    in
+      case List.find (String.isPrefix "runevm: count: ") lines of
+        SOME l => ahead (String.tokens (fn c => Char.isSpace c orelse c = #",") l)
       | NONE => NONE
     end
 
@@ -188,6 +235,47 @@ struct
                in if List.all level ["O0", "O2", "O2n"] then rmTree w else () end
            | _ => fail (what ^ ": its line -- budget: wants two sizes"))
       | _ => fail (what ^ ": no line -- budget: SIZE1 SIZE2")
+    end
+
+  (* a match that does not fail on the run, under Sestoft's trees, made at
+     -O0 and -O2, against one that cannot fail at all: the run of the first
+     input at most as many objects as that of the second and 16 more. The
+     match's no-match continuation, a suspension where it is bound at the
+     head of the tree, made at every call and never forced, is the excess it
+     catches (D34; the Report's order pays one where a clause falls to one
+     that tests again, which is that order's, so it is not held to this) *)
+  fun objectsOne (p : Lang.program) () =
+    let
+      val w = workFor ("objects", #name p)
+      val what = "hs/simplify/objects/" ^ #name p
+    in
+      case marked (fromRoot (#src p), "objects") of
+        [line] =>
+          (case String.tokens (fn c => c = #"<") line of
+             [a, b] =>
+               let
+                 (* each input as written, its words one space apart *)
+                 fun input s = String.concatWith " " (String.tokens (fn c => Char.isSpace c orelse c = #"=") s)
+                 val a = input a
+                 val b = input b
+                 fun level l =
+                   let
+                     val rbc = w ^ "/" ^ l ^ ".rbc"
+                     val cc = exec {cmd = [rhcPath (), "--lint=2", "-" ^ l, "--match=sestoft", fromRoot (#src p), "-o", rbc], dir = SOME w,
+                                    stdin = "", stdout = w ^ "/" ^ l ^ ".c.err", stderr = w ^ "/" ^ l ^ ".c.err", timeout = 600}
+                   in
+                     if cc <> 0 then (fail (what ^ ": rhc does not compile it at -" ^ l ^ " --match=sestoft: " ^ firstNonEmpty (w ^ "/" ^ l ^ ".c.err")); false)
+                     else
+                       case (objectsOf (rbc, w, l ^ ".a", sizeFile (w, "a", a)), objectsOf (rbc, w, l ^ ".b", sizeFile (w, "b", b))) of
+                         (SOME x, SOME y) =>
+                           if x <= y + 16 then true
+                           else (fail (what ^ ": at -" ^ l ^ " --match=sestoft " ^ Int.toString x ^ " objects on `" ^ a ^ "`, more than the "
+                                       ^ Int.toString y ^ " on `" ^ b ^ "`: a match's continuation made where no run reaches it"); false)
+                       | _ => (fail (what ^ ": at -" ^ l ^ " no count (" ^ w ^ ")"); false)
+                   end
+               in if List.all level ["O0", "O2"] then rmTree w else () end
+           | _ => fail (what ^ ": its line -- objects: wants IN1 <= IN2"))
+      | _ => fail (what ^ ": no line -- objects: IN1 <= IN2")
     end
 
   (* the Core the passes leave of p, at -O2, held to its lines `-- dump: has
@@ -307,6 +395,8 @@ struct
           | ("fuel", SOME p) => fuelOne p ()
           | ("budget", SOME p) => budgetOne p ()
           | ("dump", SOME p) => dumpOne p ()
+          | ("objects", SOME p) => objectsOne p ()
+          | ("sestoft", SOME p) => sestoftOne p ()
           | ("eta", SOME p) => etaOne p ()
           | ("lang", SOME p) => langOne p ()
           | _ => fail ("hs-simplify: no program " ^ name ^ " for " ^ kind))
@@ -334,7 +424,8 @@ struct
       List.foldl (fn (c, t) => Test.tag c t)
         (Test.tag "hs" (Test.describe "hs/simplify"
            [family ("run", own), family ("fuel", marking "fuel"), family ("budget", marking "budget"),
-            family ("dump", marking "dump"), family ("eta", probes), lang]))
+            family ("dump", marking "dump"), family ("objects", marking "objects"), family ("sestoft", marking "sestoft"),
+            family ("eta", probes), lang]))
         covers
     end
 end

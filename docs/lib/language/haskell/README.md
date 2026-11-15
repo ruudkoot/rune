@@ -66,8 +66,8 @@ the Core it means: [`HsDesugar`](str/HsDesugar.md) applies the Report's translat
 chapters 3 and 4 literally (D34's A), each class a data type of
 dictionaries and each overloaded use its type and dictionary arguments as
 the checker's evidence records give them (D31). [`HsMatch`](str/HsMatch.md) matches patterns
-in the Report's order, or as decision trees in Sestoft's order for D34's
-measurement; [`HsDsEnv`](str/HsDsEnv.md) is what desugaring knows of the program, its names,
+in the Report's order, or as decision trees in Sestoft's order, rhc's at
+`-O2` (D34); [`HsDsEnv`](str/HsDsEnv.md) is what desugaring knows of the program, its names,
 types and records in Core, and [`HsDsCore`](str/HsDsCore.md) builds Core with its types.
 
 The roadmap is `docs/plans/language/haskell98.md`.
@@ -107,7 +107,7 @@ The roadmap is `docs/plans/language/haskell98.md`.
 | [`HS_LEXER`](sig/HS_LEXER.md) | The lexer of Haskell 98: the Report's chapter 2 and section 9.2, over program text. |
 | [`HS_LINT`](sig/HS_LINT.md) | HsLint (the haskell98 roadmap's M16, D54): the independent check of rhc's types, as AstLint is Rune's. Its first part is a second inference: a transliteration of Typing Haskell in Haskell (Jones 1999) in the form its 11.6.3 calls conformant, with kinds and dependency groups recomputed, the monomorphism restriction and defaulting as the roadmap's D32 reads the Report (R18, R20, R21, R22), over the renamed tree. It shares nothing with rhc's checker but the renamer: its unifier, its kinds and its context reduction are its own, so that a disagreement between the two is a finding. rhc runs it among the checks of level 2 (`--lint=2`, `RUNE_LINT=2`), where a refusal of a program the compile accepts is a bug of rhc's. |
 | [`HS_LITERATE`](sig/HS_LITERATE.md) | Literate Haskell (the Report's section 9.4): the program text of a literate file. |
-| [`HS_MATCH`](sig/HS_MATCH.md) | Pattern matching in the Report's order (the haskell98 roadmap's M15, D34), and decision trees in Sestoft's order as an option. |
+| [`HS_MATCH`](sig/HS_MATCH.md) | Pattern matching in the Report's order (the haskell98 roadmap's M15, D34), and decision trees in Sestoft's order. |
 | [`HS_MODULES`](sig/HS_MODULES.md) | The names of Haskell 98's modules (the Report's chapter 5; the haskell98 roadmap's D29, D30): what each module defines, what it exports, and what is in scope in it, over a group of modules that import one another. |
 | [`HS_MOD_IFACE`](sig/HS_MOD_IFACE.md) | A module's interface as the renamer and the checker make it (the haskell98 roadmap's M21, D44): what a client of the module needs of it to be named and checked against it in place of its source, by entity, and the fingerprints a store's usages compare (E13's H5, H6). HsIface, rhc's interface of a unit, holds one for each of its modules beside its Core, and codes them. |
 | [`HS_PARSER`](sig/HS_PARSER.md) | The parser of Haskell 98: recursive descent over the grammar of the Report's section 9.5, on the layout of [`HsLayout`](str/HsLayout.md) (the haskell98 roadmap's D27). |
