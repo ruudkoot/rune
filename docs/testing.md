@@ -977,7 +977,14 @@ nothing for a match that does not fail on the run: compiled with
 `--match=sestoft` at `-O0` and `-O2`, its run on `IN1` makes at most 16
 objects more than its run on `IN2` (`hs/simplify/objects/NAME`;
 `nomatch.hs`, a match with leaves that fail against one with none, which
-a no-match continuation made at every call fails).
+a no-match continuation made at every call fails); one with a line `--
+sestoft:` is run again with `--match=sestoft` at `-O0` and `-O2`, on Core's
+interpreter and the VM, held to the same `NAME.expected` and
+`NAME.exitcode`, the Report's order's result (`hs/simplify/sestoft/NAME`):
+the `sestoft-*.hs` programs, on what a match forces and which methods it
+calls (a user `(==)` under literal patterns, n+k with a user `(>=)`, a
+refutable column after a bottom one, guards falling through, arity under
+`seq`, lazy patterns, and the clauses HsMatch's `refuted` leaves out).
 `eta.hs` is D48's bottom probe: `seq` of a
 function whose lambda is behind a case, given bottom, is bottom under the
 pedantic rule, which GHC's default (`--eta=ghc`, built to be measured) breaks.
@@ -990,12 +997,14 @@ programs of the corpus and the ready lazy ports, prepared as
 `hs/simplify/lazy/PORT`, nightly). `bin/rune-test hs-simplify-figures SET
 ID OUT [WAY...]` measures one program of those sets for *Decisions on the
 numbers* (with `RUNE_HS_RHC`, another build's rhc), every way's bytecode
-named alike, since `getProgName` is its name: each way's output, and the
+at one path, since `getProgName`'s cost grows with it: each way's output, and the
 instructions, bytes and objects of
 `runevm --count`, the suspensions made (`runevm-census`) and the
 instructions:u at tier 2 (`perf`), at `-O0` and `-O2`, with GHC's eta
 (D48's D) and Sestoft's trees (D34's B), on Core's interpreter where asked,
-and the eta rewrites under each rule (`stats`). The expected outputs are GHC 9.4.7's
+and the eta rewrites under each rule (`stats`); `bin/rune-test
+hs-simplify-compile SET ID OUT [WAY...]` only compiles, a line a way with
+the compile's instructions:u and the bytecode's bytes. The expected outputs are GHC 9.4.7's
 (`monad.hs` with the Functor and Applicative instances GHC's Monad wants).
 The seeds for the simplifier (a thunk copied into a lambda, eta through an
 expensive let, eta through a case under the pedantic rule, a specialisation
