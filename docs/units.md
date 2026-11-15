@@ -1174,10 +1174,14 @@ every module of it, at `RUNE_LINT=2`, and `bin/rhc` names it
 (`--snapshot`). Every check and compile of `bin/rhc FILE.hs`, with `-o`,
 `--typecheck-only` or neither (a run on Core's interpreter), takes the
 library's units from it, read only, and reads, names, checks and desugars
-the program's own modules a unit at a time, keeping nothing
-(`RhcDriver.front`); `--units --store DIR` keeps them too, the snapshot
-read after any `--layer`; `--whole` reads the library as well, the
-reference. A unit's entry is kept in a configuration with no setting of
+the program's own modules a unit at a time (`RhcDriver.front`), and keeps
+them in the program's store, `.rhc` beside its file (D58; `--store DIR`
+or `RHC_STORE` another, `--no-store` or an empty `RHC_STORE` none), which
+it reads first, then any `--layer`, then the snapshot; a compile with
+`-o` keeps its link too, its bytecode by the sums of the units' entries.
+The store is trimmed by `StorePolicy.trimAfter`, as `.rune` is: a store
+of the same limits, a week and 4 GiB. `--whole` reads the library as
+well, the reference, and keeps nothing. A unit's entry is kept in a configuration with no setting of
 the back end (the instruction set, the level, the width of int), since it
 holds no code, so one snapshot serves the stack machine and the register
 machine; the link's entry keeps them. A module's header is kept by the

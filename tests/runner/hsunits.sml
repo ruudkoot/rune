@@ -249,7 +249,7 @@ struct
       fun step (label, want : (string * string) list, prints) =
         let
           val log = f (label ^ ".log")
-          val ok = exec {cmd = [fromRoot "bin/rhc", "--lint=2", "--units", "--store", "st", "--show-units", "Main.hs", "-o", "w.rbc"],
+          val ok = exec {cmd = [fromRoot "bin/rhc", "--lint=2", "--store", "st", "--show-units", "Main.hs", "-o", "w.rbc"],
                          dir = SOME d, stdin = "", stdout = log, stderr = log, timeout = 900} = 0
           val whole = exec {cmd = [fromRoot "bin/rhc", "--lint=2", "Main.hs", "-o", "j.rbc"], dir = SOME d, stdin = "",
                             stdout = f (label ^ ".whole"), stderr = f (label ^ ".whole"), timeout = 900} = 0
@@ -343,7 +343,7 @@ struct
       fun bytes p = (let val i = BinIO.openIn p in Byte.bytesToString (BinIO.inputAll i) before BinIO.closeIn i end)
                     handle IO.Io _ => ""
       fun compiles (cmd, log) = exec {cmd = cmd, dir = SOME d, stdin = "", stdout = f log, stderr = f log, timeout = 900} = 0
-      val warm = compiles ([fromRoot "bin/rhc", "--units", "--store", "st", "--show-units", "Main.hs", "-o", "w.rbc"], "warm.log")
+      val warm = compiles ([fromRoot "bin/rhc", "--store", "st", "--show-units", "Main.hs", "-o", "w.rbc"], "warm.log")
       val whole = compiles ([fromRoot "bin/rhc", "Main.hs", "-o", "j.rbc"], "whole.log")
       fun units' () = String.concatWith "; " (List.filter (fn l => String.isPrefix "rhc: unit" l orelse String.isPrefix "rhc: link" l)
                                                          (lines (read (f "warm.log"))))
@@ -357,9 +357,12 @@ struct
       (* the units' refusal, which the whole compile's must say too: a unit
          taken that should not be may make a link that does not check *)
       fun refusal () =
-        case List.find (String.isPrefix "rhc: error: ") (lines (read (f "warm.log"))) of
-          SOME l => String.extract (l, size "rhc: error: ", NONE)
-        | NONE => firstLine (f "warm.log")
+        let val marker = ": error: "
+        in
+          case List.find (String.isSubstring marker) (lines (read (f "warm.log"))) of
+            SOME l => Substring.string (Substring.triml (size marker) (#2 (Substring.position marker (Substring.full l))))
+          | NONE => firstLine (f "warm.log")
+        end
     in
       if want = "refused\n" then
         if warm then no ("the units' compile takes what the whole compile "
@@ -455,9 +458,9 @@ struct
         in walk dir end
       val () = write (f "make/Main.hs", "main :: IO ()\nmain = putStrLn \"made\"\n")
       val () = write (f "hello/Main.hs", "main :: IO ()\nmain = putStrLn \"hello\"\n")
-      val made = rhc ("make", ["--units", "--store", f "layer", "Main.hs", "-o", "m.rbc"], "make.log")
+      val made = rhc ("make", ["--store", f "layer", "Main.hs", "-o", "m.rbc"], "make.log")
       val unwritten = listing (f "layer")
-      val warm = rhc ("hello", ["--units", "--layer", f "layer", "--store", f "overlay", "--show-units", "Main.hs", "-o", "w.rbc"],
+      val warm = rhc ("hello", ["--layer", f "layer", "--store", f "overlay", "--show-units", "Main.hs", "-o", "w.rbc"],
                       "hello.log")
       val whole = rhc ("hello", ["Main.hs", "-o", "j.rbc"], "whole.log")
       val text = read (f "hello.log")
@@ -480,9 +483,162 @@ struct
          if listing (f "layer") = unwritten then () else no "the snapshot is written")
     end
 
+  (* The store by default (the haskell98 roadmap's D58), RHC_STORE unset as
+     a compile outside the runner has it (the runner sets it empty), Main
+     and Lib of tests/hs/units/drive in a directory of the job's: a plain
+     compile keeps its units in .rhc beside Main.hs, and the next one takes
+     them and the link from there, its program byte for byte the first's;
+     --units, which a compile of Haskell is without it, makes the same
+     compile; a check keeps its units too, and a run takes them; --no-store
+     and an empty RHC_STORE write nothing, and RHC_STORE names another
+     store, which .rhc is not *)
+  fun bytesOf p = (let val i = BinIO.openIn p in Byte.bytesToString (BinIO.inputAll i) before BinIO.closeIn i end)
+                  handle IO.Io _ => ""
+  fun drived (d : string) =
+    (rmTree d; mkdirs d;
+     write (d ^ "/Lib.hs", read (fromRoot "tests/hs/units/drive/Lib.hs"));
+     write (d ^ "/Main.hs", read (fromRoot "tests/hs/units/drive/Main.hs")))
+  (* bin/rhc in d with RHC_STORE unset, or set to what `store` says, its
+     log in d/log *)
+  fun rhcIn (d, store : string option, args, log) =
+    execEnv (fn e => case store of SOME v => setEnv ("RHC_STORE", v) e | NONE => unsetEnv ["RHC_STORE"] e)
+      {cmd = [fromRoot "bin/rhc"] @ args, dir = SOME d, stdin = "", stdout = d ^ "/" ^ log, stderr = d ^ "/" ^ log, timeout = 900}
+  (* what a log says of a unit or the link: compiled, taken or nothing *)
+  fun saysOf (text, unit) =
+    let
+      val prefix = if unit = "link" then "rhc: link: " else "rhc: unit " ^ unit ^ ": "
+      val said = List.mapPartial (fn l => if String.isPrefix prefix l
+                                          then SOME (hd (String.tokens (fn c => c = #" " orelse c = #",") (String.extract (l, size prefix, NONE))))
+                                          else NONE)
+                                 (lines text)
+    in List.filter (fn w => w = "compiled" orelse w = "taken" orelse w = "reached") said end
+  fun samePrograms (a, b) =
+    let val (x, y) = (bytesOf a, bytesOf b)
+    in size x > 12 andalso String.extract (x, 12, NONE) = String.extract (y, 12, NONE) end
+
+  fun defaultStore () =
+    let
+      fun no why = say ("FAIL hs.units.default: " ^ why ^ "\n")
+      val d = out ^ "/default"
+      fun f x = d ^ "/" ^ x
+      fun expect (label, log, want : (string * string) list) =
+        let val text = read log
+        in
+          List.app (fn (u, w) => if List.exists (fn x => x = w) (saysOf (text, u)) then ()
+                                 else no (label ^ ": " ^ u ^ " not " ^ w ^ " (" ^ String.concatWith "; " (List.filter (String.isPrefix "rhc: ") (lines text)) ^ ")"))
+            want
+        end
+      (* the files of d but the program's and its outputs, a store's *)
+      fun written dir = List.filter (fn n => not (List.exists (fn m => m = n) ["Lib.hs", "Main.hs"])
+                                              andalso not (String.isSuffix ".rbc" n) andalso not (String.isSuffix ".log" n))
+                                    (sort (entries dir))
+      val () = drived d
+      val cold = rhcIn (d, NONE, ["--show-units", "Main.hs", "-o", "a.rbc"], "cold.log") = 0
+      val store = isDir (f ".rhc")
+      val again = rhcIn (d, NONE, ["--show-units", "Main.hs", "-o", "b.rbc"], "again.log") = 0
+      val spelled = rhcIn (d, NONE, ["--units", "--show-units", "Main.hs", "-o", "c.rbc"], "units.log") = 0
+      val () =
+        if not cold then no ("a plain compile fails: " ^ firstLine (f "cold.log"))
+        else if not store then no ("a plain compile keeps no .rhc beside Main.hs: " ^ String.concatWith " " (written d))
+        else if not again then no ("the second compile fails: " ^ firstLine (f "again.log"))
+        else if not spelled then no ("a compile with --units fails: " ^ firstLine (f "units.log"))
+        else
+          (expect ("cold", f "cold.log", [("Lib", "compiled"), ("Main", "compiled"), ("link", "compiled")]);
+           expect ("again", f "again.log", [("Lib", "taken"), ("Main", "taken"), ("link", "taken")]);
+           expect ("--units", f "units.log", [("Lib", "taken"), ("Main", "taken"), ("link", "taken")]);
+           if samePrograms (f "a.rbc", f "b.rbc") andalso samePrograms (f "a.rbc", f "c.rbc") then ()
+           else no "the program taken from .rhc is not the one compiled";
+           if written d = [".rhc"] then () else no ("a compile writes more than .rhc: " ^ String.concatWith " " (written d)))
+      (* a check keeps its units, a run takes them *)
+      val c = out ^ "/default-check"
+      fun g x = c ^ "/" ^ x
+      val () = drived c
+      val checked = rhcIn (c, NONE, ["--typecheck-only", "Main.hs"], "check.log") = 0
+      val ran = rhcIn (c, NONE, ["--show-units", "Main.hs"], "run.log") = 0
+      val compiled = rhcIn (c, NONE, ["--show-units", "Main.hs", "-o", "a.rbc"], "compile.log") = 0
+      val () =
+        if not checked then no ("a check fails: " ^ firstLine (g "check.log"))
+        else if not ran orelse not (String.isSubstring "hello\n42\n" (read (g "run.log"))) then
+          no ("a run after a check does not print hello and 42: " ^ firstLine (g "run.log"))
+        else if not compiled then no ("a compile after a run fails: " ^ firstLine (g "compile.log"))
+        else
+          (expect ("a run after a check", g "run.log", [("Lib", "taken"), ("Main", "taken")]);
+           expect ("a compile after a run", g "compile.log", [("Lib", "taken"), ("Main", "taken"), ("link", "compiled")]);
+           if samePrograms (f "a.rbc", g "a.rbc") then () else no "the program after a check is not a plain compile's")
+      (* none, and another *)
+      val n = out ^ "/default-none"
+      fun h x = n ^ "/" ^ x
+      val () = drived n
+      val none = rhcIn (n, NONE, ["--no-store", "Main.hs", "-o", "a.rbc"], "none.log") = 0
+      val empty = rhcIn (n, SOME "", ["Main.hs", "-o", "b.rbc"], "empty.log") = 0
+      val emptyCheck = rhcIn (n, SOME "", ["--typecheck-only", "Main.hs"], "emptycheck.log") = 0
+      val nothing = written n
+      val other = rhcIn (n, SOME (h "other"), ["Main.hs", "-o", "c.rbc"], "other.log") = 0
+      val both = rhcIn (n, SOME (h "other"), ["--no-store", "--show-units", "Main.hs", "-o", "d.rbc"], "both.log") = 0
+    in
+      if not none then no ("a compile with --no-store fails: " ^ firstLine (h "none.log"))
+      else if not empty then no ("a compile with RHC_STORE empty fails: " ^ firstLine (h "empty.log"))
+      else if not emptyCheck then no ("a check with RHC_STORE empty fails: " ^ firstLine (h "emptycheck.log"))
+      else if not (null nothing) then no ("--no-store or an empty RHC_STORE writes " ^ String.concatWith " " nothing)
+      else if not other then no ("a compile with RHC_STORE set fails: " ^ firstLine (h "other.log"))
+      else if not both then no ("a compile with --no-store and RHC_STORE fails: " ^ firstLine (h "both.log"))
+      else
+        (if written n = ["other"] andalso isDir (h "other") then ()
+         else no ("RHC_STORE's store is not the one written: " ^ String.concatWith " " (written n));
+         expect ("--no-store over RHC_STORE", h "both.log", [("Lib", "compiled"), ("Main", "compiled")]);
+         if List.all (fn x => samePrograms (f "a.rbc", h x)) ["a.rbc", "b.rbc", "c.rbc", "d.rbc"] then ()
+         else no "a compile without the store is not the one with it")
+    end
+
+  (* Two compiles at once on one .rhc (D58), as two rune builds on one
+     .rune: each entry is written whole or not at all (UnitStore.publish,
+     a file renamed into place), so both compile, whichever writes first,
+     their programs the same and a plain compile's, and a third takes
+     every unit and the link from what they kept. Twice, each round on a
+     store of its own *)
+  fun concurrent () =
+    let
+      fun no why = say ("FAIL hs.units.concurrent: " ^ why ^ "\n")
+      fun round k =
+        let
+          val d = out ^ "/concurrent-" ^ Int.toString k
+          fun f x = d ^ "/" ^ x
+          val () = drived d
+          val rhc = fromRoot "bin/rhc"
+          val script =
+            "\"$0\" --show-units Main.hs -o a.rbc > a.log 2>&1 & a=$!; " ^
+            "\"$0\" --show-units Main.hs -o b.rbc > b.log 2>&1 & b=$!; " ^
+            "wait $a; sa=$?; wait $b; sb=$?; echo \"$sa $sb\" > statuses"
+          val () = ignore (execEnv (unsetEnv ["RHC_STORE"])
+                                   {cmd = ["sh", "-c", script, rhc], dir = SOME d, stdin = "", stdout = f "both.log",
+                                    stderr = f "both.log", timeout = 1200})
+          val statuses = String.tokens Char.isSpace (read (f "statuses"))
+          val third = rhcIn (d, NONE, ["--show-units", "Main.hs", "-o", "c.rbc"], "c.log") = 0
+          val plain = exec {cmd = [rhc, "--no-store", "Main.hs", "-o", "p.rbc"], dir = SOME d, stdin = "", stdout = f "p.log",
+                            stderr = f "p.log", timeout = 900} = 0
+          val text = read (f "c.log")
+        in
+          if statuses <> ["0", "0"] then
+            no ("round " ^ Int.toString k ^ ": the compiles at once end with " ^ String.concatWith " " statuses ^ ": "
+                ^ firstLine (f "a.log") ^ "; " ^ firstLine (f "b.log"))
+          else if not third then no ("round " ^ Int.toString k ^ ": the compile after them fails: " ^ firstLine (f "c.log"))
+          else if not plain then no ("round " ^ Int.toString k ^ ": the compile without a store fails: " ^ firstLine (f "p.log"))
+          else
+            ((if List.all (fn u => saysOf (text, u) = ["taken"]) ["Lib", "Main", "link"] then ()
+              else no ("round " ^ Int.toString k ^ ": the compile after them does not take every unit and the link: "
+                       ^ String.concatWith "; " (List.filter (String.isPrefix "rhc: ") (lines text))));
+             if List.all (fn x => samePrograms (f "p.rbc", f x)) ["a.rbc", "b.rbc", "c.rbc"] then ()
+             else no ("round " ^ Int.toString k ^ ": the programs of the compiles at once are not one"))
+        end
+    in
+      round 1; round 2
+    end
+
   fun command args =
     case args of
       ["hs-units-drive"] => SOME drive
+    | ["hs-units-default"] => SOME defaultStore
+    | ["hs-units-concurrent"] => SOME concurrent
     | ["hs-units-hole", c] => SOME (hole c)
     | ["hs-units-snapshot"] => SOME snapshot
     | ["hs-units-random", c] => SOME (random c)
@@ -495,6 +651,7 @@ struct
     | _ => NONE
 
   val covers = ["covers:src/rhc/store.sml", "covers:src/rhc/units.sml", "covers:src/rhc/driver.sml", "covers:lib/compiler/driver/unitstore.sml",
+                "covers:src/rhc/storeconfig.sml", "covers:src/rhc/syntax.sml", "covers:lib/compiler/driver/storepolicy.sml",
                 "covers:lib/compiler/core/midtext.sml", "covers:lib/language/haskell/coretomid.sml",
                 "covers:tests/hs/units/*",
                 "covers:tests/runner/hsunits.sml"]
@@ -505,7 +662,8 @@ struct
         [Tools.job ("store", ["hs-units-store"], [], 300, 600), Tools.job ("named", ["hs-units-named"], [], 500, 1200),
          Tools.job ("warm", ["hs-units-warm"], [], 500, 1800), Tools.job ("abi", ["hs-units-abi"], [], 300, 600),
          Tools.job ("warm-whole", ["hs-units-warm-whole"], [], 500, 1800), Tools.job ("drive", ["hs-units-drive"], [], 600, 3600),
-         Tools.job ("snapshot", ["hs-units-snapshot"], [], 600, 2400)]
+         Tools.job ("snapshot", ["hs-units-snapshot"], [], 600, 2400),
+         Tools.job ("default", ["hs-units-default"], [], 600, 3600), Tools.job ("concurrent", ["hs-units-concurrent"], [], 600, 3600)]
         @ List.map (fn c => Tools.job ("holes/" ^ c, ["hs-units-hole", c], [], 600, 3600)) (holeCases ())
         @ List.map (fn s => Tools.job ("core/" ^ HsCore.nameOf s, ["hs-units-core", s], [], 500, 1200)) (coreTests ())
       val nightly = List.map (fn c => Tools.job ("random/" ^ c, ["hs-units-random", c], [], 900, 3600)) (holeCases ())
