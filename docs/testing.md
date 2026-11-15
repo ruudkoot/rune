@@ -535,7 +535,10 @@ jobs. Rune's is `Lang.rune`; rhc's is `HsLang.rhc` (`tests/runner/hslang.sml`).
   `--accept`, the way `register` writes `.expected`. A compile writes
   `NAME/prog.rbc` in the run's directory (`Lang.suite`'s `binary`), so that
   `getProgName`, the bytecode file's base name (the lead's ruling 33), is
-  `prog` in every way, as in `hs/jit` and `hs/interp-vm`.
+  `prog` in every way, as in `hs/jit` and `hs/interp-vm`. `RUNE_HS_RHC_FLAGS`
+  gives every compile of the suite options before its own: with `-O2` the
+  suite runs at the level of the Core simplifier and Sestoft's trees (D34)
+  on both bytecodes.
 * **Tiers** (the roadmap's D56, B; the lead's rulings 45, 47 and 48). A program of
   `tests/hs/lang` runs in `check` in the three ways, with its two compiles
   and its check, unless `tests/hs/lang-nightly.txt` names it (a program
@@ -1008,7 +1011,23 @@ copied into a lambda or work moved under one by eta shows
 (`hs/simplify/budget/NAME`); one with lines `-- dump: has NAME` or `--
 dump: lacks NAME` has the Core the passes leave held to them, a value of
 the name there or not (a copy at known dictionaries, an overloaded original
-dropped, no `fromInteger` left), what no run shows (`hs/simplify/dump/NAME`).
+dropped, no `fromInteger` left), what no run shows (`hs/simplify/dump/NAME`);
+one with `-- objects: IN1 <= IN2` holds Sestoft's trees (D34's B) to making
+nothing for a match that does not fail on the run: compiled with
+`--match=sestoft` at `-O0` and `-O2`, its run on `IN1` makes at most 16
+objects more than its run on `IN2` (`hs/simplify/objects/NAME`;
+`nomatch.hs`, a match with leaves that fail against one with none, which
+a no-match continuation made at every call fails); one with a line `--
+sestoft:` is run again in the order its level does not take by default
+(D34: Sestoft's trees at `-O2` and above, the Report's order below), with
+`--match=sestoft` at `-O0` and `--match=report` at `-O2`, on Core's
+interpreter and the VM, held to the same `NAME.expected` and
+`NAME.exitcode`, the Report's order's result (`hs/simplify/sestoft/NAME`),
+so that each order meets each level: the `sestoft-*.hs` programs, on what a
+match forces and which methods it calls (a user `(==)` under literal
+patterns, n+k with a user `(>=)`, a refutable column after a bottom one,
+guards falling through, arity under `seq`, lazy patterns, and the clauses
+HsMatch's `refuted` leaves out).
 `eta.hs` is D48's bottom probe (D55's): `seq` of a
 function whose lambda is behind a case, given bottom, is bottom under the
 pedantic rule, rhc's default (D48's C), which GHC's default (`--eta=ghc`,
@@ -1035,11 +1054,17 @@ programs of the corpus and the ready lazy ports, prepared as
 (`tests/runner/hssimplifyfigures.sml`, `hs/simplify/corpus/ID` and
 `hs/simplify/lazy/PORT`, nightly). `bin/rune-test hs-simplify-figures SET
 ID OUT [WAY...]` measures one program of those sets for *Decisions on the
-numbers*: each way's output, and the instructions, bytes and objects of
+numbers* (with `RUNE_HS_RHC`, another build's rhc), every way's bytecode
+at one path, since `getProgName`'s cost grows with it: each way's output, and the
+instructions, bytes and objects of
 `runevm --count`, the suspensions made (`runevm-census`) and the
-instructions:u at tier 2 (`perf`), at `-O0` and `-O2`, with GHC's eta
-(D48's D) and Sestoft's trees (D34's B), on Core's interpreter where asked,
-and the eta rewrites under each rule (`stats`). The expected outputs are GHC 9.4.7's
+instructions:u at tier 2 (`perf`), at `-O0` and `-O2` with each level's
+defaults (the Report's order at `-O0`, Sestoft's trees at `-O2`, D34), and
+with the Report's order at `-O2` (`O2-report`), GHC's eta (D48's D) and
+Sestoft's trees named (D34's B), on Core's interpreter where asked,
+and the eta rewrites under each rule (`stats`); `bin/rune-test
+hs-simplify-compile SET ID OUT [WAY...]` only compiles, a line a way with
+the compile's instructions:u and the bytecode's bytes. The expected outputs are GHC 9.4.7's
 (`monad.hs` with the Functor and Applicative instances GHC's Monad wants).
 The seeds for the simplifier (a thunk copied into a lambda, eta through an
 expensive let, eta through a case under the pedantic rule, a specialisation
@@ -1067,9 +1092,10 @@ seed, with Int, Bool and `[Int]` values, top-level functions, `let`, `case`,
 lambdas, the list functions and `const e undefined`, each with the output its
 own evaluator gives. `hs/generated/@parse` puts 32 through rhc's parser in
 `make check` now; `hs/generated/@run` (16 from seed 1, `check`) and
-`hs/generated/@nightly` (400, `nightly`) compile and run them, held until
-the rows they need are out of `Planned`; `hs/generated/@orders` (the same
-400, `nightly`) compiles them with `--match=sestoft`, Sestoft's decision trees
+`hs/generated/@nightly` (400, `nightly`) compile and run them with
+`--match=report`, held until the rows they need are out of `Planned`;
+`hs/generated/@orders` (the same 400, `nightly`) compiles them with
+`--match=sestoft`, each order named, not the level's default, Sestoft's decision trees
 held to the meaning of the Report's top-to-bottom rules (`tr.case.obligation`).
 `bin/rune-test hs-generate SEED` prints a program and its output;
 `hs-generated FIRST COUNT` runs a range, and `hs-generated-orders FIRST

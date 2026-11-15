@@ -3,16 +3,25 @@
    simplifier): a program of the run set compiled by rhc in several ways and
    run on bin/runevm, each way's output held to the program's own and to
    -O0's, with the instructions, bytes and objects `runevm --count` gives,
-   the suspensions made (`runevm-census --census-summary`, its THUNK
-   objects) and, where perf is there, the instructions:u of a run at tier
-   2. Measured, not adopted: the owner decides on the figures.
+   the suspensions made (`runevm-census --census-summary`: thunk_make's
+   calls) and, where perf is there, the instructions:u of a run at tier 2,
+   and of the suspensions those copied (the census's THUNK objects, a
+   suspension of a code that captures nothing, which thunk_make allocates
+   apart where it makes the rest of their closures in place). Measured, not
+   adopted: the owner decides on the figures.
 
    `bin/rune-test hs-simplify-figures SET ID OUT [WAY...]` appends a line a
    way to OUT, tab-separated: the set (lang, corpus or lazy), the id, the
    way, whether rhc compiled it, the run's status, whether it printed the
    program's expected output and what -O0 printed, then instructions,
-   bytes, objects, suspensions and instructions:u (- where not measured).
-   The ways are O0, O2 (the pedantic rule, the Report's order), O2-ghc
+   bytes, objects, suspensions, instructions:u and suspensions copied (-
+   where not measured). `bin/rune-test hs-simplify-compile SET ID OUT
+   [WAY...]` prepares the program alike and only compiles it, a line a way:
+   the set, the id, the way, whether rhc compiled it, the compile's
+   instructions:u and the bytecode's bytes (D34's compile time and size).
+   The ways are O0 and O2, each the level's defaults (the pedantic rule;
+   the Report's order at -O0, Sestoft's trees at -O2 since the owner's
+   decision on D34 of 2026-11-15), O2-report (D34's A at -O2), O2-ghc
    (D48's D), O2-sestoft and O0-sestoft (D34's B), all of them where none
    is named or where `all` is; and, where named, iO0 and iO2, the program
    run on Core's interpreter, whose sameness is to iO0's, and `stats`, a
@@ -28,8 +37,8 @@ struct
   val gib = 1024 * 1024 * 1024
   val limits = {addressSpace = SOME (6 * gib), cpuTime = NONE, fileSize = SOME gib, core = SOME 0}
 
-  val ways = [("O0", ["-O0"]), ("O2", ["-O2"]), ("O2-ghc", ["-O2", "--eta=ghc"]), ("O2-sestoft", ["-O2", "--match=sestoft"]),
-              ("O0-sestoft", ["-O0", "--match=sestoft"])]
+  val ways = [("O0", ["-O0"]), ("O2", ["-O2"]), ("O2-report", ["-O2", "--match=report"]), ("O2-ghc", ["-O2", "--eta=ghc"]),
+              ("O2-sestoft", ["-O2", "--match=sestoft"]), ("O0-sestoft", ["-O0", "--match=sestoft"])]
   (* the ways on Core's interpreter, named and never all: iO0 and iO2, the
      program run by rhc itself, its output held to iO0's *)
   val interpreted = [("iO0", ["-O0"]), ("iO2", ["-O2"])]
@@ -38,6 +47,10 @@ struct
      arguments and standard input, and what it must print *)
   type prog = {dir : string, main : string, runDir : string, fresh : bool, args : string list, stdin : string,
                expected : string}
+
+  (* the rhc measured, RUNE_HS_RHC for another build's (an earlier one,
+     for a figure before and after), bin/rhc where none is named *)
+  fun rhc () = env ("RUNE_HS_RHC", fromRoot "bin/rhc")
 
   fun call (cmd, dir, stdin, out, err, timeout) =
     execProcess false limits (fn e => e) {cmd = cmd, dir = SOME dir, stdin = stdin, stdout = out, stderr = err, timeout = timeout}
@@ -52,7 +65,33 @@ struct
     let val digits = String.tokens (fn c => not (Char.isDigit c)) s
     in case digits of d :: _ => d | [] => "-" end
 
+  (* hs-simplify-compile: each way compiled and nothing run, the compile's
+     instructions:u (perf) and the bytecode's bytes its line: set, id, way,
+     compiled, instructions, bytes *)
+  val compileOnly = ref false
+
+  fun compileWays (set, id, p : prog, out, chosen) =
+    let
+      fun one (name, flags) =
+        let
+          val rbcDir = #dir p ^ "/way"
+          val () = (rmTree rbcDir; mkdirs rbcDir)
+          val rbc = rbcDir ^ "/" ^ OS.Path.base (OS.Path.file (#main p)) ^ ".rbc"
+          fun f x = #dir p ^ "/" ^ name ^ "." ^ x
+          val cs = call (["perf", "stat", "-x", ",", "-e", "instructions:u", "-o", f "cperf", rhc (), #main p] @ flags @ ["-o", rbc],
+                         #dir p, "", f "c.out", f "c.err", 1800)
+          val instr =
+            case List.find (fn l => String.isSubstring "instructions" l) (lines (read (f "cperf"))) of
+              SOME l => (case String.fields (fn c => c = #",") l of n :: _ => n | [] => "-")
+            | NONE => "-"
+          val bytes = if cs = 0 andalso exists rbc then Int.toString (Position.toInt (OS.FileSys.fileSize rbc)) else "-"
+        in append (out, String.concatWith "\t" [set, id, name, if cs = 0 then "yes" else "no", instr, bytes] ^ "\n") end
+      val selected = if null chosen orelse List.exists (fn m => m = "all") chosen then ways
+                     else List.filter (fn (n, _) => List.exists (fn m => m = n) chosen) ways
+    in List.app one selected end
+
   fun measure (set, id, p : prog, out, chosen) =
+    if !compileOnly then compileWays (set, id, p, out, chosen) else
     let
       val runevm = fromRoot "bin/runevm"
       val census = fromRoot "bin/runevm-census"
@@ -72,21 +111,28 @@ struct
           fun f x = #dir p ^ "/" ^ name ^ "." ^ x
           (* the interpreter is slow by design: a run past 300 s is not
              compared, its status 124 *)
-          val rs = call ([fromRoot "bin/rhc", #main p] @ flags @ (case #args p of [] => [] | a => "--" :: a), runIn name, #stdin p,
+          val rs = call ([rhc (), #main p] @ flags @ (case #args p of [] => [] | a => "--" :: a), runIn name, #stdin p,
                          f "out", f "err", 300)
           val output = read (f "out")
           val () = if name = "iO0" then i0out := SOME output else ()
           val row = [name, "yes", Int.toString rs, if output = #expected p then "yes" else "no",
                      case !i0out of SOME first => if output = first then "yes" else "no" | NONE => "-",
-                     "-", "-", "-", "-", "-"]
+                     "-", "-", "-", "-", "-", "-"]
         in append (out, String.concatWith "\t" ([set, id] @ row) ^ "\n") end
       fun one (name, flags) =
         let
-          val rbc = #dir p ^ "/" ^ name ^ ".rbc"
+          (* every way's bytecode at one path, the main file's base in one
+             directory, made again for each way: getProgName reads the
+             bytecode's path, a character at a time, so that a program that
+             prints it costs more for a longer one, and a way's name in the
+             path was measured as the way's (nhcnofib/real/grep) *)
+          val rbcDir = #dir p ^ "/way"
+          val () = (rmTree rbcDir; mkdirs rbcDir)
+          val rbc = rbcDir ^ "/" ^ OS.Path.base (OS.Path.file (#main p)) ^ ".rbc"
           fun f x = #dir p ^ "/" ^ name ^ "." ^ x
-          val cs = call ([fromRoot "bin/rhc", #main p] @ flags @ ["-o", rbc], #dir p, "", f "c.out", f "c.err", 1800)
+          val cs = call ([rhc (), #main p] @ flags @ ["-o", rbc], #dir p, "", f "c.out", f "c.err", 1800)
           val row =
-            if cs <> 0 then [name, "no", "-", "-", "-", "-", "-", "-", "-", "-"]
+            if cs <> 0 then [name, "no", "-", "-", "-", "-", "-", "-", "-", "-", "-"]
             else
               let
                 val rs = call ([runevm, "--count", rbc] @ #args p, runIn (name ^ ".count"), #stdin p, f "out", f "err", 1800)
@@ -95,8 +141,13 @@ struct
                 val count = getOpt (lineAfter (f "err", "runevm: count: "), "")
                 val fields = String.tokens (fn c => c = #",") count
                 fun nth i = if length fields > i then firstNumber (List.nth (fields, i)) else "-"
-                val thunks =
-                  if not haveCensus then "-"
+                (* the suspensions made, thunk_make's calls (its line of the
+                   census's primitive results), and of them those copied, a
+                   THUNK allocated apart for a code that captures nothing,
+                   where the rest are their closures made suspensions in place
+                   (runtime/prims.c, p_thunk_make) *)
+                val (thunks, copies) =
+                  if not haveCensus then ("-", "-")
                   else
                     let
                       val d = f "census"
@@ -106,8 +157,10 @@ struct
                       val _ = call ([census, "--census-dir", d, "--census-every", "0", "--census-summary", rbc] @ #args p,
                                     runIn (name ^ ".census"), #stdin p,
                                     "/dev/null", f "census.err", 1800)
-                      val t = if exists (d ^ "/census.txt") then getOpt (lineAfter (d ^ "/census.txt", "THUNK\t"), "-") else "-"
-                    in rmTree d; firstNumber t end
+                      val text = d ^ "/census.txt"
+                      val made = if exists text then getOpt (lineAfter (text, "thunk_make\tPTR\t"), "0") else "-"
+                      val copied = if exists text then getOpt (lineAfter (text, "THUNK\t"), "0") else "-"
+                    in rmTree d; (firstNumber made, firstNumber copied) end
                 val tier2 =
                   if not havePerf then "-"
                   else
@@ -121,7 +174,7 @@ struct
               in
                 [name, "yes", Int.toString rs, if output = #expected p then "yes" else "no",
                  case !o0out of SOME first => if output = first then "yes" else "no" | NONE => "-",
-                 nth 0, nth 1, nth 2, thunks, tier2]
+                 nth 0, nth 1, nth 2, thunks, tier2, copies]
               end
         in append (out, String.concatWith "\t" ([set, id] @ row) ^ "\n") end
       (* the eta-expansions under each rule (D48): compiled at -O2 with
@@ -133,7 +186,7 @@ struct
           fun counts flags tag =
             let
               val e = #dir p ^ "/stats." ^ tag ^ ".err"
-              val _ = call ([fromRoot "bin/rhc", #main p, "-O2", "--simplify-stats", "--desugar-only"] @ flags, #dir p, "",
+              val _ = call ([rhc (), #main p, "-O2", "--simplify-stats", "--desugar-only"] @ flags, #dir p, "",
                             "/dev/null", e, 1800)
               fun get what = case lineAfter (e, "simplify " ^ what ^ ": ") of SOME n => n | NONE => "0"
               val all = List.foldl (fn (l, n) => if String.isPrefix "simplify " l
@@ -211,7 +264,7 @@ struct
             | pick (v :: vs) =
                 let val (p, m) = HsCorpus.prepare (c, v, files, work ^ "/" ^ v)
                 in
-                  if call ([fromRoot "bin/rhc", m, "-O0", "-o", "probe.rbc"], p, "", p ^ "/probe.out", p ^ "/probe.err", 1800) = 0
+                  if call ([rhc (), m, "-O0", "-o", "probe.rbc"], p, "", p ^ "/probe.out", p ^ "/probe.err", 1800) = 0
                   then SOME (p, m) else pick vs
                 end
         in
@@ -276,5 +329,12 @@ struct
     | "hs-simplify-figures" :: "lang" :: name :: out :: chosen => SOME (fn () => lang (name, out, chosen))
     | "hs-simplify-figures" :: "corpus" :: id :: out :: chosen => SOME (fn () => corpus (id, out, chosen))
     | "hs-simplify-figures" :: "lazy" :: port :: out :: chosen => SOME (fn () => lazy (port, out, chosen))
+    | "hs-simplify-compile" :: set :: id :: out :: chosen =>
+        SOME (fn () => (compileOnly := true;
+                        case set of
+                          "lang" => lang (id, out, chosen)
+                        | "corpus" => corpus (id, out, chosen)
+                        | "lazy" => lazy (id, out, chosen)
+                        | _ => say ("FAIL hs-simplify-compile: no set " ^ set ^ "\n")))
     | _ => NONE
 end

@@ -339,17 +339,27 @@ struct
          | CoreToMid.Unsupported msg =>
              (eprint (String.concatWith ", " (#readCore opts) ^ ": error: rhc cannot compile this yet: " ^ msg ^ "\n"); 1)
 
+  (* --match=report|sestoft: the order of a match (D34), and the options
+     without it; where none is given, the level's, which `byLevel` sets once
+     the options have set the level: Sestoft's trees at -O2 and above, the
+     Report's order at -O0 and -O1 (the owner's decision of 2026-11-15) *)
+  fun matchOptions (args : string list) : string list * (unit -> unit) =
+    let
+      val (orders, rest) = List.partition (String.isPrefix "--match=") args
+      val () = List.app (fn "--match=report" => HsMatch.order := HsMatch.Report
+                          | "--match=sestoft" => HsMatch.order := HsMatch.Sestoft
+                          | a => raise RhcOptions.Usage ("--match takes report or sestoft: " ^ a)) orders
+      fun byLevel () =
+        if null orders then HsMatch.order := (if !Pass.level >= 2 then HsMatch.Sestoft else HsMatch.Report) else ()
+    in (rest, byLevel) end
+
   (* a program of Haskell, checked (RhcSyntax), desugared to Core (M15)
      with what it reaches of rhc's runtime, checked by CoreLint, and run on
      the Core interpreter or, with -o, compiled; `args` are the options of
      the command line that are not the syntax's *)
   fun haskell (file : string) (args : string list, desugar : CoreRuntime.strings -> Core.program) : int =
     let
-      (* --match=report|sestoft: the order of matching (D34) *)
-      val (orders, args) = List.partition (String.isPrefix "--match=") args
-      val () = List.app (fn "--match=report" => HsMatch.order := HsMatch.Report
-                          | "--match=sestoft" => HsMatch.order := HsMatch.Sestoft
-                          | a => raise RhcOptions.Usage ("--match takes report or sestoft: " ^ a)) orders
+      val (args, byLevel) = matchOptions args
       (* --desugar-only: as far as Core and CoreLint, and run nothing *)
       val (only, args) = List.partition (fn a => a = "--desugar-only") args
       (* --desugar-units: the program desugared a unit at a time, each group
@@ -361,6 +371,7 @@ struct
       val (canonicalCore, args) = List.partition (fn a => a = "--canonical-core") args
       val showCore = if null canonicalCore then CoreText.show else CoreText.show o canonical
       val opts = RhcOptions.parse args
+      val () = byLevel ()
       val () = List.app (fn s => if s = "all" orelse List.exists (fn t => t = s) stages then ()
                                  else raise RhcOptions.Usage ("--dump-after: no stage " ^ s ^ " (the stages: "
                                                               ^ String.concatWith ", " stages ^ ")"))
@@ -511,7 +522,9 @@ struct
          level 2 is held to, as a whole compile's *)
       val (claimed, rest) = List.partition (String.isPrefix "--hslint-claims=") rest
       val () = List.app (fn a => RhcLint.claims := SOME (String.extract (a, size "--hslint-claims=", NONE))) claimed
+      val (rest, byLevel) = matchOptions rest
       val opts = RhcOptions.parse rest
+      val () = byLevel ()
       val out = case #output opts of SOME f => f | NONE => raise RhcOptions.Usage "--units compiles: give -o FILE"
       val () = Pass.startup ()
       val status =
