@@ -1,8 +1,8 @@
 (* Pattern matching in the Report's order (the haskell98 roadmap's M15,
-   D34), and decision trees in Sestoft's order as an option.
+   D34), and decision trees in Sestoft's order.
 
-   The rules of 3.17.3 are taken literally, at `-O0`; the trees are built
-   for D34's measurement.
+   The rules of 3.17.3 are taken literally at `-O0` and `-O1`; the trees
+   are rhc's at `-O2` and above (D34, the owner's decision of 2026-11-15).
 
    The Report's order: the clauses one after another, and in each the
    patterns from left to right, each from the outside in (3.17.2). A
@@ -33,8 +33,8 @@ sig
   (* How clauses are matched. *)
   datatype order = Report | Sestoft
 
-  (* `order` is the order of every match: `Report`, `-O0`'s, unless rhc is
-     told otherwise. *)
+  (* `order` is the order of every match: `Report` unless set; rhc sets it
+     by `--match`, or by the level, `Sestoft` at `-O2` and above. *)
   val order : order ref
 
   (* What is matched: an atom of Core and its type. *)

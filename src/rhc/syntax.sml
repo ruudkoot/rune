@@ -285,9 +285,16 @@ struct
             val () = check args
             (* what a snapshot's units are made of, known before they are
                taken: the strings' form and the match's order, which the
-               compile's own options set again *)
+               compile's own options set again; the order the last --match
+               gives, or the level's where none does, Sestoft's trees at -O2
+               and above (D34, RhcMain.matchOptions) *)
             val () = if List.exists (fn a => a = "--strings=whole") args then strings := CoreRuntime.Whole else ()
-            val () = if List.exists (fn a => a = "--match=sestoft") args then HsMatch.order := HsMatch.Sestoft else ()
+            val lastMatch = List.foldl (fn (a, m) => if String.isPrefix "--match=" a then SOME a else m) NONE args
+            val level = List.foldl (fn ("-O0", _) => 0 | ("-O1", _) => 1 | ("-O2", _) => 2 | (_, l) => l) (!Pass.level) args
+            val () = HsMatch.order := (case lastMatch of
+                                         SOME "--match=sestoft" => HsMatch.Sestoft
+                                       | SOME _ => HsMatch.Report
+                                       | NONE => if level >= 2 then HsMatch.Sestoft else HsMatch.Report)
             (* what is the compile's: the options not of the syntax and names *)
             fun own a =
               isSource a orelse isSome (modeOf a) orelse a = "--no-spans" orelse a = "--typecheck-only"

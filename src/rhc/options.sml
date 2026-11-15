@@ -121,7 +121,8 @@ struct
     \                        default)\n\
     \  -O0, -O1, -O2         the level of Mid's optional passes (default: 1); at -O2 the\n\
     \                        Core simplifier too: core-simplify, core-specialise,\n\
-    \                        core-eta, core-cheap, core-simplify-2 (M23)\n\
+    \                        core-eta, core-cheap, core-simplify-2 (M23), and a match\n\
+    \                        by Sestoft's trees (--match=sestoft, D34)\n\
     \  --eta=E              the Core simplifier's eta-expansion (D48): pedantic, the default,\n\
     \                        the Report's, only where the expression is a value already; or\n\
     \                        ghc, GHC's default, through a case and IO, which departs from the\n\
@@ -145,8 +146,9 @@ struct
     \                        types, then imports, then values, each by name: one form of one\n\
     \                        program's Core however it was made (hs/snapshot's comparison)\n\
     \  --match=M             the order of a match in Haskell: report, the Report's, a clause\n\
-    \                        after another (default), or sestoft, decision trees that make no\n\
-    \                        test the tests made decide, for D34's measurement\n\
+    \                        after another, the default at -O0 and -O1; or sestoft, decision\n\
+    \                        trees that make no test the tests made decide, forcing what the\n\
+    \                        Report's order forces, the default at -O2 and above (D34)\n\
     \  --lint-rules          print the name of each rule of CoreLint, one a line\n\
     \  --generate-core=SEED  print a well-typed Core program made from SEED (D55)\n\
     \  --version             print the version and the identity of rhc\n\
