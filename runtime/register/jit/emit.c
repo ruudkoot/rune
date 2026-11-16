@@ -2130,10 +2130,15 @@ void emit_ENTER(Jit *j, uint32_t pc, int32_t a, int32_t b) { call_object(j, pc, 
    FORCE: a branch to o with the value, where register s holds no
    unevaluated suspension -- what an indirection holds, else s's word; on
    to the ENTER after it where it holds one. A value of any kind is tested
-   whatever the section says: no representation is a suspension's alone. */
+   whatever the section says: no representation is a suspension's alone.
+   A selector (D17's C), its contag THUNK_SELECTOR or more, is given to C
+   first (compile.c, SLOW_SELECT; vm_selected): where its tuple is
+   evaluated, register s is given the field the collector would give it,
+   which is tested again, so that a selector reduced by a collection or not
+   counts the same (D17's count), as the interpreter's FORCE. */
 void emit_FORCE(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
-    AsmLabel have, thunk; as_label_init(&have); as_label_init(&thunk);
+    AsmLabel have, thunk, enter; as_label_init(&have); as_label_init(&thunk); as_label_init(&enter);
     ms_need_word(M, b);
     ms_load_bits(M, R_S0, b);
     ms_jump_if_immediate(M, R_S0, &have);
@@ -2147,7 +2152,26 @@ void emit_FORCE(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     ms_set_bits(M, a, R_S0);
     as_jmp(A, jit_label(j, (uint32_t)c));
     as_bind(A, &thunk);
-    as_label_free(&have); as_label_free(&thunk);
+    Slow *s = ms_slow(M, SLOW_SELECT, j->next);
+    if (s) {
+        s->a = b;
+        ms_load_contag(M, R_S1, R_S0);
+        as_cmp_ri(A, R_S1, THUNK_SELECTOR);
+        as_jcc(A, CC_AE, &s->here);
+        as_jmp(A, &enter);
+        /* back with what C gave in rax, register s written: tested again */
+        as_bind(A, &s->back);
+        ms_jump_if_immediate(M, R_S0, &have);
+        ms_load_kind(M, R_S1, R_S0);
+        as_cmp_ri(A, R_S1, K_THUNK);
+        as_jcc(A, CC_E, &enter);
+        as_cmp_ri(A, R_S1, K_IND);
+        as_jcc(A, CC_NE, &have);
+        ms_load_field_bits(M, R_S0, R_S0, 0);
+        as_jmp(A, &have);
+    }
+    as_bind(A, &enter);
+    as_label_free(&have); as_label_free(&thunk); as_label_free(&enter);
 }
 /* the running frame's closure into rax, which must be a suspension */
 static void suspension(Jit *j, int what) {

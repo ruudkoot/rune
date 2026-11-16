@@ -587,7 +587,12 @@ directory (`hs/units/*`, `hs/hslint/faults`'s units), or unsets
   the same output, instruction counts and standard error, but for a program
   whose path depends on its run, which says so on a line `-- jit: output only:
   REASON` and has its output alone compared (`jit-one-output`; the global
-  generator's program, seeded from the clock).
+  generator's program, seeded from the clock). In `check`, `hs/selectors`
+  holds programs of selectors (D17's C) to it in every mode --
+  `tests/hs/selectors/count` and two of `tests/hs/lang` whose counts once
+  differed by where the engines collect -- and `hs/selectors/nursery` holds
+  count's instructions the same interpreted at five nurseries, so that a
+  selector the collector reduced counts as one it did not (D17's count).
 
 **Round trips** (the roadmap's D28; `tests/runner/hsroundtrip.sml`). On every
 file of `tests/hs/lang`, `tests/hs/accept` and `tests/hs/roundtrip`

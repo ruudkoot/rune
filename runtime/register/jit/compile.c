@@ -319,6 +319,13 @@ static Obj *running_suspension(VM *vm) {
 void jit_h_blackhole(VM *vm) { vm_blackhole(vm, running_suspension(vm)); }
 void jit_h_update(VM *vm, int32_t v) { obj_become_ind(vm, running_suspension(vm), vm->stack[vm->fp + (size_t)v]); }
 
+/* FORCE of a selector (emit.c, emit_FORCE; D17's count): what register r,
+   synced, is to be given -- the field the collector would give it where
+   its tuple is evaluated (vm_selected) -- which the code writes to the
+   register's home itself, a home C keeps being left as it was by the
+   reload (ms_reload) */
+Value jit_h_select(VM *vm, int32_t r) { return vm_selected(vm, vm->stack[vm->fp + (size_t)r]); }
+
 Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n) {
     return vm_alloc_fields(vm, (uint8_t)kind, (uint16_t)contag, n);
 }
@@ -856,6 +863,16 @@ static void emit_slow(Masm *m, Slow *sp) {
         if (s.a >= 0) { as_mov_ri(&m->a, ms_arg(m, 1), s.a); ms_call(m, (MsHelper)jit_h_update); }
         else ms_call(m, (MsHelper)jit_h_blackhole);
         ms_reload(m);
+        as_jmp(&m->a, &s.back);
+    } else if (s.kind == SLOW_SELECT) {
+        /* FORCE of a selector: its field where its tuple is evaluated, in
+           C (jit_h_select), given to register a, and back to test it, in
+           rax */
+        ms_sync(m, s.pc, 0);
+        as_mov_ri(&m->a, ms_arg(m, 1), s.a);
+        ms_call(m, (MsHelper)jit_h_select);
+        ms_reload(m);
+        ms_set_bits(m, s.a, R_S0);
         as_jmp(&m->a, &s.back);
     } else if (s.kind == SLOW_LOOP) {
         /* ENTER of a suspension under evaluation: Loop raised from the

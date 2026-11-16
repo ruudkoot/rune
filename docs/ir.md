@@ -885,7 +885,9 @@ its own, and forcing one is one step.
   `3 + i`), and the collector gives what points to it that field of the tuple once the
   tuple is evaluated, following a chain of them as far as it goes, so that a field the
   program no longer reads does not keep the tuple, and what the tuple's other fields
-  hold, alive. A suspension forced while its code runs is a loop,
+  hold, alive; and a force of one whose tuple is evaluated takes that field as the
+  collector would, its code not run, so that what a program counts does not depend
+  on where its collections fall ([runtime.md](runtime.md)). A suspension forced while its code runs is a loop,
   and so is one that code left by a raise: `ENTER` raises the builtin exception `Loop`
   on every engine, which a program may handle, and which rhc's top level takes for an
   uncaught `NonTermination` (`<<loop>>`): status 1, the handles flushed (chapter 23;

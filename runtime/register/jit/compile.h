@@ -126,6 +126,7 @@ Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n);
 void jit_h_setenv(VM *vm, int32_t c, int32_t e, int32_t v);
 void jit_h_blackhole(VM *vm);
 void jit_h_update(VM *vm, int32_t v);
+Value jit_h_select(VM *vm, int32_t r);
 int jit_h_return(VM *vm, uint64_t value);
 const void *jit_h_barrier(VM *vm, const Value *regs);
 int jit_h_enter_interp(VM *vm);

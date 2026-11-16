@@ -276,6 +276,16 @@ const void *native_tailcalln(VM *vm, int32_t m) { return apply(vm, (uint32_t)m -
 void native_newexn(VM *vm, int32_t a) { op_NEWEXN(vm, a, 0); }
 void native_mkexn(VM *vm) { op_MKEXN(vm, 0, 0); }
 void native_blackhole(VM *vm) { op_BLACKHOLE(vm, 0, 0); }
+/* FORCE of a selector (src/opt/x64.sml; D17's count): the top of the stack
+   given the field the collector would give it where its tuple is evaluated
+   (vm_selected); whether that changed it */
+int native_select(VM *vm) {
+    Value *top = &vm->stack[vm->sp - 1];
+    Value v = vm_selected(vm, *top);
+    if (v == *top) return 0;
+    *top = v;
+    return 1;
+}
 void native_update(VM *vm) { op_UPDATE(vm, 0, 0); }
 
 /* The checks the code makes itself end here, with vm->pc already the
