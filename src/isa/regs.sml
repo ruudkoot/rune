@@ -506,12 +506,24 @@ struct
      (* Suspensions (docs/ir.md, Suspensions; docs/plans/language/haskell98.md,
         D11, D13): thunk_force is FORCE, then on its slow path ENTER and
         RESULT; a suspension's code says BLACKHOLE once it has read what it
-        captured, and UPDATE with its value before it returns it. *)
+        captured, and UPDATE with its value before it returns it. FORCE gives
+        a selector whose tuple is evaluated (D17's C) its field first, as the
+        collector would (vm_selected, runtime/heap.c), so that a program counts
+        the same wherever its collections fall (D17's count). *)
      rinst ("FORCE", [("d", Writes any), ("s", Reads any), ("o", K Label)], Branch,
             "Where register s holds no unevaluated suspension, register d := its value -- what an indirection holds, else what s holds -- and jump to o; else on to the ENTER after it.")
        ["Value v = R(b);",
         "if (val_is_ptr(v)) {",
         "  int k = obj_kind(val_ptr(v));",
+        "  if (k == K_THUNK && obj_contag(val_ptr(v)) >= THUNK_SELECTOR) {",
+        "      /* a selector whose tuple is evaluated: its field, as the",
+        "         collector would give it (vm_selected, D17's count) */",
+        "      Value w = vm_selected(vm, v);",
+        "      if (w != v) {",
+        "          R(b) = v = w;",
+        "          k = val_is_ptr(v) ? obj_kind(val_ptr(v)) : -1;",
+        "      }",
+        "  }",
         "  if (k == K_THUNK) NEXT;",
         "  if (k == K_IND) v = obj_field(val_ptr(v), 0);",
         "}",
