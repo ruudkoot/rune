@@ -735,6 +735,114 @@ struct
             ^ f {dup = true, tail = false, want = #want c, k = fn a => "(jump " ^ j ^ " " ^ a ^ ")"} ^ ")"
           end
 
+      (* ---- Selectors by their shape (the roadmap's D17, C) ---- *)
+
+      (* f of each expression of e, e's own first *)
+      fun walk (f : exp -> unit) (e : exp) : unit =
+        (f e;
+         case e of
+           App (g, _) => walk f g
+         | Lam (_, b) => walk f b
+         | Let (_, _, r, b) => (walk f r; walk f b)
+         | LetRec (bs, b) => (List.app (fn (_, _, r) => walk f r) bs; walk f b)
+         | Case (s, _, alts) =>
+             (walk f s;
+              List.app (fn AltCon (_, _, r) => walk f r | AltLit (_, r) => walk f r
+                         | AltUTuple (_, r) => walk f r | AltDefault r => walk f r) alts)
+         | Cast (b, _) => walk f b
+         | _ => ())
+      (* the variables an expression names itself, not those under it *)
+      fun namedBy (e : exp) : string list =
+        let fun vars atoms = List.mapPartial (fn Var x => SOME x | Lit _ => NONE) atoms
+        in
+          case e of
+            Atom a => vars [a]
+          | App (_, args) => vars (List.mapPartial (fn ValArg a => SOME a | TyArg _ => NONE) args)
+          | Con (_, _, atoms) => vars atoms
+          | Prim (_, _, atoms) => vars atoms
+          | UTuple atoms => vars atoms
+          | _ => []
+        end
+      (* whether e names x *)
+      exception Named
+      fun named (x, e) = (walk (fn e => if List.exists (fn y => y = x) (namedBy e) then raise Named else ()) e; false)
+                         handle Named => true
+      (* the globals of the program *)
+      val globalNames =
+        List.foldl (fn (Val (x, _, _), m) => CoreMap.insert (m, x, ()) | (Import (x, _), m) => CoreMap.insert (m, x, ())
+                     | (_, m) => m) CoreMap.empty prog
+      fun isGlobal x = CoreMap.member (globalNames, x)
+      (* how many times the program names each global, worked out once, where
+         a CAF has a selector's shape *)
+      val globalCountsMade : int CoreMap.map option ref = ref NONE
+      fun globalCount x =
+        let
+          val counts =
+            case !globalCountsMade of
+              SOME m => m
+            | NONE =>
+                let
+                  val m = ref CoreMap.empty
+                  fun note x = if isGlobal x then m := CoreMap.insert (!m, x, 1 + getOpt (CoreMap.find (!m, x), 0)) else ()
+                in
+                  List.app (fn Val (_, _, e) => walk (fn e => List.app note (namedBy e)) e | _ => ()) prog;
+                  globalCountsMade := SOME (!m);
+                  !m
+                end
+        in getOpt (CoreMap.find (counts, x), 0) end
+      (* the constructor k the one constructor of a data type, which is no
+         class's dictionary (the desugaring's `%dict:`): a dictionary is
+         small and lives as long as the program, so a selector of one keeps
+         nothing alive that the collector could let go *)
+      fun onlyConstructor k =
+        case CoreMap.find (cons, k) of
+          SOME {count = 1, tycon, ...} =>
+            not (String.isPrefix "%dict:" k)
+            andalso (case tyconInfo tycon of SOME {shape = DataT [_], ...} => true | _ => false)
+        | _ => false
+      (* `case p of K x1 ... xn -> xi`, where K is the one constructor of its
+         data type, maybe after a let the rest does not name (a failed
+         match's): SOME (p, i) *)
+      fun projection (e : exp) : (string * int) option =
+        case e of
+          Case (Atom (Var p), b, AltCon (k, xs, Atom (Var x)) :: rest) =>
+            let
+              fun index (_, []) = NONE
+                | index (i, y :: ys) = if y = x then SOME i else index (i + 1, ys)
+            in
+              if (case rest of [] => true | [AltDefault _] => true | _ => false) andalso onlyConstructor k
+                 andalso x <> "_" andalso x <> b andalso p <> b
+              then Option.map (fn i => (p, i)) (index (0, xs))
+              else NONE
+            end
+        | Let (y, _, _, body) => if named (y, body) then NONE else projection body
+        | _ => NONE
+      (* the functions of the program that give a field of their argument,
+         as `fst` and a record's field do: each with the field's index *)
+      val fieldFunctions : int CoreMap.map =
+        List.foldl (fn (Val (f, _, Lam (bs, body)), m) =>
+                         (case List.filter (fn ValBinder _ => true | TyBinder _ => false) bs of
+                            [ValBinder (r, _)] =>
+                              (case (List.last bs, projection body) of
+                                 (ValBinder _, SOME (p, i)) => if p = r then CoreMap.insert (m, f, i) else m
+                               | _ => m)
+                          | _ => m)
+                     | (_, m) => m)
+                   CoreMap.empty prog
+      (* the field of a variable the code of a suspension of e takes, a
+         selector by its shape, as GHC's are: a projection, or a field
+         function applied to the variable; SOME (p, i) *)
+      fun selected (e : exp) : (string * int) option =
+        case projection e of
+          SOME r => SOME r
+        | NONE =>
+            case e of
+              App (Atom (Var f), args as _ :: _) =>
+                (case (CoreMap.find (fieldFunctions, f), List.filter (fn ValArg _ => true | TyArg _ => false) args, List.last args) of
+                   (SOME i, [ValArg (Var p)], ValArg _) => SOME (p, i)
+                 | _ => NONE)
+            | _ => NONE
+
       (* ---- Expressions ---- *)
 
       fun exp (env : env, e : exp, c : cont) : string =
@@ -1467,6 +1575,33 @@ struct
                           | _ => NONE)
                         globals
 
+      (* the place of each value of the top level among them, the order their
+         globals are made in *)
+      val placeOf = #2 (List.foldl (fn ((x, _, _, _), (i, m)) => (i + 1, CoreMap.insert (m, x, i))) (0, CoreMap.empty) globals)
+      (* a value of the top level that is another, by name *)
+      fun aliasOf p =
+        let
+          fun go (p, seen) =
+            case List.find (fn Val (y, _, _) => y = p | _ => false) prog of
+              SOME (Val (_, _, Atom (Var q))) => if isGlobal q andalso not (member (q, p :: seen)) then go (q, p :: seen) else p
+            | _ => p
+        in go (p, []) end
+      (* the CAF a CAF x selects a field of, by its shape: one made before
+         x, of one type, which the program names more than once (what x
+         alone names is evaluated by x alone, and no collection could give
+         x its field); SOME (its name, its type, its global, the field) *)
+      fun cafSelected (x, rhs) =
+        case selected rhs of
+          SOME (p, i) =>
+            let val q = aliasOf p
+            in
+              case (CoreMap.find (placeOf, q), CoreMap.find (placeOf, x), CoreMap.find (#vals genv, q)) of
+                (SOME a, SOME b, SOME {rep = Lazy gq, ty, arity = 0}) =>
+                  if a < b andalso globalCount q >= 2 then SOME (p, ty, gq, i) else NONE
+              | _ => NONE
+            end
+        | NONE => NONE
+
       (* each value of the top level that is no function: a suspension in a
          global, its code reading the others when it runs (a CAF), or a
          literal *)
@@ -1490,9 +1625,30 @@ struct
                   | peel (e, t) = (genv, t, [], e)
                 val (env, t', tvs, rhs) = peel (e, t)
                 val V = valTy env t'
-                val (def, code) = thunkCode (env, x, t', rhs, "")
                 val scheme = (if null tvs then "" else "[" ^ String.concatWith " " tvs ^ "] ") ^ "(" ^ V ^ " susp)"
-              in SOME ("(val " ^ g ^ " : " ^ scheme ^ " (fun " ^ def ^ " (return " ^ makeSusp (V, code) ^ ")))\n") end
+              in
+                case (tvs, cafSelected (x, rhs)) of
+                  ([], SOME (p, pty, gp, i)) =>
+                    (* a selector of a CAF made before it (D17's C at the top
+                       level): its code takes the CAF from what it captures,
+                       not from its global, so that the collector finds
+                       the CAF in the selector's first field, and it is
+                       marked *)
+                    let
+                      val P = valTy env (stripEval pty)
+                      val tv = freshVar ()
+                      val (def, code) = thunkCode (bindVal (env, p, {rep = Lazy tv, ty = pty, arity = 0}), x, t', rhs, "")
+                      val s = freshVar ()
+                    in
+                      SOME ("(val " ^ g ^ " : " ^ scheme ^ " (let (" ^ tv ^ " : (" ^ P ^ " susp)) (prim unsafe_cast " ^ gp ^ " : ("
+                            ^ P ^ " susp) -> (" ^ P ^ " susp)) (fun " ^ def ^ " (let (" ^ s ^ " : (" ^ V ^ " susp)) "
+                            ^ makeSusp (V, code) ^ " (let (" ^ freshVar () ^ " : unit) (prim thunk_selector " ^ s ^ " " ^ tv ^ " "
+                            ^ Int.toString i ^ " : ((" ^ V ^ " susp) * (" ^ P ^ " susp) * int) -> unit) (return " ^ s ^ "))))))\n")
+                    end
+                | _ =>
+                    let val (def, code) = thunkCode (env, x, t', rhs, "")
+                    in SOME ("(val " ^ g ^ " : " ^ scheme ^ " (fun " ^ def ^ " (return " ^ makeSusp (V, code) ^ ")))\n") end
+              end
 
       val cafs = List.mapPartial cafText globals
 

@@ -886,7 +886,14 @@ its own, and forcing one is one step.
   (`(_, y) = p`, or `~(x, _)` matched against a variable), makes it that field's
   selector of the variable's value, which the program may evaluate elsewhere (one
   whose value the binding makes is rule (d) as before: only its variable evaluates
-  that value, so no collection could give the variable its field):
+  that value, so no collection could give the variable its field). At the top level,
+  where a selector is a CAF, Core to Mid makes one whose code takes a field of a CAF
+  made before it, by its shape (`case p of K x1 ... xn -> xi`, K the one constructor
+  of a data type that is no class's dictionary, or a function of the program that
+  is one, as `fst` and a record's field are, applied to p), take that CAF from what
+  it captures rather than from its global, which the collector does not look in,
+  where the program names the CAF more than once: a top-level pattern binding's
+  selectors among them.
   `thunk_selector` marks it so (`THUNK`'s state
   `3 + i`), and the collector gives what points to it that field of the tuple once the
   tuple is evaluated, following a chain of them as far as it goes, so that a field the
