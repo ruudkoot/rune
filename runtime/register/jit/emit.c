@@ -1819,6 +1819,235 @@ static void apply_fast_tail(Jit *j, int32_t a, uint32_t n, const int32_t *args, 
     as_label_free(&pap); as_label_free(&make); as_label_free(&over); as_label_free(&more);
 }
 
+/* ---- item 24: the general path's cases shared, out of line ----
+   The cases above, made in line at every call through a closure, were
+   most of each such call's code, and of the time a compile takes (the
+   tiny programs of A0 under --jit=all: 1.5% to 5% of their run), for
+   calls few of which ever find a closure of another arity. A call of n
+   arguments, n up to VM_APPLY_ARGS, carries instead a hand-off
+   (apply_hand) to code that every call of n arguments shares, and every
+   tail call of n another (apply_shared: made when a call first wants it,
+   and placed in the region's top): the arguments' words in
+   VM.apply_args, and in r8 the address of the call's record, three
+   32-bit words after its jump -- its landing's offset from the record
+   (REC_AFTER), its general path's (SLOW_APPLY: REC_BACK), and its frame's
+   registers and header in bytes (REC_ABOVE); a tail call's landing and
+   frame unused. The shared code tests the closure the call's checks
+   refused (rdx) with rax, rcx, rdx, r8 and r11 alone, which are no home,
+   and where no case applies goes on at the call's general path with the
+   frame, its homes and the count as the call left them; once a case has
+   what it needs (a room, an allocation), the homes are free -- those
+   wanted after the call were written back for it, and its landing loads
+   them again -- and it is made as apply_fast and apply_fast_tail make it,
+   the arguments read from VM.apply_args: a tail call's straight to the
+   frame's base, since nothing is read from the frame's registers. A room
+   short goes to the general path, which claims it. */
+#define APPLY_ARG(i) ((int32_t)(OFF(apply_args) + sizeof(Value) * (i)))
+enum { REC_AFTER = 0, REC_BACK = 4, REC_ABOVE = 8 };
+static void shared_counted(Asm *a, int k, int r) {
+    if (!reg_apply_stats) return;
+    as_mov_ri(a, r, (int64_t)(intptr_t)&jit_apply_fast_counts[k]);
+    as_add_mi(a, r, 0, 1);
+}
+/* rd := the address of the record's (r8) entry at k */
+static void shared_rec(Masm *m, int rd, int k) {
+    as_ld32s(&m->a, rd, R_S3, k);
+    as_add_rr(&m->a, rd, R_S3);
+}
+/* rd := the word of the function of the closure in c, of more than one
+   parameter (REG_NARY: -2 - w); to bad where it is past the functions
+   (tmp clobbered), unless bad is NULL */
+static void shared_function_word(Masm *m, int rd, int c, int tmp, AsmLabel *bad) {
+    ms_load_field_bits(m, rd, c, 0);
+    as_neg(&m->a, rd);
+    as_sub_ri(&m->a, rd, 2);
+    if (!bad) return;
+    as_ld32(&m->a, tmp, VMR, OFF(prog.nfuncs));
+    as_lea(&m->a, tmp, tmp, tmp, 1, 1);
+    as_cmp_rr(&m->a, rd, tmp);
+    as_jcc(&m->a, CC_AE, bad);
+}
+/* the room of the frame of the function whose word is in r11 (rax, r9
+   clobbered), past the call's frame (r9 := REC_ABOVE's bytes) or at a
+   tail call's base, else to back */
+static void shared_room(Masm *m, int tail, AsmLabel *back) {
+    as_ld64(&m->a, R_S0, VMR, OFF(jit_calls));
+    as_ld64x(&m->a, R_S0, R_S0, R_S6, 8, (int32_t)offsetof(CallInfo, need) - 8);
+    if (!tail) as_ld32s(&m->a, R_S1, R_S3, REC_ABOVE);
+    ms_room_shared(m, R_S0, tail ? -1 : R_S1, back);
+}
+/* the room had: a call's frame made past its own, BASER its base (rcx
+   the bytes), with the landing's return word (r8's record read last) */
+static void shared_frame(Masm *m, int tail) {
+    if (tail) return;
+    as_add_rr(&m->a, BASER, R_S1);
+    shared_rec(m, R_S1, REC_AFTER);
+    if (JIT_RET_BIAS) as_add_ri(&m->a, R_S1, JIT_RET_BIAS);
+    as_st64(&m->a, BASER, HEADER_AT(0, 1), R_S1);
+}
+/* the value in rax, a partial application made, the call's: on at its
+   landing, BASER the callee's base as there, or a tail call's frame's,
+   returned (r11 clobbered) */
+static void shared_value(Masm *m, int tail) {
+    ms_count(m, 1);   /* the RESULT the landing passes over, or <apply return>'s RET */
+    if (tail) { as_jmp_ret(&m->a, BASER, HEADER_AT(0, 1)); return; }
+    as_ld32s(&m->a, R_S6, R_S3, REC_ABOVE);
+    as_add_rr(&m->a, BASER, R_S6);
+    shared_rec(m, R_S6, REC_AFTER);
+    as_jmp_r(&m->a, R_S6);
+}
+/* r11 the function's word: into its code, or the interpreter's stub, which
+   reads r11 (ms_emit_call_interp) */
+static void shared_enter(Masm *m) {
+    as_ld64(&m->a, R_S3, VMR, OFF(jit_calls));
+    as_ld64x(&m->a, R_S0, R_S3, R_S6, 8, (int32_t)offsetof(CallInfo, entry) - 8);
+    as_jmp_r(&m->a, R_S0);
+}
+static void emit_apply_shared(VM *vm, Masm *m, uint32_t n, int tail) {
+    Asm *a = &m->a;
+    uint32_t stub = n >= 2 ? reg_apply_stub(vm, 1, n - 1) : UINT32_MAX;
+    AsmLabel back, pap, make, more, over, fail;
+    as_label_init(&back); as_label_init(&pap); as_label_init(&make); as_label_init(&more); as_label_init(&over); as_label_init(&fail);
+    ms_load_field_bits(m, R_S6, R_S2, 0);
+    as_cmp_ri(a, R_S6, 2 * REG_PAP + 1);   /* a partial application; a closure of more than one parameter holds REG_NARY(f) */
+    as_jcc(a, CC_E, &pap);
+    ms_load_contag(m, R_S1, R_S2);   /* its parameters; 0 for one */
+    if (stub != UINT32_MAX) { as_cmp_ri(a, R_S1, 0); as_jcc(a, CC_E, &over); }
+    as_cmp_ri(a, R_S1, (int32_t)n);
+    as_jcc(a, CC_A, &make);
+    /* the call's general path, as it left it */
+    as_bind(a, &back);
+    shared_rec(m, R_S6, REC_BACK);
+    as_jmp_r(a, R_S6);
+    /* a closure of more parameters: a partial application made, the call's value */
+    as_bind(a, &make);
+    shared_counted(a, 0, R_S6);
+    ms_alloc(m, K_CLOSURE, 0, n + 2, &fail);   /* rax */
+    as_sub_ri(a, R_S1, (int32_t)n);
+    ms_set_kind_contag(m, R_S0, K_CLOSURE, R_S1);   /* what it still wants */
+    ms_store_field_imm(m, R_S0, 0, T_INT, REG_PAP);
+    ms_store_field_reg(m, R_S0, 1, R_S2);
+    for (uint32_t i = 0; i < n; i++) {
+        as_ld64(a, R_S6, VMR, APPLY_ARG(i));
+        ms_store_field_reg(m, R_S0, 2 + i, R_S6);
+    }
+    shared_value(m, tail);
+    as_bind(a, &fail);
+    ms_alloc_undo(m, K_CLOSURE, n + 2);
+    as_jmp(a, &back);
+    /* a partial application that wants n: its closure's function entered
+       with what it holds, then the arguments */
+    as_bind(a, &pap);
+    ms_load_contag(m, R_S1, R_S2);
+    as_cmp_ri(a, R_S1, (int32_t)n);
+    as_jcc(a, CC_A, &more);
+    as_jcc(a, CC_NE, &back);
+    shared_counted(a, tail ? 2 : 1, R_S1);
+    ms_load_field_bits(m, R_S1, R_S2, 1);   /* the closure it holds, of more than one parameter */
+    shared_function_word(m, R_S6, R_S1, R_S0, &back);
+    shared_room(m, tail, &back);
+    shared_frame(m, tail);
+    ms_load_len(m, R_S3, R_S2);
+    as_sub_ri(a, R_S3, 2);
+    ms_scale_index(m, R_S3);
+    ms_field_address(m, R_S0, R_S2, 2);
+    as_add_rr(a, R_S3, R_S0);
+    as_mov_rr(a, R_S1, BASER);
+    ms_copy_words(m, R_S0, R_S1, R_S3, R_S6);   /* what it holds; rcx past it */
+    for (uint32_t i = 0; i < n; i++) {
+        as_ld64(a, R_S6, VMR, APPLY_ARG(i));
+        ms_store_word_at(m, R_S1, i, R_S6);
+    }
+    ms_load_field_bits(m, R_S1, R_S2, 1);
+    as_st64(a, BASER, HEADER_AT(0, 2), R_S1);   /* the frame's closure */
+    shared_function_word(m, R_S6, R_S1, R_S0, NULL);
+    shared_enter(m);
+    /* a partial application given fewer than it wants: another, of what it
+       holds and the arguments, the call's value; the homes free once it is
+       made (r9 one) */
+    as_bind(a, &more);
+    shared_counted(a, 5, R_S6);
+    ms_load_len(m, R_S6, R_S2);
+    as_add_ri(a, R_S6, (int32_t)n);   /* its fields */
+    as_mov_rr(a, R_S1, R_S6);
+    ms_object_size(m, R_S1);
+    ms_alloc_dynamic(m, K_CLOSURE, R_S6, R_S1, &back);   /* rax */
+    ms_load_contag(m, R_S1, R_S2);
+    as_sub_ri(a, R_S1, (int32_t)n);
+    ms_set_kind_contag(m, R_S0, K_CLOSURE, R_S1);
+    ms_store_field_imm(m, R_S0, 0, T_INT, REG_PAP);
+    ms_load_field_bits(m, R_S1, R_S2, 1);
+    ms_store_field_reg(m, R_S0, 1, R_S1);
+    ms_load_len(m, R_S6, R_S2);
+    as_sub_ri(a, R_S6, 2);
+    ms_scale_index(m, R_S6);
+    ms_field_address(m, R_S2, R_S2, 2);
+    as_add_rr(a, R_S6, R_S2);
+    ms_field_address(m, R_S1, R_S0, 2);
+    ms_copy_words(m, R_S2, R_S1, R_S6, R_S4);   /* what it held; rcx past it */
+    for (uint32_t i = 0; i < n; i++) {
+        as_ld64(a, R_S4, VMR, APPLY_ARG(i));
+        ms_store_word_at(m, R_S1, i, R_S4);
+    }
+    shared_value(m, tail);
+    /* a closure of one given more: the program's <apply 1 n-1>, given the
+       closure and the arguments */
+    if (stub != UINT32_MAX) {
+        as_bind(a, &over);
+        shared_counted(a, tail ? 4 : 3, R_S1);
+        as_mov_ri(a, R_S6, 2 * (int64_t)stub + 1);
+        shared_room(m, tail, &back);
+        shared_frame(m, tail);
+        ms_store_word_at(m, BASER, 0, R_S2);
+        for (uint32_t i = 0; i < n; i++) {
+            as_ld64(a, R_S1, VMR, APPLY_ARG(i));
+            ms_store_word_at(m, BASER, 1 + i, R_S1);
+        }
+        as_st64i(a, BASER, HEADER_AT(0, 2), (int32_t)mk_unit());   /* a known function's: none */
+        shared_enter(m);
+    }
+    as_label_free(&back); as_label_free(&pap); as_label_free(&make); as_label_free(&more); as_label_free(&over); as_label_free(&fail);
+}
+/* the shared code of the calls of n arguments (tail: of the tail calls),
+   made and placed when a call first wants it; NULL where it cannot be */
+static const void *apply_shared(Jit *j, uint32_t n, int tail) {
+    JitProgram *jit = j->jit;
+    if (n < 1 || n > VM_APPLY_ARGS) return NULL;
+    if (jit->apply_shared[tail][n]) return jit->apply_shared[tail][n];
+    Masm m;
+    memset(&m, 0, sizeof m);
+    as_init(&m.a);
+    m.win = j->m.win; m.nfields = UINT32_MAX;   /* (Windows's convention as the function's) */
+    m.alloc_reg = 1;   /* as every function's code keeps it (compile.c) */
+    emit_apply_shared(j->vm, &m, n, tail);
+    const void *at = m.a.failed ? NULL : jit_place_shared(jit, m.a.buf, m.a.n);
+    as_free(&m.a);
+    jit->apply_shared[tail][n] = at;
+    return at;
+}
+/* a call's hand-off at odd (rdx the closure its checks refused) to the
+   shared code, and its record: after, its landing, for a call that is
+   not a tail call */
+static void apply_hand(Jit *j, uint32_t n, const int32_t *args, AsmLabel *odd, AsmLabel *general, AsmLabel *after,
+                       const void *shared) {
+    AsmLabel rec; as_label_init(&rec);
+    ms_role(M, MR_CLOS);
+    as_bind(A, odd);
+    ms_role(M, MR_ARGS);
+    for (uint32_t i = 0; i < n; i++) ms_store_value(M, VMR, APPLY_ARG(i), args[i]);
+    ms_role(M, MR_JUMP);
+    as_lea_label(A, R_S3, &rec);
+    as_jmp_to(A, shared);
+    as_bind(A, &rec);
+    size_t rec_at = A->n;
+    as_u32(A, 0);
+    if (after) as_offset32_at(A, rec_at + REC_AFTER, rec_at, after);
+    as_u32(A, 0);
+    as_offset32_at(A, rec_at + REC_BACK, rec_at, general);
+    as_u32(A, after ? (uint32_t)sizeof(Value) * (j->m.nlocals + MS_HEADER) : 0);
+    as_label_free(&rec);
+}
+
 /* A call through a closure reads a home last where it stores the
    argument, and until then keeps what it found in rax, rcx, rdx, r8 and
    r11 alone: every other general register may be a home (asm.h), and a
@@ -1886,7 +2115,11 @@ static void call_object(Jit *j, uint32_t pc, int32_t a, uint32_t n, const int32_
     ms_role(M, MR_JUMP);
     if (j->callret) as_call_ret_r(A, R_S5);   /* (M7) */
     else as_jmp_r(A, R_S5);   /* its code, or the interpreter (the table of calls, M6) */
-    if (fast) apply_fast(j, a, n, args, &odd, gen_c, &after, grow);
+    if (fast) {
+        const void *shared = apply_shared(j, n, 0);
+        if (shared) apply_hand(j, n, args, &odd, gen_c, &after, shared);
+        else apply_fast(j, a, n, args, &odd, gen_c, &after, grow);
+    }
     call_landing(j, &after);
     as_label_free(&after);
     as_label_free(&odd);
@@ -2006,7 +2239,11 @@ static void tail_object(Jit *j, uint32_t pc, int32_t a, uint32_t n, const int32_
     ms_role(M, MR_JUMP);
     if (j->callret) as_push_ret(A, BASER, HEADER_AT(0, 1));   /* the entry stores it again (M7) */
     as_jmp_r(A, R_S5);   /* its code, or the interpreter (the table of calls, M6) */
-    if (fast) apply_fast_tail(j, a, n, args, &odd, &g->here, grow);
+    if (fast) {
+        const void *shared = apply_shared(j, n, 1);
+        if (shared) apply_hand(j, n, args, &odd, &g->here, NULL, shared);
+        else apply_fast_tail(j, a, n, args, &odd, &g->here, grow);
+    }
     ms_role(M, MR_BODY);
     as_label_free(&odd);
 }

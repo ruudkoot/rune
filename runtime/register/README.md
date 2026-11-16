@@ -590,7 +590,19 @@ makes the clean part unit from the frame's registers' end, where they are
 anything else -- the nursery full, a closure of k >= 2 given more than k
 -- goes to `reg_apply` in C (`SLOW_APPLY`, `jit_h_apply`), which goes on in
 the code of the function it entered, or after the `RESULT` in the
-caller's. The cases are off under `--jit-returns=call` and for a program
+caller's. A call of up to 8 arguments (`VM_APPLY_ARGS`) does not carry
+the cases in line (the haskell98 roadmap's item 24: they were most of its
+code, and of a compile's time): it hands its arguments' words over in
+`VM.apply_args` and, in `r8`, the address of a record after its jump --
+its landing's offset, its general path's, its frame's size -- to the
+cases' code that every call of as many arguments shares, and every tail
+call of as many another (`apply_shared` in `emit.c`), made when a call
+first wants it and placed at the region's top (`jit_place_shared`). That
+code tests the closure with the registers that are no home and goes on at
+the call's general path, with everything as the call left it, where no
+case applies or the room is short; a case it makes, it makes as the
+cases in line do, a tail call's arguments straight to the frame's base.
+The cases are off under `--jit-returns=call` and for a program
 without every arity in the section, and `RUNE_JIT_APPLY_FAST=0` turns them
 off, for a measurement. `RET` takes the value's word into `rax` and jumps
 where the frame's return word says, testing nothing: two instructions

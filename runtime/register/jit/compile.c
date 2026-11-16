@@ -179,6 +179,26 @@ void jit_pending(Jit *j, size_t off, uint32_t f, int call) {
     j->npending++;
 }
 #if JIT_TARGET
+/* code shared by the functions' code (item 24: jit/emit.c, apply_shared),
+   n bytes that refer to nothing outside themselves by address: placed
+   from the region's top down, below what was placed before, its pages
+   alone made writable; NULL where the region has no room past its
+   functions and a megabyte for more */
+const void *jit_place_shared(JitProgram *jit, const uint8_t *code, size_t n) {
+    size_t size = (n + 15) & ~(size_t)15;
+    if (!jit->code_mem || jit->code_top < jit->code_used + size + ((size_t)1 << 20)) return NULL;
+    size_t at = jit->code_top - size;
+    size_t page = sys_code_page();
+    size_t lo = at & ~(page - 1), hi = (jit->code_top + page - 1) & ~(page - 1);
+    if (!sys_code_protect(jit->code_mem + lo, hi - lo, 0)) return NULL;
+    memcpy(jit->code_mem + at, code, n);
+    sys_code_protect(jit->code_mem + lo, hi - lo, 1);
+    sys_code_flush(jit->code_mem + at, n);
+    jit->code_top = at;
+    return jit->code_mem + at;
+}
+#endif
+#if JIT_TARGET
 /* function f has code: the known calls compiled while it had none made
    jumps into it -- or calls, under --jit-returns=call, into the entry of
    calls, where a jump pushed the return address first (M7) -- where their
@@ -1147,6 +1167,7 @@ int jit_region_init(VM *vm, JitProgram *jit) {
     memcpy(mem, a.buf, a.n);
     jit->code_mem = mem;
     jit->code_cap = cap;
+    jit->code_top = cap;
     jit->code_used = (a.n + 15) & ~(size_t)15;
     jit->enter_at = mem + enter_at;
     jit->leave_at = mem + leave_at;
@@ -1317,7 +1338,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     }
     if (ok) {
         size_t size = (j.m.a.n + 15) & ~(size_t)15;
-        if (jit->code_used + size > jit->code_cap) ok = 0;
+        if (jit->code_used + size > jit->code_top) ok = 0;
         else {
             uint8_t *at = jit->code_mem + jit->code_used;
             /* the pages the code lands in alone are made writable and
