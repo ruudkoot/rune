@@ -3,16 +3,16 @@
 structure IntInfHardening =
 struct
   open IntInfChecks
-  (* Independent image-15 prefix reader. Keep the named field sequence beside
+  (* Independent image-16 prefix reader. Keep the named field sequence beside
      the format guard: a new image version must be reviewed, not patched at
      offsets inherited from an older layout. Fields use little-endian bytes. *)
   fun savedPolicyLayout bytes =
     let val start=case CharVector.findi(fn(_,ch)=>ch= #"\000")bytes of
             SOME(i,_)=>i+1 | NONE=>raise Failed "image header is not terminated"
         val magic=String.substring(bytes,0,start-1)
-        val magicPrefix="runevm image 15 isa "
+        val magicPrefix="runevm image 16 isa "
         val ()=need(size magic=size magicPrefix+8 andalso String.isPrefix magicPrefix magic,
-                    "saved policy fixture requires image format 15")
+                    "saved policy fixture requires image format 16")
         val ()=need(CharVector.all Char.isHexDigit(String.extract(magic,size magicPrefix,NONE)),
                     "unsupported saved policy image fingerprint")
         val cursor=ref 0
@@ -119,7 +119,7 @@ struct
               val ()=List.app alloc ["success","malloc","realloc"]
               val report=Json.Object [("subprocesses",Json.Number (Int.toString (!(#sequence c)))),("result",Json.String "pass"),
                     ("native",Json.Bool native),("has_gmp",Json.Bool gmp),("allocation_checks",Json.Array (List.map Json.String (!allocation))),
-                    ("saved_policy_layout",Json.Object[("version",Json.Number "15"),("header_bytes",Json.Number(Int.toString start)),
+                    ("saved_policy_layout",Json.Object[("version",Json.Number "16"),("header_bytes",Json.Number(Int.toString start)),
                       ("mode",Json.Number(Int.toString(#mode layout))),("stats",Json.Number(Int.toString(#stats layout))),
                       ("bits",Json.Number(Int.toString(#bits layout))),("memory",Json.Number(Int.toString(#memory layout)))])]
           in write (path c "report.json",Json.encode report ^ "\n") end

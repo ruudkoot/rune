@@ -131,6 +131,7 @@ static void jit_make(VM *vm, JitProgram *jit) {
        image never returns into it, since its return word is not carried */
     memset(jit->seen, 0, sizeof jit->seen);
     jit->code_used = jit->code_mem ? jit->code_used : 0;
+    memset(jit->apply_shared, 0, sizeof jit->apply_shared);   /* (the program's stubs may be others) */
     /* what each function's calls must fill: worked out for all now, since
        a call through a closure reads it from the table at run time */
     if (jit->fill_from) for (uint32_t i = 0; i < p->nfuncs; i++) jit_fill_from(vm, jit, i);
@@ -191,7 +192,7 @@ static int tier_of(const VM *vm) {
 void jit_tier_up(VM *vm, JitProgram *jit, uint32_t f) {
     if (jit->full || jit->codes[f].entry) return;
     clock_t t0 = clock();
-    if (!jit_compile_tier(vm, jit, f, tier_of(vm)) && jit->code_used + (1u << 20) > jit->code_cap) jit->full = 1;
+    if (!jit_compile_tier(vm, jit, f, tier_of(vm)) && jit->code_used + (1u << 20) > jit->code_top) jit->full = 1;
     else if (vm->jit.perf_map && jit->codes[f].entry) perf_map(vm, jit, f);
     jit->compile_seconds += (double)(clock() - t0) / CLOCKS_PER_SEC;
 }

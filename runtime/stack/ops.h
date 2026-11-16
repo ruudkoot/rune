@@ -101,7 +101,10 @@ static inline void op_ARITY(VM *vm, int32_t a, int32_t b) {
     (void)p; (void)a; (void)b;
     Obj *c = vm_expect_obj(vm, *vm_top(vm, 0), K_CLOSURE, "closure");
     if (a < 2 || a > 65535) vm_fatal(vm, "ARITY of %d parameters", a);
+    int64_t f = val_imm(obj_field(c, 0));
+    if (f < 0) vm_fatal(vm, "ARITY of a closure of no function");
     c->contag = (uint16_t)a;
+    obj_fill_field(c, 0, mk_int(CLOSURE_NARY(f)));   /* an immediate into a fresh closure: no barrier */
 }
 
 #endif

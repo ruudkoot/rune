@@ -36,15 +36,19 @@ struct
   (* What CALL and TAILCALL share: the closure and its function checked; a
      closure of more parameters than one, or a partial application, the
      general path's (D15 C: stack_apply, runtime/stack/isa_stack.c), the
-     closure and the argument back on the stack for it. *)
+     closure and the argument back on the stack for it. Its parameters are
+     not tested (item 24, option 1): field 0 is a function in a closure of
+     one alone, a closure of more holding CLOSURE_NARY of it (ARITY) and a
+     partial application -1, both negative, which the check of the index
+     finds. *)
   fun callee tail =
     ["POLL();",
      "Value arg = POP();",
      "Value cv = POP();",
      "Obj *c = EXPECT(cv, K_CLOSURE, \"closure in call\");",
-     "if (obj_contag(c) != 0) { PUSH(cv); PUSH(arg); APPLY(1, " ^ tail ^ "); }",
      "int64_t fidx = val_imm(obj_field(c, 0));",
-     "if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
+     "if (fidx < 0) { PUSH(cv); PUSH(arg); APPLY(1, " ^ tail ^ "); }",
+     "if ((uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
      "Function *fn = &p->funcs[fidx];"]
   (* and the callee's frame at `at`: room for its locals and its deepest
      stack, local 0 the argument, the others unit, and its code entered *)
@@ -337,18 +341,22 @@ struct
         path's in C (stack_apply). *)
      sharedBody
        (inst ("ARITY", [("k", Count)], (Fixed 1, 1), Next,
-              "The closure on top, just made by CLOSURE, takes k parameters, k from 2: k in its contag, which a call tests.")
+              "The closure on top, just made by CLOSURE, takes k parameters, k from 2: k in its contag, which a call of more than one argument tests, and in field 0 not its function f but -2 - f (CLOSURE_NARY), which a call of one finds negative.")
           ["Obj *c = vm_expect_obj(vm, *vm_top(vm, 0), K_CLOSURE, \"closure\");",
            "if (a < 2 || a > 65535) vm_fatal(vm, \"ARITY of %d parameters\", a);",
-           "c->contag = (uint16_t)a;"]),
+           "int64_t f = val_imm(obj_field(c, 0));",
+           "if (f < 0) vm_fatal(vm, \"ARITY of a closure of no function\");",
+           "c->contag = (uint16_t)a;",
+           "obj_fill_field(c, 0, mk_int(CLOSURE_NARY(f)));   /* an immediate into a fresh closure: no barrier */"]),
      inst ("CALLN", [("m", Count)], (OperandValue 0, 1), Call,
            "Call the closure m - 1 below the top with the m - 1 values above it, m from 3, which become its locals 0 to m - 2; a closure of another number of parameters, or a partial application, is the general path's.")
        ["POLL();",
         "int32_t n = a - 1;   /* TOP takes a signed index */",
         "Value cv = TOP(n);",
         "Obj *c = EXPECT(cv, K_CLOSURE, \"closure in call\");",
-        "int64_t fidx = val_imm(obj_field(c, 0));",
-        "if (obj_contag(c) != n || fidx < 0) APPLY(n, 0);",
+        "int64_t w = val_imm(obj_field(c, 0));",
+        "if (obj_contag(c) != n || w > CLOSURE_NARY(0)) APPLY(n, 0);",
+        "int64_t fidx = CLOSURE_NARY(w);",
         "if ((uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
         "Function *fn = &p->funcs[fidx];",
         "size_t at = (size_t)(sp - vm->stack) - (size_t)n - 1;",
@@ -365,8 +373,9 @@ struct
         "int32_t n = a - 1;   /* TOP takes a signed index */",
         "Value cv = TOP(n);",
         "Obj *c = EXPECT(cv, K_CLOSURE, \"closure in call\");",
-        "int64_t fidx = val_imm(obj_field(c, 0));",
-        "if (obj_contag(c) != n || fidx < 0) APPLY(n, 1);",
+        "int64_t w = val_imm(obj_field(c, 0));",
+        "if (obj_contag(c) != n || w > CLOSURE_NARY(0)) APPLY(n, 1);",
+        "int64_t fidx = CLOSURE_NARY(w);",
         "if ((uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
         "Function *fn = &p->funcs[fidx];",
         "size_t at = FRAME->base;",

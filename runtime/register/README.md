@@ -194,8 +194,12 @@ the handlers to the innermost handler's, pushes the exception and enters
 the handler's code, which begins with `CATCH d`.
 
 Calls through a closure test its parameters (D15 C; [docs/bytecode.md](../../docs/bytecode.md),
-*Calls through a closure*): `CALL` enters a closure whose contag is 0,
-`CALLN f n a...` one whose contag is `n` (`CLOSUREN` makes them), and any
+*Calls through a closure*): `CALL` enters a closure whose field 0 is a
+function, a closure of one, testing nothing else (item 24, option 1: a
+closure of k >= 2 parameters holds `CLOSURE_NARY(f)`, `-2 - f`, there, and a
+partial application -1, both negative, which the check of the index finds),
+`CALLN f n a...` one whose contag is `n` (`CLOSUREN` makes them), its
+function `CLOSURE_NARY` of its field 0 again, and any
 other -- a closure of another number of parameters, a partial application
 (field 0 the int -1) -- goes to the general path, `reg_apply`
 (`isa_regs.c`), with the closure and the arguments pushed above the
@@ -560,11 +564,15 @@ argument gives, and tier 1 keep the slots; so do calls through a closure,
 whose callee is not known. A call through a closure (`CALL`, `TAILCALL`) finds
 both in that table by the word of the closure's function (`2f + 1`: the
 entry at 8 times it less 8, the room at 8 times it; checked against the
-number of functions where the section does not vouch for the closure),
+number of functions even where the section vouches for the closure,
+unsigned, so that a negative word -- a closure of more parameters, a
+partial application -- goes to the cases below: a call of one argument
+tests nothing else, item 24),
 the room claimed (a slow path claims and starts the instruction over),
 the registers made, the header's closure and return word written and
 the entry jumped to; `CALLN` and `TAILCALLN` the same for a closure whose
-contag is their number of arguments. A closure of another number of
+contag is their number of arguments, the function's word `-2 - w` of the
+word `w` of its `CLOSURE_NARY(f)`. A closure of another number of
 parameters, or a partial application, is taken after the call's code,
 out of the way of the call that finds what it wants, by four cases kept in
 compiled code (D15 C, `apply_fast` and `apply_fast_tail` in `emit.c`): a
@@ -582,7 +590,19 @@ makes the clean part unit from the frame's registers' end, where they are
 anything else -- the nursery full, a closure of k >= 2 given more than k
 -- goes to `reg_apply` in C (`SLOW_APPLY`, `jit_h_apply`), which goes on in
 the code of the function it entered, or after the `RESULT` in the
-caller's. The cases are off under `--jit-returns=call` and for a program
+caller's. A call of up to 8 arguments (`VM_APPLY_ARGS`) does not carry
+the cases in line (the haskell98 roadmap's item 24: they were most of its
+code, and of a compile's time): it hands its arguments' words over in
+`VM.apply_args` and, in `r8`, the address of a record after its jump --
+its landing's offset, its general path's, its frame's size -- to the
+cases' code that every call of as many arguments shares, and every tail
+call of as many another (`apply_shared` in `emit.c`), made when a call
+first wants it and placed at the region's top (`jit_place_shared`). That
+code tests the closure with the registers that are no home and goes on at
+the call's general path, with everything as the call left it, where no
+case applies or the room is short; a case it makes, it makes as the
+cases in line do, a tail call's arguments straight to the frame's base.
+The cases are off under `--jit-returns=call` and for a program
 without every arity in the section, and `RUNE_JIT_APPLY_FAST=0` turns them
 off, for a measurement. `RET` takes the value's word into `rax` and jumps
 where the frame's return word says, testing nothing: two instructions

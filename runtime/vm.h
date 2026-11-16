@@ -208,6 +208,9 @@ typedef struct JitOptions {
 } JitOptions;
 
 #define NUM_BUILTIN_EXNS 8
+/* the most arguments a call through a closure hands the general path's
+   shared cases in compiled code (VM.apply_args; item 24) */
+#define VM_APPLY_ARGS 8
 
 /* Where the next object goes: the state of the thread that allocates. There
    is one thread, and one of these, in the VM; a nursery of a thread's own or
@@ -600,6 +603,12 @@ typedef struct VM {
        program with suspensions, NULL before; and --caf-tables's mode */
     struct CafTables *caf;
     int caf_mode;
+    /* The arguments' words that a call through a closure in compiled code
+       hands the general path's cases shared by every call of as many (the
+       haskell98 roadmap's item 24; register/jit/emit.c, apply_shared):
+       read at once by code that calls nothing and collects nothing, so no
+       root. */
+    Value apply_args[VM_APPLY_ARGS];
 } VM;
 
 /* Whether p points into the room objects are made in (alloc). Young and
@@ -1024,7 +1033,7 @@ int stack_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc, const void *back)
 
 /* What each VM's instruction set gives (runtime/stack/isa_stack.c, runtime/register/isa_regs.c):
    the fingerprint an .rbc must carry, and the first bytes of an image. */
-#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 15 isa 00000000")
+#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 16 isa 00000000")
 extern const uint32_t isa_fingerprint;
 extern const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE];
 const LineEntry *line_at(const Program *p, uint32_t pc);
