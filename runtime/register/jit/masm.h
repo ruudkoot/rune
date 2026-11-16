@@ -306,6 +306,7 @@ void ms_frame_back(Masm *m);
    address ms_room compared, for its slow path. */
 void ms_room(Masm *m, uint32_t need, AsmLabel *slow);
 void ms_room_dynamic(Masm *m, int r, uint32_t above, AsmLabel *slow);
+void ms_room_shared(Masm *m, int r, int above, AsmLabel *slow);   /* the room past the bytes in register above (-1: none): item 24 */
 void ms_room_compared(Masm *m, int r, uint32_t need);
 /* r := the frame's base, an index into the stack, plus k */
 void ms_base_index(Masm *m, int r, uint32_t k);
@@ -382,6 +383,7 @@ void ms_alloc_dynamic(Masm *m, int kind, int len, int size, AsmLabel *slow);
    (a new object's fields, a frame's slots: no barrier) */
 void ms_store_field_reg(Masm *m, int obj, uint32_t i, int r);
 void ms_field_address(Masm *m, int rd, int obj, uint32_t i);
+void ms_store_word_at(Masm *m, int at, uint32_t i, int r);   /* [at + i values] := r (item 24) */
 void ms_object_size(Masm *m, int r);
 void ms_set_kind_contag(Masm *m, int obj, int kind, int r);
 void ms_copy_words(Masm *m, int src, int dst, int end, int tmp);

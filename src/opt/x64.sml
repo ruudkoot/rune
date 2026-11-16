@@ -461,16 +461,15 @@ struct
                    array of frames, is the glue's (native_call and
                    native_tailcall), as before M10 -- a closure of more
                    parameters than one and a partial application too, whose
-                   contag is not 0 (D15 C: the general path, stack_apply). *)
+                   field 0 is negative, which the check of the index finds
+                   with no test of the parameters (D15 C: the general path,
+                   stack_apply; item 24: CLOSURE_NARY, runtime/value.h). *)
                 let
                   val slow = lab pc ^ "_slow"
                   val tail = opc = Opcodes.TAILCALL
                   val newBase = sd (h - 2)
                 in
                   L.loadObj line (L.RAX, sd (h - 2), "K_CLOSURE", slow);
-                  L.loadContag line (L.RDX, L.RAX);
-                  line "test %edx, %edx";
-                  line ("jne " ^ slow);
                   L.loadFieldPayload line (L.RCX, L.RAX, 0);
                   line ("cmp $" ^ num nfuncs ^ ", %rcx");
                   line ("jae " ^ slow);

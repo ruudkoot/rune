@@ -50,7 +50,7 @@ enum Opcode {
   OP_ENTER = 42,  /* Pop argument, pop a suspension, and enter it as CALL enters a closure; one under evaluation is a loop: the exception Loop is raised. */
   OP_BLACKHOLE = 43,  /* The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows. */
   OP_UPDATE = 44,  /* Pop a value; the suspension running becomes an indirection to it; one that is an indirection already, lazy ML's that a force from inside it updated first, holds it now. */
-  OP_ARITY = 45,  /* The closure on top, just made by CLOSURE, takes k parameters, k from 2: k in its contag, which a call tests. */
+  OP_ARITY = 45,  /* The closure on top, just made by CLOSURE, takes k parameters, k from 2: k in its contag, which a call of more than one argument tests, and in field 0 not its function f but -2 - f (CLOSURE_NARY), which a call of one finds negative. */
   OP_CALLN = 46,  /* Call the closure m - 1 below the top with the m - 1 values above it, m from 3, which become its locals 0 to m - 2; a closure of another number of parameters, or a partial application, is the general path's. */
   OP_TAILCALLN = 47,  /* Like CALLN but the current frame is replaced. */
   OP__COUNT

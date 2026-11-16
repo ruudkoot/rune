@@ -46,7 +46,11 @@
    k_outlive_raise, k_outlive_three and outlive_nullary, a body that outlives
    its own update, which the collector's pin keeps written (gc_pin_running),
    and k_nested, a suspension of a suspension, which its guard keeps apart
-   (ind_may_shortcut); ordinary kernels, every build and every way. *)
+   (ind_may_shortcut); ordinary kernels, every build and every way. And
+   cafnary, a CAF that the function of a closure of two parameters alone
+   reaches: a closure of more parameters than one, on either VM, holds
+   -2 - f in field 0 (item 24, option 1), and the CAF tables take its
+   function back from it, so that the CAF is kept. *)
 structure Thunks =
 struct
   open Sh
@@ -57,7 +61,13 @@ struct
                     update, and a suspension of a suspension *)
                  "k_outlive", "k_outlive_int", "k_outlive_raise", "k_outlive_three", "outlive_nullary", "k_nested",
                  (* suspensions of closures that capture nothing, made beside them (M9b) *)
-                 "nullary_make"]
+                 "nullary_make",
+                 (* an over-applied tail call through an apply stub, entered past the
+                    stack's clean part, at both tiers under --deopt-stress (D15 C) *)
+                 "overtail",
+                 (* a CAF the function of a closure of two parameters alone reaches,
+                    which the collector takes back from its field 0 (item 24) *)
+                 "cafnary"]
   fun source k = "tests/thunks/" ^ k ^ ".sml"
   fun args k = words (fromRoot ("tests/thunks/" ^ k ^ ".args"))
 
@@ -69,7 +79,8 @@ struct
      has them (tests/runner/oracles.sml) *)
   val registerWays =
     List.map (fn (name, jit, _) => (name, "bin/runevm", jit)) Oracles.jitModes
-    @ [("checked", "bin/runevm", ["--checked"]),
+    @ [("deopt1", "bin/runevm", ["--jit=all", "--deopt-stress=1"]),   (* tier 1 leaving for the interpreter too (overtail) *)
+       ("checked", "bin/runevm", ["--checked"]),
        ("verify", "bin/runevm", ["--gc-verify", "--heap-size", "65536", "--nursery", "4096"]),
        ("stress", "bin/runevm", ["--gc-stress", "3"]),
        ("stress2", "bin/runevm", ["--gc-stress", "3", "--jit=all", "--jit-tier=2"]),

@@ -110,6 +110,8 @@ AsmLabel *jit_alloc_slow(Jit *j, int kind, int contag, uint32_t n, int fill, int
 void jit_fill(Jit *j, int kind, int fill, uint32_t n, int32_t d, int32_t a, int32_t b, const uint8_t *L);
 /* an instruction tier 1 does not compile: the function stays interpreted */
 void jit_unsupported(Jit *j);
+/* code shared by the functions' code, placed in the region's top (item 24) */
+const void *jit_place_shared(JitProgram *jit, const uint8_t *code, size_t n);
 /* where the code is entered from outside at pc (tier 2: a landing that
    loads the homes; tier 1: the instruction's label) */
 AsmLabel *jit_landing(Jit *j, uint32_t pc);

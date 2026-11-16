@@ -175,6 +175,12 @@ typedef struct JitProgram {
        function's code (M4); its stubs enter native code and leave it */
     uint8_t *code_mem;
     size_t code_cap, code_used;
+    /* the general path's cases shared by the calls through a closure of n
+       arguments, [0][n] and of tail calls [1][n], placed from the region's
+       top down to code_top as a call first wants them, NULL before (item
+       24; jit/emit.c, apply_shared); a program made again forgets them */
+    size_t code_top;
+    const void *apply_shared[2][VM_APPLY_ARGS + 1];
     const void *enter_at, *leave_at;
     const void *fatal_at;       /* the stub of the fatal errors, beside them */
     JitFatalSite *fatals;           /* the fatal errors of the code, by the number it gives the stub; the process's */

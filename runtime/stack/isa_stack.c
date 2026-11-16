@@ -8,7 +8,7 @@
 #include "opcodes.h"
 
 const uint32_t isa_fingerprint = STACK_ISA_FINGERPRINT;
-const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 15 isa " STACK_ISA_FINGERPRINT_HEX;
+const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 16 isa " STACK_ISA_FINGERPRINT_HEX;
 
 /* byte length of an instruction, or 0 for an invalid opcode */
 static inline int instr_length(uint8_t op) {
@@ -360,7 +360,9 @@ static void apply_table(VM *vm) {
     uint32_t kmax = 0, rmax = 0;
     for (uint32_t f = 0; f < p->nfuncs; f++) {
         unsigned k, r;
-        if (p->funcs[f].name && sscanf(p->funcs[f].name, "<apply %u %u>", &k, &r) == 2) {
+        /* sscanf only on the names apply_function finds: it costs a few hundred
+           instructions a name, and every program loaded pays for this */
+        if (apply_function(p, f) && sscanf(p->funcs[f].name, "<apply %u %u>", &k, &r) == 2) {
             if (k > kmax) kmax = k;
             if (r > rmax) rmax = r;
         }
@@ -376,7 +378,7 @@ static void apply_table(VM *vm) {
     }
     for (uint32_t f = 0; f < p->nfuncs; f++) {
         unsigned k, r;
-        if (!p->funcs[f].name) continue;
+        if (!apply_function(p, f)) continue;
         if (strcmp(p->funcs[f].name, "<apply return>") == 0) vm->apply_return = f;
         else if (sscanf(p->funcs[f].name, "<apply %u %u>", &k, &r) == 2 && k >= 1 && r >= 1)
             vm->apply_stubs[(size_t)(k - 1) * rmax + (r - 1)] = f;
@@ -470,6 +472,7 @@ int stack_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc, const void *back)
             vm->sp += s;
             continue;
         }
+        if (fidx <= CLOSURE_NARY(0)) fidx = CLOSURE_NARY(fidx);   /* a closure of more than one parameter (ARITY) */
         if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) vm_fatal(vm, "bad function index");
         uint32_t arity = obj_contag(c) ? obj_contag(c) : 1;
         if (n == arity) {

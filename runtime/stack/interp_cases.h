@@ -183,9 +183,9 @@ CASE(CALL) {
     Value arg = POP();
     Value cv = POP();
     Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
-    if (obj_contag(c) != 0) { PUSH(cv); PUSH(arg); APPLY(1, 0); }
     int64_t fidx = val_imm(obj_field(c, 0));
-    if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
+    if (fidx < 0) { PUSH(cv); PUSH(arg); APPLY(1, 0); }
+    if ((uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
     size_t at = (size_t)(sp - vm->stack);
     vm_push_frame(vm, (uint32_t)fidx, c, PC, at);
@@ -205,9 +205,9 @@ CASE(TAILCALL) {
     Value arg = POP();
     Value cv = POP();
     Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
-    if (obj_contag(c) != 0) { PUSH(cv); PUSH(arg); APPLY(1, 1); }
     int64_t fidx = val_imm(obj_field(c, 0));
-    if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
+    if (fidx < 0) { PUSH(cv); PUSH(arg); APPLY(1, 1); }
+    if ((uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
     size_t at = FRAME->base;
     FRAME->func = (uint32_t)fidx;
@@ -536,8 +536,9 @@ CASE(CALLN) {
     int32_t n = a - 1;   /* TOP takes a signed index */
     Value cv = TOP(n);
     Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
-    int64_t fidx = val_imm(obj_field(c, 0));
-    if (obj_contag(c) != n || fidx < 0) APPLY(n, 0);
+    int64_t w = val_imm(obj_field(c, 0));
+    if (obj_contag(c) != n || w > CLOSURE_NARY(0)) APPLY(n, 0);
+    int64_t fidx = CLOSURE_NARY(w);
     if ((uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
     size_t at = (size_t)(sp - vm->stack) - (size_t)n - 1;
@@ -559,8 +560,9 @@ CASE(TAILCALLN) {
     int32_t n = a - 1;   /* TOP takes a signed index */
     Value cv = TOP(n);
     Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
-    int64_t fidx = val_imm(obj_field(c, 0));
-    if (obj_contag(c) != n || fidx < 0) APPLY(n, 1);
+    int64_t w = val_imm(obj_field(c, 0));
+    if (obj_contag(c) != n || w > CLOSURE_NARY(0)) APPLY(n, 1);
+    int64_t fidx = CLOSURE_NARY(w);
     if ((uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
     size_t at = FRAME->base;

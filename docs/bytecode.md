@@ -524,7 +524,7 @@ Opcode numbers are assigned in the order of `src/isa/stack.sml`.
 | `CLOSURE f, n` | function, count | Pop `n` values into the environment of a new closure of function `f`. |
 | `SETENV e` | slot | Pop value `v`, pop closure `c`, set `c.env[e] := v` (patches mutually recursive closures). |
 | `CALL` / `TAILCALL` | | Pop argument, pop closure, call (replacing the frame for `TAILCALL`); a closure of more parameters than one, or a partial application, is the general path's (*Calls through a closure*, below). |
-| `ARITY k` | count | The closure on top, just made by `CLOSURE`, takes `k` parameters, `k` from 2: `k` in its header's contag, which a call tests. |
+| `ARITY k` | count | The closure on top, just made by `CLOSURE`, takes `k` parameters, `k` from 2: `k` in its header's contag, which a call of more than one argument tests, and in field 0 not its function `f` but `-2 - f`, which a call of one finds negative (*Calls through a closure*, below). |
 | `CALLN m` / `TAILCALLN m` | count | Call the closure `m - 1` below the top with the `m - 1` values above it, `m` from 3, which become its locals 0 to `m - 2` (replacing the frame for `TAILCALLN`); a closure of another number of parameters, or a partial application, is the general path's. |
 | `CALLK f, n` / `TAILCALLK f, n` | function, count | Call function `f` with the `n` values on top of the stack as its locals 0 to `n-1`, and no closure (replacing the frame for `TAILCALLK`); `n` is at most `f`'s locals. |
 | `RET` | | Return the top of stack to the caller. |
@@ -695,7 +695,13 @@ its function takes, and the call tests it.
   and the register bytecode's `CLOSUREN` give it. The compiler makes one of
   more parameters of a curried function's twin (`Uncurry`, [ir.md](ir.md)),
   and a call of several arguments through a closure, `CALLN`, of a chain of
-  calls each of whose result the next applies at once.
+  calls each of whose result the next applies at once. In both bytecodes
+  a closure of more parameters than one holds in field 0 not its
+  function `f` but `-2 - f` (`CLOSURE_NARY`, `runtime/value.h`),
+  negative as a partial application's -1 is, so that a call of one argument
+  tests no parameters: the check of the function index it makes anyway
+  sends both to the general path (the haskell98 roadmap's item 24, option
+  1); `CALLN` tests the contag and takes the function back as `-2 - w`.
 * **A partial application** is a `K_CLOSURE` whose field 0 is the int -1, where
   a closure's is its function: its contag is how many more arguments it
   wants, field 1 the closure it applies (never itself a partial application)

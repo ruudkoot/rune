@@ -1209,6 +1209,17 @@ void ms_room_dynamic(Masm *m, int r, uint32_t above, AsmLabel *slow) {
     as_cmp_rm(&m->a, R_S0, VMR, OFF(stack_room));
     as_jcc(&m->a, CC_A, slow);
 }
+/* the same for the general path's cases shared by the calls of n arguments
+   (item 24, emit.c: apply_shared): the room of r words (r may be rax) past
+   the bytes in register above over the frame's base, a call's, or (above
+   -1) past its base, a tail call's; to slow where there is none, which a
+   general path in C claims (rax clobbered) */
+void ms_room_shared(Masm *m, int r, int above, AsmLabel *slow) {
+    as_lea(&m->a, R_S0, BASER, r, VALUE_SIZE, -VALUE_SIZE * ROOM_SLACK);
+    if (above >= 0) as_add_rr(&m->a, R_S0, above);
+    as_cmp_rm(&m->a, R_S0, VMR, OFF(stack_room));
+    as_jcc(&m->a, CC_A, slow);
+}
 void ms_room_compared(Masm *m, int r, uint32_t need) {
     as_lea(&m->a, r, BASER, -1, 1, need <= ROOM_SLACK ? 0 : VALUE_SIZE * (int32_t)(need - ROOM_SLACK));
 }
@@ -1723,6 +1734,10 @@ void ms_store_field_reg(Masm *m, int obj, uint32_t i, int r) {
     as_st64(&m->a, obj, FIELD_OFF(i), r);
 }
 void ms_field_address(Masm *m, int rd, int obj, uint32_t i) { as_lea(&m->a, rd, obj, -1, 1, FIELD_OFF(i)); }
+/* the i-th value from at, where ms_field_address or a frame's base put it,
+   := the word in r: a fresh object's fields past what it holds, or a
+   callee's registers (item 24's shared cases, emit.c) */
+void ms_store_word_at(Masm *m, int at, uint32_t i, int r) { as_st64(&m->a, at, VALUE_SIZE * (int32_t)i, r); }
 void ms_object_size(Masm *m, int r) {
     as_shl_ri(&m->a, r, VALUE_SHIFT);
     as_add_ri(&m->a, r, (int32_t)sizeof(Obj));
