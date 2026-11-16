@@ -136,23 +136,6 @@ struct
   val real_eq = Real.==
   val real_floor = Real.floor
   val real_ceil = Real.ceil
-  (* Not the host's Real.round: Poly/ML 5.7.1 rounds 0.49999999999999994 up.
-     r - floor r is exact, so the three cases are decided exactly. On a
-     31-bit int, floor overflows for r in [minInt - 0.5, minInt), which rounds
-     to minInt (not trunc: SML/NJ 110.99.9 truncates minInt to maxInt). *)
-  fun real_round r =
-    let
-      val below = Real.floor r
-      val d = Real.- (r, Real.fromInt below)
-    in
-      if Real.< (d, 0.5) then below
-      else if Real.> (d, 0.5) orelse Int.rem (below, 2) <> 0 then Int.+ (below, 1)
-      else below
-    end
-    handle Overflow =>
-      case Int.minInt of
-        SOME m => if Real.< (r, 0.0) andalso Real.>= (r, Real.- (Real.fromInt m, 0.5)) then m else raise Overflow
-      | NONE => raise Overflow
   val real_trunc = Real.trunc
   val real_to_string = Real.toString
   (* Poly/ML raises Overflow for an exponent that does not fit an int; the
@@ -205,6 +188,11 @@ struct
         else if Real.== (Real.rem (below, 2.0), 0.0) then below
         else below + 1.0
       end)
+  (* real_round_r's whole real as an int: not the host's Real.round, which
+     adds 0.5 and rounds the sum, in the rounding mode that is set (Poly/ML
+     5.7.1 rounds 0.49999999999999994 up, SML/NJ and MLKit round 2^52 + 1 to
+     2^52 + 2). floor, not trunc: SML/NJ 110.99.9 truncates minInt to maxInt. *)
+  fun real_round r = Real.floor (real_round_r r)
   val real_sign_bit = Real.signBit
   (* The bits of IEEE 754 binary64, worked out with the host's IntInf, which
      every host has (SML/NJ has no PackReal). A host whose word has fewer

@@ -61,7 +61,7 @@ real_ge          2  real * real -> bool      Greater or equal.
 real_eq          2  real * real -> bool      IEEE equality.
 real_floor       1  real -> int              Raises Overflow/Domain.
 real_ceil        1  real -> int              Raises Overflow/Domain.
-real_round       1  real -> int              Round to nearest even; raises Overflow/Domain.
+real_round       1  real -> int              Nearest int, ties to even, in every rounding mode; raises Overflow/Domain.
 real_trunc       1  real -> int              Raises Overflow/Domain.
 real_to_string   1  real -> string           SML formatting (~ for negative, E exponent).
 real_from_string 1  string -> real option    Parse a real literal.

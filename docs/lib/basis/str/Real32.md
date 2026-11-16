@@ -7,7 +7,7 @@
 | Signature | [`REAL`](../sig/REAL.md) |
 | Status | optional |
 | Members | 64 |
-| Tests | 150 checks |
+| Tests | 152 checks |
 | Source | [lib/basis/real32.sml](../../../../lib/basis/real32.sml) |
 
 ## Synopsis

@@ -564,10 +564,13 @@ reach inside it. The note is
   cannot pass with the host's `exnName` where Rune defines none.
 * `RunePrim` does not go through host functions that the suite shows to be
   wrong: files use `Posix.IO` and not the host's streams (MLton's `inputAll`
-  after `input1`), `real_round` is written with `floor` (Poly/ML's `round`;
-  `trunc`, which would suit a 31-bit `int` better, gives `maxInt` for `minInt`
-  on SML/NJ 110.99.9), and `time_sleep` sleeps again for what is left
-  (Poly/ML 5.9.2 can return early). Where the shim does call the host's
+  after `input1`), `real_round` is the `floor` of `real_round_r`, which
+  decides a tie on the exact `x - floor x` (the hosts' `round` adds 0.5 and
+  rounds that: Poly/ML's `realRound` of 0.49999999999999994 is 1, SML/NJ's
+  and MLKit's `round` of 2^52 + 1 is 2^52 + 2, and what they give depends on
+  the rounding mode; `trunc`, which would suit a 31-bit `int` better, gives
+  `maxInt` for `minInt` on SML/NJ 110.99.9), and `time_sleep` sleeps again
+  for what is left (Poly/ML 5.9.2 can return early). Where the shim does call the host's
   function, the host's bug shows in the `xc1` configuration too: a host line
   that names `*:HOST` explains both. Writing it showed three primitives whose contract was only in the
   C code; `runtime/prims.def` now states the 100000000-element limit of arrays and

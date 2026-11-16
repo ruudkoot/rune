@@ -125,7 +125,7 @@ struct
          {name = "real_ceil", arity = 1, ty = "real -> int", effects = [Raises],
           doc = "Raises Overflow/Domain."},
          {name = "real_round", arity = 1, ty = "real -> int", effects = [Raises],
-          doc = "Round to nearest even; raises Overflow/Domain."},
+          doc = "Nearest int, ties to even, in every rounding mode; raises Overflow/Domain."},
          {name = "real_trunc", arity = 1, ty = "real -> int", effects = [Raises],
           doc = "Raises Overflow/Domain."},
          {name = "real_to_string", arity = 1, ty = "real -> string", effects = [RoundingMode, Allocates],

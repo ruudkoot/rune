@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 4 |
 | Documentation | 64 of 64 entries documented |
-| Tests | 1059 checks of 62 entries |
+| Tests | 1076 checks of 62 entries |
 | Source | [lib/basis/sig\_real.sml](../../../../lib/basis/sig_real.sml) |
 
 ## Synopsis
@@ -1070,11 +1070,11 @@ val realRound : real -> real
 
 </details>
 
-<details><summary>Tests (20)</summary>
+<details><summary>Tests (25)</summary>
 
-For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `down` &middot; `up` &middot; `negative-down` &middot; `negative-up` &middot; `tie-half` &middot; `tie-one-and-half` &middot; `tie-two-and-half` &middot; `tie-three-and-half` &middot; `tie-negative` &middot; `tie-negative-odd` &middot; `just-below-half` &middot; `large-odd` &middot; `huge` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `negzero-sign` &middot; `law-nearest`
+For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `down` &middot; `up` &middot; `negative-down` &middot; `negative-up` &middot; `tie-half` &middot; `tie-one-and-half` &middot; `tie-two-and-half` &middot; `tie-three-and-half` &middot; `tie-negative` &middot; `tie-negative-odd` &middot; `just-below-half` &middot; `large-odd` &middot; `large-odd-negative` &middot; `just-below-half-negative` &middot; `huge` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `negzero-sign` &middot; `law-nearest` &middot; `*` &middot; `law-every-mode`
 
-For `Real32`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `tie-to-even` &middot; `tie-up`
+For `Real32`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `tie-to-even` &middot; `tie-up` &middot; `*`
 
 </details>
 
@@ -1209,13 +1209,13 @@ Also in the [top-level environment](../top-level.md): `round`.
 
 </details>
 
-<details><summary>Tests (28)</summary>
+<details><summary>Tests (40)</summary>
 
-For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `down` &middot; `up` &middot; `negative` &middot; `tie-half` &middot; `tie-one-and-half` &middot; `tie-two-and-half` &middot; `tie-three-and-half` &middot; `tie-negative-half` &middot; `tie-negative` &middot; `tie-negative-odd` &middot; `just-below-half` &middot; `toplevel` &middot; `large` &middot; `Overflow-posInf` (raises Overflow) &middot; `Overflow-negInf` (raises Overflow) &middot; `Domain-nan` (raises Domain) &middot; `Overflow-above-maxInt` &middot; `Overflow-below-minInt` &middot; `Overflow-negative-huge` &middot; `minInt` &middot; `minInt-minus-half-tie-to-even` &middot; `near-maxInt` &middot; `Overflow-maxInt-plus-half-tie-to-even` &middot; `law-halves-to-even` &middot; `tie-to-even`
+For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `down` &middot; `up` &middot; `negative` &middot; `tie-half` &middot; `tie-one-and-half` &middot; `tie-two-and-half` &middot; `tie-three-and-half` &middot; `tie-negative-half` &middot; `tie-negative` &middot; `tie-negative-odd` &middot; `just-below-half` &middot; `just-below-half-negative` &middot; `toplevel` &middot; `large` &middot; `Overflow-posInf` (raises Overflow) &middot; `Overflow-negInf` (raises Overflow) &middot; `Domain-nan` (raises Domain) &middot; `Overflow-above-maxInt` &middot; `Overflow-below-minInt` &middot; `Overflow-negative-huge` &middot; `minInt` &middot; `minInt-minus-half-tie-to-even` &middot; `near-maxInt` &middot; `Overflow-maxInt-plus-half-tie-to-even` &middot; `large-odd` &middot; `large-odd-negative` &middot; `large-tie-to-even` &middot; `large-tie-to-even-below` &middot; `two-to-the-53` &middot; `two-to-the-53-negative` &middot; `law-halves-to-even` &middot; `*` &middot; `Overflow-*` &middot; `Overflow-*` (raises Overflow) &middot; `Domain-*` (raises Domain) &middot; `law-every-mode` &middot; `tie-to-even`
 
 For `LargeReal`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `tie-to-even`
 
-For `Real32`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `tie-to-even` &middot; `Domain-nan` (raises Domain)
+For `Real32`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `tie-to-even` &middot; `Domain-nan` (raises Domain) &middot; `*`
 
 </details>
 

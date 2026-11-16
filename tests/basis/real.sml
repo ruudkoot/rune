@@ -729,6 +729,8 @@ struct
   (* 0.5 - 2^~54 is the predecessor of 0.5: adding 0.5 and flooring is wrong. *)
   val () = T.check ("Real.realRound/just-below-half", fn () => Real.== (Real.realRound (0.5 - pow2 ~54), 0.0))
   val () = eqR ("Real.realRound/large-odd", 4503599627370497.0, fn () => Real.realRound 4503599627370497.0)
+  val () = eqR ("Real.realRound/large-odd-negative", ~4503599627370497.0, fn () => Real.realRound (~4503599627370497.0))
+  val () = T.check ("Real.realRound/just-below-half-negative", fn () => Real.== (Real.realRound (~ (0.5 - pow2 ~54)), 0.0))
   val () = eqR ("Real.realRound/huge", 1E300, fn () => Real.realRound 1E300)
   val () = eqR ("Real.realRound/posInf", posInf, fn () => Real.realRound posInf)
   val () = eqR ("Real.realRound/negInf", negInf, fn () => Real.realRound negInf)
@@ -783,6 +785,7 @@ struct
   val () = eqI ("Real.round/tie-negative", ~2, fn () => Real.round (~2.5))
   val () = eqI ("Real.round/tie-negative-odd", ~4, fn () => Real.round (~3.5))
   val () = eqI ("Real.round/just-below-half", 0, fn () => Real.round (0.5 - pow2 ~54))
+  val () = eqI ("Real.round/just-below-half-negative", 0, fn () => Real.round (~ (0.5 - pow2 ~54)))
   val () = eqI ("Real.round/toplevel", 4, fn () => round 3.5)
   val () = eqI ("Real.round/large", 536870911, fn () => Real.round 536870911.25)
   val () = eqI ("Real.floor/large-negative", ~536870912, fn () => Real.floor (~536870911.5))
@@ -867,6 +870,21 @@ struct
   val () = sharp ("Real.round/Overflow-maxInt-plus-half-tie-to-even", true, Real.round, true)
   val () = sharp ("Real.floor/Overflow-minInt-minus-half", true, Real.floor, false)
 
+  (* From 2^52 every real is whole, and x + 0.5 is a tie for an odd x, which
+     goes to the even x + 1: round is not floor (x + 0.5) there. Below 2^52
+     the halves are reals, and their ties go to even. Where an int holds the
+     result: a precision of 54 for 2^52 + 1, of 55 for 2^53. *)
+  fun wideRound (label, need : int, x : real, expected : unit -> int) : unit =
+    case Int.precision of
+      SOME p => if p < need then T.check (label, fn () => true) else eqI (label, expected (), fn () => Real.round x)
+    | NONE => eqI (label, expected (), fn () => Real.round x)
+  val () = wideRound ("Real.round/large-odd", 54, pow2 52 + 1.0, fn () => intPow2 52 + 1)
+  val () = wideRound ("Real.round/large-odd-negative", 54, ~ (pow2 52 + 1.0), fn () => ~ (intPow2 52 + 1))
+  val () = wideRound ("Real.round/large-tie-to-even", 54, pow2 52 - 0.5, fn () => intPow2 52)
+  val () = wideRound ("Real.round/large-tie-to-even-below", 54, pow2 52 - 1.5, fn () => intPow2 52 - 2)
+  val () = wideRound ("Real.round/two-to-the-53", 55, pow2 53, fn () => intPow2 53)
+  val () = wideRound ("Real.round/two-to-the-53-negative", 55, ~ (pow2 53), fn () => ~ (intPow2 53))
+
   val () = law ("Real.floor/law-agrees-with-realFloor", 300, 28,
                 fn x => Real.== (Real.fromInt (Real.floor x), Real.realFloor x)
                         andalso Real.== (Real.fromInt (Real.ceil x), Real.realCeil x)
@@ -945,6 +963,66 @@ struct
                              Real.== (inMode IEEEReal.TO_NEGINF (fn () => Real.fromInt (Int.fromLarge (LargeInt.~ odd))),
                                       ~ (pow2 53 + 2.0)))
   (*>> fromint-rounding-mode *)
+
+  (*<< round-every-mode *)
+  (* round is "the nearest int", ties to even, and realRound the nearest
+     whole real: unlike toInt they take no rounding mode, so the one that
+     IEEEReal.setRoundingMode sets does not change them. Each case is checked
+     with each of the four set, its argument worked out before. *)
+  fun underMode mode f =
+    let val saved = IEEEReal.getRoundingMode ()
+    in IEEEReal.setRoundingMode mode; (f () before IEEEReal.setRoundingMode saved)
+       handle e => (IEEEReal.setRoundingMode saved; raise e)
+    end
+  val everyMode = [("TO_NEAREST", IEEEReal.TO_NEAREST), ("TO_NEGINF", IEEEReal.TO_NEGINF),
+                   ("TO_POSINF", IEEEReal.TO_POSINF), ("TO_ZERO", IEEEReal.TO_ZERO)]
+  (* (case, the precision an int needs to hold it, x, round x, realRound x) *)
+  val roundCases =
+    [("just-below-half", 0, 0.5 - pow2 ~54, fn () => 0, 0.0),
+     ("just-below-half-negative", 0, ~ (0.5 - pow2 ~54), fn () => 0, ~0.0),
+     ("just-above-half", 0, 0.5 + pow2 ~53, fn () => 1, 1.0),
+     ("tie-half", 0, 0.5, fn () => 0, 0.0),
+     ("tie-negative-half", 0, ~0.5, fn () => 0, ~0.0),
+     ("tie-one-and-half", 0, 1.5, fn () => 2, 2.0),
+     ("tie-negative-one-and-half", 0, ~1.5, fn () => ~2, ~2.0),
+     ("tie-two-and-half", 0, 2.5, fn () => 2, 2.0),
+     ("tie-negative-two-and-half", 0, ~2.5, fn () => ~2, ~2.0),
+     ("large-odd", 54, pow2 52 + 1.0, fn () => intPow2 52 + 1, pow2 52 + 1.0),
+     ("large-odd-negative", 54, ~ (pow2 52 + 1.0), fn () => ~ (intPow2 52 + 1), ~ (pow2 52 + 1.0)),
+     ("large-tie-to-even", 54, pow2 52 - 0.5, fn () => intPow2 52, pow2 52),
+     ("large-tie-to-even-below", 54, pow2 52 - 1.5, fn () => intPow2 52 - 2, pow2 52 - 2.0),
+     ("two-to-the-53", 55, pow2 53, fn () => intPow2 53, pow2 53),
+     ("two-to-the-53-negative", 55, ~ (pow2 53), fn () => ~ (intPow2 53), ~ (pow2 53))]
+  val () = List.app (fn (name, mode) =>
+             let
+               fun r x = underMode mode (fn () => Real.round x)
+               fun rr x = underMode mode (fn () => Real.realRound x)
+               fun holds need = case Int.precision of SOME p => p >= need | NONE => true
+             in
+               List.app (fn (what, need, x, n, whole) =>
+                           (if holds need then eqI ("Real.round/" ^ name ^ "-" ^ what, n (), fn () => r x)
+                            else T.check ("Real.round/" ^ name ^ "-" ^ what, fn () => true);
+                            eqR ("Real.realRound/" ^ name ^ "-" ^ what, whole, fn () => rr x)))
+                        roundCases;
+               nearMaxInt ("Real.round/" ^ name ^ "-near-maxInt", r);
+               atMinInt ("Real.round/" ^ name ^ "-minInt", r, 0.0);
+               atMinInt ("Real.round/" ^ name ^ "-minInt-minus-half-tie-to-even", r, 0.5);
+               overflows ("Real.round/Overflow-" ^ name ^ "-above-maxInt", r, above);
+               overflows ("Real.round/Overflow-" ^ name ^ "-below-minInt", r, below);
+               sharp ("Real.round/Overflow-" ^ name ^ "-maxInt-plus-half-tie-to-even", true, r, true);
+               T.raises ("Real.round/Overflow-" ^ name ^ "-posInf", T.isOverflow, fn () => r posInf);
+               T.raises ("Real.round/Overflow-" ^ name ^ "-negInf", T.isOverflow, fn () => r negInf);
+               T.raises ("Real.round/Domain-" ^ name ^ "-nan", T.isDomain, fn () => r nan);
+               eqR ("Real.realRound/" ^ name ^ "-posInf", posInf, fn () => rr posInf);
+               eqR ("Real.realRound/" ^ name ^ "-negInf", negInf, fn () => rr negInf);
+               eqR ("Real.realRound/" ^ name ^ "-nan", nan, fn () => rr nan)
+             end) everyMode
+  val () = law ("Real.round/law-every-mode", 300, 28,
+                fn x => List.all (fn (_, mode) => underMode mode (fn () => Real.round x) = Real.round x) everyMode)
+  val () = law ("Real.realRound/law-every-mode", 300, 60,
+                fn x => List.all (fn (_, mode) => T.sameReal (underMode mode (fn () => Real.realRound x), Real.realRound x))
+                                 everyMode)
+  (*>> round-every-mode *)
 
   (*<< tolargeint *)
   (* The expected values need an unbounded LargeInt (all four systems have
