@@ -5,6 +5,7 @@
 - `make` (val): [HS_MOD_IFACE](../sig/HS_MOD_IFACE.md#val-make)
 - `map` (type): [HS_STRING_MAP](../sig/HS_STRING_MAP.md#type-map)
 - `mark` (type): [HS_LAYOUT](../sig/HS_LAYOUT.md#type-mark)
+- `markFields` (val): [HS_MATCH](../sig/HS_MATCH.md#val-markfields)
 - `marks` (val): [HS_MATCH](../sig/HS_MATCH.md#val-marks)
 - `matchType` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-matchtype)
 - `member` (val): [HS_STRING_MAP](../sig/HS_STRING_MAP.md#val-member)

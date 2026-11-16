@@ -2632,7 +2632,7 @@
    ]
   },
   "HS_MATCH": {
-   "doc": "Pattern matching in the Report's order (the haskell98 roadmap's M15,\nD34), and decision trees in Sestoft's order.\n\nThe rules of 3.17.3 are taken literally at `-O0` and `-O1`; the trees\nare rhc's at `-O2` and above (D34, the owner's decision of 2026-11-15).\n\nThe Report's order: the clauses one after another, and in each the\npatterns from left to right, each from the outside in (3.17.2). A\nclause that fails goes to the next, which a lazy `let` of the rest of\nthe match holds (rule (c)'s `y`), so no clause is copied (defect 14).\nA constructor's pattern forces its value and matches its fields left\nto right (rule (g)); a newtype's casts and forces nothing (rules (k),\n(l)); a numeric literal compares by `==` at its type with the\ndictionaries the checker chose (rule (h)), a character literal by a\ncase on its code point, a string literal as the list of its characters\n(defect 7); `~p` binds each variable of `p` to a match of its own that\nis made only when the variable is forced (rule (d)); `x@p` binds `x`\nto the value (rule (e)); `n+k` compares by `>=` and binds `n` to the\nvalue less `k` (rule (s)); a record pattern tests its constructor and\nmatches its fields in the pattern's order (rules (m) to (o)).\n\nSestoft's order (Sestoft 1996) matches the same patterns in the same\norder, but makes no test whose outcome the tests made already decide:\na decision tree whose right-hand sides are functions of their\nvariables, so that none is copied. Its only freedom is in tests on\nvalues already forced (D34). A clause with a pattern it does not take\napart (a literal, `~p`, `n+k`, a newtype's or a record's) is matched\nfrom there on in the Report's way.\n\n",
+   "doc": "Pattern matching in the Report's order (the haskell98 roadmap's M15,\nD34), and decision trees in Sestoft's order.\n\nThe rules of 3.17.3 are taken literally at `-O0` and `-O1`; the trees\nare rhc's at `-O2` and above (D34, the owner's decision of 2026-11-15).\n\nThe Report's order: the clauses one after another, and in each the\npatterns from left to right, each from the outside in (3.17.2). A\nclause that fails goes to the next, which a lazy `let` of the rest of\nthe match holds (rule (c)'s `y`), so no clause is copied (defect 14).\nA constructor's pattern forces its value and matches its fields left\nto right (rule (g)); a newtype's casts and forces nothing (rules (k),\n(l)); a numeric literal compares by `==` at its type with the\ndictionaries the checker chose (rule (h)), a character literal by a\ncase on its code point, a string literal as the list of its characters\n(defect 7); `~p` binds each variable of `p` to a match of its own that\nis made only when the variable is forced (rule (d)), but where `p` has\ntwo variables or more, the tuple form's selectors (`tupleForm`), and\nwhere its one variable is a field of what a variable holds, that\nfield's selector (`oneField`), each marked for the collector (the\nroadmap's D17, C); `x@p` binds `x`\nto the value (rule (e)); `n+k` compares by `>=` and binds `n` to the\nvalue less `k` (rule (s)); a record pattern tests its constructor and\nmatches its fields in the pattern's order (rules (m) to (o)).\n\nSestoft's order (Sestoft 1996) matches the same patterns in the same\norder, but makes no test whose outcome the tests made already decide:\na decision tree whose right-hand sides are functions of their\nvariables, so that none is copied. Its only freedom is in tests on\nvalues already forced (D34). A clause with a pattern it does not take\napart (a literal, `~p`, `n+k`, a newtype's or a record's) is matched\nfrom there on in the Report's way.\n\n",
    "page": "sig/HS_MATCH.md",
    "members": [
     {
@@ -2683,6 +2683,27 @@
      "spec": "val marks : string * Core.ty * (string * Core.ty) list * HsDsCore.texp -> HsDsCore.texp",
      "doc": "`marks (t, tupleTy, vs, body)` is `body` after each of the selectors\n`vs` of the tuple `t` is marked one for the collector (sel\\_mark,\nthe VM's thunk\\_selector).\n\n",
      "page": "sig/HS_MATCH.md#val-marks"
+    },
+    {
+     "kind": "val",
+     "name": "markFields",
+     "spec": "val markFields : Core.atom * Core.ty * (int * string * Core.ty) list * HsDsCore.texp -> HsDsCore.texp",
+     "doc": "`markFields (a, t, fs, body)` is `body` after each selector of `fs`\nis marked one for the collector, of its field of the value `a`, of type\n`t`.\n\nEach of `fs` is the field's index and the selector's Core name and\ntype.\n\n",
+     "page": "sig/HS_MATCH.md#val-markfields"
+    },
+    {
+     "kind": "val",
+     "name": "oneField",
+     "spec": "val oneField : HsAst.pat -> (string * int) option",
+     "doc": "`oneField p` is the constructor's Core name and the field's index where\n`p`, of one variable, takes it from a field of the constructor.\n\n`p` is a tuple, or a constructor of a data type of one constructor,\neach of whose patterns is `_` but the variable (the roadmap's D17, C,\nfor one variable); NONE for any other.\n\n",
+     "page": "sig/HS_MATCH.md#val-onefield"
+    },
+    {
+     "kind": "val",
+     "name": "field",
+     "spec": "val field : Core.atom * Core.ty * string * int -> HsDsCore.texp",
+     "doc": "`field (a, t, k, i)` is field `i` of the value `a`, of type `t`, which\nthe constructor `k` made, the type's one constructor.\n\n",
+     "page": "sig/HS_MATCH.md#val-field"
     },
     {
      "kind": "type",

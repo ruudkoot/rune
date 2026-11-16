@@ -35,7 +35,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_LEXER`](sig/HS_LEXER.md) | 3 | 3 | 100% | 1 | 1 |
 | [`HS_LINT`](sig/HS_LINT.md) | 24 | 24 | 100% | 9 | 9 |
 | [`HS_LITERATE`](sig/HS_LITERATE.md) | 2 | 2 | 100% | 2 | 2 |
-| [`HS_MATCH`](sig/HS_MATCH.md) | 12 | 12 | 100% | 8 | 8 |
+| [`HS_MATCH`](sig/HS_MATCH.md) | 15 | 15 | 100% | 11 | 11 |
 | [`HS_MODULES`](sig/HS_MODULES.md) | 14 | 14 | 100% | 6 | 6 |
 | [`HS_MOD_IFACE`](sig/HS_MOD_IFACE.md) | 4 | 4 | 100% | 3 | 3 |
 | [`HS_PARSER`](sig/HS_PARSER.md) | 6 | 6 | 100% | 3 | 3 |
@@ -47,7 +47,7 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_TOKEN`](sig/HS_TOKEN.md) | 9 | 9 | 100% | 5 | 5 |
 | [`HS_TYPES`](sig/HS_TYPES.md) | 43 | 43 | 100% | 29 | 29 |
 | [`HS_USAGE`](sig/HS_USAGE.md) | 5 | 5 | 100% | 4 | 4 |
-| **all** | 474 | 474 | 100% | 303 | 303 |
+| **all** | 477 | 477 | 100% | 306 | 306 |
 
 ## Members a signature describes
 
@@ -56,7 +56,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-41 structures have a page, with 474 members, of which 474 (100%) are described by a signature.
+41 structures have a page, with 477 members, of which 477 (100%) are described by a signature.
 
 ## Examples that are run
 

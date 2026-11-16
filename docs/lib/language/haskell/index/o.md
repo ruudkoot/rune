@@ -5,6 +5,7 @@
 - `occurrence` (type): [HS_MATCH](../sig/HS_MATCH.md#type-occurrence)
 - `Occurs` (exn): [HS_TYPES](../sig/HS_TYPES.md#exn-occurs)
 - `OF` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-of)
+- `oneField` (val): [HS_MATCH](../sig/HS_MATCH.md#val-onefield)
 - `options` (type): [CORE_SIMPLIFY](../sig/CORE_SIMPLIFY.md#type-options), [HS_LEXER](../sig/HS_LEXER.md#type-options), [HS_PARSER](../sig/HS_PARSER.md#type-options)
 - `order` (type): [HS_MATCH](../sig/HS_MATCH.md#type-order)
 - `order` (val): [HS_MATCH](../sig/HS_MATCH.md#val-order)

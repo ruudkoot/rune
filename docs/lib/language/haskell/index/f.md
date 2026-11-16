@@ -10,6 +10,7 @@
 - `fault` (type): [CORE_TO_MID](../sig/CORE_TO_MID.md#type-fault)
 - `Field` (con): [HS_AST](../sig/HS_AST.md#con-field), [HS_MODULES](../sig/HS_MODULES.md#con-field)
 - `field` (type): [HS_AST](../sig/HS_AST.md#type-field)
+- `field` (val): [HS_MATCH](../sig/HS_MATCH.md#val-field)
 - `fieldsAt` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-fieldsat)
 - `fieldsOf` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-fieldsof)
 - `file` (val): [HS_SOURCE](../sig/HS_SOURCE.md#val-file)
