@@ -438,6 +438,7 @@ void caf_code(VM *vm, Obj *o, void (*visit)(VM *, Value *)) {
     Value fv = obj_fields(o)[0];
     if (!val_is_imm(fv)) return;
     int64_t fid = val_int(fv);
+    if (fid <= -2) fid = -2 - fid;   /* the register VM's closure of more than one parameter (REG_NARY) */
     if (fid < 0) return;
     take_func(vm, vm->caf, (uint32_t)fid, visit);
 }

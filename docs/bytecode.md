@@ -695,7 +695,13 @@ its function takes, and the call tests it.
   and the register bytecode's `CLOSUREN` give it. The compiler makes one of
   more parameters of a curried function's twin (`Uncurry`, [ir.md](ir.md)),
   and a call of several arguments through a closure, `CALLN`, of a chain of
-  calls each of whose result the next applies at once.
+  calls each of whose result the next applies at once. In the register
+  bytecode a closure of more parameters than one holds in field 0 not its
+  function `f` but `-2 - f` (`REG_NARY`, `runtime/register/regvm.h`),
+  negative as a partial application's -1 is, so that a call of one argument
+  tests no parameters: the check of the function index it makes anyway
+  sends both to the general path (the haskell98 roadmap's item 24, option
+  1); `CALLN` tests the contag and takes the function back as `-2 - w`.
 * **A partial application** is a `K_CLOSURE` whose field 0 is the int -1, where
   a closure's is its function: its contag is how many more arguments it
   wants, field 1 the closure it applies (never itself a partial application)

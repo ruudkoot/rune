@@ -962,7 +962,7 @@ void emit_CLOSURE(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c, const ui
 void emit_CLOSUREN(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c, int32_t d, const uint8_t *L, uint32_t n) {
     (void)pc; (void)d;
     if (c < 2) { jit_unsupported(j); return; }
-    alloc(j, K_CLOSURE, c, n + 1, FILL_CLOSURE, a, b, 0, L);
+    alloc(j, K_CLOSURE, c, n + 1, FILL_CLOSURE, a, (int32_t)REG_NARY(b), 0, L);   /* field 0 no function (item 24) */
 }
 void emit_SELECT(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
@@ -1456,20 +1456,30 @@ static void called(Jit *j, uint32_t pc) {
    VM, which a unit loaded grows and may move */
 static void closure_function(Jit *j, int32_t a, int obj, int kind, AsmLabel *general, uint32_t n) {
     ms_load_obj(M, obj, a, kind, jit_fatal(j, kind == K_THUNK ? FATAL_ENTER : FATAL_CALL, 0, 0, 0));
-    /* D15 C: a closure of another arity than the call gives (its contag,
-       0 for one), or a partial application (field 0 REG_PAP), is the
-       interpreter's general path's (SLOW_APPLY, reg_apply) */
-    if (general) {
+    /* D15 C: a closure of another arity than the call gives, or a partial
+       application, is the interpreter's general path's (SLOW_APPLY,
+       reg_apply). A call of one argument tests no parameters (item 24):
+       field 0 of a closure of more (REG_NARY) and of a partial application
+       (REG_PAP) is negative, which the check of the index sends there. A
+       call of n >= 2 tests the contag, n, then REG_NARY(f)'s word, -2 - w
+       for the function's */
+    if (general && n >= 2) {
         ms_load_contag(M, R_S6, obj);
-        as_cmp_ri(A, R_S6, n == 1 ? 0 : (int32_t)n);
+        as_cmp_ri(A, R_S6, (int32_t)n);
         as_jcc(A, CC_NE, general);
     }
     ms_load_field_bits(M, R_S6, obj, 0);   /* field 0: the function, its word */
-    if (general && n >= 2) { as_cmp_ri(A, R_S6, 0); as_jcc(A, CC_L, general); }
+    if (general && n >= 2) {
+        as_cmp_ri(A, R_S6, 2 * (int32_t)REG_NARY(0) + 1);
+        as_jcc(A, CC_G, general);
+        as_neg(A, R_S6);
+        as_sub_ri(A, R_S6, 2);
+    }
     as_ld32(A, R_S3, VMR, OFF(prog.nfuncs));
     as_lea(A, R_S3, R_S3, R_S3, 1, 1);   /* the word of the number of functions */
     as_cmp_rr(A, R_S6, R_S3);
-    as_jcc(A, CC_AE, jit_fatal(j, FATAL_FUNCTION, 0, 0, 0));   /* unsigned: negative too */
+    /* unsigned: negative too, the general path's for a call of one */
+    as_jcc(A, CC_AE, general && n == 1 ? general : jit_fatal(j, FATAL_FUNCTION, 0, 0, 0));
     as_ld64(A, R_S1, VMR, OFF(jit_calls));
 }
 /* the callee's entry from the table (rcx) by its function's word (r11) */
@@ -1572,9 +1582,13 @@ static void apply_counted(Jit *j, int k, int r) {
     as_add_mi(A, r, 0, 1);
 }
 /* the word of the function of the closure in rdx into r11, checked as
-   closure_function checks it (r8 clobbered); rcx := the table of calls */
+   closure_function checks it (r8 clobbered); rcx := the table of calls.
+   The closure is a partial application's, of more than one parameter:
+   field 0 REG_NARY(f), whose word w gives f's as -2 - w (item 24) */
 static void function_word(Jit *j) {
     ms_load_field_bits(M, R_S6, R_S2, 0);
+    as_neg(A, R_S6);
+    as_sub_ri(A, R_S6, 2);
     as_ld32(A, R_S3, VMR, OFF(prog.nfuncs));
     as_lea(A, R_S3, R_S3, R_S3, 1, 1);
     as_cmp_rr(A, R_S6, R_S3);
@@ -1647,8 +1661,8 @@ static void apply_fast(Jit *j, int32_t a, uint32_t n, const int32_t *args, AsmLa
     ms_role(M, MR_CLOS);
     as_bind(A, odd);
     ms_load_field_bits(M, R_S6, R_S2, 0);
-    as_cmp_ri(A, R_S6, 0);
-    as_jcc(A, CC_L, &pap);
+    as_cmp_ri(A, R_S6, 2 * REG_PAP + 1);   /* REG_PAP's word: a closure of more than one parameter holds REG_NARY(f), negative too */
+    as_jcc(A, CC_E, &pap);
     ms_load_contag(M, R_S3, R_S2);   /* its parameters; 0 for one */
     if (stub != UINT32_MAX) { as_cmp_ri(A, R_S3, 0); as_jcc(A, CC_E, &over); }
     as_cmp_ri(A, R_S3, (int32_t)n);
@@ -1721,8 +1735,8 @@ static void apply_fast_tail(Jit *j, int32_t a, uint32_t n, const int32_t *args, 
     ms_role(M, MR_CLOS);
     as_bind(A, odd);
     ms_load_field_bits(M, R_S6, R_S2, 0);
-    as_cmp_ri(A, R_S6, 0);
-    as_jcc(A, CC_L, &pap);
+    as_cmp_ri(A, R_S6, 2 * REG_PAP + 1);   /* REG_PAP's word: a closure of more than one parameter holds REG_NARY(f), negative too */
+    as_jcc(A, CC_E, &pap);
     ms_load_contag(M, R_S3, R_S2);
     if (stub != UINT32_MAX) { as_cmp_ri(A, R_S3, 0); as_jcc(A, CC_E, &over); }
     as_cmp_ri(A, R_S3, (int32_t)n);

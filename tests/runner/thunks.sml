@@ -46,7 +46,11 @@
    k_outlive_raise, k_outlive_three and outlive_nullary, a body that outlives
    its own update, which the collector's pin keeps written (gc_pin_running),
    and k_nested, a suspension of a suspension, which its guard keeps apart
-   (ind_may_shortcut); ordinary kernels, every build and every way. *)
+   (ind_may_shortcut); ordinary kernels, every build and every way. And
+   cafnary, a CAF that the function of a closure of two parameters alone
+   reaches: the register VM's closure of more parameters than one holds
+   -2 - f in field 0 (item 24, option 1), and the CAF tables take its
+   function back from it, so that the CAF is kept. *)
 structure Thunks =
 struct
   open Sh
@@ -60,7 +64,10 @@ struct
                  "nullary_make",
                  (* an over-applied tail call through an apply stub, entered past the
                     stack's clean part, at both tiers under --deopt-stress (D15 C) *)
-                 "overtail"]
+                 "overtail",
+                 (* a CAF the function of a closure of two parameters alone reaches,
+                    which the collector takes back from its field 0 (item 24) *)
+                 "cafnary"]
   fun source k = "tests/thunks/" ^ k ^ ".sml"
   fun args k = words (fromRoot ("tests/thunks/" ^ k ^ ".args"))
 

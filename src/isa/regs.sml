@@ -190,11 +190,13 @@ struct
   fun callee tail =
     ["Value arg = R(b);",
      "Obj *c = EXPECT(R(a), K_CLOSURE, \"closure in call\");",
-     "/* D15 C: a closure of more than one parameter, or a partial",
-     "   application, is the general path's (reg_apply, isa_regs.c) */",
-     "if (obj_contag(c) != 0) APPLY(R(a), 1, &R(b), " ^ tail ^ ");",
+     "/* D15 C, item 24: no test of the closure's parameters -- field 0 is a",
+     "   function only in a closure of one; a closure of more (REG_NARY) and a",
+     "   partial application (REG_PAP) hold a negative, the general path's",
+     "   (reg_apply, isa_regs.c) */",
      "int64_t fidx = val_imm(obj_field(c, 0));",
-     "if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
+     "if (fidx < 0) APPLY(R(a), 1, &R(b), " ^ tail ^ ");",
+     "if ((uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
      "Function *fn = &p->funcs[fidx];"]
   val enter =
     ["Value *slot = vm->stack + top;",
@@ -547,14 +549,18 @@ struct
            "obj_become_ind(vm, val_ptr(cv), R(a));"]),
      (* Eval/apply proper (the haskell98 roadmap's D15 C; impl/w/d15/design.md):
         a closure of a function of k parameters says k in its contag (0 for
-        one, as every closure CLOSURE makes), and a call of n arguments
+        one, as every closure CLOSURE makes), and a call of n >= 2 arguments
         tests it -- the same, the function entered with them; fewer, a
         partial application made; more, the function entered with its k
         under a frame that applies what it returns to the rest. A
         partial application is a K_CLOSURE too, of the function index
         REG_PAP, its contag the parameters it still wants, its fields
         the closure applied and what it was given. The general path is
-        reg_apply's (runtime/register/isa_regs.c). *)
+        reg_apply's (runtime/register/isa_regs.c). A call of one argument
+        tests nothing of it (item 24, option 1): field 0 is a function
+        only in a closure of one, and a closure of more holds
+        REG_NARY(f) there, negative as REG_PAP is, so that the check of
+        the index a call makes anyway sends both to the general path. *)
      implicitly [MakesClosure "f"]
        (rinst ("CLOSUREN", [("d", Writes (Is RPtr)), ("f", K Function), ("k", K Tag), ("n", K Count), ("env", Registers (3, CapturesOf "f"))], Next,
                "Register d := a closure of function f, of k parameters (2 or more), capturing the n registers of env: a call of k arguments enters it.")
@@ -562,7 +568,7 @@ struct
            "SYNC();",
            "Obj *cl = vm_alloc_fields(vm, K_CLOSURE, (uint16_t)c, n + 1);",
            "Value *f = obj_fields(cl);",
-           "f[0] = mk_int(b);",
+           "f[0] = mk_int(REG_NARY(b));   /* no function: a call of one argument is the general path's (item 24) */",
            "for (uint32_t i = 0; i < n; i++) f[i + 1] = R(LIST(i));",
            "R(a) = mk_ptr(cl);"]),
      (ordered [Then "RESULT"] o implicitly [CallsClosure, Leaves any])
@@ -571,10 +577,11 @@ struct
           ["POLL(9 + 4 * n);",
            "CENSUS_CALL(5, R(a), CENSUS_REP(p, vm->func, a));",
            "Obj *c = EXPECT(R(a), K_CLOSURE, \"closure in call\");",
-           "int64_t fidx = val_imm(obj_field(c, 0));",
+           "int64_t w = val_imm(obj_field(c, 0));",
            "/* the general path for any other arity, and for a partial application (REG_PAP) */",
-           "if (obj_contag(c) != n || fidx < 0) APPLY_LIST(R(a), n, 0);",
-           "if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
+           "if (obj_contag(c) != n || w > REG_NARY(0)) APPLY_LIST(R(a), n, 0);",
+           "int64_t fidx = REG_NARY(w);",
+           "if ((uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
            "Function *fn = &p->funcs[fidx];",
            "size_t top = (size_t)(sp - vm->stack) + FRAME_HEADER;",
            "ROOM(top, fn);",
@@ -593,9 +600,10 @@ struct
           ["POLL(9 + 4 * n);",
            "CENSUS_CALL(6, R(a), CENSUS_REP(p, vm->func, a));",
            "Obj *c = EXPECT(R(a), K_CLOSURE, \"closure in call\");",
-           "int64_t fidx = val_imm(obj_field(c, 0));",
-           "if (obj_contag(c) != n || fidx < 0) APPLY_LIST(R(a), n, 1);",
-           "if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
+           "int64_t w = val_imm(obj_field(c, 0));",
+           "if (obj_contag(c) != n || w > REG_NARY(0)) APPLY_LIST(R(a), n, 1);",
+           "int64_t fidx = REG_NARY(w);",
+           "if ((uint64_t)fidx >= p->nfuncs) FATAL(\"bad function index\");",
            "Function *fn = &p->funcs[fidx];",
            "size_t top = vm->fp;",
            "size_t need = (size_t)(sp - vm->stack) + n;",
