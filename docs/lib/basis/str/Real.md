@@ -205,7 +205,7 @@ What each means is on [`REAL`](../sig/REAL.md); the types are this structure's o
 > NaN the significand is `x` itself; the exponent of a zero is 0, and that
 > of an infinity or a NaN is left open.
 
-<details><summary>Other implementations (59)</summary>
+<details><summary>Other implementations (71)</summary>
 
 - **MLKit** &mdash; the optimiser compiles 0.0 + e and e + 0.0 as e, so 0.0 + \~0.0 is \~0.0, not 0.0 (with --no\_optimiser it is 0.0)
 - **SML/NJ** &mdash; Real.ceil minPos is 0: ceil is \~1 - floor (\~(x + 1.0)), which is one too small whenever x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
@@ -242,17 +242,29 @@ What each means is on [`REAL`](../sig/REAL.md); the types are this structure's o
 - **SML/NJ** &mdash; realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 \<\> 1E300, realCeil maxFinite = inf)
 - **SML/NJ** &mdash; realCeil, realTrunc and realRound lose the sign of a zero result
 - **SML/NJ** &mdash; Real.realFloor 0.0 is \~0.0
-- **Poly/ML** &mdash; round and realRound of 0.49999999999999994 give 1 (they add 0.5 and floor)
-- **Poly/ML** &mdash; Real.realRound (2^52 + 1) is 2^52 + 2
+- **Poly/ML** &mdash; realRound of 0.49999999999999994 is 1 (it adds 0.5 and floors; round gives 0)
+- **Poly/ML** &mdash; Real.realRound (2^52 + 1) is 2^52 + 2, and realRound \~(2^52 + 1) is \~2^52
+- **Poly/ML** &mdash; realRound depends on the rounding mode: it is floor (x + 0.5), or ceil (x - 0.5) for an even number and a half, and the sum is rounded in the mode that is set (libpolyml/reals.cpp, PolyRealRound), so that 0.49999999999999994 gives 1, 2^52 + 1 gives 2^52 + 2, a zero result loses its sign, and under TO\_NEGINF realRound 0.5 is \~0.0
+- **Poly/ML** &mdash; realRound depends on the rounding mode: it adds 0.5 and the sum is rounded in the mode that is set (libpolyml/reals.cpp, PolyRealRound)
 - **Poly/ML** &mdash; Real.realRound (\~0.25) is 0.0, not \~0.0
-- **SML/NJ** &mdash; Real.realRound (2^52 + 1) is 2^52
+- **SML/NJ** &mdash; realRound is x + 2^52 - 2^52 (x - 2^52 + 2^52 below zero) to nearest, and the sum is rounded: Real.realRound (2^52 + 1) is 2^52, realRound \~(2^52 + 1) is \~2^52
+- **SML/NJ** &mdash; realRound loses the sign of a zero result whatever the rounding mode: realRound \~0.5 is 0.0
+- **SML/NJ** &mdash; realRound loses the sign of a zero result whatever the rounding mode: realRound \~0.49999999999999994 is 0.0
+- **MLKit** &mdash; realRound depends on the rounding mode, as (x + 2^52) - 2^52 would: under TO\_POSINF realRound 2.5 is 3.0, under TO\_NEGINF realRound 1.5 is 1.0 and realRound 0.5 is \~0.0
+- **MLKit** &mdash; realRound depends on the rounding mode: under TO\_POSINF realRound 2.5 is 3.0
 - **MLton** &mdash; Real.rem (0.0, 0.0) is 0.0, not NaN
 - **MLton** &mdash; Real.rem computes x - n\*y in floating point: rem (1.5E12, 3.1E\~10) = 2.44140625E\~4, larger than y
 - **SML/NJ** &mdash; Real.rem (x, inf) is NaN, not x
 - **SML/NJ** &mdash; Real.rem is inexact: rem (210.25, 176.25) = 34.000000000000007
 - **SML/NJ** &mdash; rem (±inf, y) is a zero, not NaN
 - **SML/NJ** &mdash; rem (x, ±0.0) is a zero, not NaN
+- **SML/NJ (64-bit), SML/NJ development** &mdash; round is floor (x + 0.5), or ceil (x - 0.5) where that is odd, and the sums are rounded in the rounding mode that is set (smlnj/init/pervasive.sml): round (2^52 + 1) is 2^52 + 2 to nearest and 2^52 under TO\_NEGINF
+- **SML/NJ (64-bit), SML/NJ development** &mdash; under TO\_POSINF round 2^53 is 2^53 + 2: round is floor (x + 0.5), and x + 0.5 rounds up
+- **SML/NJ** &mdash; round (0.5 + 2^\~53) is 0, not 1: floor (x + 0.5) is 1, since x + 0.5 rounds to 1 (but under TO\_POSINF), and being odd gives way to ceil (x - 0.5), which is 0, ceil being \~1 - floor (\~(x - 0.5 + 1.0)) and the sum rounding to 1 (docs/bugreport/smlnj/Real.ceil)
 - **SML/NJ (32-bit)** &mdash; Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt: round computes ceil (x - 0.5), which is out of range (docs/bugreport/smlnj/Real.ceil)
+- **MLKit** &mdash; round is floor (x + 0.5), or floor x where x + 0.5 is whole and floor x even, and x + 0.5 is rounded in the rounding mode that is set (lib/mlkit/basis/Real.sml): round (2^52 + 1) is 2^52 + 2 and round \~(2^52 + 1) is \~2^52 to nearest
+- **MLKit** &mdash; round (0.5 + 2^\~53) is 0, not 1: x + 0.5 rounds to 1 (but under TO\_POSINF), which round takes for a tie, and floor x is 0, which is even
+- **MLKit** &mdash; under TO\_POSINF round (2^62 - 512) is minInt: x + 0.5 rounds up to 2^62, whose floor wraps around (as ceil's does: Real.ceil/Overflow-above-maxInt)
 - **SML/NJ** &mdash; scan consumes a decimal point that no digit follows ("1." leaves "", "1.E5" is 1E5)
 - **Poly/ML 5.9.2** &mdash; toDecimal gives exp = 1, not 0, for zeros, infinities and NaNs
 - **MLKit** &mdash; toDecimal gives sign = false for every NaN ("In all cases, the sign and class field capture the sign and class of r")

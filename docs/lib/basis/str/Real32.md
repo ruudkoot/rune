@@ -97,13 +97,14 @@ What each means is on [`REAL`](../sig/REAL.md); the types are this structure's o
 | val | [`~`](../sig/REAL.md#val-op-tilde) | `Real32.real -> Real32.real` |
 | structure | [`Math`](../str/Real32.Math.md) | [`MATH`](../sig/MATH.md) |
 
-<details><summary>Other implementations (6)</summary>
+<details><summary>Other implementations (7)</summary>
 
 - **Poly/ML 5.9.2** &mdash; fromLargeInt rounds to binary64 and then to binary32: 2^60 + 2^36 + 1 becomes 2^60, not 2^60 + 2^37
 - **Poly/ML 5.9.2** &mdash; fromString "3.4028236e38", beyond maxFinite by more than half a spacing, is 2^127 instead of an infinity
 - **Poly/ML 5.9.2** &mdash; fromString rounds a number just above half of minPos to zero
 - **Poly/ML 5.9.2** &mdash; another reading of the specification: fromString rounds to nearest in every rounding mode; the test takes MLton's reading, that a numeral is rounded in the current mode
 - **MLton, Poly/ML 5.9.2** &mdash; another reading of the specification: as Real.nextAfter/equal-zeros-returns-r\*: returns t
+- **Poly/ML** &mdash; Real32.realRound depends on the rounding mode: it is floor (x + 0.5), or ceil (x - 0.5) for an even number and a half, in binary32, and the sum is rounded in the mode that is set (libpolyml/reals.cpp, PolyRealFRound), so that the greatest binary32 below one half gives 1 and 2^23 + 1 gives 2^23 + 2
 - **Poly/ML 5.9.2** &mdash; toDecimal of a zero has exp 1, not 0
 
 </details>
