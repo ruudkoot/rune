@@ -433,9 +433,14 @@ programs). A collection takes the table of each frame from where it waits
 evaluated it marks, and of what the units loaded export; the frames' own
 closures come last, so that one only the frames hold does not keep all its
 function reaches; and it makes unit every global none of those reached. The
-full collection, the copier and the low-pause collector's cycle (which
-keeps the globals as they were when it began, beside what they are, for its
-snapshot) take them, on both VMs and in native code. A program of SML has
+full collection, the copier and the low-pause collector's cycle take them,
+on both VMs and in native code. The cycle keeps the globals as they were
+when it began, beside what they are, for its snapshot; and a suspension
+not yet evaluated that goes under evaluation (`BLACKHOLE`) or is updated
+(`UPDATE`) while it marks has its code's table taken then, as marking it
+would have (`gc_barrier_code`, `runtime/vm.h`): its code goes on in a frame
+the snapshot never saw, and the cycle's end would otherwise make unit a
+global that code still reads. A program of SML has
 no suspensions, builds no table and keeps its globals as roots, as before;
 `runevm --caf-tables off` keeps them roots in any program, and
 `--caf-tables on` takes the tables in any (a test of them). Minor

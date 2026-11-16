@@ -126,6 +126,16 @@ void gc_shade_old(VM *vm, Obj *o, Value old) {
     shade(vm, val_ptr(old));
 }
 
+/* THE BARRIER's part for code (vm.h, gc_barrier_code), where the cycle
+   keeps its globals by the CAF tables: a suspension not yet evaluated that
+   goes under evaluation or is updated, its function's table taken. One of
+   the nursery is newer than the snapshot, its code taken where the code
+   that made it was. */
+void gc_shade_code(VM *vm, Obj *o) {
+    if (gc_in_nursery(vm, o) || !caf_runs(o)) return;
+    caf_code(vm, o, shade_value);
+}
+
 /* Gray objects scanned until want bytes more are marked, or the work of
    the scan reaches most: CYCLE_FIELD_WORK for each field scanned and
    CYCLE_OBJECT_WORK for each object marked (an object marked is a header
