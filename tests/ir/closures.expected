@@ -4,43 +4,35 @@
     (case v2
       (0
         (return (con0 0 : int list)))
-      (1
+      (else
         (let (v3 : int * int list) (decon 1 v2 : int list)
         (let (v4 : int) (select 0 v3)
         (let (v5 : int list) (select 1 v3)
         (let (v6 : int) (app v1 v4)
         (let (v7 : int list) (app g1 v1 v5)
         (let (v8 : int * int list) (tuple v6 v7)
-        (return (con 1 v8 : int list)))))))))
-      (else
-        (let (v9 : exncon) (builtinexn 0)
-        (let (v10 : exn) (mkexn v9 ())
-        (raise v10)))))))
+        (return (con 1 v8 : int list))))))))))))
 (funs
-  (fn g2 ((v11 : int) (v12 : int)) : int "fn"
-    (return (prim int_add v12 v11 : (int * int) -> int)))
-  (fn g3 ((v13 : int list) (v14 : int)) : int list "map"
-    (case v13
+  (fn g2 ((v9 : int) (v10 : int)) : int "fn"
+    (return (prim int_add v10 v9 : (int * int) -> int)))
+  (fn g3 ((v11 : int list) (v12 : int)) : int list "map"
+    (case v11
       (0
         (return (con0 0 : int list)))
-      (1
-        (let (v15 : int * int list) (decon 1 v13 : int list)
-        (let (v16 : int) (select 0 v15)
-        (let (v17 : int list) (select 1 v15)
-        (let (v18 : int) (prim int_add v16 v14 : (int * int) -> int)
-        (let (v19 : int list) (app g3 v17 v14)
-        (let (v20 : int * int list) (tuple v18 v19)
-        (return (con 1 v20 : int list)))))))))
       (else
-        (let (v21 : exncon) (builtinexn 0)
-        (let (v22 : exn) (mkexn v21 ())
-        (raise v22)))))))
+        (let (v13 : int * int list) (decon 1 v11 : int list)
+        (let (v14 : int) (select 0 v13)
+        (let (v15 : int list) (select 1 v13)
+        (let (v16 : int) (prim int_add v14 v12 : (int * int) -> int)
+        (let (v17 : int list) (app g3 v15 v12)
+        (let (v18 : int * int list) (tuple v16 v17)
+        (return (con 1 v18 : int list))))))))))))
 (funs
-  (fn g4 ((v23 : int) (v24 : int list)) : int list "add"
-    (return (app g3 v24 v23))))
+  (fn g4 ((v19 : int) (v20 : int list)) : int list "add"
+    (return (app g3 v20 v19))))
 (val g5 : int list
-  (let (v25 : int * int list) (tuple 2 (con0 0 : int list))
-  (let (v26 : int list) (con 1 v25 : int list)
-  (let (v27 : int * int list) (tuple 1 v26)
-  (let (v28 : int list) (con 1 v27 : int list)
-  (return (app g3 v28 3)))))))
+  (let (v21 : int * int list) (tuple 2 (con0 0 : int list))
+  (let (v22 : int list) (con 1 v21 : int list)
+  (let (v23 : int * int list) (tuple 1 v22)
+  (let (v24 : int list) (con 1 v23 : int list)
+  (return (app g3 v24 3)))))))

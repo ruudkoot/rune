@@ -4,65 +4,57 @@
     (case v1
       (0
         (return v2))
-      (1
+      (else
         (let (v3 : int * int list) (decon 1 v1 : int list)
         (let (v4 : int) (select 0 v3)
         (let (v5 : int list) (select 1 v3)
         (let (v6 : int) (prim int_add v2 v4 : (int * int) -> int)
-        (return (app g1 v5 v6)))))))
-      (else
-        (let (v7 : exncon) (builtinexn 0)
-        (let (v8 : exn) (mkexn v7 ())
-        (raise v8)))))))
+        (return (app g1 v5 v6))))))))))
 (funs
-  (fn g2 ((v9 : int list)) : int "sum"
-    (return (app g1 v9 0))))
+  (fn g2 ((v7 : int list)) : int "sum"
+    (return (app g1 v7 0))))
 (funs
-  (fn g3 ((v10 : int) (v11 : int list)) : int list "m"
-    (case v11
+  (fn g3 ((v8 : int) (v9 : int list)) : int list "m"
+    (case v9
       (0
         (return (con0 0 : int list)))
-      (1
-        (let (v12 : int * int list) (decon 1 v11 : int list)
-        (let (v13 : int) (select 0 v12)
-        (let (v14 : int list) (select 1 v12)
-        (let (v15 : int) (prim int_mul v10 v13 : (int * int) -> int)
-        (let (v16 : int list) (app g3 v10 v14)
-        (let (v17 : int * int list) (tuple v15 v16)
-        (return (con 1 v17 : int list)))))))))
       (else
-        (let (v18 : exncon) (builtinexn 0)
-        (let (v19 : exn) (mkexn v18 ())
-        (raise v19)))))))
+        (let (v10 : int * int list) (decon 1 v9 : int list)
+        (let (v11 : int) (select 0 v10)
+        (let (v12 : int list) (select 1 v10)
+        (let (v13 : int) (prim int_mul v8 v11 : (int * int) -> int)
+        (let (v14 : int list) (app g3 v8 v12)
+        (let (v15 : int * int list) (tuple v13 v14)
+        (return (con 1 v15 : int list))))))))))))
 (funs
-  (fn g4 ((v20 : int) (v21 : int list)) : int list "scale"
-    (return (app g3 v20 v21))))
+  (fn g4 ((v16 : int) (v17 : int list)) : int list "scale"
+    (return (app g3 v16 v17))))
 (funs
-  (fn g5 ((v22 : int)) : int -> int "scale2"
+  (fn g5 ((v18 : int)) : int -> int "scale2"
     (fun
-      (fn v23 ((v24 : int)) : int "keep"
-        (return (prim int_mul v22 v24 : (int * int) -> int)))
-    (return v23))))
+      (fn v19 ((v20 : int)) : int "keep"
+        (return (prim int_mul v18 v20 : (int * int) -> int)))
+    (return v19))))
 (funs
-  (fn g6 ((v25 : int -> int) (v26 : int)) : int "twice"
-    (let (v27 : int) (app v25 v26)
-    (return (app v25 v27)))))
+  (fn g6 ((v21 : int -> int) (v22 : int)) : int "twice"
+    (let (v23 : int) (app v21 v22)
+    (return (app v21 v23)))))
 (funs
-  (fn g7 ((v28 : int)) : int
-    (return (prim int_add v28 1 : (int * int) -> int))))
+  (fn g7 ((v24 : int)) : int
+    (return (prim int_add v24 1 : (int * int) -> int))))
 (funs
-  (fn g8 ((v29 : int)) : int "addTwo"
-    (return (app g6 g7 v29))))
+  (fn g8 ((v25 : int)) : int "addTwo"
+    (return (app g6 g7 v25))))
 (val g9 : int * int list * int * int
-  (let (v30 : int * int list) (tuple 2 (con0 0 : int list))
-  (let (v31 : int list) (con 1 v30 : int list)
-  (let (v32 : int * int list) (tuple 1 v31)
-  (let (v33 : int list) (con 1 v32 : int list)
-  (let (v34 : int) (app g2 v33)
-  (let (v35 : int * int list) (tuple 3 (con0 0 : int list))
-  (let (v36 : int list) (con 1 v35 : int list)
-  (let (v37 : int list) (app g4 2 v36)
-  (let (v38 : int -> int) (app g5 4)
-  (let (v39 : int) (app v38 5)
-  (let (v40 : int) (app g8 6)
-  (return (tuple v34 v37 v39 v40))))))))))))))
+  (let (v26 : int * int list) (tuple 2 (con0 0 : int list))
+  (let (v27 : int list) (con 1 v26 : int list)
+  (let (v28 : int * int list) (tuple 1 v27)
+  (let (v29 : int list) (con 1 v28 : int list)
+  (let (v30 : int) (app g2 v29)
+  (let (v31 : int * int list) (tuple 3 (con0 0 : int list))
+  (let (v32 : int list) (con 1 v31 : int list)
+  (let (v33 : int list) (app g4 2 v32)
+  (let (v34 : int -> int) (app g5 4)
+  (let (v35 : int) (app v34 5)
+  (let (v36 : int) (app g8 6)
+  (return (tuple v30 v33 v35 v36))))))))))))))

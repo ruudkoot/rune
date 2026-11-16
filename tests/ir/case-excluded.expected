@@ -1,0 +1,22 @@
+lo, then not lo: hi
+not lo: hi below 5
+a, then b: below 5
+b: 5 or more
+c
+a, then not a, not b, c
+not a, b below 5
+not a, not b, c below 5
+not b, a
+b, then not b, not a, c below 5
+not b, not a, c
+nothing, then just x
+just y
+a, then not a: c
+not a: b below 5
+not a: c
+e1
+not e1: e2
+not e1: neither
+lo, then caught, hi
+caught, hi below 5
+status 0

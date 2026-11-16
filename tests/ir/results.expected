@@ -38,26 +38,19 @@ function f2 find (v1 v2, 0 captured)
     v5 = con0 0
     return v5
   b3:
-    iftag v4 1 b4 b5
-  b4:
     v6 = field 1 0 v4
     v7 = select 0 v6
     v8 = select 1 v6
     v9 = field 1 1 v4
     v10 = prim imm_eq v3 v7
-    if v10 b6 b7
-  b6:
+    if v10 b4 b5
+  b4:
     v11 = con0 1
     v12 = setglobal g1 v8
     return v11
-  b7:
-    goto b1 v3 v9
   b5:
-    v13 = builtinexn 0
-    v14 = ()
-    v15 = mkexn v13 v14
-    raise v15
-  reps v1:int v2:con v3:int v4:con v5:con v6:ptr v7:int v8:int v9:con v10:con0 v11:con0 v13:ptr v14:unit v15:ptr
+    goto b1 v3 v9
+  reps v1:int v2:con v3:int v4:con v5:con v6:ptr v7:int v8:int v9:con v10:con0 v11:con0
 function f3 f (v1, 0 captured)
   b0:
     v2 = callk f1 v1
@@ -83,12 +76,5 @@ function f4 g (v1, 0 captured)
     v13 = const 0
     return v13
   b2:
-    iftag v11 1 b3 b4
-  b3:
     return v12
-  b4:
-    v14 = builtinexn 0
-    v15 = ()
-    v16 = mkexn v14 v15
-    raise v16
-  reps v1:int v2:int v3:int v4:int v5:int v7:con v8:con v10:con v11:con0 v13:int v14:ptr v15:unit v16:ptr
+  reps v1:int v2:int v3:int v4:int v5:int v7:con v8:con v10:con v11:con0 v13:int
