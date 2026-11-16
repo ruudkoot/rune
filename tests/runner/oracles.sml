@@ -329,7 +329,13 @@ struct
     end
 
   (* tier 2 tests CALL's function index, trusted register or not: a call of
-     what is no closure stops there and goes nowhere *)
+     what is no closure stops there and goes nowhere. Since D15's C (the
+     haskell98 roadmap, item 24) a call of one argument sends an index the
+     test refuses to the general path, reg_apply, which tests the kind as the
+     interpreter does, so a tuple stops with "expected closure in call"; a
+     closure whose index is out of range, there or in a call of more, with
+     "bad function index". A jump through the index unchecked would leave the
+     table of calls, with neither message *)
   fun callIndex () =
     let
       val out = run ^ "/regverify"
@@ -345,7 +351,9 @@ struct
         let val status = execEnv (fn e => e)
                                  {cmd = ["bin/runevm", "--jit=all", "--jit-tier=2", rbc], dir = NONE,
                                   stdin = "", stdout = log, stderr = log, timeout = 60}
-        in if status <> 0 andalso String.isSubstring "bad function index" (read log) then ()
+            val text = read log
+        in if status <> 0 andalso (String.isSubstring "expected closure in call" text
+                                    orelse String.isSubstring "bad function index" text) then ()
            else say ("FAIL call-index: status " ^ Int.toString status ^ ": " ^ firstLine log ^ "\n")
         end
     end
