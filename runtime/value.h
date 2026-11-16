@@ -53,7 +53,7 @@ typedef uint64_t Value;
 enum ObjKind {
     K_TUPLE = 1,  /* len fields; also vectors */
     K_CON,        /* contag; 1 field, the argument -- or the n fields of an argument that is a tuple of n (CONN) */
-    K_CLOSURE,    /* field 0 = the function index, an immediate; fields 1.. = environment */
+    K_CLOSURE,    /* field 0 = the function index, an immediate (CLOSURE_NARY of it for one of more parameters); fields 1.. = environment */
     K_STRING,     /* len bytes */
     K_REF,        /* 1 field */
     K_ARRAY,      /* len fields */
@@ -77,6 +77,13 @@ enum ObjKind {
     K_IND
 };
 #define K_LAST K_IND   /* the last kind an object has */
+/* What field 0 of a closure of a function f of k >= 2 parameters holds (eval/apply,
+   the haskell98 roadmap's D15 C, its contag k): not f but -2 - f, negative as a
+   partial application's -1 is, so that a call of one argument tests no
+   parameters -- the check of the index it makes anyway sends both to the general
+   path (item 24, option 1). Its own inverse: a call of k arguments, and whatever
+   reads a closure's function (the collector's CAF tables), takes f back by it. */
+#define CLOSURE_NARY(f) (-2 - (int64_t)(f))
 _Static_assert(K_IND < 16, "a kind fits four bits, which is what the header keeps for it (D4 A)");
 /* A K_THUNK's state, in its contag: unevaluated, or under evaluation once
    its code has said BLACKHOLE, having read what it captured first. Under

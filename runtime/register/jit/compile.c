@@ -178,7 +178,6 @@ void jit_pending(Jit *j, size_t off, uint32_t f, int call) {
     j->pending[j->npending].call = call;
     j->npending++;
 }
-#if JIT_TARGET
 /* code shared by the functions' code (item 24: jit/emit.c, apply_shared),
    n bytes that refer to nothing outside themselves by address: placed
    from the region's top down, below what was placed before, its pages
@@ -197,7 +196,6 @@ const void *jit_place_shared(JitProgram *jit, const uint8_t *code, size_t n) {
     jit->code_top = at;
     return jit->code_mem + at;
 }
-#endif
 #if JIT_TARGET
 /* function f has code: the known calls compiled while it had none made
    jumps into it -- or calls, under --jit-returns=call, into the entry of

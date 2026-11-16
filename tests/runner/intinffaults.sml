@@ -11,18 +11,18 @@ struct
     need (((action ();false) handle IntInfChecks.Failed _ => true | Measured.Failed _ => true),"IntInf controller accepted planted " ^ label)
   fun one (c : context) () =
     let val ()=mkdirs (#directory c)
-        val magic="runevm image 15 isa 0123abcd\000"
+        val magic="runevm image 16 isa 0123abcd\000"
         val prefix=BytecodeFixture.u32 1 ^ BytecodeFixture.le 8 1 ^ String.implode(List.tabulate(64,fn _=> #"\000"))
         val image=magic ^ prefix
         val layout=IntInfHardening.savedPolicyLayout image
         val ()=need(#start layout=size magic andalso #mode layout=36 andalso #stats layout=40 andalso
-          #bits layout=60 andalso #memory layout=68 andalso #finish layout=76,"image-15 saved policy field positions differ")
+          #bits layout=60 andalso #memory layout=68 andalso #finish layout=76,"image-16 saved policy field positions differ")
         fun invalidImage label bytes=expected label(fn()=>ignore(IntInfHardening.savedPolicyLayout bytes))
         val ()=List.app(fn version=>invalidImage "unsupported image version"
-          ("runevm image " ^ version ^ " isa 0123abcd\000" ^ prefix))["14","16"]
+          ("runevm image " ^ version ^ " isa 0123abcd\000" ^ prefix))["15","17"]
         val ()=invalidImage "truncated image prefix"(String.substring(image,0,size image-1))
-        val ()=invalidImage "missing image terminator" "runevm image 15 isa 0123abcd"
-        val ()=invalidImage "invalid image fingerprint"("runevm image 15 isa not-hex!\000" ^ prefix)
+        val ()=invalidImage "missing image terminator" "runevm image 16 isa 0123abcd"
+        val ()=invalidImage "invalid image fingerprint"("runevm image 16 isa not-hex!\000" ^ prefix)
         val ()=invalidImage "fork image used as saved policy"(magic ^ BytecodeFixture.u32 0 ^ String.extract(prefix,4,NONE))
         val ()=invalidImage "zero foreign identity floor"(magic ^ BytecodeFixture.u32 1 ^ BytecodeFixture.le 8 0 ^ String.extract(prefix,12,NONE))
         (* A skipped optional dependency still writes its report. Use a

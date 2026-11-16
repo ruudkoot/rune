@@ -48,7 +48,7 @@
    and k_nested, a suspension of a suspension, which its guard keeps apart
    (ind_may_shortcut); ordinary kernels, every build and every way. And
    cafnary, a CAF that the function of a closure of two parameters alone
-   reaches: the register VM's closure of more parameters than one holds
+   reaches: a closure of more parameters than one, on either VM, holds
    -2 - f in field 0 (item 24, option 1), and the CAF tables take its
    function back from it, so that the CAF is kept. *)
 structure Thunks =

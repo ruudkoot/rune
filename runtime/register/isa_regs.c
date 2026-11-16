@@ -6,7 +6,7 @@
 #include "jit.h"
 
 const uint32_t isa_fingerprint = REG_ISA_FINGERPRINT;
-const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 15 isa " REG_ISA_FINGERPRINT_HEX;
+const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 16 isa " REG_ISA_FINGERPRINT_HEX;
 
 static int fail(char *err, size_t errlen, const char *msg) {
     snprintf(err, errlen, "%s", msg);
@@ -1041,7 +1041,7 @@ int reg_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc) {
             vm->sp += s;
             continue;
         }
-        if (fidx <= REG_NARY(0)) fidx = REG_NARY(fidx);   /* a closure of more than one parameter (CLOSUREN) */
+        if (fidx <= CLOSURE_NARY(0)) fidx = CLOSURE_NARY(fidx);   /* a closure of more than one parameter (CLOSUREN) */
         if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) vm_fatal(vm, "bad function index");
         uint32_t arity = obj_contag(c) ? obj_contag(c) : 1;
         if (n == arity) {

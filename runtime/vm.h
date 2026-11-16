@@ -1033,7 +1033,7 @@ int stack_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc, const void *back)
 
 /* What each VM's instruction set gives (runtime/stack/isa_stack.c, runtime/register/isa_regs.c):
    the fingerprint an .rbc must carry, and the first bytes of an image. */
-#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 15 isa 00000000")
+#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 16 isa 00000000")
 extern const uint32_t isa_fingerprint;
 extern const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE];
 const LineEntry *line_at(const Program *p, uint32_t pc);

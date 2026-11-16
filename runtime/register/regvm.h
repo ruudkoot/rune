@@ -51,11 +51,6 @@ void reg_barrier_arm(VM *vm);
    is no tail call, a value left on the stack for its RESULT
    (REG_APPLY_VALUE). The VM is synced, and the stack may move. */
 enum { REG_PAP = -1, REG_APPLY_ENTERED = 0, REG_APPLY_VALUE = 1 };
-/* item 24 (option 1): what field 0 of a closure of f, of k >= 2 parameters
-   (CLOSUREN), holds -- no function, so that a call of one argument, which
-   tests no parameters, finds it out by the check of the index alone; its
-   own inverse */
-#define REG_NARY(f) (-2 - (int64_t)(f))
 int reg_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc);
 extern uint64_t reg_apply_counts[4];
 /* The general path's common cases compiled (D15 C tuned; jit/emit.c,

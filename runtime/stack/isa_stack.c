@@ -8,7 +8,7 @@
 #include "opcodes.h"
 
 const uint32_t isa_fingerprint = STACK_ISA_FINGERPRINT;
-const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 15 isa " STACK_ISA_FINGERPRINT_HEX;
+const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE] = "runevm image 16 isa " STACK_ISA_FINGERPRINT_HEX;
 
 /* byte length of an instruction, or 0 for an invalid opcode */
 static inline int instr_length(uint8_t op) {
@@ -472,6 +472,7 @@ int stack_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc, const void *back)
             vm->sp += s;
             continue;
         }
+        if (fidx <= CLOSURE_NARY(0)) fidx = CLOSURE_NARY(fidx);   /* a closure of more than one parameter (ARITY) */
         if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) vm_fatal(vm, "bad function index");
         uint32_t arity = obj_contag(c) ? obj_contag(c) : 1;
         if (n == arity) {

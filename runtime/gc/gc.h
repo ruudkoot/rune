@@ -430,7 +430,7 @@ static inline int caf_code_due(const Obj *o) {
     Value fv = OBJ_FIELDS(o)[0];
     if (!val_is_imm(fv)) return 0;
     int64_t fid = val_int(fv);
-    if (fid <= -2) fid = -2 - fid;   /* the register VM's closure of more than one parameter (REG_NARY), as caf_code */
+    if (fid <= CLOSURE_NARY(0)) fid = CLOSURE_NARY(fid);   /* a closure of more than one parameter (value.h), as caf_code */
     if (fid < 0 || (uint64_t)fid >= caf_fast.nfuncs) return 0;
     return caf_fast.sccepoch[caf_fast.scc[fid]] < caf_fast.epoch;
 }

@@ -73,12 +73,14 @@ static const void *apply(VM *vm, uint32_t n, int tail, void *back) {
 
 /* CALL, with vm->pc already the instruction after it, which is where the
    frame returns to: `back` is the native code there. A closure of more
-   parameters than one, or a partial application, the general path's. */
+   parameters than one, or a partial application, the general path's: its
+   field 0 is negative (CLOSURE_NARY, -1), and its parameters untested
+   (item 24). */
 const void *native_call(VM *vm, void *back) {
     Value arg = vm_pop(vm);
     Value cv = vm_pop(vm);
     Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, "closure in call");
-    if (obj_contag(c) != 0) { vm_push(vm, cv); vm_push(vm, arg); return apply(vm, 1, 0, back); }
+    if (val_imm(obj_field(c, 0)) < 0) { vm_push(vm, cv); vm_push(vm, arg); return apply(vm, 1, 0, back); }
     uint32_t f = callee(vm, c);
     vm_push_frame(vm, f, c, vm->pc, vm->sp);
     vm->frames[vm->fp].native_ret = back;
@@ -89,7 +91,7 @@ const void *native_tailcall(VM *vm) {
     Value arg = vm_pop(vm);
     Value cv = vm_pop(vm);
     Obj *c = vm_expect_obj(vm, cv, K_CLOSURE, "closure in call");
-    if (obj_contag(c) != 0) { vm_push(vm, cv); vm_push(vm, arg); return apply(vm, 1, 1, NULL); }
+    if (val_imm(obj_field(c, 0)) < 0) { vm_push(vm, cv); vm_push(vm, arg); return apply(vm, 1, 1, NULL); }
     uint32_t f = callee(vm, c);
     Frame *fr = &vm->frames[vm->fp];
     vm->sp = fr->base;
