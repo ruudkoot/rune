@@ -25,7 +25,11 @@
      on, status 0; ExitZeroUncaught ends with status 1, its output written.
    - hs/library/devicefull: on a full device (/dev/full) hFlush, hClose,
      writeFile, appendFile and an unbuffered hPutStr raise isFullError
-     (ruling 62), on Core's interpreter and on the VM (DeviceFull.hs). *)
+     (ruling 62), on Core's interpreter and on the VM (DeviceFull.hs).
+   - hs/library/bottomwrite: a string with a bottom in it, written by
+     writeFile, appendFile or hPutStr under each buffering mode, leaves
+     exactly the characters before the bottom in the file, on Core's
+     interpreter and on the VM (BottomWrite.hs). *)
 structure HsLibrary =
 struct
   open Sh
@@ -461,6 +465,45 @@ struct
     (both ("devicefull", "DeviceFull", 0);
      say "hs/library/devicefull: a full device's IOError, isFullError, from hFlush, hClose, writeFile, appendFile and hPutStr\n")
 
+  (* bottomwrite: tests/hs/library/BottomWrite.hs, told on its standard input
+     how to write "abc" and then a bottom to out.txt (writeFile, appendFile,
+     hPutStr under each buffering mode), ends with the bottom's error, status
+     1, and leaves in the file exactly what came before the bottom
+     (appendFile's after the "kept\n" the file held), on Core's interpreter
+     and on the VM *)
+  fun bottomwrite () =
+    let
+      val name = "BottomWrite"
+      val out = run ^ "/hs-library/" ^ name
+      val () = (rmTree out; mkdirs out)
+      fun f x = out ^ "/" ^ x
+      val src = fromRoot ("tests/hs/library/" ^ name ^ ".hs")
+      val cst = exec {cmd = [fromRoot "bin/rhc", "--whole", "--lint=2", src, "-o", f "p.rbc"], dir = NONE, stdin = "",
+                      stdout = f "c.err", stderr = f "c.err", timeout = 600}
+      fun one (way, cmd) w =
+        let
+          val prior = if w = "appendFile" then "kept\n" else ""
+          val () = (write (f "out.txt", prior); write (f "in.txt", w ^ "\n"))
+          val st = exec {cmd = cmd, dir = SOME out, stdin = f "in.txt", stdout = f "o.txt", stderr = f "e.txt", timeout = 600}
+          val got = read (f "out.txt")
+        in
+          if st <> 1 then fail ("hs/library/bottomwrite: " ^ w ^ " ends with status " ^ Int.toString st ^ " on " ^ way ^ ", not 1: "
+                                ^ firstLine (f "e.txt"))
+          else if got <> prior ^ "abc" then
+            fail ("hs/library/bottomwrite: " ^ w ^ " leaves " ^ String.toString got ^ " in the file on " ^ way ^ ", not "
+                  ^ String.toString (prior ^ "abc"))
+          else ()
+        end
+      val ways = ["writeFile", "appendFile", "none", "line", "block", "block2"]
+    in
+      if cst <> 0 then fail ("hs/library/bottomwrite: bin/rhc does not compile " ^ name ^ ": " ^ firstLine (f "c.err"))
+      else
+        (List.app (one ("Core's interpreter", [fromRoot "bin/rhc", "--whole", "--lint=3", src])) ways;
+         List.app (one ("the VM", [fromRoot "bin/runevm", f "p.rbc"])) ways;
+         say ("hs/library/bottomwrite: a bottom mid-string leaves what came before it, " ^ Int.toString (length ways)
+              ^ " ways, on the interpreter and the VM\n"))
+    end
+
   fun job (name, cmd) =
     Test.it name
       {program = "/bin/sh", args = ["sh", "-c", "exec \"$RUNE_TEST_ROOT\"/bin/rune-test " ^ cmd],
@@ -478,7 +521,8 @@ struct
          (Test.describe ""
             [job ("overlay", "hs-library-overlay"), job ("pristine", "hs-library-pristine"),
              job ("report", "hs-library-report"), job ("compile", "hs-library-compile"),
-             job ("exitzero", "hs-library-exitzero"), job ("devicefull", "hs-library-devicefull")])]
+             job ("exitzero", "hs-library-exitzero"), job ("devicefull", "hs-library-devicefull"),
+             job ("bottomwrite", "hs-library-bottomwrite")])]
 
   fun command args =
     case args of
@@ -488,5 +532,6 @@ struct
     | ["hs-library-compile"] => SOME compile
     | ["hs-library-exitzero"] => SOME exitzero
     | ["hs-library-devicefull"] => SOME devicefull
+    | ["hs-library-bottomwrite"] => SOME bottomwrite
     | _ => NONE
 end

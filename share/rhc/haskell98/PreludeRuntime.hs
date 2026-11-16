@@ -182,6 +182,10 @@ h_flush           :: Int -> IO ()
 -- device fails them), h_errno saying why; the close closes either way
 h_flush_ok        :: Int -> IO Bool
 h_close_ok        :: Int -> IO Bool
+-- the runtime's loop of a string's characters (CoreRuntime): each forced
+-- and written in turn, flushed after each where the mode is 0, after a
+-- newline where it is 1; 0, or 1 where a write failed and 2 where a flush did
+rtPutChars        :: Int -> Int -> [Char] -> IO Int
 -- the byte a file is at, or -1; to a byte from its start, 0 or -1; the
 -- size of the file of a name, or -1
 h_tell            :: Int -> IO Int
@@ -409,7 +413,8 @@ primHIsSeekable h =  usable h "hIsSeekable" >> return (handleSeeks h)
 -- ---- writing ----
 
 -- a character written, and the buffer flushed as the mode says: none (0),
--- by line (1) at a newline, by block (2) where it overflows
+-- by line (1) at a newline, by block (2) where it overflows, which only
+-- BlockBuffering (Just n) counts
 primHPutChar      :: Handle -> Char -> IO ()
 primHPutChar h c  = do
     checkOpen h "hPutChar" handleWrites
@@ -419,7 +424,8 @@ primHPutChar h c  = do
     ok <- h_write (handleFd h) (str_from_char c)
     if not ok then h_errno >>= primFailWith "hPutChar" (Just h) (Just (handleName h))
       else if mode == 0 || (mode == 1 && c == '\n') then flushed h "hPutChar"
-      else held h
+      else if mode == 2 then held h
+      else return ()
 
 -- Under BlockBuffering (Just n) a handle holds n characters: what it holds
 -- is written out when another comes ("whenever it overflows", 21.6; the
@@ -454,22 +460,22 @@ readBack h        = do
             ref_set (handleAhead h) []
 
 -- Each character as it is evaluated, so that what comes before a bottom
--- is written. Under BlockBuffering Nothing each goes to the system's buffer
--- with no more checks than the first; under BlockBuffering (Just n) it is
--- counted, as hPutChar counts it.
+-- is written, the checks made once for the string: the runtime's loop
+-- (rtPutChars) hands each to the system in turn, flushed after each under
+-- NoBuffering and after a newline under LineBuffering. Under BlockBuffering
+-- (Just n) each is counted, as hPutChar counts it; a handle that also reads
+-- takes each as hPutChar does, where its reading has got to.
 primHPutStr       :: Handle -> String -> IO ()
 primHPutStr h s   = do
     checkOpen h "hPutStr" handleWrites
     mode <- ref_get (handleMode h)
     size <- ref_get (handleSize h)
-    if mode /= 2 || handleReads h then mapM_ (primHPutChar h) s
-      else if size > 0 then counted s
-      else block s
+    if handleReads h then mapM_ (primHPutChar h) s
+      else if mode == 2 && size > 0 then counted s
+      else rtPutChars (handleFd h) mode s >>= \r -> if r == 0 then return () else failed
   where
-    write c k     = h_write (handleFd h) (str_from_char c) >>= \ok ->
-                    if ok then k else h_errno >>= primFailWith "hPutStr" (Just h) (Just (handleName h))
-    block []      = return ()
-    block (c:cs)  = write c (block cs)
+    failed        = h_errno >>= primFailWith "hPutStr" (Just h) (Just (handleName h))
+    write c k     = h_write (handleFd h) (str_from_char c) >>= \ok -> if ok then k else failed
     counted []    = return ()
     counted (c:cs) = overflow h "hPutStr" >> write c (held h >> counted cs)
 

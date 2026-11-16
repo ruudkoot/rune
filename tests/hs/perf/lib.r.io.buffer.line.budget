@@ -1,0 +1,5 @@
+# rhc's policy (D55; tests/runner/hsperf.sml): hPutStr by line costs per character about what it costs by block, both
+# the runtime's loop of the string; 1.06 measured, and 3.8 with each character through hPutChar's checks.
+a: 1 20000
+b: 0 20000
+ratio: 1.3

@@ -3,6 +3,9 @@
    what the Report leaves unsaid is not shared (a section's operand, a file
    read on demand, an array's components), each with NAME.budget, rhc's
    policy and not the Report's: lines `a: STDIN`, `b: STDIN` and `ratio: R`.
+   A program whose cost per character is the policy (hPutStr by line or
+   unbuffered against by block, writeFile against counting the string) has
+   the same form.
    The program, compiled by rhc, runs twice under bin/runevm --count, on the
    line a and on the line b as its standard input; the instructions of the
    first are at most R times those of the second. A ratio, not a count: it
