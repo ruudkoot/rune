@@ -893,7 +893,11 @@ its own, and forcing one is one step.
   is one, as `fst` and a record's field are, applied to p), take that CAF from what
   it captures rather than from its global, which the collector does not look in,
   where the program names the CAF more than once: a top-level pattern binding's
-  selectors among them.
+  selectors among them. And any other suspension of that shape, as GHC's selector
+  thunks are (`fst p`, a record's field of p, or such a case after the Core
+  simplifier inlined them), is a selector where p is a local the suspension captures,
+  neither a global nor a letrec's cell, and not a suspension a let made that this one
+  alone names, which no collection could give it its field.
   `thunk_selector` marks it so (`THUNK`'s state
   `3 + i`), and the collector gives what points to it that field of the tuple once the
   tuple is evaluated, following a chain of them as far as it goes, so that a field the

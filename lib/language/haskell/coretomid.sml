@@ -763,6 +763,12 @@ struct
           | UTuple atoms => vars atoms
           | _ => []
         end
+      (* how many times each variable is named in e *)
+      fun occurrences (e : exp) : int CoreMap.map =
+        let
+          val m = ref CoreMap.empty
+          fun note x = m := CoreMap.insert (!m, x, 1 + getOpt (CoreMap.find (!m, x), 0))
+        in walk (fn e => List.app note (namedBy e)) e; !m end
       (* whether e names x *)
       exception Named
       fun named (x, e) = (walk (fn e => if List.exists (fn y => y = x) (namedBy e) then raise Named else ()) e; false)
@@ -829,6 +835,38 @@ struct
                           | _ => m)
                      | (_, m) => m)
                    CoreMap.empty prog
+      (* of the value of the top level being made: how many times it names
+         each variable, the variables its lets bind to a suspension, and
+         those the desugaring marked selectors (sel_mark) *)
+      type facts = {counts : int CoreMap.map, suspended : unit CoreMap.map, marked : unit CoreMap.map}
+      fun factsOf (e : exp) : facts =
+        let
+          val suspended = ref CoreMap.empty
+          val marked = ref CoreMap.empty
+          fun note e =
+            case e of
+              Let (x, _, r, _) =>
+                (case r of
+                   Atom _ => ()
+                 | Con _ => ()
+                 | Cast _ => ()
+                 | Lam (bs, _) => if List.exists (fn ValBinder _ => true | TyBinder _ => false) bs then ()
+                                  else suspended := CoreMap.insert (!suspended, x, ())
+                 | _ => suspended := CoreMap.insert (!suspended, x, ()))
+            | Prim ("sel_mark", _, Var x :: _) => marked := CoreMap.insert (!marked, x, ())
+            | _ => ()
+        in walk note e; {counts = occurrences e, suspended = !suspended, marked = !marked} end
+      (* the value of the top level being made, and its facts once worked
+         out, where a suspension of it has a selector's shape *)
+      val current : (exp * facts option) ref = ref (Atom (Lit (LInt (IntInf.fromInt 0))), NONE)
+      fun factsNow () =
+        case !current of
+          (_, SOME f) => f
+        | (e, NONE) => let val f = factsOf e in current := (e, SOME f); f end
+      (* the Mid names of the globals, once they are named (the program's
+         genv): a local a let makes another name of one is held as the
+         global is *)
+      val globalMid : unit CoreMap.map ref = ref CoreMap.empty
       (* the field of a variable the code of a suspension of e takes, a
          selector by its shape, as GHC's are: a projection, or a field
          function applied to the variable; SOME (p, i) *)
@@ -1015,10 +1053,44 @@ struct
           val (def, code) = thunkCode (env, x, t, rhs, "")
           val V = valTy env t
           val s = freshVar ()
+          val rest = k (bindVal (env, x, {rep = Lazy s, ty = t, arity = 0}))
         in
           "(fun " ^ def ^ " (let (" ^ s ^ " : (" ^ V ^ " susp)) " ^ makeSusp (V, code) ^ " "
-          ^ k (bindVal (env, x, {rep = Lazy s, ty = t, arity = 0})) ^ "))"
+          ^ markSelector (env, x, rhs, s, V, rest) ^ "))"
         end
+
+      (* rest, after the suspension s (of type V susp) of x, whose code is
+         rhs, is marked a selector for the collector, where rhs selects a
+         field of a variable p by its shape (D17's C): p a local that the
+         code captures -- not a global, not a letrec's cell -- of one type,
+         whose value the program may evaluate elsewhere, so not a suspension
+         a let made that this code alone names; and x not a selector the
+         desugaring marked already, nor one nothing names *)
+      and markSelector (env, x, rhs, s, V, rest) =
+        case selected rhs of
+          NONE => rest
+        | SOME (p, i) =>
+            let
+              val {rep, ty = pty, arity} = lookup (env, p)
+              val local_ = case rep of
+                             Lazy a => not (CoreMap.member (!globalMid, a))
+                           | Value a => not (CoreMap.member (!globalMid, a))
+                           | _ => false
+              fun alone () =
+                let val {counts, suspended, ...} = factsNow ()
+                in CoreMap.member (suspended, p) andalso CoreMap.find (counts, p) = SOME 1 end
+              fun markedAlready () = CoreMap.member (#marked (factsNow ()), x)
+              (* a suspension nothing names, which Mid would drop, and the
+                 mark would keep *)
+              fun unnamed () = not (CoreMap.member (#counts (factsNow ()), x))
+            in
+              if isGlobal p orelse arity <> 0 orelse not local_ orelse alone () orelse markedAlready () orelse unnamed ()
+              then rest
+              else
+                atomSlot (env, Var p, stripEval pty, fn tp =>
+                  "(let (" ^ freshVar () ^ " : unit) (prim thunk_selector " ^ s ^ " " ^ tp ^ " " ^ Int.toString i ^ " : ((" ^ V
+                  ^ " susp) * " ^ slotTy env (stripEval pty) ^ " * int) -> unit) " ^ rest ^ ")")
+            end
 
       (* the code of a suspension of rhs, of type t: a function of unit *)
       and thunkCode (env, label, t, rhs, tyvars) : string * string =
@@ -1561,6 +1633,8 @@ struct
         List.foldl (fn ((x, t, g, a), env) =>
                       bindVal (env, x, {rep = case a of Suspension => Lazy g | _ => Value g, ty = t, arity = leadingForalls t}))
                    genv importGlobals
+      val () = globalMid := List.foldl (fn (g, m) => CoreMap.insert (m, g, ()))
+                              CoreMap.empty (List.map #4 globals @ List.map #3 importGlobals)
       (* an import declared at its scheme, the exporter's: its type under
          its leading foralls, a suspension's in its susp; the expression a
          placeholder the client drops *)
@@ -1609,7 +1683,8 @@ struct
       (* the functions of the top level, one group *)
       val functions =
         List.mapPartial (fn (x, t, e as Lam (bs, body), g) =>
-                              if isFunction e then SOME (#1 (fundef (genv, SOME g, x, bs, body, t))) else NONE
+                              if isFunction e then (current := (e, NONE); SOME (#1 (fundef (genv, SOME g, x, bs, body, t))))
+                              else NONE
                           | _ => NONE)
                         globals
 
@@ -1650,6 +1725,7 @@ struct
             Atom (Lit l) => SOME ("(val " ^ g ^ " : " ^ valTy genv t ^ " (return " ^ constText l ^ "))\n")
           | _ =>
               let
+                val () = current := (e, NONE)
                 fun peel (Lam (bs, body), TForall _) =
                       let
                         fun go (TyBinder (a, _) :: rest, env, want, tvs) =

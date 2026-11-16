@@ -658,7 +658,8 @@ is a change to the collector and not to everything that touches the heap.
   at most 16), so that the indirection dies; the copier of `--nursery 0`
   and the low-pause collector's cycle keep it as it is.
 * **A selector is reduced** (Wadler's rule; the haskell98 roadmap's D17):
-  a suspension `thunk_selector` marked, of field i of a tuple, is given up
+  a suspension `thunk_selector` marked, of field i of a tuple (or of a value
+  of any data type of one constructor, a constructor of tag 0 too), is given up
   by a minor collection (where young), a full one and the copier of
   `--nursery 0`, the field that pointed to it given field i of the tuple
   once the tuple is evaluated, along a chain of selectors as far as it
