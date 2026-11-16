@@ -633,6 +633,7 @@ static inline size_t heap_used(const VM *vm) { return vm->gc.closed + vm->gc.los
    measures one. Before the store: *f is the value overwritten. */
 void gc_write(Obj *o, Value *f);
 void gc_shade_old(VM *vm, Obj *o, Value old);
+void gc_shade_code(VM *vm, Obj *o);
 static inline void gc_barrier(VM *vm, Obj *o, Value *f, Value v) {
 #ifdef RUNE_BARRIER_CARDS
     rune_cards[((uintptr_t)f >> CARD_SHIFT) & (CARD_COUNT - 1)] = 1;
@@ -643,12 +644,26 @@ static inline void gc_barrier(VM *vm, Obj *o, Value *f, Value v) {
     if (vm->gc.marking) gc_shade_old(vm, o, *f);
     if (vm->gc.nursery && val_is_ptr(v) && heap_is_young(vm, val_ptr(v)) && !heap_is_young(vm, o)) gc_write(o, f);
 }
+/* THE BARRIER's part for code, while a cycle of the low-pause collector
+   keeps the globals by the CAF tables (runtime/gc/caf.c): a suspension
+   whose code may run stops being one (BLACKHOLE, UPDATE), its code then
+   running in a frame the cycle's snapshot never saw, so the globals that
+   code reads are taken now, as marking the suspension would have taken
+   them; else the cycle's end makes unit a global the code goes on to read
+   (D19's B under --gc low-pause). Every engine's BLACKHOLE and UPDATE come
+   here while a cycle marks (the JIT's through SLOW_THUNK). */
+static inline void gc_barrier_code(VM *vm, Obj *o) {
+    if (vm->gc.marking && vm->gc.cycle_cafs) gc_shade_code(vm, o);
+}
 /* A suspension goes under evaluation (BLACKHOLE): what it captured is let
    go as if each field were overwritten, which the snapshot of the
-   low-pause collector's cycle may reach by those fields alone. */
+   low-pause collector's cycle may reach by those fields alone; and the
+   globals its code reads taken (gc_barrier_code). */
 static inline void vm_blackhole(VM *vm, Obj *o) {
-    if (vm->gc.marking)
+    if (vm->gc.marking) {
+        gc_barrier_code(vm, o);
         for (uint32_t i = 1; i < obj_scanned_fields(o); i++) gc_shade_old(vm, o, obj_field(o, i));
+    }
     obj_blackhole(o);
 }
 

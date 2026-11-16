@@ -9,11 +9,13 @@
    with the lint; each register build runs on runevm interpreted and in
    every mode of the JIT the oracle jit runs, under --checked, --gc-verify
    with a small heap and nursery, a collection at every few allocations,
-   the low-pause collector and the compacting one, on the VM whose
+   the low-pause collector (a cycle at every other allocation, at the
+   default tier and at tier 2) and the compacting one, on the VM whose
    collector sets the header's bits (runevm-gcbits) and on the census VM,
    which interprets and counts as runevm does; each stack build on
-   runevm-stack, under --checked and --gc-verify, and as runeopt's native
-   code (runevm-native) where the machine makes it. Every run prints the
+   runevm-stack, under --checked, --gc-verify and the low-pause collector,
+   and as runeopt's native code (runevm-native) where the machine makes
+   it. Every run prints the
    kernel's `.expected` with the arguments of its `.args`; every run of a
    build counts the same instructions, bytes and objects; and the two
    bytecodes at -O1 allocate the same.
@@ -50,7 +52,11 @@
    cafnary, a CAF that the function of a closure of two parameters alone
    reaches: a closure of more parameters than one, on either VM, holds
    -2 - f in field 0 (item 24, option 1), and the CAF tables take its
-   function back from it, so that the CAF is kept. *)
+   function back from it, so that the CAF is kept. And cafcycle, a CAF
+   that only a suspension's code reads, the suspension forced while the
+   low-pause collector's cycle marks and before it is marked: BLACKHOLE
+   takes the globals its code reads (gc_barrier_code, runtime/vm.h), so
+   that the cycle's end keeps the CAF the code goes on to read. *)
 structure Thunks =
 struct
   open Sh
@@ -67,7 +73,10 @@ struct
                  "overtail",
                  (* a CAF the function of a closure of two parameters alone reaches,
                     which the collector takes back from its field 0 (item 24) *)
-                 "cafnary"]
+                 "cafnary",
+                 (* a CAF that a suspension forced while a cycle marks reads after
+                    the cycle's end (the low-pause collector's code barrier) *)
+                 "cafcycle"]
   fun source k = "tests/thunks/" ^ k ^ ".sml"
   fun args k = words (fromRoot ("tests/thunks/" ^ k ^ ".args"))
 
@@ -85,6 +94,7 @@ struct
        ("stress", "bin/runevm", ["--gc-stress", "3"]),
        ("stress2", "bin/runevm", ["--gc-stress", "3", "--jit=all", "--jit-tier=2"]),
        ("lowpause", "bin/runevm", ["--gc", "low-pause", "--gc-stress", "2", "--gc-stress-cycles"]),
+       ("lowpause2", "bin/runevm", ["--gc", "low-pause", "--gc-stress", "2", "--gc-stress-cycles", "--jit=all", "--jit-tier=2"]),
        ("compact", "bin/runevm", ["--gc-compact", "--gc-stress", "5"]),
        ("gcbits", "bin/runevm-gcbits", ["--gc-verify", "--heap-size", "65536", "--nursery", "4096"]),
        ("gcbits2", "bin/runevm-gcbits", ["--jit=all", "--jit-tier=2", "--gc-stress", "7"]),
@@ -92,7 +102,8 @@ struct
   val stackWays =
     [("stack", "bin/runevm-stack", []), ("checked", "bin/runevm-stack", ["--checked"]),
      ("verify", "bin/runevm-stack", ["--gc-verify", "--heap-size", "65536", "--nursery", "4096"]),
-     ("stress", "bin/runevm-stack", ["--gc-stress", "3"])]
+     ("stress", "bin/runevm-stack", ["--gc-stress", "3"]),
+     ("lowpause", "bin/runevm-stack", ["--gc", "low-pause", "--gc-stress", "2", "--gc-stress-cycles"])]
     @ (if exists (fromRoot "bin/runevm-native") then [("native", "bin/runevm-native", [])] else [])
 
   fun fail (k, what) = say ("FAIL thunks." ^ k ^ ": " ^ what ^ "\n")

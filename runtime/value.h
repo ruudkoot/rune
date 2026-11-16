@@ -342,6 +342,7 @@ extern uint8_t *rune_cards;   /* CARD_COUNT bytes (runtime/heap.c) */
 #endif
 struct VM;
 static inline void gc_barrier(struct VM *vm, Obj *o, Value *f, Value v);
+static inline void gc_barrier_code(struct VM *vm, Obj *o);
 /* a store into an object that exists (ref_set, array_update, SETENV),
    through the barrier */
 static inline void obj_set_field(struct VM *vm, Obj *o, uint32_t i, Value v) {
@@ -386,7 +387,9 @@ static inline void obj_become_ind(struct VM *vm, Obj *o, Value v) {
        if overwritten: what a snapshot reaches by them is kept (the
        low-pause collector's cycle). Those of a suspension under evaluation
        were let go when it went under (obj_blackhole), and hold what may be
-       gone since. */
+       gone since. A suspension not yet evaluated, whose code may run, has
+       that code's globals taken first (gc_barrier_code). */
+    gc_barrier_code(vm, o);
     uint32_t n = obj_scanned_fields(o);
     for (uint32_t i = 1; i < n; i++) gc_barrier(vm, o, &OBJ_FIELDS(o)[i], mk_unit());
     gc_barrier(vm, o, &OBJ_FIELDS(o)[0], v);
