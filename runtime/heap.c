@@ -243,3 +243,35 @@ void vm_unpin(VM *vm, size_t h, void *copy) {
     if (o && copy) memcpy(obj_bytes(o), copy, obj_payload_bytes(obj_kind(o), obj_len(o)));
     free(copy);
 }
+
+/* Wadler's rule at a force (the haskell98 roadmap's D17, C; D17's count):
+   v, a selector whose tuple is evaluated, is what the collector would make
+   of it (gc_shortcut_walk, gc.h) -- that tuple's field, through a chain of
+   such selectors, under M26's guard where the program has lazy ML's
+   suspensions (a field that is a suspension or an indirection is not
+   taken), a cycle stopped by Brent's method -- and v itself where it is no
+   such selector. FORCE takes it before it would ENTER a selector (each
+   engine: the register loop, the JIT's FORCE, the stack loop), so that a
+   selector the collector reduced costs what one it did not costs: a
+   selector's code runs only where its tuple is not evaluated, which no
+   collection can have reduced. Before, a reduced selector was an ENTER and
+   its code the program did not run, and since the engines collect at
+   different points (tier 2's boxes of reals fill the nursery otherwise),
+   --count differed between --jit=off and tier 2
+   (hs/jit/lib.complex.realpart_literal). Nothing is allocated or written. */
+Value vm_selected(const VM *vm, Value v) {
+    int guard = vm->prog.reruns;
+    uint64_t power = 1, lam = 0;
+    Value tortoise = v;
+    while (val_is_ptr(v)) {
+        Obj *o = val_ptr(v);
+        if (obj_kind(o) != K_THUNK || o->contag < THUNK_SELECTOR) break;
+        Value to;
+        if (!gc_select(o, &to)) break;
+        if (guard && val_is_ptr(to) && (obj_kind(val_ptr(to)) == K_THUNK || obj_kind(val_ptr(to)) == K_IND)) break;
+        v = to;
+        if (v == tortoise) break;   /* a cycle: its code, run, raises Loop */
+        if (++lam == power) { tortoise = v; power <<= 1; lam = 0; }
+    }
+    return v;
+}

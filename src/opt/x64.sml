@@ -783,16 +783,32 @@ struct
                  (* suspensions (docs/ir.md, Suspensions): FORCE in line --
                     the value of what is no unevaluated suspension in its
                     place, what an indirection holds or itself, and a jump to
-                    a; one unevaluated left for the ENTER after it -- and the
-                    rest the glue's, as CALL's slow path is *)
+                    a; one unevaluated left for the ENTER after it, but a
+                    selector (D17's C, its contag THUNK_SELECTOR or more),
+                    given the field the collector would give it where its
+                    tuple is evaluated, in the glue (native_select), and
+                    tested again where that changed it, as the interpreter's
+                    FORCE (D17's count) -- and the rest the glue's, as CALL's
+                    slow path is *)
                  | Opcode.FORCE =>
-                   let val value = lab pc ^ "_value"
+                   let
+                     val again = lab pc ^ "_again"
+                     val value = lab pc ^ "_value"
+                     val enter = lab pc ^ "_enter"
                    in
+                     put (again ^ ":\n");
                      L.loadObj line (L.RAX, sd (h - 1), "K_IND", value);
                      L.loadField line (sd (h - 1), L.RAX, 0);
                      line ("jmp " ^ lab a);
                      put (value ^ ":\n");
-                     L.loadObj line (L.RAX, sd (h - 1), "K_THUNK", lab a)
+                     L.loadObj line (L.RAX, sd (h - 1), "K_THUNK", lab a);
+                     line "cmpw $THUNK_SELECTOR, OBJ_CONTAG(%rax)";
+                     line ("jb " ^ enter);
+                     flushSp ();
+                     callC ("native_select", []);
+                     line "test %eax, %eax";
+                     line ("jne " ^ again);
+                     put (enter ^ ":\n")
                    end
                  | Opcode.ENTER =>
                    (* the count too: a loop raises Loop from here, as RAISE raises *)

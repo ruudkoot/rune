@@ -654,6 +654,9 @@ Obj *vm_string_from(VM *vm, const char *s, uint32_t len);
    of every object every collection visits */
 static inline size_t obj_size(const Obj *o) { return obj_size_of(obj_kind(o), obj_len(o)); }
 void vm_gc(VM *vm, size_t needed);
+/* a selector whose tuple is evaluated: the field the collector would give
+   for it, where FORCE would ENTER it (D17's count); else v */
+Value vm_selected(const VM *vm, Value v);
 void vm_collect(VM *vm);   /* Runtime.collect: a full collection, the low-pause collector's cycle ended first */
 uint64_t vm_share(VM *vm);   /* Runtime.share: equal immutable objects made one (runtime/gc/share.c); the bytes freed */
 int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 when it is not sound */

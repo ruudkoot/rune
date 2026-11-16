@@ -635,7 +635,15 @@ is a change to the collector and not to everything that touches the heap.
   compiler compiling itself 0.16%). Where the program reruns (lazy ML's),
   the walk keeps the indirection's guard and gives no field a component
   that is a suspension or an indirection. The low-pause collector's cycle
-  reduces none.
+  reduces none. `FORCE` applies the same rule where the program meets a
+  selector (`vm_selected`, `runtime/heap.c`; every engine: the two loops,
+  the JIT's tiers and runeopt's code): one whose tuple is evaluated is
+  given its field before it would be entered, so that a selector's code
+  runs only where its tuple is not evaluated, which no collection can have
+  reduced either. A program's `--count` is then the same wherever its
+  collections fall, which differs between the engines (tier 2 boxes reals
+  otherwise, and fills its nursery otherwise) and with `--nursery`
+  (`hs/selectors`; D17's count).
 * **The collector's state is the VM's** (`GcState`), and where the next
   object goes is the allocating thread's (`AllocState`): no variable of
   the collector is the process's, so two VMs of a process collect each by

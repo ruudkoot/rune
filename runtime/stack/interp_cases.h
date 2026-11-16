@@ -461,6 +461,15 @@ CASE(FORCE) {
     Value v = TOP(0);
     if (val_is_ptr(v)) {
       int k = obj_kind(val_ptr(v));
+      if (k == K_THUNK && obj_contag(val_ptr(v)) >= THUNK_SELECTOR) {
+          /* a selector whose tuple is evaluated: its field, as the
+             collector would give it (vm_selected, D17's count) */
+          Value w = vm_selected(vm, v);
+          if (w != v) {
+              TOP(0) = v = w;
+              k = val_is_ptr(v) ? obj_kind(val_ptr(v)) : -1;
+          }
+      }
       if (k == K_THUNK) NEXT;
       if (k == K_IND) TOP(0) = obj_field(val_ptr(v), 0);
     }

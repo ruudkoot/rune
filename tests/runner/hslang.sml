@@ -248,9 +248,44 @@ struct
       Posix.Process.exit (Word8.fromInt code)
     end
 
+  (* D17's count (runtime/heap.c, vm_selected): a program of selectors,
+     interpreted at nurseries of 64 KiB, 256 KiB, 1 MiB and 4 MiB and with
+     none (the copier), counts the same instructions and prints what it is
+     to print, wherever its collections fall *)
+  val nurseries = ["65536", "262144", "1048576", "4194304", "0"]
+  fun selectorsNursery b =
+    let
+      val n = OS.Path.file b
+      val dir = run ^ "/hs-selectors/" ^ n
+      val () = mkdirs dir
+      fun f x = dir ^ "/" ^ x
+    in
+      if exec {cmd = [fromRoot "bin/rhc", fromRoot (b ^ ".hs"), "-o", f "prog.rbc"], dir = NONE, stdin = "", stdout = "",
+               stderr = f "cerr", timeout = 600} <> 0
+      then say ("FAIL hs-selectors." ^ n ^ ": " ^ firstNonEmpty (f "cerr") ^ "\n")
+      else
+        let
+          fun runAt k =
+            (ignore (exec {cmd = [fromRoot "bin/runevm", "--count", "--jit=off", "--nursery", k, f "prog.rbc"], dir = NONE,
+                           stdin = "", stdout = f ("out." ^ k), stderr = f ("err." ^ k), timeout = 600});
+             (k, countOf (f ("err." ^ k))))
+          val counts = List.map runAt nurseries
+          val (k0, c0) = hd counts
+        in
+          List.app (fn (k, _) => if same (f ("out." ^ k), fromRoot (b ^ ".expected")) then ()
+                                 else say ("FAIL hs-selectors." ^ n ^ ": --nursery " ^ k ^ " prints otherwise: "
+                                           ^ firstNonEmpty (f ("err." ^ k)) ^ "\n")) counts;
+          if c0 = "" then say ("FAIL hs-selectors." ^ n ^ ": no count with --nursery " ^ k0 ^ "\n") else ();
+          List.app (fn (k, c) => if c = c0 then ()
+                                 else say ("FAIL hs-selectors." ^ n ^ ": counts " ^ c0 ^ " with --nursery " ^ k0 ^ ", " ^ c
+                                           ^ " with --nursery " ^ k ^ "\n")) (tl counts)
+        end
+    end
+
   fun command args =
     case args of
       "hs-stub-compile" :: rest => SOME (fn () => stubCompile rest)
+    | ["hs-selectors-nursery", b] => SOME (fn () => selectorsNursery b)
     | "hs-stub-run" :: rest => SOME (fn () => stubRun rest)
     | ["hs-programs"] => SOME programs
     | _ => NONE
@@ -269,11 +304,29 @@ struct
     let val t = Oracles.jobIn ("", #name p, [if outputOnly p then "jit-one-output" else "jit-one-with", "bin/rhc", #base p, #src p],
                                [], 1, 600, 3600)
     in case HsConformance.pending p of SOME why => Test.pending why t | NONE => t end
+  (* D17's count (runtime/heap.c, vm_selected): programs of selectors --
+     tests/hs/selectors/count, and the two of tests/hs/lang whose counts
+     differed (hs/jit, nightly, which D17's gate did not run) -- each
+     counting the same instructions interpreted, at tier 1, at tier 2, under
+     --deopt-stress and in the oracle's other modes, at the default nursery,
+     whatever the collector reduced (hs/selectors/NAME, in a directory of
+     their own, apart from hs/jit's of the same programs); and count the
+     same at every nursery (hs/selectors/nursery). In make check *)
+  val selectors = ["tests/hs/selectors/count", "tests/hs/lang/lib.complex.realpart_literal",
+                   "tests/hs/lang/lib.numeric.showsigned_literal"]
   fun tree () =
     Test.describe ""
       [Lang.tree rhc,
        Test.requires ["rhc"] (tagged (["nightly", "hs"] @ covers)
                                 (Test.describe "hs/jit" (List.map jit (Lang.programsOf (#lang rhc, suffixes, mains))))),
+       Test.requires ["rhc", "jit"]
+         (tagged (["check", "hs"] @ covers @ ["covers:tests/hs/selectors/*", "covers:runtime/heap.c", "covers:runtime/gc/*",
+                                              "covers:runtime/register/*", "covers:runtime/stack/*"])
+            (Test.describe "hs/selectors"
+               (List.map (fn b => Oracles.jobIn ("RUNE_TEST_RUN=\"$RUNE_TEST_RUN\"/hs-selectors ", OS.Path.file b,
+                                                 ["jit-one-with", "bin/rhc", b, b ^ ".hs"], [], 1, 600, 3600))
+                         selectors
+                @ [Oracles.jobIn ("", "nursery", ["hs-selectors-nursery", "tests/hs/selectors/count"], [], 1, 600, 3600)]))),
        tagged (runnerTags @ runnerCovers)
          (Test.describe "hs/runner"
             [Test.describe "silent" (List.map silent (Lang.programsOf (#lang stub, suffixes, mains))),
