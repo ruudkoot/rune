@@ -1,0 +1,5 @@
+# rhc's policy (D55; tests/runner/hsperf.sml): writing n characters to a file costs little more than counting them, the
+# runtime's loop of the string; 0.74 measured, and 2.19 through the library's loop of an IO action a character.
+a: 1 20000
+b: 0 20000
+ratio: 1.0

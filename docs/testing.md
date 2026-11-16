@@ -887,7 +887,10 @@ holds of (ruling 57), caught by `ExitZeroCaught` and uncaught by
 `ExitZeroUncaught`, status 1, on Core's interpreter and on the VM; and
 `devicefull`, `DeviceFull.hs` on a full device (`/dev/full`): `hFlush`, `hClose`,
 `writeFile`, `appendFile` and an unbuffered `hPutStr` raise `isFullError`
-(ruling 62), on both.
+(ruling 62), on both; and `bottomwrite`, `BottomWrite.hs` writing `"abc"` and
+then a bottom by `writeFile`, `appendFile` and `hPutStr` under each buffering
+mode: it ends with the bottom's error, and the file holds exactly `"abc"`
+(after what `appendFile`'s held), on both.
 
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants
@@ -950,6 +953,10 @@ for a dump of rhc's binding sites; the `rename` pairs are by hand.
 program of `tests/hs/perf` that costs far more when what the Report leaves
 unsaid is not shared (a section's operand, a file read on demand, an array's
 components) has `NAME.budget`, rhc's policy: lines `a:`, `b:` and `ratio:`.
+A program whose cost per character is the policy (`lib.r.io.buffer.line`,
+`lib.r.io.buffer.none`, `io.writefile`) has the same form, its two runs doing
+the work two ways: by line or unbuffered against by block, writing a string
+against counting it.
 Compiled by rhc and run twice under `bin/runevm --count`, on the line a and
 the line b as its standard input, the first's instructions are at most the
 ratio times the second's: a ratio separates linear from quadratic and holds
