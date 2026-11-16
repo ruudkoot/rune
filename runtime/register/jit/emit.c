@@ -1787,8 +1787,13 @@ static void apply_fast_tail(Jit *j, int32_t a, uint32_t n, const int32_t *args, 
         apply_counted(j, 4, R_S3);
         ms_role(M, MR_ARGS);
         ms_store_nth(M, BASER, nl + n, a);
+        /* the room by the grow that makes the call again (grow_slow), as
+           the partial application's: a claim makes the clean part unit from
+           the frame's registers' end, where the copies are, when the
+           room was given up (an interrupt, a leave for the interpreter) */
         ms_role(M, MR_ROOM);
-        room(j, need);
+        as_mov_ri(A, R_S3, (int64_t)need);
+        ms_room_dynamic(M, R_S3, 0, &M->slow[grow]->here);
         ms_role(M, MR_ARGS);
         for (uint32_t i = 0; i < n; i++) ms_slot_from_nth_raw(M, (int32_t)(1 + i), BASER, nl + i);
         ms_slot_from_nth_raw(M, 0, BASER, nl + n);

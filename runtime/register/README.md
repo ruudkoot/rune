@@ -574,7 +574,11 @@ application of as many more arguments as the call gives entered as a call
 of its closure with what it holds and then the arguments (in a tail call
 gathered above the frame and moved down to its base), one given fewer
 than it wants made another (`ms_alloc_dynamic`), and a closure of one
-given more entered through the program's `<apply 1 n-1>`, a known call;
+given more entered through the program's `<apply 1 n-1>`, a known call
+(in a tail call the arguments and the closure gathered above the frame:
+its room is claimed by the grow that makes the call again, since a claim
+makes the clean part unit from the frame's registers' end, where they are
+-- `tests/thunks/overtail.sml`, at both tiers under `--deopt-stress`);
 anything else -- the nursery full, a closure of k >= 2 given more than k
 -- goes to `reg_apply` in C (`SLOW_APPLY`, `jit_h_apply`), which goes on in
 the code of the function it entered, or after the `RESULT` in the
