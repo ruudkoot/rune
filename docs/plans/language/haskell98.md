@@ -57,7 +57,7 @@ What it rests on:
 
 ## Status
 
-Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation began on 2026-11-10 on branch `haskell98`, from origin/master `697724da5`: each milestone is built on a branch of its own and merged into `haskell98`, which `make check` runs in a fresh tree after the merges. "Green" names the merge on which `make check` last passed; "on X" means `make check` ran on merge X with no failure of that milestone's. On `dec159c4c`, 28,037 tests: 28,020 pass, 15 held, one timeout under load (`make/test-lsp-oracle`, 1.018 times master's instructions for 3.4% more source), and one failure since fixed (the order of HsLint's library dump, now canonical). The nightly tier of rhc's families on `29103ef52` at lint level 2: 9,171 of 9,219 pass, 46 held (oracles not on the machine, Planned rows), two failures of the test harness's own. G1 passed on 2026-11-10 under form C: 546 of the 555 clause programs print the same on Core's interpreter and on the VM, from the saved world and compiled whole alike. The decisions are in the table at the head of *Decisions*, and the six still to be taken on the figures in *Decisions on the numbers* (D3, D9 and D16 were taken on them on 2026-11-10).
+Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation began on 2026-11-10 on branch `haskell98`, from origin/master `697724da5`: each milestone is built on a branch of its own and merged into `haskell98`, which `make check` runs in a fresh tree after the merges. "Green" names the merge on which `make check` last passed; "on X" means `make check` ran on merge X with no failure of that milestone's. At the close, on `e5db9feca`, `make check`: 28,355 of 28,360 pass, 5 held, none fail; the nightly tier of rhc's families on `6e00db287` at lint level 2: 10,162 of 10,198 pass, 36 held (the oracles not on the machine), none fail (*At the close*). G1 passed on 2026-11-10 under form C: 546 of the 555 clause programs print the same on Core's interpreter and on the VM, from the saved world and compiled whole alike. The decisions are in the table at the head of *Decisions*, every one taken; the nine taken on the figures are in *Decisions on the numbers* and M25.
 
 | Milestone | Track | Size | Rests on | Status |
 |---|---|---|---|---|
@@ -87,7 +87,7 @@ Decided on 2026-11-09, with the owner's answers of 2026-11-10. Implementation be
 | M24. Strictness | P | M | D50 | done, merged after G2: a backward analysis with signatures, workers and wrappers, precise exceptions for I/O; E3's L2 step on rhc at `-O2`, 171 programs alike: `--count` 0.912, suspensions made 0.884 (geomean 0.704), copied 0.896; a defect of Mid's simplify it exposed fixed by ruling 71, SML's bytes unmoved |
 | M25. What measurement justifies | P | | D15-D17, D19, D51 | done: D3, D9, D16 and D24 measured and decided, as they were; D15's C (eval/apply, uncurrying), D19's B (CAF tables), D17's C (selector thunks by Wadler's rule), D34's B at `-O2` (Sestoft's trees) and D51's C at `-O2` (cheap eagerness) each measured, decided and landed on every engine it touches; D51 measured again after M24 |
 | M26. Ready for lazy ML | Z | | D57 | done, ahead of G2: the checklist's six lines each shown by a test; the collector's pin and guard only where a program reruns a suspension (Haskell 1.0002, SML 1.002 at most) |
-| M27. Retire | | S | | under way: `docs/rhc.md` and the architecture's rhc section written |
+| M27. Retire | | S | | done: the final measurements on `76ddd3cf1`; `docs/rhc.md`, and rhc in `architecture.md`, `ir.md`, `testing.md`, `units.md` and `bytecode.md`; *At the close* written; the worktrees wait for the owner's word |
 | M28. `Ty` with application and forall | A | L | D4 | done; the arrow as a type name and the lazy arrow `(~>)` with it (rulings 60, 65) |
 | M29. Mid `Case` | A | L | D8 | done; on `0f44dafbe` |
 | M30. Multi-value return, built to be measured | A | L | D9 | built and measured on `hs-a-m30`; the owner took A (2026-11-10), so it does not land |
@@ -5207,24 +5207,24 @@ Every change to Rune is graded on the brief's scale: **large**, optimal for Hask
 **small**, Haskell can live with it; **none**, rhc works around it. Paths are as in *Where we are*. `tables/` is
 `results/E2/tables/`. Machine instructions are `instructions:u` at tier 2.
 
-| | Decision | Recommended | Status, 2026-11-10 |
+| | Decision | Recommended | Status at the close |
 |---|---|---|---|
 | D1 | Hook point | Mid, beneath a Core that rhc owns | decided: A |
 | D2 | Core | Owned by rhc in `lib/language/haskell`: System F plus `f a`, lazy `let` and `letrec`, forcing `case`; typed, with a text form | decided: C |
-| D3 | Mid's laziness surface | Small: `susp` an abstract tycon, force one primitive node, no new constructor | decided: B, with form C; measure C |
+| D3 | Mid's laziness surface | Small: `susp` an abstract tycon, force one primitive node, no new constructor | decided: B, with form C; C measured, B kept |
 | D4 | `Any` against extending `Ty` | `Any` stands: evaluated, `susp Any` where lazy; casts erased in `Lower`, with a lint, and `any_check` in test builds | decided: C |
 | D5 | The evaluated-datatype invariant | Written in `docs/ir.md`, linted where a lint can reach | decided: B; C in checked builds only |
 | D6 | Recursive values and CAFs | Cell-patched recursion, CAFs as thunks in globals, no change to Mid | decided: A; C for D3's measured C |
 | D7 | Lambda | Stays, private to SML; no front end enters there; `Try` and `Fail` may go | decided: B |
 | D8 | Mid `Case` | None in this roadmap; recorded as medium, for clarity and compile time, for a later roadmap | decided: C, now |
-| D9 | Multi-value return | None now | measure B against A |
+| D9 | Multi-value return | None now | decided: A, B measured (M30) |
 | D10 | Walkers | Small: `atomsOfRhs` and `mapRhs` first | decided: C, now |
 | D11 | Thunk object | `K_CLOSURE` with non-zero `contag`, evaluated is `K_IND`; `K_THUNK`'s reservation released | decided: C |
 | D12 | Release, blackholing, raise | Form G, form L the alternative; no raise repair for Haskell 98 | n/a: form C |
 | D13 | Library, prims or instructions | No new instruction; `FORCE` stays additive | decided: C |
 | D14 | Stack bytecode and runeopt parity | Parity by G: force in `stack.sml`, +22 as built in E14, nothing in runeopt | decided: C, by the owner's rule; confirmed |
 | D15 | Eval/apply | Not now: M25, on measurement | decided: C, measured |
-| D16 | Pointer code 11 | None: force loads the header | measure B against A |
+| D16 | Pointer code 11 | None: force loads the header | decided: A, B measured |
 | D17 | Selector thunks | After leaks are measured on the corpus | decided: C, measured |
 | D18 | Depth | None: a 10^7 chain fits 1 GiB under G | decided: A |
 | D19 | CAF roots and the barrier | CAFs stay roots at first, measured on the corpus; the barrier needs nothing new | decided: B, measured; barrier as recommended |
@@ -5232,7 +5232,7 @@ Every change to Rune is graded on the brief's scale: **large**, optimal for Hask
 | D21 | `Char` | Mid `int`, Unicode 18.0.0; general category and case mapping added to `lib/unicode` | decided: A; tables D |
 | D22 | `Int` width and overflow | The checked prims: overflow an error, as 6.4 allows; the corpus's `hash` a compat function over `Integer`; reopened by a program outside `hash` that overflows | decided: A |
 | D23 | `Float` | Re-rounding by `real_to_single`, as `Real32` does | decided: B |
-| D24 | String literals | Lazily unpacked from a constant | decided: A; B and D measured |
+| D24 | String literals | Lazily unpacked from a constant | decided: A; B and D measured, A kept |
 | D25 | `IO` and lazy I/O | `IO a` a function of unit, no state token; `getContents` through one interleaving primitive | decided: B |
 | D26 | Library boundary | Haskell over prims and a frozen SML support unit, SML names confined to that unit | decided: A |
 | D27 | Parser and layout | Hand-written recursive descent, `closeImplicit` | decided: A |
@@ -8380,7 +8380,112 @@ Claims rest on instruction counts: `runevm --count`, and `perf stat -e instructi
 
 ## At the close
 
-Written at M27.
+M1 to M31 are done (2026-11-16), but M30, which the owner closed on its measurement (D9's A). Implementation ran on
+branch `haskell98` from origin/master `697724da5`, each milestone on a branch of its own and merged when it passed its
+gate; the branch is not merged into master. This section gathers what a later review needs: the last checks, what the
+roadmap promised against what it gave, the bugs found and where they went, and what is left open. The campaign's logs,
+scripts, measurements and every agent's notes are in the drafts (`~/.cache/claude-rune-drafts/haskell98`: `README.md`
+the log, `impl/rulings.md` the lead's 71 rulings, `impl/owner-list.md` the owner's 24 items, `impl/progress/` and
+`impl/<agent>/` the work).
+
+### The last checks
+
+- `make check` at the close (`e5db9feca`, batch21): 28,360 tests, 28,355 passed, 5 skipped, none failed.
+- `make check` on `6e00db287`, every branch merged (batch20): 28,360 tests, 28,354 passed, 5 skipped and one failed,
+  `register/@call-index`, whose oracle still wanted tier 2's "bad function index" for a tuple called as a function.
+  Since D15's one-argument calls, an index the call's test refuses goes to the general path, which tests the kind first,
+  as the interpreter does, and stops with "expected closure in call". The call still goes nowhere: with the index test
+  taken out, tier 2 dumps core with neither message. `e5db9feca` takes either message. The one-argument calls' gate had
+  run the families the change touched, not `make check`, where the register oracles are.
+- The nightly over rhc's families (`6e00db287`, `hs/*` and `hs-*/*` at the nightly tier with the corpus, at
+  `RUNE_LINT=2`; `e5db9feca` changes only the oracle above): 10,198 tests, 10,162 passed, 36 skipped, none failed.
+  The skips are the oracles' jobs for Hugs (17), nhc98 (17) and MicroHs (2), which need those systems built and named
+  (`tests/hs/oracles/README.md`), skipped in every nightly of the campaign; the judges' verdicts are E8's, recorded
+  with the corpus.
+- `make check` on `76ddd3cf1`, every branch merged before the last fixes (batch19): 28,349 tests, 28,344 passed, 5
+  skipped.
+- G2, the Report's exit, passed on 2026-11-14 (*Gates*): all 3,901 rows Supported, eight deviations each on one of
+  D38's grounds; `conformance98` 52 green and 30 recorded; 135 of the run set's 138 clean nofib programs alike at
+  `-O0` and `-O2`, the other three outside the Report or refused by 5.3.1; the lints at level 2 and the mutants.
+- The standing gate held at every change to Rune: stage 1 = stage 2 on both bytecodes, h98-ref's six outputs byte for
+  byte where a change said they would not move, and `perf-check`'s budgets, re-based only where a change said so.
+- What SML pays, measured on E2's ports in SML's own encoding (A0) by a build at each merge (owner's item 24): D15's
+  eval/apply cost +1.5% at the call through a closure until its one-argument calls lost the arity test (D15-C's own
+  share then 1.0030 and 1.0026 at the two tiers); D17's selector rule +0.43% in the collector, as accepted; every
+  other merge 1.000. The compiler compiling itself runs 0.58% and then a further 0.6% below the base compiler on the
+  same sources.
+
+### What the roadmap promised, and what it gave
+
+Against the brief (*The request*):
+
+- **A Haskell 98 compiler written in SML, separate from `rune`, sharing `lib/compiler`.** `bin/rhc`: the front end in
+  `lib/language/haskell`, the driver in `src/rhc`, the Report's libraries in `share/rhc/haskell98` in the Report's own
+  module graph. It joins `lib/compiler` at Mid, beneath a lazy Core of its own (D1, D2), and compiles the Report's
+  programs to Rune's bytecode on both instruction sets, every engine and tier.
+- **Conformance to the Report on the level of Rune's to the Definition.** G2's lines, above. The table is generated
+  and enforced (D53); every row cites its clause; the deviations are D38's and listed.
+- **A large test suite, an independent type-checking lint, an AST printer with round trips, a corpus.** The table's
+  3,901 rows as tests; HsLint, a second inference with Faxén's rules replayed and a target check on Core (M16); the
+  printers and the round-trip harness (M11); 3,089 corpus programs judged by GHC, Hugs and nhc98, 188 vendored and run
+  (M19); rhc's mutants, every one caught or argued equivalent.
+- **Separate compilation, reusing Rune's cache.** The store is Rune's (D43's B): rhc writes its own interface (HsIface),
+  keys and settings into it; units by recursive group across modules (M22); the library frozen as a snapshot layer
+  (D45's A); and since D58 a store of rhc's own, `.rhc`, by default. A warm compile with nothing edited takes 0.33 s,
+  from 1.01 s with no store (the median of `tests/hs/lang` at `-O1`).
+- **The hook, and every change to Rune a decision.** *Every change to Rune* lists them; each landed by its decision
+  under the standing gate: the contract and pass list as data (M4 to M7), Mid's `Ty` with application, forall and the
+  lazy arrow (M28), Mid `Case` (M29), suspensions through every engine in form C (M9) and in line in the JIT (M9b),
+  `IntInf`'s immediate (M31), eval/apply with one-argument calls that pay no arity test (D15), CAF tables (D19),
+  selector thunks by Wadler's rule (D17), a failed flush or close reported (the owner's A of 2026-11-12), and the
+  defect fixes below.
+- **Beyond rhc.** Ready for lazy ML (M26): the pin and guard, the MidLint rule, the stack target's force, the spec's
+  programs. The pipeline as data with passes named and swappable (M4); the IRs reviewed (E12, *The IRs, reviewed*).
+- **Optimisation, on the measurements.** A Core simplifier (M23), strictness (M24), cheap eagerness (D51) and
+  Sestoft's decision trees (D34) at `-O2`. Against `ghc -O0` (K, instructions): 10.75 times by geomean at `-O1`, 3.80
+  at `-O2`, 2.22 on the heavy programs, 20 programs under `ghc -O0` at `-O2` (M27's final measurements, `76ddd3cf1`).
+
+### Bugs found in Rune
+
+| Bug | Found | Fixed |
+|---|---|---|
+| `=` on a non-uniform datatype overflowed the compiler at `-O2`; `specialise` ignored type arguments on polymorphic recursion | E1 | M7 |
+| An unknown `--passes` name was accepted and ran no pass | E1 | M4 |
+| The codec generator numbered a sum's parts without skipping a shared instance's tag | M28 | M28 (`88b47d682`) |
+| `p_file_flush` and `p_file_close` ignored their results: data lost on a full device in SML and Haskell | M18 | M18 (the owner's A) |
+| Bytecode of another primitive result passed the fingerprint and failed later in the verifier | M18 | ruling 68 |
+| A handler's re-raise was placed at the end of its last rule, so a trace named a function that never ran | the mutants' race | `f7a8f6ab1` (the owner's item 22) |
+| Mid's simplify dropped the dead arms of a `Case` with no default, breaking MidLint's invariant | M24 with D34 | `a13c3dfdf` (ruling 71) |
+| The low-pause cycle cleared a global that running code read, where a suspension was forced before the cycle marked it | D17's count fix | `5efa6bf0b` |
+| A compiled over-application in a tail call claimed its room over its own arguments under a deopt | the final nightly | `cbb54668a` |
+| A selector's reduction made a program's instruction count depend on where collections fell | the final nightly | `77b9eec04`, `6e00db287` |
+| The loader parsed every function's name for apply stubs, twice a load | D15's one-argument calls | `59522bd40` |
+| The mutants' built jobs removed a running mutant's files, in rhc's and the compiler's mutants | G2's mutant line | `2a1614736`, `7c0f0dc88` |
+| Compiler mutant M05 had become dead code under M29 | the same | `7c0f0dc88` |
+| `make test-lsp-oracle` ran past its hour under load | every `make check` | split into three jobs |
+
+### Bugs found in other compilers
+
+| System | What | Report |
+|---|---|---|
+| Poly/ML 5.9.2 | aborts on `IntInf.xorb (2^64-1, ~1)` (`arb.cpp:1423`) | a HOST-BUG line; not sent upstream |
+| SML/NJ 110.99.9, 2026.2 | `IntInf.xorb (2^62-1, ~1)` is 0, not `~2^62` | a HOST-BUG line; not sent upstream |
+| GHC 9.4.7, Hugs, nhc98, MicroHs | where they depart from the Report's text: `NondecreasingIndentation` in GHC's Haskell 98 mode, a synonym exported as `T(..)`, a method's context on its class's variable and others | readings in `tests/hs/readings.md` and `oracles.txt` |
+
+### Left open
+
+- **The stack VM's retention of `last`'s dead suspension** (M9's departure): the owner's word was not to fix it (D14).
+- **`Real.round` on master** computes `floor (x + 0.5)`, wrong at 2^52 + 1; rhc does not meet it.
+- **Four tiers' make targets do not build the tools their tests run** (`bin/rune-heap-check`, `bin/rune-measure`),
+  on master too.
+- **Imported unfoldings are not read.** A unit's interface carries its unfoldings and strictness signatures only under
+  `--unfoldings`, off by default, and no client reads them; cross-module inlining waits for a reader.
+- **What D17's C leaves**: top-level pattern bindings, bindings of one variable, and a program's own `fst` and `snd`.
+- **The LSP oracle's crash on a store a restart had cut** (`docs/bugreport/rune/lsp-oracle-store-sigsegv`): not
+  reproduced over 19 kinds of damage.
+- **`lib.r.char.table.other.upper_unicode` under the low-pause collector's stress** runs past its half hour; it is
+  right, and 3.8 s without the stress.
+- **The haskell98 branch is not merged into master**, which is the owner's to decide.
 
 ## References
 
