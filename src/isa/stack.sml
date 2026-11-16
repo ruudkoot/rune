@@ -296,12 +296,24 @@ struct
         D11, D14), as in the register set: thunk_force is FORCE, then on its
         slow path UNIT and ENTER; a suspension's code says BLACKHOLE once it
         has read what it captured, and UPDATE with its value before it
-        returns it. *)
+        returns it. FORCE gives a selector whose tuple is evaluated (D17's C)
+        its field first, as the collector would (vm_selected,
+        runtime/heap.c), so that a program counts the same wherever its
+        collections fall (D17's count). *)
      inst ("FORCE", [("o", Label)], (Fixed 1, 1), Branch,
            "Where the top of stack is no unevaluated suspension, replace it by its value -- what an indirection holds, else itself -- and jump to o; else leave it for the ENTER after.")
        ["Value v = TOP(0);",
         "if (val_is_ptr(v)) {",
         "  int k = obj_kind(val_ptr(v));",
+        "  if (k == K_THUNK && obj_contag(val_ptr(v)) >= THUNK_SELECTOR) {",
+        "      /* a selector whose tuple is evaluated: its field, as the",
+        "         collector would give it (vm_selected, D17's count) */",
+        "      Value w = vm_selected(vm, v);",
+        "      if (w != v) {",
+        "          TOP(0) = v = w;",
+        "          k = val_is_ptr(v) ? obj_kind(val_ptr(v)) : -1;",
+        "      }",
+        "  }",
         "  if (k == K_THUNK) NEXT;",
         "  if (k == K_IND) TOP(0) = obj_field(val_ptr(v), 0);",
         "}",
