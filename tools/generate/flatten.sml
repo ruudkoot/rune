@@ -64,7 +64,11 @@ struct
            with what the index marks to inline *)
         val index=lines (successful (execute root (out ^ "/basis-index") (tool "RUNE" (fromRoot "bin/rune") @ ["--lib","lib","--no-warnings","--basis-index","lib/basis"])))
         fun marked key=List.concat (List.map (fn line => if String.isPrefix key line then String.tokens Char.isSpace (String.extract (line,size key,NONE)) else []) index)
-        fun inline (word,key)=case marked key of [] => "" | names => "inline " ^ word ^ " " ^ String.concatWith " " names ^ " end\n"
+        (* each name quoted, as the build file's reader takes any name of an
+           inline list, and as lib/basis/library.build writes "Word32.>>",
+           whose > a bare word of the reader cannot hold *)
+        fun inline (word,key)=case marked key of [] => "" | names =>
+              "inline " ^ word ^ " " ^ String.concatWith " " (List.map (fn name => "\"" ^ name ^ "\"") names) ^ " end\n"
         fun row line=if String.isPrefix "#" line orelse trim line="" then NONE else
           case List.map trim (fields #"|" line) of
             file::class::host::_ =>

@@ -126,5 +126,22 @@ struct
       val () = need ("failed library accounts for every selected law", length (lines output) = 2
                     andalso List.all (String.isPrefix "NOT BUILT ") (lines output)
                     andalso String.isSubstring "library producer" errors)
+      (* the Basis Library that xc2 trims (rune-generate trim-lib) is one the
+         build file's reader takes, with the inline lists of lib/basis's
+         index: written bare, Word32.>> was refused, and no xc2 prepared *)
+      val trimmed = dir ^ "/trim-lib"
+      fun step (label, cmd) =
+        Children.exec {addressSpace = NONE, cpuTime = SOME 120, fileSize = SOME (16 * 1024 * 1024), core = SOME 0} (fn e => e)
+          {cmd = cmd, dir = SOME root, stdin = "", stdout = dir ^ "/" ^ label ^ ".out", stderr = dir ^ "/" ^ label ^ ".err",
+           timeout = 120}
+      fun inlines (label, lib) =
+        let val status = step (label, [fromRoot "bin/rune", "--lib", lib, "--no-warnings", "--basis-index", lib ^ "/basis"])
+        in (status, List.filter (String.isPrefix "# inline") (lines (read (dir ^ "/" ^ label ^ ".out")))) end
+      val trimStatus = step ("trim-lib", [fromRoot "bin/rune-generate", "trim-lib", trimmed, fromRoot "tests/basis/harness.sml"])
+      val (sourceStatus, sourceInlines) = inlines ("index-source", fromRoot "lib")
+      val (trimmedStatus, trimmedInlines) = inlines ("index-trimmed", trimmed ^ "/lib")
+      val () = need ("xc2's trimmed library loads with lib/basis's inline lists",
+                     trimStatus = 0 andalso sourceStatus = 0 andalso trimmedStatus = 0
+                     andalso not (null sourceInlines) andalso trimmedInlines = sourceInlines)
     in () end
 end

@@ -420,6 +420,12 @@ defect of the shim or of Rune's compiler.
   and `LargeWord.word` types of their own (heap-layout M5), took some 250
   changed lines across the shims and patches. A change to Rune's Basis
   Library or to the specification does not reach them.
+* **The library it trims.** `trim-lib` writes the inline lists of the
+  index of `lib/basis` back into its `library.build` with every name
+  quoted, as the reader of build files takes a name there (`Word32.>>` is
+  no bare word); `runner/matrix-controller-faults` checks that the library
+  it writes loads, with the same lists. Written bare, the name kept every
+  xc2 configuration from preparing from 2026-10-26 to 2026-11-17.
 * **The hosts' versions.** Each patch is of one release: MLton 20241230,
   MLKit 4.7.25, SML/NJ 110.99.9 and 2026.2, and Poly/ML 5.9.2. A new
   release means applying the patch again and fixing what does not apply.
