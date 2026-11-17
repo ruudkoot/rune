@@ -318,6 +318,17 @@ static inline int prim_fast(VM *vm, int prim, uint32_t n, const Value *base, con
        (runtime/prims.c, p_thunk_make); the copy of one that does not is the
        primitive's */
     case PRIM_thunk_make: OBJ(x, K_CLOSURE); if (obj_len(val_ptr(*x)) < 2) return 0; obj_become_thunk(val_ptr(*x)); r = *x; break;
+    /* a selector's suspension marked (runtime/prims.c, p_thunk_selector; the
+       haskell98 roadmap's D17, C): s, unevaluated, whose first capture is t,
+       of field i of t, which the contag can name; else nothing. i, the
+       compiler's constant, is an int or the primitive's to judge */
+    case PRIM_thunk_selector:
+        if (!val_is(*z, T_INT)) return 0;
+        if (val_is_ptr(*x) && obj_kind(val_ptr(*x)) == K_THUNK && obj_contag(val_ptr(*x)) == THUNK_UNEVALUATED
+            && obj_len(val_ptr(*x)) >= 2 && obj_field(val_ptr(*x), 1) == *y && val_imm(*z) >= 0
+            && THUNK_SELECTOR + val_imm(*z) < 256)
+            obj_set_contag(val_ptr(*x), (uint16_t)(THUNK_SELECTOR + val_imm(*z)));
+        r = mk_unit(); break;
     case PRIM_ref_get: OBJ(x, K_REF); r = obj_field(val_ptr(*x), 0); break;
     case PRIM_ref_set: OBJ(x, K_REF); HEAP_STORE(val_ptr(*x), 0, *y); r = mk_unit(); break;
     case PRIM_array_length: OBJ(x, K_ARRAY); FAST_INT(obj_len(val_ptr(*x))); break;

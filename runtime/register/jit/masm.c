@@ -1312,6 +1312,9 @@ void ms_set_kind(Masm *m, int obj, int kind, int r) {
 _Static_assert(THUNK_UNEVALUATED == 0 && THUNK_BLACKHOLE > 0 && THUNK_BLACKHOLE < 256,
                "a suspension goes under evaluation by the low byte of its contag");
 void ms_blackhole(Masm *m, int obj) { as_st8i(&m->a, obj, (int32_t)offsetof(Obj, contag), THUNK_BLACKHOLE); }
+/* a selector's state the same way (thunk_selector, D17's C): below 256 */
+_Static_assert(THUNK_SELECTOR > THUNK_BLACKHOLE && THUNK_SELECTOR < 256, "a selector's state is the low byte of its contag");
+void ms_set_selector(Masm *m, int obj, int r) { as_st8(&m->a, obj, (int32_t)offsetof(Obj, contag), r); }
 /* `=` in line (masm.h): values_equal's answers that need no walk. A
    string's bytes are compared a word at a time, its last word's bytes past
    the length -- the high ones on the JIT's machines, which are

@@ -460,7 +460,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_real_exp: case PRIM_real_ln: case PRIM_real_sin: case PRIM_real_cos: case PRIM_real_tan:
     case PRIM_real_atan: case PRIM_real_sinh: case PRIM_real_cosh: case PRIM_real_tanh:
     case PRIM_real_atan2: case PRIM_real_pow:
-    case PRIM_thunk_make:
+    case PRIM_thunk_make: case PRIM_thunk_selector:
         break;
     default:
         return 0;
@@ -798,6 +798,40 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         ms_set_reg(M, d, T_PTR, R_S0);
         as_bind(A, &done);
         as_label_free(&captures); as_label_free(&done);
+        break;
+    }
+    case PRIM_thunk_selector: {
+        /* D17's C, as the loop has it (fastprim.h): the state THUNK_SELECTOR + i
+           in R_S3, to slow where i is no int; then nothing, unless s is an
+           unevaluated suspension of two fields or more whose first is t's
+           word, when its contag's low byte becomes that state */
+        AsmLabel done; as_label_init(&done);
+        ms_need_word(M, x);
+        ms_need_word(M, y);
+        ms_one_imm(M, z, T_INT, slow);
+        ms_untag(M, R_S0, T_INT);
+        as_cmp_ri(A, R_S0, 256 - THUNK_SELECTOR);
+        as_jcc(A, CC_AE, &done);          /* unsigned: a negative i too */
+        as_mov_rr(A, R_S3, R_S0);
+        as_add_ri(A, R_S3, THUNK_SELECTOR);
+        ms_load_bits(M, R_S1, x);
+        ms_jump_if_immediate(M, R_S1, &done);
+        ms_load_kind(M, R_S2, R_S1);
+        as_cmp_ri(A, R_S2, K_THUNK);
+        as_jcc(A, CC_NE, &done);
+        ms_load_contag(M, R_S2, R_S1);
+        as_cmp_ri(A, R_S2, THUNK_UNEVALUATED);
+        as_jcc(A, CC_NE, &done);
+        ms_load_len(M, R_S2, R_S1);
+        as_cmp_ri(A, R_S2, 2);
+        as_jcc(A, CC_B, &done);
+        ms_load_field_bits(M, R_S2, R_S1, 1);
+        ms_cmp_bits(M, R_S2, y);
+        as_jcc(A, CC_NE, &done);
+        ms_set_selector(M, R_S1, R_S3);
+        as_bind(A, &done);
+        ms_set(M, d, T_UNIT, 0);
+        as_label_free(&done);
         break;
     }
     case PRIM_ref_set:

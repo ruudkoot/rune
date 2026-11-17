@@ -434,6 +434,7 @@ void ms_load_kind(Masm *m, int r, int obj);
 void ms_jump_if_immediate(Masm *m, int r, AsmLabel *to);            /* to `to` where the word in r is an immediate, no object */
 void ms_set_kind(Masm *m, int obj, int kind, int r);                 /* the object in obj of that kind, the collector's bits kept (obj_become_thunk, obj_become_ind); r clobbered */
 void ms_blackhole(Masm *m, int obj);                                 /* the suspension in obj under evaluation (obj_blackhole) */
+void ms_set_selector(Masm *m, int obj, int r);                       /* the unevaluated suspension in obj a selector: its contag := the byte in r, THUNK_SELECTOR + i (thunk_selector) */
 
 /* arrays of values outside the heap's objects: the constants, the globals,
    a frame's registers at an address */
