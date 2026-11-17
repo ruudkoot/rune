@@ -926,6 +926,30 @@ store:
   Status: open (the desugarer's: one selector, or a diagnostic; 4.3.1 does
   not forbid the repetition).
 
+* **A compile with `--no-cache` makes the Basis Library's index again,
+  wherever no store holds this compiler's.** Seen by the haskell98
+  roadmap's agent CS measuring benchmarks (a `lib/cache` of another
+  compiler build "doubled a compile's work"), and read under rhc's
+  verification: the compile of `examples/benchmarks`' tak with `--whole
+  --no-cache`, `RUNE_CACHE` empty, runs 98.7M instructions where the
+  `lib/cache` beside its Basis is its own compiler's, and 175.0M where
+  there is none or one of another compiler build (175.0M either way: a
+  record refused costs nothing to speak of; CS's lower figure, with a lib
+  copy without `lib/cache`, was a compile that found the record elsewhere,
+  in its workspace's `.rune` [inferred]). The difference is the index
+  pass (`--pass-stats`: 0.04 s against 0.33 s): the index is kept as a
+  record named by the compiler's identity (`LibraryIndex`, its
+  `library-index` key), read from the store and the frozen layer, and a
+  compile with `--no-cache` reads such records and writes none, so each
+  one makes the index again from the Basis's sources. The programs are
+  the same bytes and run the same (149.6M instructions for tak, every
+  way). Not a wrong result, but a trap for measuring: a `--no-cache`
+  compile costs 1.8 times as much in a tree whose `lib/cache` is stale or
+  absent. Status: open; writing the record under `--no-cache`, or naming
+  it by what the index is made of rather than by the compiler, would
+  change what `--no-cache` means or how the store keys it, which is the
+  cache's design.
+
 ## Found under rhc: what was run
 
 The haskell98 roadmap's agent BC, 2026-11-16; the tools, their logs and
