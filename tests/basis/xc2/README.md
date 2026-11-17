@@ -158,7 +158,13 @@ are of them, and a program is compiled with `--default-type=int64
 --default-type=word64` (`OUTDIR/flags`), as MLton compiles one with
 `-default-type int64`, so that the constants and the arithmetic that a
 declaration leaves open are of MLton's `int` and `word` there too (they
-would be Rune's otherwise, and not meet the library's). `mlton/rewrite.awk` replaces
+would be Rune's otherwise, and not meet the library's), and with
+`--overloading=topdec`, MLton's context for overloading: the shim and the
+library leave a constant's type to a later use in the same top-level
+declaration (`val count = ref 0`), which the default context, a
+declaration at structure level, settles first (`xc2:polyml` has the flag
+for the same reason, Poly/ML's `val op rem = fn (_, 0) => ...`).
+`mlton/rewrite.awk` replaces
 `_prim "N": T;` by `(XC2Prim.N : T)`, `_import` by `XC2FFI.N`, `_symbol` by
 `XC2Symbol.N`, and `_const`/`_build_const` by the value of the constant (from
 MLton's `targets/self/constants`). A primitive used at more than one type
