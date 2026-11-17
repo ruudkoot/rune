@@ -279,16 +279,22 @@ struct
   val reaches : (string * string -> bool) ref = ref (fn _ => true)
   fun setReaches f = reaches := f
 
+  (* whether the module h's imports reach the module that declares the
+     instance i, a read of the program's graph that a store's entry of h's
+     unit is judged by (HsUsage.Reaches; build-cache-issues.md, issue 26) *)
+  fun inScope (h, i : C.instance) =
+    h = "" orelse (HsUsage.read (HsUsage.Reaches {from = h, to = #home i}); !reaches (h, #home i))
+
   (* an instance at a module: NONE where there is none, or where the
      module's imports do not reach the one that declares it *)
   fun instanceAt (h, cls, tc) =
     case C.findInstance (#classes (!genv), cls, tc) of
-      SOME i => if h = "" orelse !reaches (h, #home i) then SOME i else NONE
+      SOME i => if inScope (h, i) then SOME i else NONE
     | NONE => NONE
 
   fun outOfScope (h, cls, tc) =
     case C.findInstance (#classes (!genv), cls, tc) of
-      SOME i => if h = "" orelse !reaches (h, #home i) then ""
+      SOME i => if inScope (h, i) then ""
                 else ": the instance " ^ Mo.moduleName (#home i) ^ " declares is not in scope in " ^ Mo.moduleName h ^
                      ", from which no chain of imports leads to it (5.4, R26)"
     | NONE => ""
@@ -1683,9 +1689,14 @@ struct
             List.foldl (fn ((k, own : T.scheme), m) =>
                           M.insert (m, k, {vars = #vars own, ctx = {cls = key, ty = T.TGen 0} :: #ctx own, ty = #ty own}))
               values methods
+          (* the methods its body gives a default, which an instance that
+             leaves one out takes (4.3.2), in the methods' order *)
+          val bound = List.concat (List.map bkeys (collect (List.map (fn d => (h, d)) (getOpt (body, [])))))
+          val defaults = List.filter (fn m => List.exists (fn b => b = m) bound) (List.map #1 methods)
         in
           genv := {values = values', tycons = tycons, cons = cons, fields = fields,
-                   classes = C.addClass (classes, {key = key, supers = supers, methods = List.map #1 methods, kind = kind}),
+                   classes = C.addClass (classes, {key = key, supers = supers, methods = List.map #1 methods, kind = kind,
+                                                   defaults = defaults}),
                    methods = List.foldl (fn ((k, own), m) => M.insert (m, k, {cls = key, scheme = own})) ms methods}
         end
     | classDecl _ = ()
@@ -2034,10 +2045,11 @@ struct
                     (err (nameSpan c, "the class `" ^ nameText c ^ "` is its own superclass, where the superclass relation " ^
                                       "must not be cyclic (4.3.1)");
                      case C.findClass (#classes (!genv), key) of
-                       SOME {key, methods, kind, ...} =>
+                       SOME {key, methods, kind, defaults, ...} =>
                          let val {values, tycons, classes, cons, fields, methods = ms} = !genv
                          in genv := {values = values, tycons = tycons, cons = cons, fields = fields, methods = ms,
-                                     classes = C.addClass (classes, {key = key, supers = [], methods = methods, kind = kind})}
+                                     classes = C.addClass (classes, {key = key, supers = [], methods = methods, kind = kind,
+                                                                     defaults = defaults})}
                          end
                      | NONE => ())
                   else ()

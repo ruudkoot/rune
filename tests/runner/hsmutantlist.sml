@@ -92,7 +92,7 @@ struct
           "| (d, NONE) => Option.map (fn p => p) (superPath (env, d, s)))",
           ["hs/hslint/dump/dicts"]),
      one ("HK05", "checker", "a method slot swapped: a class's methods reversed, and its dictionary's slots with them (D31)",
-          "infer.sml", "methods = List.map #1 methods, kind = kind}", "methods = List.rev (List.map #1 methods), kind = kind}",
+          "infer.sml", "methods = List.map #1 methods, kind = kind,", "methods = List.rev (List.map #1 methods), kind = kind,",
           ["hs/hslint/dump/dicts"]),
      one ("HD03", "deriving", "a derived Ord's and Ix's constructor positions are bare literals, which the module's default types",
           "derive.sml",
@@ -150,7 +150,7 @@ struct
           "store.sml", "case List.find (fn (k, v) => current k <> v) usages of", "case List.find (fn (k, v) => false) usages of",
           [holes ^ "h1-name", holes ^ "h2-default"]),
      rhc ("HU04", "units", "H4: a unit's key without its members' texts, the default declaration's among them",
-          "driver.sml", "(#id f, #hash f)) found)", "(#id f, \"\")) found)", [holes ^ "h2-default"]),
+          "driver.sml", "then \" literate\" else \"\"), #hash f))", "then \" literate\" else \"\"), \"\"))", [holes ^ "h2-default"]),
      one ("HU05", "units", "H5: an instance's fingerprint without its context: a context moved from one variable to another, " ^
                    "naming the same classes, is not seen, and a derived instance keeps the old one",
           "modiface.sml", "context (#ctx i) ^ (if #derived i", "\"\" ^ (if #derived i", [holes ^ "h5-context"]),
@@ -159,7 +159,7 @@ struct
      one ("HU07", "units", "H7: `module M` in an export list reads none of M's exports: a module that re-exports one stays as it was",
           "modules.sml", "then HsUsage.read (HsUsage.Exports target)", "then ()", [holes ^ "h7-reexport"]),
      rhc ("HU08", "units", "H8: a cycle's key over its first member alone",
-          "driver.sml", "(#id f, #hash f)) found)", "(#id f, #hash f)) [hd found])", [holes ^ "h8-cycle"]),
+          "driver.sml", "#hash f))\n                    found)", "#hash f))\n                    [hd found])", [holes ^ "h8-cycle"]),
      rhc ("HU09", "units", "H9: the Prelude's names the translations ask for are no reads",
           "names.sml", "HsUsage.read (HsUsage.Standard {space = space, name = name});", "();",
           ["hs/iface/usages/reads"]),
@@ -174,5 +174,25 @@ struct
                    "of another",
           "driver.sml", "HsModIface.fingerprints Pickle.hash (mods, external)",
           "List.concat (List.map (fn i => HsModIface.fingerprints Pickle.hash ([i], external)) mods)",
-          [holes ^ "h8-group"])]
+          [holes ^ "h8-group"]),
+     one ("HU12", "units", "a class's fingerprint without its defaults: an instance elsewhere that leaves a method out keeps " ^
+                   "the class's default it was made of, or the error made where there was none (build-cache-issues.md, issue 25)",
+          "modiface.sml", "fun defaultOf m = if List.exists (fn d => d = m) (#defaults c) then \" default\" else \"\"",
+          "fun defaultOf m = \"\"", [holes ^ "class-default", "hs/iface/fingerprints/default"]),
+     one ("HU13", "units", "H2: an instance found is read without whether the reading module's imports reach it: an import " ^
+                   "on the way given or taken moves neither a default nor a refusal (5.4; build-cache-issues.md, issue 26)",
+          "infer.sml", "h = \"\" orelse (HsUsage.read (HsUsage.Reaches {from = h, to = #home i}); !reaches (h, #home i))",
+          "h = \"\" orelse !reaches (h, #home i)", [holes ^ "instance-chain", holes ^ "instance-chain-refused"]),
+     rhc ("HU14", "units", "H8: a unit's key without whether its member is literate: the same text read literate takes the " ^
+                   "plain reading's entry (build-cache-issues.md, issue 27)",
+          "driver.sml", "(#id f ^ (if HsLiterate.isLiterate (#file f) then \" literate\" else \"\"), #hash f)",
+          "(#id f, #hash f)", [holes ^ "literate"]),
+     rhc ("HU15", "units", "a module's header kept without whether its text is literate: the same text read literate takes " ^
+                   "the plain reading's name and imports (build-cache-issues.md, issue 27)",
+          "graph.sml", "^ (if HsLiterate.isLiterate file then \" literate\" else \"\")", "^ \"\"", [holes ^ "literate"]),
+     rhc ("HU16", "units", "a program's groups numbered on from where the group before them ended: a unit made after one " ^
+                   "taken is other Core than a build without the store makes, and a comment makes the link compiled again " ^
+                   "(build-cache-issues.md, issue 30)",
+          "names.sml", "else HsInfer.numberFrom (programSlot members)", "else HsInfer.renumber unitCounters",
+          [holes ^ "fresh-names"])]
 end

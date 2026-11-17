@@ -42,6 +42,7 @@ sig
     | <a href="#con-instance">Instance</a> of {<a href="#fld-instance.cls">cls</a> : string, <a href="#fld-instance.tycon">tycon</a> : string}
     | <a href="#con-standard">Standard</a> of {<a href="#fld-standard.space">space</a> : string, <a href="#fld-standard.name">name</a> : string}
     | <a href="#con-entity">Entity</a> of string
+    | <a href="#con-reaches">Reaches</a> of {<a href="#fld-reaches.from">from</a> : string, <a href="#fld-reaches.to">to</a> : string}
   val <a href="#val-setnote">setNote</a> : (read -&gt; unit) -&gt; (read -&gt; unit)
   val <a href="#val-read">read</a> : read -&gt; unit
   val <a href="#val-key">key</a> : read -&gt; string
@@ -59,6 +60,7 @@ datatype read =
   | Instance of {cls : string, tycon : string}
   | Standard of {space : string, name : string}
   | Entity of string
+  | Reaches of {from : string, to : string}
 ```
 
 A read. Spaces are `"v"` for a value and `"t"` for a type or class,
@@ -84,9 +86,15 @@ and entities, classes and type constructors are by their keys
 | &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-standard.space"></a>`space` | `string` |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-standard.name"></a>`name` | `string` |  |
 | <a name="con-entity"></a>`Entity` | `string` | what the Prelude exports under a name the translations of the Report name, `Bool` or `>>=` (H9) |
+| <a name="con-reaches"></a>`Reaches` | `{from : string, to : string}` | an entity the translations name by its key, a program unable to shadow it, as Ratio's % (H9) |
+| &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-reaches.from"></a>`from` | `string` |  |
+| &nbsp;&nbsp;&nbsp;&nbsp;<a name="fld-reaches.to"></a>`to` | `string` |  |
 
-an entity the translations name by its key, a program unable to
-shadow it, as Ratio's % (H9)
+whether a chain of imports leads from the module of identity
+`from` to that of `to`, which declares an instance the checker
+found: the instance is in scope in `from` where one does (5.4), so
+that an import of a module on the way, taken away or given, moves
+the modules after it (H2)
 
 ### <a name="val-setnote"></a>`setNote`
 

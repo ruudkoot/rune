@@ -111,6 +111,7 @@ struct
             ents (List.filter (fn (e : Mo.entity) => #space e = spaceOf space andalso #name e = name) (exportsOf from))
           end
       | HsUsage.Entity k => getOpt (fingerprint k, "?")
+      | HsUsage.Reaches {from, to} => if RhcGraph.reaches (from, to) then "reached" else "not reached"
     end
 
   (* ---- a program by its groups, each from the interfaces before it ---- *)

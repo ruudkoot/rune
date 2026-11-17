@@ -103,6 +103,7 @@ struct
     | "--layer" :: d :: rest => (ownLayers := !ownLayers @ [d]; storeArgs rest)
     | ["--layer"] => raise RhcOptions.Usage "--layer takes a directory"
     | "--no-store" :: rest => (noStore := true; storeArgs rest)
+    | "--verify-store" :: rest => (RhcDriver.verify := true; storeArgs rest)
     | "--units" :: rest => storeArgs rest
     | a :: rest => a :: storeArgs rest
     | [] => []
@@ -196,6 +197,8 @@ struct
         else if not exportsMain then SOME (root ^ ": error: the module `Main` does not export `main`, which a program runs (5)")
         else NONE
       val perGroup = !cycleDefault = PerGroup
+      (* the store trimmed once the compile is done (RhcDriver.front) *)
+      fun finish () = case front of SOME f => #finish f () | NONE => ()
     in
       case mode of
         DumpNames => (RhcNames.dump (g, r); OS.Process.success)
@@ -224,6 +227,7 @@ struct
                        (SOME f, SOME _) =>
                          (#keep f () handle Fail msg => raise Error.Bug ("rhc's desugaring fails, a bug of rhc's: " ^ msg))
                      | _ => ());
+                    finish ();
                     OS.Process.success)
                  else (!compile) (rest, fn strings' =>
                                    case front of
@@ -232,10 +236,15 @@ struct
                                      SOME f => if strings' = !strings then #link f () handle RhcDriver.Failed msg => raise Error.Bug msg
                                                else raise Error.Bug "rhc's strings' form is not the one its units are of"
                                    | NONE => RhcDesugar.program (g, r, strings'),
-                                  case front of SOME f => #memo f | NONE => NONE))
+                                  case front of SOME f => #memo f | NONE => NONE)
+                      before finish ())
     end
     handle HsSource.Error (span, msg) => (eprint (message (hd files, span, msg) ^ "\n"); OS.Process.failure)
          | RhcDriver.Failed msg => (eprint ("rhc: error: " ^ msg ^ "\n"); OS.Process.failure)
+         | RhcStore.Damaged dir =>
+             (eprint ("rhc: error: the store " ^ dir ^ " holds a damaged entry, which this compile took and rhc does not "
+                      ^ "write: make it again (bin/rhc's snapshot by make bin/rhc.layer)\n");
+              OS.Process.failure)
 
   fun go (mode, spans, file, rest) =
     let

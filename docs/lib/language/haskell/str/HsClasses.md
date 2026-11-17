@@ -22,7 +22,7 @@ What each means is on [`HS_CLASSES`](../sig/HS_CLASSES.md); the types are this s
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`class`](../sig/HS_CLASSES.md#type-class) | `{key : string, kind : HsTypes.kind, methods : string list, supers : string list}` |
+| type | [`class`](../sig/HS_CLASSES.md#type-class) | `{defaults : string list, key : string, kind : HsTypes.kind, methods : string list, supers : string list}` |
 | type | [`env`](../sig/HS_CLASSES.md#type-env) | *a type of its own* |
 | type | [`instance`](../sig/HS_CLASSES.md#type-instance) | `{cls : string, ctx : {cls : string, ty : HsTypes.ty} list, derived : bool, home : string, id : string, tycon : string, vars : int}` |
 | val | [`addClass`](../sig/HS_CLASSES.md#val-addclass) | `env * class -> env` |

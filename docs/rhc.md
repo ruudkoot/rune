@@ -91,6 +91,13 @@ made again.
   whether it was compiled or taken. `--units` is what every check and
   compile of Haskell is, and says nothing more of one; of Core it compiles
   each `--read-core` file apart (below).
+- `--verify-store` takes nothing from the store: it makes every unit and
+  the link, as a compile without a store does, and holds each entry that
+  stands for one of them to what making it gave, byte for byte, failing
+  where one is not (Rune's `--verify-cache`, [units.md](units.md)). An
+  entry of the store that does not hold what its hashes say is no entry,
+  and is removed; one of a layer, which rhc does not write, stops a compile
+  that took it, saying which.
 - The store is kept small as Rune's is: at most once a day a compile drops
   what no compile has taken for a week, and past 4 GiB what was taken
   least recently ([units.md](units.md), *The store*). Two compiles at once
@@ -190,6 +197,7 @@ of them is a bug of rhc's.
 | `--no-store` | keep nothing, and take the program's units from the layers and the snapshot alone |
 | `--layer DIR` | a store a unit is taken from and never kept in |
 | `--show-units` | say of each unit whether it was compiled or taken |
+| `--verify-store` | make every unit and the link, and fail where an entry that stands in the store or a layer is not what making it gives |
 | `--link=whole\|units` | with `--units` over Core, join the units' Core and compile what `main` reaches whole, or link each unit's code (the default) |
 | `--desugar-units` | desugar a program a unit at a time and join the units, as a compile in units does, for its tests |
 | `--canonical-core` | with `--dump-after=desugar`, print what `main` reaches of the Core, its types, then imports, then values, each by name: one program's Core in one form, whole or against the snapshot |

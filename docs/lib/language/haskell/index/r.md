@@ -9,6 +9,7 @@
 - `RBRACE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-rbrace)
 - `RBRACKET` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-rbracket)
 - `reach` (val): [CORE_UNITS](../sig/CORE_UNITS.md#val-reach)
+- `Reaches` (con): [HS_USAGE](../sig/HS_USAGE.md#con-reaches)
 - `reachIndexed` (val): [CORE_UNITS](../sig/CORE_UNITS.md#val-reachindexed)
 - `read` (type): [HS_USAGE](../sig/HS_USAGE.md#type-read)
 - `read` (val): [CORE_STRICT](../sig/CORE_STRICT.md#val-read), [HS_USAGE](../sig/HS_USAGE.md#val-read)

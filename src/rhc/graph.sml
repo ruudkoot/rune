@@ -238,7 +238,10 @@ struct
       fun read (file, library, name) : header * string * (unit -> A.module) * bool ref =
         let
           val text = once (fn () => readBytes file)
-          val mode = if library then "library" else if dotted then "dotted" else "program"
+          (* a literate file's text is another program than the same text
+             read plain (build-cache-issues.md, issue 27) *)
+          val mode = (if library then "library" else if dotted then "dotted" else "program")
+                     ^ (if HsLiterate.isLiterate file then " literate" else "")
           val hash = #hash reader {file = file, mode = mode, text = text}
           val parsed = ref false
           val tree = once (fn () => (parsed := true; parse (file, library, text ())))

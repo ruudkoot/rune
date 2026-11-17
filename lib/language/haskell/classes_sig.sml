@@ -7,8 +7,12 @@
 signature HS_CLASSES =
 sig
   (* A class: its key, its direct superclasses, its methods' keys, in
-     order, and the kind of its variable. *)
-  type class = {key : string, supers : string list, methods : string list, kind : HsTypes.kind}
+     order, the kind of its variable, and the methods it gives a default.
+
+     The defaults are keys, in the methods' order: what an instance of
+     another module that leaves a method out is made of (4.3.2), so that
+     a default given or taken away moves the class's fingerprint. *)
+  type class = {key : string, supers : string list, methods : string list, kind : HsTypes.kind, defaults : string list}
 
   (* An instance `C (T a1 ... an)`: its identity, class, type constructor
      and the number of its head's variables.

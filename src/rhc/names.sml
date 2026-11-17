@@ -104,10 +104,27 @@ struct
   (* The first number a program's fresh type variables and kinds take, past
      any the library's checking takes, so that they are numbered alike
      whether the library was checked now or taken from bin/rhc's
-     snapshot (RhcDriver), or its groups by interface (RhcIface); the
-     program's units go on from it, so that no two dictionaries of a
-     program have one name *)
+     snapshot (RhcDriver), or its groups by interface (RhcIface) *)
   val unitCounters = 100000000
+
+  (* The first number a group of the program's fresh variables take: past
+     unitCounters, a range of its own, a million wide, by the hash of its
+     modules' identities, so that no two dictionaries of a program have
+     one name but where two groups' hashes meet (one in 2^28), and so that
+     a group is numbered alike whatever the session checked before it: a
+     unit taken from the store, numbered in another session after other
+     units, and one checked now, as a build without the store checks it.
+     Going on from where the group before it ended, as the program's
+     groups did, made a unit made after one taken other Core than a build
+     without the store makes (build-cache-issues.md, issue 30) *)
+  fun programSlot (members : G.node list) : int =
+    let
+      (* a hash of the identities, below 2^28 (a prime's residue) *)
+      val n = CharVector.foldl (fn (c, h) => (h * 31 + Char.ord c) mod 268435399) 0
+                (String.concatWith "+" (List.map #id members))
+    in
+      unitCounters + 1000000 * n
+    end
 
   (* The first number a unit of the library's fresh variables take: a range
      of its own, a million wide, by the place of its first module among the
@@ -191,7 +208,7 @@ struct
           | (SOME cycleDefault, false) =>
               let
                 val () = if List.all #library members then HsInfer.numberFrom (librarySlot members)
-                         else HsInfer.renumber unitCounters
+                         else HsInfer.numberFrom (programSlot members)
                 val resolved = List.filter (fn (n, _) => List.exists (fn (m : G.node) => #id m = #id n) members) (!out)
                 (* 5.4: an instance in scope where imports reach it *)
                 val () = HsInfer.setReaches RhcGraph.reaches

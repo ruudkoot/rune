@@ -51,7 +51,7 @@ struct
     \       rhc --dump-names [NAME OPTION...] FILE.hs...\n\
     \       rhc --dump-types | --dump-evidence | --dump-derived [NAME OPTION...] FILE.hs\n\
     \       rhc --dump-hslint [NAME OPTION...] FILE.hs\n\
-    \       rhc [--store DIR | --no-store] [--layer DIR] [--show-units] FILE.hs [-o OUT]\n\
+    \       rhc [--store DIR | --no-store] [--layer DIR] [--show-units] [--verify-store] FILE.hs [-o OUT]\n\
     \       rhc --prune-store DIR | --identity | --hslint-rules | --lint-rules\n\
     \rhc is the Haskell 98 compiler of the haskell98 roadmap (docs/rhc.md). It\n\
     \reads a program of Haskell, a file and the modules it imports, checks it,\n\
@@ -121,6 +121,8 @@ struct
     \  --store DIR           keep each unit in the store DIR, not .rhc, and take it from\n\
     \                        there where what it read is as it was; of Core, with --units\n\
     \  --no-store            keep nothing, and take the units from the layers alone\n\
+    \  --verify-store        make every unit and the link, and fail where an entry of the\n\
+    \                        store or a layer that stands is not what making it gives\n\
     \  --prune-store DIR     drop from the store DIR every configuration another rhc made,\n\
     \                        which make does to bin/rhc.layer after each build of rhc\n\
     \  --layer DIR           a store a unit is taken from and never kept in\n\

@@ -1029,8 +1029,8 @@
     {
      "kind": "type",
      "name": "class",
-     "spec": "type class = {key : string, supers : string list, methods : string list, kind : HsTypes.kind}",
-     "doc": "A class: its key, its direct superclasses, its methods' keys, in\norder, and the kind of its variable.\n\n",
+     "spec": "type class = {key : string, supers : string list, methods : string list, kind : HsTypes.kind, defaults : string list}",
+     "doc": "A class: its key, its direct superclasses, its methods' keys, in\norder, the kind of its variable, and the methods it gives a default.\n\nThe defaults are keys, in the methods' order: what an instance of\nanother module that leaves a method out is made of (4.3.2), so that\na default given or taken away moves the class's fingerprint.\n\n",
      "page": "sig/HS_CLASSES.md#type-class"
     },
     {
@@ -3530,7 +3530,7 @@
     {
      "kind": "datatype",
      "name": "read",
-     "spec": "datatype read =\n    Name of {within : string, space : string, qual : string, name : string}\n  | Item of {from : string, space : string, name : string}\n  | Exports of string\n  | Instance of {cls : string, tycon : string}\n  | Standard of {space : string, name : string}\n  | Entity of string",
+     "spec": "datatype read =\n    Name of {within : string, space : string, qual : string, name : string}\n  | Item of {from : string, space : string, name : string}\n  | Exports of string\n  | Instance of {cls : string, tycon : string}\n  | Standard of {space : string, name : string}\n  | Entity of string\n  | Reaches of {from : string, to : string}",
      "doc": "A read. Spaces are `\"v\"` for a value and `\"t\"` for a type or class,\nand entities, classes and type constructors are by their keys\n(HsModules.key).\n\n",
      "page": "sig/HS_USAGE.md#type-read"
     },

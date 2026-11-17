@@ -314,10 +314,11 @@ struct
   val holesDir = "tests/hs/units/holes"
   fun holeCases () = sort (List.filter (fn n => isDir (fromRoot (holesDir ^ "/" ^ n))) (entries (fromRoot holesDir)))
 
-  (* a case's states: the k-th its steps 1 to k's modules, the later a
-     module's text the one it has, the k-th step's want, and what its
-     `units` says of the units, a line each, `NAME compiled` or `NAME
-     taken` (`link` the link), which holds in the order of the steps *)
+  (* a case's states: the k-th its steps 1 to k's modules (.hs and .lhs),
+     the later a module's text the one it has, less those a step's `rm`
+     names, a file a line; the k-th step's want, and what its `units` says
+     of the units, a line each, `NAME compiled` or `NAME taken` (`link`
+     the link), which holds in the order of the steps *)
   fun statesOf name : (string * (string * string) list * string * string list) list =
     let
       val src = fromRoot (holesDir ^ "/" ^ name)
@@ -325,8 +326,10 @@ struct
       fun go ([], _, acc) = List.rev acc
         | go (s :: rest, files, acc) =
             let
-              val mine = List.map (fn p => (OS.Path.file p, read p)) (glob (src ^ "/" ^ s, ".hs"))
-              val files' = mine @ List.filter (fn (n, _) => not (List.exists (fn (m, _) => m = n) mine)) files
+              val mine = List.map (fn p => (OS.Path.file p, read p)) (glob (src ^ "/" ^ s, ".hs") @ glob (src ^ "/" ^ s, ".lhs"))
+              val gone = String.tokens Char.isSpace (read (src ^ "/" ^ s ^ "/rm"))
+              val files' = mine @ List.filter (fn (n, _) => not (List.exists (fn (m, _) => m = n) mine)
+                                                            andalso not (List.exists (fn m => m = n) gone)) files
             in go (rest, files', (s, files', read (src ^ "/" ^ s ^ "/want"), lines (read (src ^ "/" ^ s ^ "/units"))) :: acc) end
     in go (steps, [], []) end
 
@@ -337,7 +340,8 @@ struct
   fun stateHolds (family, d, label, files, want, units) =
     let
       fun f x = d ^ "/" ^ x
-      val () = List.app (fn n => if String.isSuffix ".hs" n andalso not (List.exists (fn (m, _) => m = n) files)
+      val () = List.app (fn n => if (String.isSuffix ".hs" n orelse String.isSuffix ".lhs" n)
+                                    andalso not (List.exists (fn (m, _) => m = n) files)
                                  then OS.FileSys.remove (f n) else ()) (entries d)
       val () = List.app (fn (n, text) => write (f n, text)) files
       fun bytes p = (let val i = BinIO.openIn p in Byte.bytesToString (BinIO.inputAll i) before BinIO.closeIn i end)
@@ -634,9 +638,220 @@ struct
       round 1; round 2
     end
 
+  (* The link's memo across the back end's settings (build-cache-issues.md,
+     issue 29): Main and Lib of tests/hs/units/drive through one store, at
+     each level, for each instruction set and without the strictness pass,
+     in an order that comes back to each. Each program is the bytes a
+     compile of the same options without a store gives; the link is taken
+     where a compile before had the same options, compiled where none had,
+     and neither kept nor taken without the strictness pass, whose option
+     the memo's configuration does not hold *)
+  fun memo () =
+    let
+      fun no why = say ("FAIL hs.units.memo: " ^ why ^ "\n")
+      val d = out ^ "/memo"
+      fun f x = d ^ "/" ^ x
+      val () = drived d
+      val runs = [["-O1"], ["-O0"], ["-O2"], ["-O1", "--target=stack"], ["-O2", "--strictness=off"], ["-O0", "--target=stack"],
+                  ["-O2"], ["-O1"], ["-O2", "--strictness=off"], ["-O0", "--target=stack"], ["-O0"]]
+      fun one (k, flags) =
+        let
+          val label = "step " ^ Int.toString (k + 1) ^ " (" ^ String.concatWith " " flags ^ ")"
+          val warm = rhcIn (d, NONE, flags @ ["--store", "st", "--show-units", "Main.hs", "-o", "w.rbc"], "w.log") = 0
+          val cold = rhcIn (d, NONE, flags @ ["--no-store", "Main.hs", "-o", "c.rbc"], "c.log") = 0
+          val said = List.filter (fn w => w <> "reached") (saysOf (read (f "w.log"), "link"))
+          val kept = not (List.exists (fn a => a = "--strictness=off") flags)
+          val seen = List.exists (fn g => g = flags) (List.take (runs, k))
+          val want = if not kept then [] else if seen then ["taken"] else ["compiled"]
+        in
+          if not warm then no (label ^ ": the compile through the store fails: " ^ firstLine (f "w.log"))
+          else if not cold then no (label ^ ": the compile without a store fails: " ^ firstLine (f "c.log"))
+          else
+            ((if bytesOf (f "w.rbc") = bytesOf (f "c.rbc") then ()
+              else no (label ^ ": the program through the store is not the one without it"));
+             if said = want then ()
+             else no (label ^ ": the link " ^ (case said of [] => "neither compiled nor taken" | w :: _ => w) ^ ", where "
+                      ^ (case want of [] => "neither" | w :: _ => w) ^ " is wanted"))
+        end
+      fun go (_, []) = ()
+        | go (k, flags :: rest) = (one (k, flags); go (k + 1, rest))
+    in
+      go (0, runs)
+    end
+
+  (* An entry damaged (build-cache-issues.md, issue 28): Main and Lib of
+     tests/hs/units/drive compiled through a store, then each entry of it
+     (its units', its modules' headers', its link's) given one byte flipped,
+     in its head, in its middle and at its end, and a compile after each:
+     it compiles, to the bytes of the first, the entry refused and what it
+     held compiled again, never taken and never a crash. Then the store as
+     a layer, read only, under an overlay of its own: a compile that takes
+     a damaged part of a layer's entry, which it cannot take back, stops
+     and says so, or compiles to the same bytes *)
+  fun damaged () =
+    let
+      fun no why = say ("FAIL hs.units.damaged: " ^ why ^ "\n")
+      val d = out ^ "/damaged"
+      fun f x = d ^ "/" ^ x
+      val () = drived d
+      fun writeBytes (p, b) = let val o' = BinIO.openOut p in BinIO.output (o', Byte.stringToBytes b); BinIO.closeOut o' end
+      fun flipped (b, at) =
+        String.substring (b, 0, at) ^ str (Char.chr (Word.toInt (Word.xorb (Word.fromInt (Char.ord (String.sub (b, at))), 0w32))))
+        ^ String.extract (b, at + 1, NONE)
+      (* the entries of a store: a file of a key's directory, in a
+         configuration's, not its units/ or the memo's *)
+      fun entriesOf st =
+        List.concat
+          (List.map (fn c => if c = "memo" orelse not (isDir (st ^ "/" ^ c)) then []
+                             else List.concat (List.map (fn k => if k = "units" orelse not (isDir (st ^ "/" ^ c ^ "/" ^ k)) then []
+                                                                 else List.map (fn e => st ^ "/" ^ c ^ "/" ^ k ^ "/" ^ e)
+                                                                        (sort (entries (st ^ "/" ^ c ^ "/" ^ k))))
+                                                (sort (entries (st ^ "/" ^ c)))))
+             (sort (entries st)))
+      val first = rhcIn (d, NONE, ["--store", "st", "Main.hs", "-o", "a.rbc"], "a.log") = 0
+      val want = bytesOf (f "a.rbc")
+      fun each (p, args, log, layered) =
+        let
+          val b = bytesOf p
+          fun at k =
+            let
+              val () = if layered then rmTree (f "overlay") else ()
+              val () = writeBytes (p, flipped (b, k))
+              val ok = rhcIn (d, NONE, args @ ["Main.hs", "-o", "x.rbc"], log) = 0
+              val text = read (f log)
+              val label = OS.Path.file (OS.Path.dir p) ^ "/" ^ OS.Path.file p ^ " flipped at " ^ Int.toString k
+            in
+              (if ok then (if bytesOf (f "x.rbc") = want then () else no (label ^ ": the program is not the one compiled first"))
+               else if layered andalso String.isSubstring "holds a damaged entry" text then ()
+               else no (label ^ ": the compile fails: " ^ firstLine (f log)));
+              writeBytes (p, b)
+            end
+        in
+          if size b < 8 then () else List.app at [20, size b div 2, size b - 2]
+        end
+    in
+      if not first then no ("the first compile fails: " ^ firstLine (f "a.log"))
+      else
+        (List.app (fn p => each (p, ["--store", "st"], "x.log", false)) (entriesOf (f "st"));
+         List.app (fn p => each (p, ["--layer", "st", "--store", "overlay"], "y.log", true)) (entriesOf (f "st")))
+    end
+
+  (* --verify-store (build-cache-issues.md, issue 6, rhc's): Main and Lib
+     of tests/hs/units/drive through a store, which --verify-store then
+     finds to hold what compiling gives; then Lib's body edited and Lib's
+     entry made again over the first's, planted as Rune's S55 plants one:
+     an entry whose usages hold and whose content is another compile's. A
+     compile through the store takes it and prints what the first Lib
+     made; --verify-store refuses it, naming Lib *)
+  fun verified () =
+    let
+      fun no why = say ("FAIL hs.units.verify: " ^ why ^ "\n")
+      val d = out ^ "/verify"
+      fun f x = d ^ "/" ^ x
+      val () = drived d
+      fun rhc (args, log) = rhcIn (d, NONE, ["--store", "st", "--show-units"] @ args @ ["Main.hs", "-o", "w.rbc"], log) = 0
+      fun files () =
+        List.concat
+          (List.map (fn c => if c = "memo" orelse not (isDir (f ("st/" ^ c))) then []
+                             else List.concat (List.map (fn k => if k = "units" orelse not (isDir (f ("st/" ^ c ^ "/" ^ k))) then []
+                                                                 else List.map (fn e => "st/" ^ c ^ "/" ^ k ^ "/" ^ e)
+                                                                        (sort (entries (f ("st/" ^ c ^ "/" ^ k)))))
+                                                (sort (entries (f ("st/" ^ c))))))
+             (sort (entries (f "st"))))
+      (* the entry of Lib's unit: the one whose removal makes Lib's unit
+         compiled again *)
+      fun libEntry () =
+        List.find (fn p =>
+                     let
+                       val b = bytesOf (f p)
+                       val () = OS.FileSys.remove (f p)
+                       val _ = rhc ([], "find.log")
+                       val () = let val o' = BinIO.openOut (f p) in BinIO.output (o', Byte.stringToBytes b); BinIO.closeOut o' end
+                     in
+                       saysOf (read (f "find.log"), "Lib") = ["compiled"]
+                     end)
+                  (files ())
+      fun printed () = (ignore (exec {cmd = [fromRoot "bin/runevm", f "w.rbc"], dir = SOME d, stdin = "", stdout = f "w.out",
+                                      stderr = f "w.out", timeout = 300});
+                        read (f "w.out"))
+      val first = rhc ([], "first.log")
+      val good = rhc (["--verify-store"], "good.log")
+      val e1 = libEntry ()
+      val old = Option.map (fn p => bytesOf (f p)) e1
+      val t = read (f "Lib.hs")
+      val edited = let val (a, b) = Substring.position "x + x" (Substring.full t)
+                   in Substring.string a ^ "x * 3" ^ String.extract (Substring.string b, 5, NONE) end
+      val () = write (f "Lib.hs", edited)
+      val second = rhc ([], "second.log")
+      val e2 = libEntry ()
+    in
+      if not first then no ("the first compile fails: " ^ firstLine (f "first.log"))
+      else if not good then no ("--verify-store refuses a store as compiled: " ^ firstLine (f "good.log"))
+      else if not second then no ("the compile after the edit fails: " ^ firstLine (f "second.log"))
+      else
+        case (e1, old, e2) of
+          (SOME p1, SOME b1, SOME p2) =>
+            if p1 = p2 then no "Lib's entry is the same file before and after its edit"
+            else
+              let
+                val () = let val o' = BinIO.openOut (f p2) in BinIO.output (o', Byte.stringToBytes b1); BinIO.closeOut o' end
+                val planted = rhc ([], "planted.log")
+                val shows = printed ()
+                val checked = rhc (["--verify-store"], "checked.log")
+                val text = read (f "checked.log")
+              in
+                if not planted then no ("the compile of the planted entry fails: " ^ firstLine (f "planted.log"))
+                else if saysOf (read (f "planted.log"), "Lib") <> ["taken"] then no "the planted entry is not taken"
+                else if shows <> "hello\n42\n" then no ("the planted entry's program prints " ^ firstLine (f "w.out")
+                                                         ^ ", where the first Lib's 42 is wanted")
+                else if checked then no "--verify-store takes the planted entry"
+                else if not (String.isSubstring "--verify-store" text andalso String.isSubstring "Lib:" text) then
+                  no ("--verify-store refuses it otherwise than naming Lib: " ^ firstLine (f "checked.log"))
+                else ()
+              end
+        | _ => no "Lib's entry is not found in the store"
+    end
+
+  (* The store trimmed (build-cache-issues.md, issue 34): Main and Lib of
+     tests/hs/units/drive through a store, every file of which is then
+     made nine days old, past the week a trim keeps what no compile took,
+     and its last trim with it. The next compile takes the units and the
+     link, the trim that is due running after them, and the store keeps
+     them, so that the compile after takes them all again *)
+  fun trimmed () =
+    let
+      fun no why = say ("FAIL hs.units.trim: " ^ why ^ "\n")
+      val d = out ^ "/trim"
+      fun f x = d ^ "/" ^ x
+      val () = drived d
+      val old = Time.- (Time.now (), Time.fromSeconds (9 * 86400))
+      fun age p = if isDir p then List.app (fn n => age (p ^ "/" ^ n)) (entries p)
+                  else OS.FileSys.setTime (p, SOME old) handle OS.SysErr _ => ()
+      fun rhc log = rhcIn (d, NONE, ["--store", "st", "--show-units", "Main.hs", "-o", "w.rbc"], log) = 0
+      val first = rhc "first.log"
+      val () = age (f "st")
+      val aged = rhc "aged.log"
+      val again = rhc "again.log"
+      fun all (log, what) = List.all (fn u => saysOf (read (f log), u) = [what]) ["Lib", "Main", "link"]
+    in
+      if not first then no ("the first compile fails: " ^ firstLine (f "first.log"))
+      else if not aged then no ("the compile after a week fails: " ^ firstLine (f "aged.log"))
+      else if not again then no ("the compile after it fails: " ^ firstLine (f "again.log"))
+      else
+        ((if all ("aged.log", "taken") then ()
+          else no ("the compile after a week does not take every unit and the link: "
+                   ^ String.concatWith "; " (List.filter (String.isPrefix "rhc: unit L") (lines (read (f "aged.log")))
+                                             @ List.filter (String.isPrefix "rhc: link") (lines (read (f "aged.log"))))));
+         if all ("again.log", "taken") then () else no "the compile after it does not take every unit and the link")
+    end
+
   fun command args =
     case args of
       ["hs-units-drive"] => SOME drive
+    | ["hs-units-trim"] => SOME trimmed
+    | ["hs-units-verify"] => SOME verified
+    | ["hs-units-memo"] => SOME memo
+    | ["hs-units-damaged"] => SOME damaged
     | ["hs-units-default"] => SOME defaultStore
     | ["hs-units-concurrent"] => SOME concurrent
     | ["hs-units-hole", c] => SOME (hole c)
@@ -663,7 +878,9 @@ struct
          Tools.job ("warm", ["hs-units-warm"], [], 500, 1800), Tools.job ("abi", ["hs-units-abi"], [], 300, 600),
          Tools.job ("warm-whole", ["hs-units-warm-whole"], [], 500, 1800), Tools.job ("drive", ["hs-units-drive"], [], 600, 3600),
          Tools.job ("snapshot", ["hs-units-snapshot"], [], 600, 2400),
-         Tools.job ("default", ["hs-units-default"], [], 600, 3600), Tools.job ("concurrent", ["hs-units-concurrent"], [], 600, 3600)]
+         Tools.job ("default", ["hs-units-default"], [], 600, 3600), Tools.job ("concurrent", ["hs-units-concurrent"], [], 600, 3600),
+         Tools.job ("memo", ["hs-units-memo"], [], 600, 3600), Tools.job ("damaged", ["hs-units-damaged"], [], 600, 3600),
+         Tools.job ("verify", ["hs-units-verify"], [], 600, 3600), Tools.job ("trim", ["hs-units-trim"], [], 600, 3600)]
         @ List.map (fn c => Tools.job ("holes/" ^ c, ["hs-units-hole", c], [], 600, 3600)) (holeCases ())
         @ List.map (fn s => Tools.job ("core/" ^ HsCore.nameOf s, ["hs-units-core", s], [], 500, 1200)) (coreTests ())
       val nightly = List.map (fn c => Tools.job ("random/" ^ c, ["hs-units-random", c], [], 900, 3600)) (holeCases ())

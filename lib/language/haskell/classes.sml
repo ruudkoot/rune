@@ -3,7 +3,7 @@ structure HsClasses :> HS_CLASSES =
 struct
   structure M = HsStringMap
 
-  type class = {key : string, supers : string list, methods : string list, kind : HsTypes.kind}
+  type class = {key : string, supers : string list, methods : string list, kind : HsTypes.kind, defaults : string list}
   type instance = {id : string, cls : string, tycon : string, vars : int, ctx : HsTypes.pred list,
                    derived : bool, home : string}
 

@@ -31,7 +31,7 @@ program declares, or derives, is in force in all of it.
 <pre>
 signature HS_CLASSES =
 sig
-  type <a href="#type-class">class</a> = {<a href="#fld-class.key">key</a> : string, <a href="#fld-class.supers">supers</a> : string list, <a href="#fld-class.methods">methods</a> : string list, <a href="#fld-class.kind">kind</a> : HsTypes.kind}
+  type <a href="#type-class">class</a> = {<a href="#fld-class.key">key</a> : string, <a href="#fld-class.supers">supers</a> : string list, <a href="#fld-class.methods">methods</a> : string list, <a href="#fld-class.kind">kind</a> : HsTypes.kind, <a href="#fld-class.defaults">defaults</a> : string list}
   type <a href="#type-instance">instance</a> = {<a href="#fld-instance.id">id</a> : string, <a href="#fld-instance.cls">cls</a> : string, <a href="#fld-instance.tycon">tycon</a> : string, <a href="#fld-instance.vars">vars</a> : int, <a href="#fld-instance.ctx">ctx</a> : HsTypes.pred list,
                    <a href="#fld-instance.derived">derived</a> : bool, <a href="#fld-instance.home">home</a> : string}
   type <a href="#type-env">env</a>
@@ -53,11 +53,15 @@ end
 ### <a name="type-class"></a>`class`
 
 ```sml
-type class = {key : string, supers : string list, methods : string list, kind : HsTypes.kind}
+type class = {key : string, supers : string list, methods : string list, kind : HsTypes.kind, defaults : string list}
 ```
 
 A class: its key, its direct superclasses, its methods' keys, in
-order, and the kind of its variable.
+order, the kind of its variable, and the methods it gives a default.
+
+The defaults are keys, in the methods' order: what an instance of
+another module that leaves a method out is made of (4.3.2), so that
+a default given or taken away moves the class's fingerprint.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -65,6 +69,7 @@ order, and the kind of its variable.
 | <a name="fld-class.supers"></a>`supers` | `string list` |  |
 | <a name="fld-class.methods"></a>`methods` | `string list` |  |
 | <a name="fld-class.kind"></a>`kind` | `HsTypes.kind` |  |
+| <a name="fld-class.defaults"></a>`defaults` | `string list` |  |
 
 ### <a name="type-instance"></a>`instance`
 
