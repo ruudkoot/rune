@@ -1408,7 +1408,8 @@ makes it says:
   tag comes first on every way there (`IfTag`, `Switch`, or `ConTag`
   compared with a constant or with another's `ConTag`), or that
   constructor made it, or every jump to the block's parameter it is passes
-  such a value; a datatype whose layout a functor's argument gives is left
+  such a value -- the ways into a handler's block being those to where it
+  was pushed; a datatype whose layout a functor's argument gives is left
   out.
 
 `--pass-stats` counts what it checked against a known shape and what it
