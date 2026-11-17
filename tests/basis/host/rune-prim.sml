@@ -188,11 +188,21 @@ struct
         else if Real.== (Real.rem (below, 2.0), 0.0) then below
         else below + 1.0
       end)
-  (* real_round_r's whole real as an int: not the host's Real.round, which
-     adds 0.5 and rounds the sum, in the rounding mode that is set (Poly/ML
-     5.7.1 rounds 0.49999999999999994 up, SML/NJ and MLKit round 2^52 + 1 to
-     2^52 + 2). floor, not trunc: SML/NJ 110.99.9 truncates minInt to maxInt. *)
-  fun real_round r = Real.floor (real_round_r r)
+  (* real_round_r's whole real as an int, Overflow outside [minInt, ~minInt)
+     as in runtime/prims.c (minInt is a power of two, a real in every
+     rounding mode). Not the host's Real.round, which adds 0.5 and rounds the
+     sum in the rounding mode that is set (Poly/ML 5.7.1 rounds
+     0.49999999999999994 up, SML/NJ and MLKit round 2^52 + 1 to 2^52 + 2),
+     nor the host's floor for the range (MLKit's floor of 2^62 under TO_POSINF
+     is minInt); floor, not trunc, for the rest: SML/NJ 110.99.9 truncates
+     minInt to maxInt. *)
+  fun real_round r =
+    let val n = real_round_r r
+    in case Int.minInt of
+         SOME m => if Real.>= (n, Real.~ (Real.fromInt m)) orelse Real.< (n, Real.fromInt m) then raise Overflow
+                   else Real.floor n
+       | NONE => Real.floor n
+    end
   val real_sign_bit = Real.signBit
   (* The bits of IEEE 754 binary64, worked out with the host's IntInf, which
      every host has (SML/NJ has no PackReal). A host whose word has fewer
