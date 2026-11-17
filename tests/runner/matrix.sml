@@ -201,7 +201,9 @@ struct
             (if custom then ["matrix-selected"] else ["nightly", "matrix"])]
     in Test.tag "covers:tests/basis/*" (Test.tag "covers:lib/basis/*" (Test.tag "covers:tests/runner/matrix*.sml"
          (Test.describe "matrix" (List.map group specs @ final)))) end
+  (* the cache's faults compile with MLton's build of the compiler
+     (tests/runner/matrixcachefaults.sml), which make quick does not build *)
   val faults = Test.tag "check" (Test.tag "quick" (Test.tag "covers:tests/runner/matrix*.sml"
        (Test.describe "runner" [job ("matrix-execution-faults", ["matrix-execution-faults"], [], 1500, [], 180, failLines),
-        job ("matrix-cache-faults", ["matrix-cache-faults"], [], 1500, [], 180, failLines)])))
+        Test.requires ["mlton"] (job ("matrix-cache-faults", ["matrix-cache-faults"], [], 1500, [], 180, failLines))])))
 end

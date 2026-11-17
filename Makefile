@@ -795,7 +795,7 @@ bin/rune-mlkit: bin/rune-mlkit.bin Makefile
 .PHONY: rhc test-rhc
 rhc: bin/rhc
 # rhc's tests (tests/hs/core; tests/runner/hscore.sml), part of make check
-test-rhc: bin/rhc bin/rune-test
+test-rhc: bin/rhc vm bin/rune-test
 	$(RUNE_TEST) --tier test-rhc
 src/rhc/config.sml: FORCE | $(VERSIONGEN)
 	@sh scripts/gen-version.sh --config rhc.plan $@
@@ -1321,7 +1321,8 @@ bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_CROSS_TOOL) build
 test-windows-text: bin/rune-test bin/rune-windows windows $(RUNE) bin/rune.rbc bin/rune.stack.rbc
 	RUNE=$(RUNE) WINCC='$(WINCC)' WINCC32='$(WINCC32)' $(RUNE_TEST) --tier test-windows-text
 
-test-windows: bin/rune-matrix bin/rune-test bin/rune-windows bin/rune-protocol-check bin/rune-terminal windows $(RUNE) bin/rune.rbc bin/rune.stack.rbc bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel
+test-windows: bin/rune-matrix bin/rune-test bin/rune-windows bin/rune-protocol-check bin/rune-terminal windows vm $(RUNE) bin/rune.rbc bin/rune.stack.rbc bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel \
+              bin/rune-scenarios bin/rune-ffi-check bin/runeffi bin/rune-win32-check
 	RUNE=$(RUNE) WINCC='$(WINCC)' WINCC32='$(WINCC32)' $(RUNE_TEST) --tier test-windows
 	WSLENV=RUNEVM_INTINF:RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all RUNE=$(abspath $(RUNE_STACK)) bin/rune-matrix -j $(JOBS) --configs windows
 	bin/rune-protocol-check dap --windows
@@ -1511,7 +1512,7 @@ bin/dist/runevm-ppc64: $(NEW_SRCS_X64) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CRO
 # Basis suite gets longer than the two minutes a program is otherwise given:
 # the largest of the monomorphic tests takes 34 s here and about six minutes
 # there.
-test-portability: portability $(RUNE) vm bin/rune-test
+test-portability: portability $(RUNE) vm bin/rune-windows bin/rune-matrix bin/rune-test
 	$(RUNE_TEST) --tier test-portability
 
 # ---------------------------------------------------------------- tests
@@ -1573,7 +1574,7 @@ test-gc: $(RUNE) vm bin/rune-test | build/.doctor-check
 test-all: host-builds vm bin/rune-test | build/.doctor-check
 	$(RUNE_TEST) --tier test-all
 
-check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/runeopt-boot bin/rune.stack.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc bin/rune-test | build/.doctor-check
+check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/runeopt-boot bin/rune.stack.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc bin/runevm-stack bin/rune-test | build/.doctor-check
 	$(RUNE_TEST) --tier check-cross
 
 # Every instruction says where it came from, and the line is one the file has.
@@ -1582,7 +1583,7 @@ check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/runeopt-boot bin/run
 # and in units, on both bytecodes and at tier 2 of the JIT, with the lint of
 # every pass on, which makes the register bytecode's same bytes as with it off
 # (docs/plans/middle-end.md, M2; docs/plans/correctness/linting.md, M1).
-test-ir: $(RUNE) bin/rune-test
+test-ir: $(RUNE) vm bin/rune-test
 	$(RUNE_TEST) --tier test-ir
 
 check-levels: $(RUNE) vm basis-cache bin/rune-test
@@ -1695,7 +1696,7 @@ test-install: all repl dap kernel mlton smlnj-legacy bin/runedoc-mlton bin/runeo
 
 # the distribution archives, with stand-in binaries (bin/rune-scenarios dist),
 # and one with the compiler and its frozen layer, installed and compiling
-test-dist: $(RUNE) vm basis-cache bin/rune-scenarios bin/rune-test
+test-dist: $(RUNE) vm basis-cache bin/rune-scenarios bin/rune-windows bin/rune-test
 	$(RUNE_TEST) --tier test-dist
 
 # the compiler as a service, a prototype (src/driver/serve.sml)
@@ -1889,7 +1890,7 @@ test-doc: $(RUNEDOC) vm FORCE bin/rune-test
 
 # The libraries beside the basis library and rune --library (tests/lib;
 # docs/plans/quickcheck.md, D1).
-test-lib: $(RUNE) $(RUNEDOC) vm FORCE bin/rune-test
+test-lib: $(RUNE) $(RUNEDOC) vm FORCE bin/rune-protocol-check bin/rune-test
 	$(RUNE_TEST) --tier test-lib
 
 .PHONY: test-compiler-api
@@ -1943,7 +1944,7 @@ perf-check: $(RUNE) bin/runedoc vm bin/rune.rbc bin/runedoc.rbc bin/rune.stack.r
 # (bin/rune names bin/runevm outright), or every compile would be quadratic too.
 GC_STRESS ?= 101
 GC_STRESS_BASIS ?= 1009
-test-stress: $(RUNE) vm bin/rune-test | build/.doctor-check
+test-stress: $(RUNE) vm bin/rune-matrix bin/rune-test | build/.doctor-check
 	GC_STRESS_BASIS=$(GC_STRESS_BASIS) $(RUNE_TEST) --tier test-stress
 
 # ------------------------------------------------------------- native code
@@ -1970,14 +1971,14 @@ bin/runevm-native: bin/runevm-native.rbc bin/runevm Makefile
 ifeq ($(NATIVE_HOST),yes)
 # test-native-steps reads the stack compiler's bytecode of every program of
 # tests/lang in tests/out, which the runner's tier makes first.
-test-native: bin/runevm-native bin/runeopt-mlton bin/rune-native-check build/librune.a $(RUNE) vm bin/rune.stack.rbc bin/rune-test | build/.doctor-native
+test-native: bin/runevm-native bin/runeopt-mlton bin/runeopt-templates bin/rune-native-check build/librune.a $(RUNE) vm bin/rune.stack.rbc bin/rune-test | build/.doctor-native
 	$(RUNE_TEST) --tier test-native
 # Compatibility entry point for the native generator's count/debug/bootstrap checks.
-test-native-steps: bin/runevm-native bin/runeopt-mlton bin/rune-native-check build/librune.a $(RUNE) vm bin/rune.stack.rbc bin/rune-test | build/.doctor-native
+test-native-steps: bin/runevm-native bin/runeopt-mlton bin/runeopt-templates bin/rune-native-check build/librune.a $(RUNE) vm bin/rune.stack.rbc bin/rune-test | build/.doctor-native
 	$(RUNE_TEST) 'native/code/*'
 
 # Extra stress ways use the same cases and limits as the normal native way.
-test-native-stress: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/rune-test | build/.doctor-native
+test-native-stress: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/rune-matrix bin/rune-test | build/.doctor-native
 	GC_STRESS_BASIS=$(GC_STRESS_BASIS) $(RUNE_TEST) --tier test-native-stress
 
 ASAN_CFLAGS := -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer
@@ -2148,7 +2149,7 @@ bin/runevm-jit: bin/runevm Makefile
 bin/runevm-opt: bin/runevm Makefile
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 "$$@"\n' > $@
 	chmod +x $@
-test-register-jit: bin/runevm-jit bin/runevm-opt $(LOW_LEVEL_BINS) $(RUNE) bin/rune-test
+test-register-jit: bin/runevm-jit bin/runevm-opt $(LOW_LEVEL_BINS) $(RUNE) vm bin/runevm-gcbits bin/runevm-census bin/rune-heap-check bin/rune-measure bin/rune-test
 	$(RUNE_TEST) --tier test-register-jit
 test-register-jit-steps: bin/runevm-jit bin/runevm-opt $(LOW_LEVEL_BINS) $(RUNE) bin/rune-test
 	$(RUNE_TEST) --tier test-register-jit-steps
@@ -2341,8 +2342,13 @@ check-tools: $(LOW_LEVEL_BINS) bin/runevm-jit bin/runevm-opt bin/rune-build bin/
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
-# changed).
-quick: $(RUNE) vm runedoc bin/rune-test | build/.doctor-check
+# changed). QUICK_TOOLS is what else its tests run: rhc's programs and the
+# syntax's, the libraries' interop, and the runner's own checks of the heap,
+# the matrix, the laws of the hosts, the benchmarks and native code's launcher.
+QUICK_TOOLS := bin/rhc bin/rune-hs-syntax bin/rune-protocol-check bin/rune-heap-check bin/rune-matrix bin/rune-laws-hosts \
+               bin/rune-measure bin/rune-bench-check bin/rune-budget.rbc \
+               $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/rune-native-check $(RUNEOPT))
+quick: $(RUNE) vm runedoc $(QUICK_TOOLS) bin/rune-test | build/.doctor-check
 	$(RUNE_TEST) --tier quick
 
 # The tests of the tier check, each step of the old recipe a test of the
@@ -2363,7 +2369,7 @@ clean:
 	  -type d \( -name .cm -o -name MLB -o -name .rune \) -prune -exec rm -rf {} +
 
 .PHONY: test-intinf
-test-intinf: $(RUNE) bin/runevm bin/runevm-stack bin/rune-intinf bin/rune-test
+test-intinf: $(RUNE) bin/runevm bin/runevm-stack bin/runevm-sml bin/rune-intinf bin/rune-test
 	INTINF_RUNE=$(abspath $(RUNE)) $(RUNE_TEST) --tier test-intinf
 
 # ---------------------------------------------------------------- install
@@ -2459,7 +2465,7 @@ bench-check: build/bench-catalog.rbc vm bin/rune-test bin/rune-bench-check
 	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' bin/rune-bench-check catalogue
 
 # Bounded correctness/metadata only; wall-clock thresholds stay outside check.
-bench-smoke: build/bench-catalog.rbc build/bench-report.rbc build/bench-counts.rbc build/bench-coverage.rbc vm bin/rune-test bin/rune-bench-check
+bench-smoke: build/bench-catalog.rbc build/bench-report.rbc build/bench-counts.rbc build/bench-coverage.rbc vm bin/rune-test bin/rune-bench-check bin/rune-measure
 	bin/runevm build/bench-coverage.rbc --check
 	$(RUNE_TEST) --tier bench-smoke
 
@@ -2599,7 +2605,7 @@ bin/rune-ffi-shim-check: bin/rune-ffi-shim-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-shim-check.rbc" "$$@"\n' > $@
 	chmod +x $@
 .PHONY: test-ffi-shims test-ffi-shims-hosts
-test-ffi-shims: $(RUNE) vm bin/rune-ffi-shim-check bin/rune-test bin/rune-windows
+test-ffi-shims: $(RUNE) $(RUNEOPT) vm windows bin/rune-ffi-shim-check bin/rune-test bin/rune-windows
 	$(RUNE_TEST) --tier test-ffi-shims
 test-ffi-shims-hosts: $(RUNE) vm bin/rune-ffi-shim-check bin/rune-test
 	$(RUNE_TEST) --tier test-ffi-shims-hosts
@@ -2627,7 +2633,7 @@ bin/rune-header-layout-check: bin/rune-header-layout-check.rbc bin/rune-header-l
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-header-layout-check.rbc" "$$@"\n' > $@
 	chmod +x $@
 .PHONY: test-ffi-header-layout test-ffi-real32
-test-ffi-header-layout: $(RUNE) vm bin/rune-header-layout-check bin/rune-test
+test-ffi-header-layout: $(RUNE) vm bin/rune-header-layout-check bin/rune-test bin/rune-windows
 	$(RUNE_TEST) --tier test-ffi-header-layout
 test-ffi-real32: $(RUNE) vm bin/rune-header-layout-check bin/rune-test
 	$(RUNE_TEST) --tier test-ffi-real32
@@ -2760,7 +2766,7 @@ test-sdl: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
 	$(RUNE_TEST) --tier test-sdl
 test-sdl-gui: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
 	$(RUNE_TEST) --tier test-sdl-gui
-test-sdl-windows: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+test-sdl-windows: $(RUNE) vm windows bin/runeffi bin/rune-sdl-check bin/rune-test bin/rune-windows
 	$(RUNE_TEST) --tier test-sdl-windows
 test-sdl-asan: $(RUNE) vm-asan bin/runeffi bin/rune-sdl-check bin/rune-test
 	$(RUNE_TEST) --tier test-sdl-asan
