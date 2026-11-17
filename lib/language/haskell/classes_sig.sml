@@ -7,8 +7,12 @@
 signature HS_CLASSES =
 sig
   (* A class: its key, its direct superclasses, its methods' keys, in
-     order, and the kind of its variable. *)
-  type class = {key : string, supers : string list, methods : string list, kind : HsTypes.kind}
+     order, the kind of its variable, and the methods it gives a default.
+
+     The defaults are keys, in the methods' order: what an instance of
+     another module that leaves a method out is made of (4.3.2), so that
+     a default given or taken away moves the class's fingerprint. *)
+  type class = {key : string, supers : string list, methods : string list, kind : HsTypes.kind, defaults : string list}
 
   (* An instance `C (T a1 ... an)`: its identity, class, type constructor
      and the number of its head's variables.
@@ -40,8 +44,25 @@ sig
   (* `instances env` is every instance of `env`. *)
   val instances : env -> instance list
 
+  (* `instanceById (env, id)` is the instance `id`, a read of nothing. *)
+  val instanceById : env * string -> instance option
+
+  (* `instancesOf (env, homes)` is every instance of `env` that a module of
+     `homes` declares, in the order of `instances env`.
+
+     It costs as those, not as every instance (build-cache-issues.md,
+     issue 39). *)
+  val instancesOf : env * string list -> instance list
+
   (* `classList env` is every class of `env`. *)
   val classList : env -> class list
+
+  (* `classesAt (env, prefixes)` is every class of `env` whose key begins
+     with one of `prefixes`.
+
+     A prefix's classes come after those of the prefixes before it, each
+     prefix's in the order of `classList env`. *)
+  val classesAt : env * string list -> class list
 
   (* `instanceId (cls, tycon)` is the identity of the instance of `cls`
      at `tycon`. *)

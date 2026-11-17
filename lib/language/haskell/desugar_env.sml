@@ -13,8 +13,14 @@ struct
   val primTypes : string M.map ref = ref M.empty
   val builtinCons : string M.map ref = ref M.empty
   val conFields : string list M.map ref = ref M.empty
+  (* the keys each was given since `mark`, the latest first *)
+  val primSet : string list ref = ref []
+  val builtinSet : string list ref = ref []
+  val fieldsSet : string list ref = ref []
 
-  fun start p = (current := SOME p; primTypes := M.empty; builtinCons := M.empty; conFields := M.empty)
+  fun mark () = (primSet := []; builtinSet := []; fieldsSet := [])
+
+  fun start p = (current := SOME p; primTypes := M.empty; builtinCons := M.empty; conFields := M.empty; mark ())
 
   fun continue p = current := SOME p
 
@@ -22,17 +28,32 @@ struct
 
   fun save () = {primTypes = !primTypes, builtinCons = !builtinCons, conFields = !conFields}
 
-  fun restore (s : saved) = (primTypes := #primTypes s; builtinCons := #builtinCons s; conFields := #conFields s)
+  fun restore (s : saved) = (primTypes := #primTypes s; builtinCons := #builtinCons s; conFields := #conFields s; mark ())
+
+  fun forget () = (primTypes := M.empty; builtinCons := M.empty; conFields := M.empty; mark ())
 
   type known = {primTypes : (string * string) list, builtinCons : (string * string) list,
                 fields : (string * string list) list}
 
   fun known () = {primTypes = M.listItems (!primTypes), builtinCons = M.listItems (!builtinCons), fields = M.listItems (!conFields)}
 
+  fun primType (k, c) = (primTypes := M.insert (!primTypes, k, c); primSet := k :: !primSet)
+  fun builtinCon (k, c) = (builtinCons := M.insert (!builtinCons, k, c); builtinSet := k :: !builtinSet)
+  fun setFields (k, fs) = (conFields := M.insert (!conFields, k, fs); fieldsSet := k :: !fieldsSet)
+
   fun learn ({primTypes = ps, builtinCons = bs, fields = fs} : known) =
-    (List.app (fn (k, c) => primTypes := M.insert (!primTypes, k, c)) ps;
-     List.app (fn (k, c) => builtinCons := M.insert (!builtinCons, k, c)) bs;
-     List.app (fn (k, f) => conFields := M.insert (!conFields, k, f)) fs)
+    (List.app primType ps; List.app builtinCon bs; List.app setFields fs)
+
+  (* the entries of `now` whose keys `set` holds and `old` does not, by key:
+     those of `M.listItems now` that `old` has not, where every key `now`
+     has and `old` has not is in `set` *)
+  fun addedOf (old : 'a M.map, now : 'a M.map, set : string list) : (string * 'a) list =
+    let val keys = List.foldl (fn (k, s) => if M.member (old, k) then s else M.insert (s, k, ())) M.empty set
+    in List.rev (M.foldl (fn (k, (), acc) => case M.find (now, k) of SOME v => (k, v) :: acc | NONE => acc) [] keys) end
+
+  fun addedSince (s : saved) : known =
+    {primTypes = addedOf (#primTypes s, !primTypes, !primSet), builtinCons = addedOf (#builtinCons s, !builtinCons, !builtinSet),
+     fields = addedOf (#conFields s, !conFields, !fieldsSet)}
 
   fun prog () = case !current of SOME p => p | NONE => raise Fail "HsDsEnv: no program"
 
@@ -48,7 +69,6 @@ struct
 
   fun libraryEntity e = #entity (prog ()) e
 
-  fun setFields (k, fs) = conFields := M.insert (!conFields, k, fs)
   fun fieldsOf k = getOpt (M.find (!conFields, k), [])
 
   (* ---- Names ---- *)
@@ -67,12 +87,9 @@ struct
 
   fun coreName k = case split k of ("", n) => n | (h, n) => h ^ "." ^ n
 
-  fun primType (k, c) = primTypes := M.insert (!primTypes, k, c)
   fun isPrimType k = M.member (!primTypes, k)
 
   fun tyconName k = case M.find (!primTypes, k) of SOME c => c | NONE => coreName k
-
-  fun builtinCon (k, c) = builtinCons := M.insert (!builtinCons, k, c)
 
   fun conName k = case M.find (!builtinCons, k) of SOME c => c | NONE => coreName k
 

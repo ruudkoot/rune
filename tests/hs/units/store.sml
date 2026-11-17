@@ -6,8 +6,10 @@
    a key is over every member and its text, in the graph's order (H8); the
    overlay is read before the layers, a layer is read and never written,
    and one configuration's entries are not another's; a damaged code
-   section is refused where it is read, which is where it is asked for; a
-   head is read back as it was written. *)
+   section of a layer's entry is refused where it is read, which is where
+   it is asked for, and the overlay's entry is held whole before it is
+   taken, a damaged one no entry, and removed; a head is read back as it
+   was written. *)
 structure RhcStoreTests =
 struct
   structure R = RhcStore
@@ -136,14 +138,23 @@ struct
       val bad = String.substring (bytes, 0, last) ^ String.str (Char.chr ((Char.ord (String.sub (bytes, last)) + 1) mod 256))
       val out = BinIO.openOut p
       val () = (BinIO.output (out, Byte.stringToBytes bad); BinIO.closeOut out)
-      (* the last byte is the code's, a section read only where it is
-         asked for: refused there *)
+      (* the last byte is the code's, a section the store holds to its
+         hash only where it is asked for. A layer's entry is found, and its
+         code refused where it is read (RhcStore.Damaged, naming the
+         layer); the overlay's is held whole before it is taken: no entry,
+         and removed (build-cache-issues.md, issue 28) *)
+      val empty = scratch ()
       val () =
-        case look (dir, [], k, judge (2, us)) of
+        case look (empty, [dir], k, judge (2, us)) of
           S.Found ({sections = {parts, ...}, ...}, _) =>
-            need ((ignore (parts 0); false) handle _ => true, "a damaged code section is refused where it is read")
-        | _ => need (false, "an entry whose code alone is damaged is found, its code not yet read")
-    in removeTree dir end
+            need ((ignore (parts 0); false) handle R.Damaged d => d = dir | _ => false,
+                  "a layer's damaged code section is refused where it is read, naming the layer")
+        | _ => need (false, "a layer's entry whose code alone is damaged is found, its code not yet read")
+      val () = need (case look (dir, [], k, judge (2, us)) of S.Missed _ => true | _ => false,
+                     "the overlay's entry whose code alone is damaged is no entry")
+      val () = need (null (List.filter (fn (p, _) => not (String.isSubstring "/units/" p)) (files dir)),
+                     "the overlay's damaged entry is removed")
+    in removeTree dir; removeTree empty end
 end
 
 structure RhcStoreTestMain = Main (struct

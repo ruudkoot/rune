@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_DS_CORE`](../sig/HS_DS_CORE.md) |
 | Status | required |
-| Members | 46 |
+| Members | 48 |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_core.sml](../../../../../lib/language/haskell/desugar_core.sml) |
 
@@ -43,6 +43,7 @@ What each means is on [`HS_DS_CORE`](../sig/HS_DS_CORE.md); the types are this s
 | val | [`forceRep`](../sig/HS_DS_CORE.md#val-forcerep) | `texp * (unit -> texp) -> texp` |
 | val | [`forced`](../sig/HS_DS_CORE.md#val-forced) | `string -> bool list` |
 | val | [`forcedOverrides`](../sig/HS_DS_CORE.md#val-forcedoverrides) | `unit -> (string * bool list) list` |
+| val | [`forcedSince`](../sig/HS_DS_CORE.md#val-forcedsince) | `saved -> (string * bool list) list` |
 | val | [`fresh`](../sig/HS_DS_CORE.md#val-fresh) | `string -> string` |
 | val | [`ifBool`](../sig/HS_DS_CORE.md#val-ifbool) | `texp * texp * texp -> texp` |
 | val | [`inferKinds`](../sig/HS_DS_CORE.md#val-inferkinds) | `string list * (string -> Core.kind option) * Core.ty list -> (string * Core.kind) list` |
@@ -52,6 +53,7 @@ What each means is on [`HS_DS_CORE`](../sig/HS_DS_CORE.md); the types are this s
 | val | [`lazyTy`](../sig/HS_DS_CORE.md#val-lazyty) | `Core.ty -> Core.ty` |
 | val | [`let_`](../sig/HS_DS_CORE.md#val-let_) | `string * Core.ty * texp * texp -> texp` |
 | val | [`letrec`](../sig/HS_DS_CORE.md#val-letrec) | `(string * Core.ty * texp) list * texp -> texp` |
+| val | [`markForced`](../sig/HS_DS_CORE.md#val-markforced) | `unit -> unit` |
 | val | [`mentions`](../sig/HS_DS_CORE.md#val-mentions) | `string * Core.exp -> bool` |
 | val | [`names`](../sig/HS_DS_CORE.md#val-names) | `Core.exp -> string list` |
 | val | [`params`](../sig/HS_DS_CORE.md#val-params) | `Core.ty * int -> Core.ty list * Core.ty` |

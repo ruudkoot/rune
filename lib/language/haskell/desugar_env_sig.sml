@@ -55,6 +55,10 @@ sig
   (* `restore s` makes `s` what is known. *)
   val restore : saved -> unit
 
+  (* `forget ()` makes nothing known of the types and constructors, as
+     `start` does, keeping the program desugared. *)
+  val forget : unit -> unit
+
   (* What is known of the types and constructors, as lists, for a unit's
      interface.
 
@@ -68,6 +72,16 @@ sig
 
   (* `learn k` adds `k` to what is known. *)
   val learn : known -> unit
+
+  (* `mark ()` starts what `addedSince` reads: the keys given since. *)
+  val mark : unit -> unit
+
+  (* `addedSince s` is what is known now that `s`, saved at the last
+     `mark`, does not know, each list by key.
+
+     It is `known ()` less what `s` knows, at the cost of what was added
+     and not of all that is known (build-cache-issues.md, issue 39). *)
+  val addedSince : saved -> known
 
   (* `classes ()` is the program's classes and instances. *)
   val classes : unit -> HsClasses.env

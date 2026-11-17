@@ -330,9 +330,7 @@ struct
                        SOME (i, _) => SOME (String.substring (inst, 0, i), String.extract (inst, i + 1, NONE))
                      | NONE => NONE
         in
-          case List.find (fn ({head = T.IsIn (_, hh), ...} : C.inst) =>
-                            case T.spine hh of (T.TCon {id, ...}, _) => T.idEq (id, tc) | _ => false)
-                 (C.instsOf cls) of
+          case M.find (!C.heads, C.headKey (cls, tc)) of
             SOME (i as {context = mine, ...}) =>
               let
                 val theirs =

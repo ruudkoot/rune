@@ -38,7 +38,7 @@ struct
                   {key = "t M S", kind = T.KStar, params = 0, synonym = SOME (T.TAp (T.TCon "t M T", T.TCon "Int")),
                    cons = [], newtype = false},
                   {key = "t M U", kind = T.KStar, params = 0, synonym = NONE, cons = ["v M MkU"], newtype = false}],
-        classes = [{key = "t M C", supers = ["t Prelude Eq"], methods = ["v M m"], kind = T.KStar}],
+        classes = [{key = "t M C", supers = ["t Prelude Eq"], methods = ["v M m"], kind = T.KStar, defaults = ["v M m"]}],
         instances = [{id = "t M C@t M T", cls = "t M C", tycon = "t M T", vars = 1, ctx = [{cls = "t M C", ty = a}],
                       derived = false, home = "M"}],
         cons = [("v M MkT", {tycon = "t M T", arity = 1, fields = ["v M unT"], strict = [false]}),
@@ -59,6 +59,8 @@ struct
                      "a constructor's strict fields read back as written")
       val () = need (List.exists (fn (k, t) => k = "v M MkU" andalso String.isSubstring " !. " t) (HsModIface.canonical back),
                      "and a strict field stands in what a client reads of the type")
+      val () = need (List.map #defaults (#classes (#checked back)) = [["v M m"]],
+                     "a class's methods with a default read back as written (build-cache-issues.md, 25)")
       val whole = {modules = [iface, back], unfoldings = ["an unfolding\nof two lines"],
                    strictness = [("M.f", "SLb"), ("%w:M.f", "SL"), ("M.g", "")]}
       val again = HsIface.decode (HsIface.encode whole)

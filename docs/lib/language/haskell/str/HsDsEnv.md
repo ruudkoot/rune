@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_DS_ENV`](../sig/HS_DS_ENV.md) |
 | Status | required |
-| Members | 56 |
+| Members | 59 |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_env.sml](../../../../../lib/language/haskell/desugar_env.sml) |
 
@@ -26,6 +26,7 @@ What each means is on [`HS_DS_ENV`](../sig/HS_DS_ENV.md); the types are this str
 | type | [`known`](../sig/HS_DS_ENV.md#type-known) | `{builtinCons : (string * string) list, fields : (string * string list) list, primTypes : (string * string) list}` |
 | type | [`program`](../sig/HS_DS_ENV.md#type-program) | `{entity : string * string * string -> string, evidence : HsEvidence.table, infer : HsInfer.env, library : string -> bool, prelude : string * string -> string option}` |
 | type | [`saved`](../sig/HS_DS_ENV.md#type-saved) | *a type of its own* |
+| val | [`addedSince`](../sig/HS_DS_ENV.md#val-addedsince) | `saved -> known` |
 | val | [`bind`](../sig/HS_DS_ENV.md#val-bind) | `env * string * Core.atom * Core.ty -> env` |
 | val | [`bindOf`](../sig/HS_DS_ENV.md#val-bindof) | `{file : string, start : int, stop : int} -> HsEvidence.record option` |
 | val | [`bindTypes`](../sig/HS_DS_ENV.md#val-bindtypes) | `env * (string * Core.kind) list -> env` |
@@ -40,6 +41,7 @@ What each means is on [`HS_DS_ENV`](../sig/HS_DS_ENV.md); the types are this str
 | val | [`dictCon`](../sig/HS_DS_ENV.md#val-dictcon) | `string -> string` |
 | val | [`empty`](../sig/HS_DS_ENV.md#val-empty) | `env` |
 | val | [`fieldsOf`](../sig/HS_DS_ENV.md#val-fieldsof) | `string -> string list` |
+| val | [`forget`](../sig/HS_DS_ENV.md#val-forget) | `unit -> unit` |
 | val | [`genScheme`](../sig/HS_DS_ENV.md#val-genscheme) | `{ctx : {cls : string, ty : HsTypes.ty} list, ty : HsTypes.ty, vars : int} -> Core.ty` |
 | val | [`global`](../sig/HS_DS_ENV.md#val-global) | `string -> Core.exp * Core.ty` |
 | val | [`haskellForm`](../sig/HS_DS_ENV.md#val-haskellform) | `Core.ty -> Core.ty` |
@@ -53,6 +55,7 @@ What each means is on [`HS_DS_ENV`](../sig/HS_DS_ENV.md); the types are this str
 | val | [`learn`](../sig/HS_DS_ENV.md#val-learn) | `known -> unit` |
 | val | [`libraryEntity`](../sig/HS_DS_ENV.md#val-libraryentity) | `string * string * string -> string` |
 | val | [`lookup`](../sig/HS_DS_ENV.md#val-lookup) | `env * string -> (Core.atom * Core.ty) option` |
+| val | [`mark`](../sig/HS_DS_ENV.md#val-mark) | `unit -> unit` |
 | val | [`matchType`](../sig/HS_DS_ENV.md#val-matchtype) | `Core.ty * string list * Core.ty -> Core.ty list option` |
 | val | [`method`](../sig/HS_DS_ENV.md#val-method) | `env -> string * Core.ty list * (Core.exp * Core.ty) list -> Core.exp * Core.ty` |
 | val | [`nameOf`](../sig/HS_DS_ENV.md#val-nameof) | `string -> string` |

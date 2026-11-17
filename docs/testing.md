@@ -920,7 +920,7 @@ mutant's tree for a job to be run against it by hand). The first fourteen
 seed rhc's lexer, its literate reader, its layout and its parser, CoreLint,
 Core's interpreter and Core's text reader, these last seen by `hs/core`'s
 jobs; HK01 to HK05 the checker, seen by `hs/hslint`'s; HD01 to HD03
-deriving; HM01 to HM03 desugaring, seen by `hs/desugar`'s; HU01 to HU11
+deriving; HM01 to HM03 desugaring, seen by `hs/desugar`'s; HU01 to HU16
 the holes of rhc's units, seen by `hs/units/holes` (*rhc in units*); HW01 and
 HW02 strictness, its workers and wrappers, seen at -O2. F's parser
 mutants (`tests/runner/hssyntax.sml`) are the in-process kind.
@@ -1280,10 +1280,23 @@ type moves as one, so that a client of the other is compiled, and a body
 edited in the cycle, which compiles its unit and no client; `h8-split`, a
 cycle split in two units of new names whose client is taken, since under
 the link of the roadmap's C a usage names no unit, and taken again after a
-body's edit. Each hole is a mutant of rhc's (`HU01` to `HU09` and `HU11`,
-H9's the Prelude's names of `hs/iface/usages`, `HU11` a unit fingerprinted
-module by module), caught by its case; `HU10`, a unit taken keeping its
-fingerprints unasked, is `EQUIVALENT`. Nightly,
+body's edit. Five cases hold what probing the store under rhc found
+(`docs/plans/build-cache-issues.md`, issues 25 to 27 and 30): `class-default`,
+a class's default given and taken away, so that an instance of another
+module that leaves the method out is made again; `instance-chain`, an
+import of an orphan instance's module taken from a module on the way and
+given back, which moves a default of a module that imports neither (5.4);
+`instance-chain-refused`, the same taking an instance out of scope, a
+refusal; `literate`, one text read plain and then literate (a step's
+`rm` names the files it removes, and a step's modules are `.hs` and
+`.lhs`), the last a text whose literate reading imports a module its plain
+reading does not, which a header kept of the plain reading would leave
+out; and `fresh-names` (issue 30), a unit made after one taken,
+numbered as a build without the store numbers it, so that a comment in it
+takes the link. Each hole is a mutant of rhc's (`HU01` to `HU09` and `HU11` to
+`HU16`, H9's the Prelude's names of `hs/iface/usages`, `HU11` a unit
+fingerprinted module by module), caught by its case; `HU10`, a unit taken
+keeping its fingerprints unasked, is `EQUIVALENT`. Nightly,
 `hs/units/random/CASE` walks each case's states (the k-th its steps 1 to
 k) in an order drawn at random, through one store, with the same
 comparison at each, so that an entry meets every edit and its undoing in
@@ -1301,7 +1314,23 @@ a compile then take; `--no-store` and an empty `RHC_STORE` write nothing,
 and `RHC_STORE` names the store written. `hs/units/concurrent` runs two
 compiles at once on one `.rhc`, twice: both compile, to one program, a
 plain compile's, and a third takes every unit and the link from what they
-kept. Core in
+kept. `hs/units/memo` compiles the same program through one store at each
+level, for both instruction sets and without the strictness pass, coming
+back to each: each program is the bytes a compile without a store gives,
+and the link is taken only where a compile before had the same options
+(issue 29). `hs/units/damaged` flips a byte in the head, the middle and
+the end of each entry of a store, the store's own and then the same as a
+layer: a compile after each gives the first's bytes, the entry refused and
+made again, or stops naming the layer, never a crash (issue 28).
+`hs/units/verify` holds `--verify-store`: a store as compiled passes, and
+an entry planted with another compile's content, whose usages hold, is
+taken by a plain compile and refused by `--verify-store`. `hs/units/trim`
+makes every file of a store nine days old: the next compile takes every
+unit and the link, and the trim, due then, runs after them (issue 34).
+`hs/units/elsewhere` reads a store with a bin/rhc whose library is a copy at
+another path: it takes every unit and the link, to the same program, and
+`--verify-store` holds every entry, the snapshot's library among them, to
+what it makes of its copy (issue 31). Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an

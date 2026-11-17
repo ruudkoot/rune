@@ -33,6 +33,12 @@ sig
     | Entity of string
       (* an entity the translations name by its key, a program unable to
          shadow it, as Ratio's % (H9) *)
+    | Reaches of {from : string, to : string}
+      (* whether a chain of imports leads from the module of identity
+         `from` to that of `to`, which declares an instance the checker
+         found: the instance is in scope in `from` where one does (5.4), so
+         that an import of a module on the way, taken away or given, moves
+         the modules after it (H2) *)
 
   (* `setNote f` makes `f` the recorder, called with each read as it is
      made, and is the recorder before it: until a driver sets one, a no-op. *)

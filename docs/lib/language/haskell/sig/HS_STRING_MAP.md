@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 8 of 8 entries documented |
+| Documentation | 9 of 9 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/strmap\_sig.sml](../../../../../lib/language/haskell/strmap_sig.sml) |
 
@@ -37,6 +37,7 @@ sig
   val <a href="#val-find">find</a> : 'a map * string -&gt; 'a option
   val <a href="#val-member">member</a> : 'a map * string -&gt; bool
   val <a href="#val-foldl">foldl</a> : (string * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a map -&gt; 'b
+  val <a href="#val-foldprefix">foldPrefix</a> : (string * 'a * 'b -&gt; 'b) -&gt; 'b -&gt; 'a map * string -&gt; 'b
   val <a href="#val-listitems">listItems</a> : 'a map -&gt; (string * 'a) list
   val <a href="#val-size">size</a> : 'a map -&gt; int
 end
@@ -91,6 +92,18 @@ val foldl : (string * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
 
 `foldl f init m` folds `f` over the keys and values of `m` in the
 order of the keys.
+
+### <a name="val-foldprefix"></a>`foldPrefix`
+
+```sml
+val foldPrefix : (string * 'a * 'b -> 'b) -> 'b -> 'a map * string -> 'b
+```
+
+`foldPrefix f init (m, p)` folds `f` over the keys of `m` that begin
+with `p`, and their values, in the order of the keys.
+
+It is [`foldl`](#val-foldl) over those keys alone, at the cost of them and not of
+every key.
 
 ### <a name="val-listitems"></a>`listItems`
 

@@ -13,7 +13,7 @@ struct
      fixities = List.mapPartial (fn (d : HsModules.def) =>
                                    let val k = HsModules.key (#entity d)
                                    in Option.map (fn f => (k, f)) (fixity k) end) defs,
-     checked = HsInfer.part (env, fn h => h = id)}
+     checked = HsInfer.part (env, id)}
 
   (* ---- canonical text ---- *)
 
@@ -93,10 +93,14 @@ struct
       fun classItem (c : HsClasses.class) : item =
         let
           val k = #key c
+          (* a default, which an instance elsewhere that leaves the method
+             out is made of (build-cache-issues.md, issue 25) *)
+          fun defaultOf m = if List.exists (fn d => d = m) (#defaults c) then " default" else ""
           val methodLines =
             List.map (fn m =>
                         "  method " ^ m ^ " " ^
-                        (case M.find (methods, m) of SOME {scheme = s, ...} => scheme s | NONE => valueText m) ^ fixOf m)
+                        (case M.find (methods, m) of SOME {scheme = s, ...} => scheme s | NONE => valueText m) ^ fixOf m
+                        ^ defaultOf m)
               (#methods c)
         in
           {key = k, members = #methods c,

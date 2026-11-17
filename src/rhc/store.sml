@@ -18,7 +18,9 @@ struct
      desugaring's interface and the fingerprints before its Core *)
   (* 3: the driver's part of HsLint's findings of a unit's modules, made at
      level 2, before its Core (ruling 66) *)
-  val version = 3
+  (* 4: the hash of a unit's Core, a part of its own, which the link's memo
+     is keyed by (build-cache-issues.md, issue 35) *)
+  val version = 4
 
   (* what a compile read, by a name of rhc's (H1, H2, H7, H9), and what it
      gave then *)
@@ -68,8 +70,47 @@ struct
         NONE => S.Stands
       | SOME (k, v) => S.Refused ("its compile read " ^ k ^ " as " ^ v ^ ", which is " ^ current k ^ " now")
 
+  (* A part of an entry of the read-only store `dir` (a layer, bin/rhc's
+     snapshot) that does not hold what its hash says, read after the entry
+     was taken: an entry a compile cannot take back, nor remove, so it
+     stops, saying which store to make again *)
+  exception Damaged of string
+
+  (* The store holds an entry's head to its hash before the entry is
+     taken, and each section to its own only as the client reads it
+     (UnitStore), and rhc reads a unit's parts long after it takes the
+     unit: its desugaring's where a unit after it is made, its Core's
+     declarations where the link reaches them. So an entry of the overlay
+     is held whole before it is taken, every part read once, which a
+     compile that goes on to read them reads again for nothing; one that
+     does not hold is no entry, and is removed, so that the next compile
+     does not read it again (build-cache-issues.md, issue 28) *)
+  fun intact ({sections = {parts, ...}, ...} : entry) : bool =
+    let fun go i = (ignore (parts i); go (i + 1))
+    in go 0 handle P.Bad _ => true | S.Damaged => false end
+
+  (* the file of an entry of the key k, named by the hash of its head's
+     bytes (UnitStore.store) *)
+  fun fileOf (dir : string, config : string, k : string, h : head) : string =
+    let val w = P.writer ()
+    in #writeHead format (w, h); S.join (S.keyDir (dir, config, k), hash ("store", P.contents w)) end
+
+  (* an entry of a read-only store dir, each part read through a guard:
+     one that does not hold stops the compile (Damaged dir) *)
+  fun guarded (dir : string) (found : (head, sections) S.found) : (head, sections) S.found =
+    let
+      fun guard ({head, sections = {iface, parts, count}} : entry) : entry =
+        {head = head, sections = {iface = iface, parts = fn i => parts i handle S.Damaged => raise Damaged dir, count = count}}
+    in
+      case found of
+        S.Found (e, sum) => S.Found (guard e, sum)
+      | S.FoundBehind (e, sum) => S.FoundBehind (guard e, sum)
+      | missed => missed
+    end
+
   (* A unit's entry: in the overlay first, which keeps the times of what it
-     gives, then in each layer, read only (the Prelude's snapshot, D45);
+     gives, held whole (intact), then in each layer, read only (the
+     Prelude's snapshot, D45), each part held as it is read (guarded);
      where none stands, why the overlay's did not *)
   fun find ({overlay, layers, config, key = k, holds = h}
             : {overlay : string, layers : string list, config : string, key : string, holds : head -> S.verdict})
@@ -79,11 +120,16 @@ struct
         | inLayers (d :: ds, why) =
             case S.find (format, h) (d, config, k) of
               S.Missed _ => inLayers (ds, why)
-            | found => found
+            | found => guarded d found
+      fun held (e : entry, found) =
+        if intact e then found
+        else ((OS.FileSys.remove (fileOf (overlay, config, k, #head e)) handle OS.SysErr _ => ());
+              inLayers (layers, "a damaged entry"))
     in
       case S.findAt (format, h) {overlay = true} (overlay, config, k) of
         S.Missed why => inLayers (layers, why)
-      | found => found
+      | found as S.Found (e, _) => held (e, found)
+      | found as S.FoundBehind (e, _) => held (e, found)
     end
 
   (* A unit's entry in the layers alone, read only, where a compile keeps
@@ -96,7 +142,7 @@ struct
         | inLayers (d :: ds, why) =
             case S.find (format, h) (d, config, k) of
               S.Missed w => inLayers (ds, if why = "" then w else why)
-            | found => found
+            | found => guarded d found
     in
       inLayers (layers, "")
     end

@@ -92,9 +92,12 @@ sig
                fields : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,
                methods : (string * {cls : string, scheme : HsTypes.scheme}) list}
 
-  (* `part (env, mine)` is what `env` holds of the entities whose module's
-     identity `mine` accepts, and of the instances it declares. *)
-  val part : env * (string -> bool) -> part
+  (* `part (env, id)` is what `env` holds of the entities of the module
+     `id`, and of the instances it declares.
+
+     It costs as those, not as every module's (build-cache-issues.md,
+     issue 39). *)
+  val part : env * string -> part
 
   (* `extend (env, p)` is `env` with the part `p`, as a client checks
      against a module it has only the interface of. *)

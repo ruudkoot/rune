@@ -36,9 +36,10 @@ struct
   fun entityText ({space, home, name} : Mo.entity) = spaceText space ^ home ^ " " ^ name
 
   (* What the groups of a graph leave for the groups after them: the
-     tables of every module's entities and fixities, whether a file is the
-     library's, and what names and the checker have found so far. *)
-  type state = {defs : Mo.def M.map, universe : Mo.entity list, fixities : (A.fixity * int) M.map,
+     tables of every module's entities and fixities (and the entities as
+     added, the latest first), whether a file is the library's, and what
+     names and the checker have found so far. *)
+  type state = {defs : Mo.def M.map, universe : Mo.entity list list, fixities : (A.fixity * int) M.map,
                 library : bool M.map, exports : Mo.entity list M.map, scopes : Mo.scope M.map, diags : G.diag list,
                 modules : (G.node * A.module) list, derived : (string * string * A.decl list) list,
                 evidence : HsEvidence.table, types : HsInfer.env}
@@ -62,7 +63,7 @@ struct
       val defs = List.concat (List.map (fn (n : G.node) => Mo.defs (#id n, #ast n)) nodes)
     in
       {defs = List.foldl (fn (d : Mo.def, t) => M.insert (t, Mo.key (#entity d), d)) (#defs s) defs,
-       universe = #universe s @ List.map #entity defs,
+       universe = List.map #entity defs :: #universe s,
        fixities = List.foldl (fn ((k, f), t) => M.insert (t, k, f)) (#fixities s)
                     (List.concat (List.map (fn (n : G.node) => HsRename.topFixities (#id n, #ast n)) nodes)),
        library = List.foldl (fn (n : G.node, t) => M.insert (t, #file n, #library n)) (#library s) nodes,
@@ -78,7 +79,7 @@ struct
     List.foldl
       (fn ({id, exports, defs, fixities, checked} : HsModIface.t, s : state) =>
          {defs = List.foldl (fn (d : Mo.def, t) => M.insert (t, Mo.key (#entity d), d)) (#defs s) defs,
-          universe = #universe s @ List.map #entity defs,
+          universe = List.map #entity defs :: #universe s,
           fixities = List.foldl (fn ((k, f), t) => M.insert (t, k, f)) (#fixities s) fixities,
           library = #library s, exports = M.insert (#exports s, id, exports), scopes = #scopes s, diags = #diags s,
           modules = #modules s, derived = #derived s, evidence = #evidence s, types = HsInfer.extend (#types s, checked)})
@@ -92,7 +93,7 @@ struct
                        (leafEntities leaves)
     in
       {defs = List.foldl (fn (d : Mo.def, t) => M.insert (t, Mo.key (#entity d), d)) M.empty leafDefs,
-       universe = List.map #entity leafDefs, fixities = M.empty, library = M.empty,
+       universe = [List.map #entity leafDefs], fixities = M.empty, library = M.empty,
        exports = List.foldl (fn ((l, names), m) =>
                                M.insert (m, RhcLibrary.identity l,
                                          List.map (fn n => {space = Mo.Value, home = RhcLibrary.identity l, name = n}) names))
@@ -104,10 +105,27 @@ struct
   (* The first number a program's fresh type variables and kinds take, past
      any the library's checking takes, so that they are numbered alike
      whether the library was checked now or taken from bin/rhc's
-     snapshot (RhcDriver), or its groups by interface (RhcIface); the
-     program's units go on from it, so that no two dictionaries of a
-     program have one name *)
+     snapshot (RhcDriver), or its groups by interface (RhcIface) *)
   val unitCounters = 100000000
+
+  (* The first number a group of the program's fresh variables take: past
+     unitCounters, a range of its own, a million wide, by the hash of its
+     modules' identities, so that no two dictionaries of a program have
+     one name but where two groups' hashes meet (one in 2^28), and so that
+     a group is numbered alike whatever the session checked before it: a
+     unit taken from the store, numbered in another session after other
+     units, and one checked now, as a build without the store checks it.
+     Going on from where the group before it ended, as the program's
+     groups did, made a unit made after one taken other Core than a build
+     without the store makes (build-cache-issues.md, issue 30) *)
+  fun programSlot (members : G.node list) : int =
+    let
+      (* a hash of the identities, below 2^28 (a prime's residue) *)
+      val n = CharVector.foldl (fn (c, h) => (h * 31 + Char.ord c) mod 268435399) 0
+                (String.concatWith "+" (List.map #id members))
+    in
+      unitCounters + 1000000 * n
+    end
 
   (* The first number a unit of the library's fresh variables take: a range
      of its own, a million wide, by the place of its first module among the
@@ -136,7 +154,9 @@ struct
     let
       val defTable = #defs s
       fun defOf k = M.find (defTable, k)
-      val universe = #universe s
+      (* every entity, which the greatest fixpoint of exports starts from
+         (Mo.solve) and the least reads nothing of *)
+      val universe = case fixpoint of Mo.Greatest => List.concat (List.rev (#universe s)) | Mo.Least => []
       val fixTable = #fixities s
       fun isLibrary (span : HsSource.span) = getOpt (M.find (#library s, #file span), false)
       val exports = ref (#exports s)
@@ -191,7 +211,7 @@ struct
           | (SOME cycleDefault, false) =>
               let
                 val () = if List.all #library members then HsInfer.numberFrom (librarySlot members)
-                         else HsInfer.renumber unitCounters
+                         else HsInfer.numberFrom (programSlot members)
                 val resolved = List.filter (fn (n, _) => List.exists (fn (m : G.node) => #id m = #id n) members) (!out)
                 (* 5.4: an instance in scope where imports reach it *)
                 val () = HsInfer.setReaches RhcGraph.reaches
@@ -207,7 +227,7 @@ struct
         end
     in
       List.app group gs;
-      {defs = defTable, universe = universe, fixities = fixTable, library = #library s, exports = !exports,
+      {defs = defTable, universe = #universe s, fixities = fixTable, library = #library s, exports = !exports,
        scopes = !scopes, diags = !diags, modules = !out, derived = !derivedOut, evidence = evidence, types = !types}
     end
 

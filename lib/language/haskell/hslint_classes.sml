@@ -24,17 +24,46 @@ struct
   val classes : class M.map ref = ref M.empty
   val insts : inst list M.map ref = ref M.empty
 
+  (* the instances added since the instances were set, by `reset` or a
+     restore of HsLintEnv's, the latest first: those of the modules read
+     since, which a unit's part and its checks read, beside those of the
+     units before it, which they do not (build-cache-issues.md, issue 39) *)
+  val added : inst list ref = ref []
+
+  (* each instance by its class and its type constructor, `CLASS\tTYCON`:
+     one in a program (cls.inst.once), found where an instance is wanted,
+     and not by trying every instance of the class, which made a unit after
+     n instances of Eq cost as n (build-cache-issues.md, issue 39) *)
+  val heads : inst M.map ref = ref M.empty
+  fun headKey (c, tc) = T.idKey c ^ "\t" ^ T.idKey tc
+  fun headOf ({head = T.IsIn (c, h), ...} : inst) =
+    case T.spine h of
+      (T.TCon {id, ...}, _) => SOME (headKey (c, id))
+    | _ => NONE
+  fun headsOf (is : inst list M.map) : inst M.map =
+    M.foldl (fn (_, is, m) => List.foldl (fn (i, m) => case headOf i of SOME k => M.insert (m, k, i) | NONE => m) m is)
+      M.empty is
+
   (* the Prelude's `Num`, which makes a class numeric (4.3.4) *)
   val numId : T.id option ref = ref NONE
 
-  fun reset () = (classes := M.empty; insts := M.empty; numId := NONE)
+  fun reset () = (classes := M.empty; insts := M.empty; added := []; heads := M.empty; numId := NONE)
 
   fun findClass c = M.find (!classes, T.idKey c)
   fun supers c = case findClass c of SOME {supers, ...} => supers | NONE => []
   fun instsOf c = getOpt (M.find (!insts, T.idKey c), [])
 
   fun addInst (i as {head = T.IsIn (c, _), ...} : inst) =
-    insts := M.insert (!insts, T.idKey c, instsOf c @ [i])
+    (insts := M.insert (!insts, T.idKey c, instsOf c @ [i]); added := i :: !added;
+     case headOf i of SOME k => heads := M.insert (!heads, k, i) | NONE => ())
+
+  (* of the instances added, those `take` takes, by class, each class's in
+     the order of its instances: what a fold over every class's instances
+     meets of them where `take` takes none of those set before *)
+  fun addedBy (take : inst -> bool) : inst list M.map =
+    List.foldl (fn (i as {head = T.IsIn (c, _), ...} : inst, m) =>
+                  if take i then M.insert (m, T.idKey c, getOpt (M.find (m, T.idKey c), []) @ [i]) else m)
+      M.empty (List.rev (!added))
 
   (* every class `c` is a subclass of, `c` among them *)
   fun closure c =
@@ -76,7 +105,11 @@ struct
               else try rest
             end
     in
-      try (instsOf c)
+      (* every instance's head is a type constructor's (cls.inst.reject.var):
+         the one instance of the class at that of `t`, if any *)
+      case T.spine t of
+        (T.TCon {id, ...}, _) => try (case M.find (!heads, headKey (c, id)) of SOME i => [i] | NONE => [])
+      | _ => try (instsOf c)
     end
 
   fun entail ps p =

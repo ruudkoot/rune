@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 56 of 56 entries documented |
+| Documentation | 59 of 59 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_env\_sig.sml](../../../../../lib/language/haskell/desugar_env_sig.sml) |
 
@@ -66,10 +66,13 @@ sig
   type <a href="#type-saved">saved</a>
   val <a href="#val-save">save</a> : unit -&gt; saved
   val <a href="#val-restore">restore</a> : saved -&gt; unit
+  val <a href="#val-forget">forget</a> : unit -&gt; unit
   type <a href="#type-known">known</a> = {<a href="#fld-known.primtypes">primTypes</a> : (string * string) list, <a href="#fld-known.builtincons">builtinCons</a> : (string * string) list,
                 <a href="#fld-known.fields">fields</a> : (string * string list) list}
   val <a href="#val-known">known</a> : unit -&gt; known
   val <a href="#val-learn">learn</a> : known -&gt; unit
+  val <a href="#val-mark">mark</a> : unit -&gt; unit
+  val <a href="#val-addedsince">addedSince</a> : saved -&gt; known
   val <a href="#val-classes">classes</a> : unit -&gt; HsClasses.env
   val <a href="#val-valuescheme">valueScheme</a> : string -&gt; HsTypes.scheme option
   val <a href="#val-prelude">prelude</a> : string * string -&gt; string
@@ -188,6 +191,15 @@ val restore : saved -> unit
 
 `restore s` makes `s` what is known.
 
+### <a name="val-forget"></a>`forget`
+
+```sml
+val forget : unit -> unit
+```
+
+`forget ()` makes nothing known of the types and constructors, as
+[`start`](#val-start) does, keeping the program desugared.
+
 ### <a name="type-known"></a>`known`
 
 ```sml
@@ -222,6 +234,26 @@ val learn : known -> unit
 ```
 
 `learn k` adds `k` to what is known.
+
+### <a name="val-mark"></a>`mark`
+
+```sml
+val mark : unit -> unit
+```
+
+`mark ()` starts what [`addedSince`](#val-addedsince) reads: the keys given since.
+
+### <a name="val-addedsince"></a>`addedSince`
+
+```sml
+val addedSince : saved -> known
+```
+
+`addedSince s` is what is known now that `s`, saved at the last
+[`mark`](#val-mark), does not know, each list by key.
+
+It is `known ()` less what `s` knows, at the cost of what was added
+and not of all that is known (build-cache-issues.md, issue 39).
 
 ### <a name="val-classes"></a>`classes`
 

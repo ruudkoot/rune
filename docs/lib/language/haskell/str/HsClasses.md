@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_CLASSES`](../sig/HS_CLASSES.md) |
 | Status | required |
-| Members | 15 |
+| Members | 18 |
 | Tests | not listed |
 | Source | [lib/language/haskell/classes.sml](../../../../../lib/language/haskell/classes.sml) |
 
@@ -22,17 +22,20 @@ What each means is on [`HS_CLASSES`](../sig/HS_CLASSES.md); the types are this s
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`class`](../sig/HS_CLASSES.md#type-class) | `{key : string, kind : HsTypes.kind, methods : string list, supers : string list}` |
+| type | [`class`](../sig/HS_CLASSES.md#type-class) | `{defaults : string list, key : string, kind : HsTypes.kind, methods : string list, supers : string list}` |
 | type | [`env`](../sig/HS_CLASSES.md#type-env) | *a type of its own* |
 | type | [`instance`](../sig/HS_CLASSES.md#type-instance) | `{cls : string, ctx : {cls : string, ty : HsTypes.ty} list, derived : bool, home : string, id : string, tycon : string, vars : int}` |
 | val | [`addClass`](../sig/HS_CLASSES.md#val-addclass) | `env * class -> env` |
 | val | [`addInstance`](../sig/HS_CLASSES.md#val-addinstance) | `env * instance -> env` |
 | val | [`classList`](../sig/HS_CLASSES.md#val-classlist) | `env -> class list` |
+| val | [`classesAt`](../sig/HS_CLASSES.md#val-classesat) | `env * string list -> class list` |
 | val | [`empty`](../sig/HS_CLASSES.md#val-empty) | `env` |
 | val | [`findClass`](../sig/HS_CLASSES.md#val-findclass) | `env * string -> class option` |
 | val | [`findInstance`](../sig/HS_CLASSES.md#val-findinstance) | `env * string * string -> instance option` |
+| val | [`instanceById`](../sig/HS_CLASSES.md#val-instancebyid) | `env * string -> instance option` |
 | val | [`instanceId`](../sig/HS_CLASSES.md#val-instanceid) | `string * string -> string` |
 | val | [`instances`](../sig/HS_CLASSES.md#val-instances) | `env -> instance list` |
+| val | [`instancesOf`](../sig/HS_CLASSES.md#val-instancesof) | `env * string list -> instance list` |
 | val | [`showInstance`](../sig/HS_CLASSES.md#val-showinstance) | `string -> string` |
 | val | [`superPath`](../sig/HS_CLASSES.md#val-superpath) | `env * string * string -> string list option` |
 | val | [`superclasses`](../sig/HS_CLASSES.md#val-superclasses) | `env * string -> string list` |

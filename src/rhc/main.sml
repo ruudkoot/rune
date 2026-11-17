@@ -246,8 +246,7 @@ struct
           SOME dir => SOME (RhcStore.find {overlay = dir, layers = #layers opts, config = config, key = key, holds = holds})
         | NONE =>
             if null (#layers opts) then NONE
-            else SOME (RhcStore.find {overlay = hd (#layers opts), layers = tl (#layers opts), config = config, key = key,
-                                      holds = holds})
+            else SOME (RhcStore.findIn {layers = #layers opts, config = config, key = key, holds = holds})
       fun keep (key, usages, sections : RhcStore.sections) =
         case #store opts of
           SOME dir =>
@@ -368,7 +367,7 @@ struct
     null (!Pass.dumpAfter)
     andalso not (List.exists (fn a => List.exists (fn b => a = b) ["--desugar-only", "--desugar-units", "--canonical-core",
                                                                     "--pass-stats", "--simplify-stats", "--no-cheap-eagerness"]
-                                      orelse List.exists (fn p => String.isPrefix p a) ["--eta=", "--fuel=", "--fault="])
+                                      orelse List.exists (fn p => String.isPrefix p a) ["--eta=", "--fuel=", "--fault=", "--strictness="])
                    args)
 
   fun haskell (file : string) (args : string list, desugar : CoreRuntime.strings -> Core.program,
@@ -395,8 +394,17 @@ struct
       (* -o where the store holds the link of the same units at the same
          configuration: its bytecode, and no stage run *)
       val memo = case #output opts of SOME _ => if memoFits args then memo else NONE | NONE => NONE
+      (* the program's bytecode kept by the link's memo; with
+         --verify-store held to what the memo has, where it has it *)
+      fun kept (m : RhcDriver.memo, bytes) =
+        if not (!RhcDriver.verify) then (#keep m bytes; 0)
+        else
+          case #find m () of
+            SOME b => if b = bytes then 0
+                      else (eprint "rhc: error: --verify-store: the store's link of the program is not what compiling it gives\n"; 1)
+          | NONE => (#keep m bytes; 0)
     in
-      case (#output opts, Option.mapPartial (fn m => #find m ()) memo) of
+      case (#output opts, if !RhcDriver.verify then NONE else Option.mapPartial (fn m => #find m ()) memo) of
         (SOME out, SOME bytes) => (writeBytes (out, bytes); Pass.finish (); 0)
       | _ =>
     let
@@ -417,8 +425,7 @@ struct
             SOME out =>
               let val status = compile (opts, p, out)
               in
-                (case memo of SOME m => if status = 0 then #keep m (bytesOf out) else () | NONE => ());
-                status
+                case memo of SOME m => if status = 0 then kept (m, bytesOf out) else status | NONE => status
               end
           | NONE =>
               (* the program's name, command_name's: the .hs file (ruling 33),
@@ -543,6 +550,8 @@ struct
     handle RhcOptions.Usage msg => (eprint ("rhc: " ^ msg ^ "\n" ^ "rhc --help says what rhc takes\n"); 1)
          | Failed => 1
          | Error.Bug msg => (eprint ("rhc: " ^ msg ^ "\n"); 1)
+         | RhcStore.Damaged dir => (eprint ("rhc: error: the store " ^ dir ^ " holds a damaged entry, which rhc does not write: "
+                                            ^ "make it again\n"); 1)
          | IO.Io {name, function, cause} =>
              (eprint ("rhc: " ^ name ^ ": " ^ function ^ ": "
                       ^ (case cause of OS.SysErr (msg, _) => msg | _ => exnMessage cause) ^ "\n"); 1)

@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 46 of 46 entries documented |
+| Documentation | 48 of 48 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_core\_sig.sml](../../../../../lib/language/haskell/desugar_core_sig.sml) |
 
@@ -83,6 +83,8 @@ sig
   val <a href="#val-forced">forced</a> : string -&gt; bool list
   val <a href="#val-setforced">setForced</a> : string * bool list -&gt; unit
   val <a href="#val-forcedoverrides">forcedOverrides</a> : unit -&gt; (string * bool list) list
+  val <a href="#val-markforced">markForced</a> : unit -&gt; unit
+  val <a href="#val-forcedsince">forcedSince</a> : saved -&gt; (string * bool list) list
   val <a href="#val-casecon">caseCon</a> : Core.atom * Core.ty * (string * ((string * Core.ty) list -&gt; texp)) list * texp option -&gt; texp
   val <a href="#val-ifbool">ifBool</a> : texp * texp * texp -&gt; texp
   val <a href="#val-con">con</a> : string * Core.ty list * texp list -&gt; texp
@@ -444,6 +446,26 @@ val forcedOverrides : unit -> (string * bool list) list
 ```
 
 `forcedOverrides ()` is each constructor [`setForced`](#val-setforced) gave its flags.
+
+### <a name="val-markforced"></a>`markForced`
+
+```sml
+val markForced : unit -> unit
+```
+
+`markForced ()` starts what [`forcedSince`](#val-forcedsince) reads.
+
+### <a name="val-forcedsince"></a>`forcedSince`
+
+```sml
+val forcedSince : saved -> (string * bool list) list
+```
+
+`forcedSince s` is each constructor given its flags since the last
+[`markForced`](#val-markforced) that `s`, saved then, has none for, by key.
+
+It is `forcedOverrides ()` less those of `s`, at the cost of those
+given since (build-cache-issues.md, issue 39).
 
 ### <a name="val-casecon"></a>`caseCon`
 

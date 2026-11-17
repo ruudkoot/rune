@@ -136,21 +136,40 @@ struct
      and their types' declarations, which a unit imports and copies *)
   val importedValues : Core.ty M.map ref = ref M.empty
   val importedTypes : Core.decl M.map ref = ref M.empty
+  (* their constructors, each by its type's name *)
+  val importedCons : string M.map ref = ref M.empty
+  (* the keys tyconCons, leafKeys and defaults were given since a unit
+     began (unitOf), the latest first: what it added, found without listing
+     all that is known (build-cache-issues.md, issue 39) *)
+  val tyconSet : string list ref = ref []
+  val leafSet : string list ref = ref []
+  val defaultSet : string list ref = ref []
+  fun setTyconCons (k, cs) = (tyconCons := M.insert (!tyconCons, k, cs); tyconSet := k :: !tyconSet)
+  fun setLeaf k = (leafKeys := M.insert (!leafKeys, k, ()); leafSet := k :: !leafSet)
+  fun setDefault k = (defaults := M.insert (!defaults, k, ()); defaultSet := k :: !defaultSet)
+  fun markSets () = (tyconSet := []; leafSet := []; defaultSet := [])
+
+  (* the entries of `now` whose keys `set` holds and `old` has not, by key:
+     those of `M.listItems now` that `old` has not, where every key `now`
+     has and `old` has not is in `set` *)
+  fun addedOf (old : 'a M.map, now : 'b M.map, set : string list) : (string * 'b) list =
+    let val keys = List.foldl (fn (k, s) => if M.member (old, k) then s else M.insert (s, k, ())) M.empty set
+    in List.rev (M.foldl (fn (k, (), acc) => case M.find (now, k) of SOME v => (k, v) :: acc | NONE => acc) [] keys) end
 
   (* what a part of a desugaring leaves the next: the library's, a
      program's (HsDsCore's and HsDsEnv's declarations, and these) *)
   type state = {core : C.saved, env : V.saved, leafKeys : unit M.map, tyconCons : string list M.map,
                 defaults : unit M.map, missing : string list, importedValues : Core.ty M.map,
-                importedTypes : Core.decl M.map}
+                importedTypes : Core.decl M.map, importedCons : string M.map}
 
   fun saveState () : state =
     {core = C.save (), env = V.save (), leafKeys = !leafKeys, tyconCons = !tyconCons, defaults = !defaults,
-     missing = !missing, importedValues = !importedValues, importedTypes = !importedTypes}
+     missing = !missing, importedValues = !importedValues, importedTypes = !importedTypes, importedCons = !importedCons}
 
   fun restoreState (s : state) =
     (C.restore (#core s); V.restore (#env s); leafKeys := #leafKeys s; tyconCons := #tyconCons s;
      defaults := #defaults s; missing := #missing s; importedValues := #importedValues s;
-     importedTypes := #importedTypes s)
+     importedTypes := #importedTypes s; importedCons := #importedCons s; markSets ())
 
   (* a value: its name, its type (`NONE` for the one its body has once
      made) and how its body is made *)
@@ -955,31 +974,38 @@ struct
     | Core.UTuple _ => acc
     | Core.Cast (b, t) => t :: typesOf (b, acc)
 
-  (* the data types and newtypes the values and `roots` name, through the
-     fields of those they name, and a tuple no declaration of `types` has
-     (3.8: of arbitrary length), after them *)
-  fun reachableTypesFrom (types : Core.decl list, vals : Core.decl list, roots : string list) =
+  (* the declarations of `types` by name, and their constructors' types *)
+  fun typeTable (types : Core.decl list) =
+    List.foldl (fn (d as Core.Data (t, _, _), m) => M.insert (m, t, d)
+                 | (d as Core.Newtype (t, _, _, _), m) => M.insert (m, t, d)
+                 | (_, m) => m) M.empty types
+  fun conTable (types : Core.decl list) =
+    List.foldl (fn (d, m) => consInto (d, m)) M.empty types
+  and consInto (Core.Data (t, _, cs), m) = List.foldl (fn ((c, _), m) => M.insert (m, c, t)) m cs
+    | consInto (Core.Newtype (t, _, c, _), m) = M.insert (m, c, t)
+    | consInto (_, m) = m
+
+  (* the names of the data types and newtypes the values and `roots` name,
+     through the fields of those they name, a name's declaration by
+     `typeOf` and a constructor's type by `conOf`; and a tuple no
+     declaration has (3.8: of arbitrary length), in the order met *)
+  fun reachableBy (typeOf : string -> Core.decl option, conOf : string -> string option, vals : Core.decl list,
+                   roots : string list) : unit M.map * Core.decl list =
     let
-      val table = List.foldl (fn (d as Core.Data (t, _, _), m) => M.insert (m, t, d)
-                               | (d as Core.Newtype (t, _, _, _), m) => M.insert (m, t, d)
-                               | (_, m) => m) M.empty types
-      val conOf = List.foldl (fn (Core.Data (t, _, cs), m) => List.foldl (fn ((c, _), m) => M.insert (m, c, t)) m cs
-                               | (Core.Newtype (t, _, c, _), m) => M.insert (m, c, t)
-                               | (_, m) => m) M.empty types
       val seen = ref M.empty
       val tuples : Core.decl list ref = ref []
       fun visit c =
         if M.member (!seen, c) then ()
         else
           (seen := M.insert (!seen, c, ());
-           case M.find (table, c) of
+           case typeOf c of
              SOME (Core.Data (_, _, cs)) => List.app visit (List.foldl (fn ((_, fs), acc) => List.foldl tycons acc fs) [] cs)
            | SOME (Core.Newtype (_, _, _, f)) => List.app visit (tycons (f, []))
            | _ => (case C.tupleArity c of SOME n => tuples := C.tupleData n :: !tuples | NONE => ()))
       val () =
         List.app (fn Core.Val (_, t, e) =>
                        (List.app visit (List.foldl tycons [] (t :: typesOf (e, [])));
-                        List.app (fn n => case M.find (conOf, n) of
+                        List.app (fn n => case conOf n of
                                             SOME t => visit t
                                           | NONE => if isSome (C.tupleArity n) then visit n else ())
                           (C.names e))
@@ -987,9 +1013,20 @@ struct
           vals
       val () = List.app visit roots
     in
-      List.filter (fn Core.Data (t, _, _) => M.member (!seen, t) | Core.Newtype (t, _, _, _) => M.member (!seen, t) | _ => true)
-        types
-      @ List.rev (!tuples)
+      (!seen, List.rev (!tuples))
+    end
+
+  fun seenIn seen = fn Core.Data (t, _, _) => M.member (seen, t) | Core.Newtype (t, _, _, _) => M.member (seen, t) | _ => true
+
+  (* the data types and newtypes of `types` the values and `roots` name,
+     and a tuple no declaration of `types` has, after them *)
+  fun reachableTypesFrom (types : Core.decl list, vals : Core.decl list, roots : string list) =
+    let
+      val table = typeTable types
+      val conOf = conTable types
+      val (seen, tuples) = reachableBy (fn c => M.find (table, c), fn n => M.find (conOf, n), vals, roots)
+    in
+      List.filter (seenIn seen) types @ tuples
     end
 
   fun reachableTypes (types, vals) = reachableTypesFrom (types, vals, [])
@@ -1108,7 +1145,7 @@ struct
           val () = emitType (Core.Data ("[]", [("a", Core.Star)],
                                         [("[]", []), (":", [Core.TVar "a", Core.TApp (Core.TCon "[]", Core.TVar "a")])]))
           val () = V.setFields (":", ["", ""])
-          val () = tyconCons := M.insert (!tyconCons, "[]", ["[]", ":"])
+          val () = setTyconCons ("[]", ["[]", ":"])
         in
           List.app (fn n =>
                       let
@@ -1117,7 +1154,7 @@ struct
                       in
                         emitType (Core.Data (name, ps, [(name, List.map (Core.TVar o #1) ps)]));
                         V.setFields (name, List.tabulate (n, fn _ => ""));
-                        tyconCons := M.insert (!tyconCons, name, [name])
+                        setTyconCons (name, [name])
                       end)
             (List.tabulate (14, fn i => i + 2))
         end
@@ -1159,7 +1196,7 @@ struct
                          end
                        val cons = List.map one cs
                      in
-                       tyconCons := M.insert (!tyconCons, tname, List.map #1 cons);
+                       setTyconCons (tname, List.map #1 cons);
                        SOME (tname, params, cons, newtype)
                      end
              end)
@@ -1332,7 +1369,7 @@ struct
                                                  SOME ct => V.haskellForm ct
                                                | NONE => Core.TForall ("a", Core.Star, Core.TVar "a"))
                                 in
-                                  leafKeys := M.insert (!leafKeys, key, ());
+                                  setLeaf key;
                                   value (V.coreName key, t, fn () => primitive (n, t))
                                 end)
                       names)
@@ -1357,7 +1394,7 @@ struct
                             else r
                         | _ => r
                     in
-                      List.app (fn n => defaults := M.insert (!defaults, V.valueKey n, ())) (bindingNames b);
+                      List.app (fn n => setDefault (V.valueKey n)) (bindingNames b);
                       List.app (fn (x, t, mk) => valueOpt (x, t, fn () => mk V.empty))
                         (#1 (definitionsWith (V.empty, b, fn n => V.defaultName (V.valueKey n), withClass)))
                     end)
@@ -1395,8 +1432,7 @@ struct
                  end
              | _ => ())
           (* this part's data types' *)
-          (List.map V.conName (List.concat (List.mapPartial (fn (t, cs) => if M.member (earlier, t) then NONE else SOME cs)
-                                                              (M.listItems (!tyconCons)))))
+          (List.map V.conName (List.concat (List.map #2 (addedOf (earlier, !tyconCons, !tyconSet)))))
 
       (* fields' selectors (3.15.1): the constructors that have the field,
          and a match that fails for the others *)
@@ -1434,7 +1470,10 @@ struct
 
       (* ---- Instances ---- *)
 
-      val instances = List.filter (fn (i : HsClasses.instance) => ownsInstance (#home i)) (HsClasses.instances (V.classes ()))
+      (* a unit after the first owns its modules' alone, found by them *)
+      val instances =
+        if first then List.filter (fn (i : HsClasses.instance) => ownsInstance (#home i)) (HsClasses.instances (V.classes ()))
+        else HsClasses.instancesOf (V.classes (), List.map #id modules)
       (* an instance's head, its type constructor at its variables: `->` Core's
          function type *)
       fun headType (tycon, args) =
@@ -1597,24 +1636,22 @@ struct
   fun idsOf (ms : module_ list) = List.foldl (fn ({id, ...} : module_, m) => M.insert (m, id, ())) M.empty ms
   fun isLibrary (m : module_) = #library m
 
-  (* the entries of `now` whose keys `old` has not *)
-  fun added (old : 'a M.map, now : (string * 'b) list) = List.filter (fn (k, _) => not (M.member (old, k))) now
-  fun mapOf (xs : (string * 'a) list) = List.foldl (fn ((k, v), m) => M.insert (m, k, v)) M.empty xs
-
   (* what a unit's interface tells the units after it, made known *)
   fun learn (i : interface) =
     (List.app (fn d =>
                  (C.declare d;
                   case d of
                     Core.Import (x, t) => importedValues := M.insert (!importedValues, x, t)
-                  | Core.Data (t, _, _) => importedTypes := M.insert (!importedTypes, t, d)
-                  | Core.Newtype (t, _, _, _) => importedTypes := M.insert (!importedTypes, t, d)
+                  | Core.Data (t, _, _) => (importedTypes := M.insert (!importedTypes, t, d);
+                                            importedCons := consInto (d, !importedCons))
+                  | Core.Newtype (t, _, _, _) => (importedTypes := M.insert (!importedTypes, t, d);
+                                                  importedCons := consInto (d, !importedCons))
                   | Core.Val _ => ()))
        (#core i);
      V.learn {primTypes = #primTypes i, builtinCons = #builtinCons i, fields = #fields i};
-     List.app (fn (t, cs) => tyconCons := M.insert (!tyconCons, t, cs)) (#constructors i);
-     List.app (fn k => leafKeys := M.insert (!leafKeys, k, ())) (#leaves i);
-     List.app (fn k => defaults := M.insert (!defaults, k, ())) (#defaults i);
+     List.app setTyconCons (#constructors i);
+     List.app setLeaf (#leaves i);
+     List.app setDefault (#defaults i);
      List.app C.setForced (#forced i))
 
   (* everything a desugaring knows forgotten, and what it is given made the
@@ -1626,8 +1663,10 @@ struct
       val () = tyconCons := M.empty
       val () = defaults := M.empty
       val () = missing := []
+      val () = markSets ()
       val () = importedValues := M.empty
       val () = importedTypes := M.empty
+      val () = importedCons := M.empty
       val libraryIds = idsOf (List.filter isLibrary modules)
     in
       V.start {infer = infer, evidence = evidence, prelude = prelude, library = fn id => M.member (libraryIds, id),
@@ -1644,24 +1683,24 @@ struct
   fun unitOf {first : bool, modules : module_ list, derived, leaves, entity, main : string option,
               others : string -> bool} : made =
     let
+      (* what is known before it, and what it adds marked from here *)
       val prior = saveState ()
-      val known = V.known ()
-      val forcedBefore = mapOf (C.forcedOverrides ())
+      val () = (V.mark (); C.markForced (); markSets ())
       val ids = idsOf modules
       val main = case main of SOME k => if M.member (ids, V.homeOf k) then SOME k else NONE | NONE => NONE
       val (types, values) =
         part {first = first, modules = modules, derived = derived, leaves = leaves, entity = entity, main = main,
               ownsInstance = fn h => M.member (ids, h) orelse others h}
-      val after = V.known ()
+      val new = V.addedSince (#env prior)
       val interface =
         {core = types @ List.mapPartial (fn (x, SOME t, _) => SOME (Core.Import (x, t)) | _ => NONE) values,
-         primTypes = added (mapOf (#primTypes known), #primTypes after),
-         builtinCons = added (mapOf (#builtinCons known), #builtinCons after),
-         fields = added (mapOf (#fields known), #fields after),
-         constructors = added (#tyconCons prior, M.listItems (!tyconCons)),
-         leaves = List.map #1 (added (#leafKeys prior, M.listItems (!leafKeys))),
-         defaults = List.map #1 (added (#defaults prior, M.listItems (!defaults))),
-         forced = added (forcedBefore, C.forcedOverrides ())}
+         primTypes = #primTypes new,
+         builtinCons = #builtinCons new,
+         fields = #fields new,
+         constructors = addedOf (#tyconCons prior, !tyconCons, !tyconSet),
+         leaves = List.map #1 (addedOf (#leafKeys prior, !leafKeys, !leafSet)),
+         defaults = List.map #1 (addedOf (#defaults prior, !defaults, !defaultSet)),
+         forced = C.forcedSince (#core prior)}
     in
       restoreState prior;
       learn interface;
@@ -1741,13 +1780,14 @@ struct
 
   (* ---- A unit made whole, for a unit file (B's driver) ---- *)
 
-  fun unit {interfaces : interface list, modules : module_ list, infer, evidence, derived, prelude, entity, runtime,
-            leaves, main} : Core.program * interface =
+  (* a unit after `known ()` has made known what the units before it left
+     it: `unit`'s and `unitFrom`'s *)
+  fun unitAfter ({known : unit -> unit, first : bool, modules : module_ list, infer, evidence, derived, prelude, entity,
+                  runtime, leaves, main}) : Core.program * interface =
     let
       val () = begin {modules = modules, infer = infer, evidence = evidence, prelude = prelude, entity = entity,
                       runtime = runtime}
-      val () = List.app learn interfaces
-      val first = null interfaces
+      val () = known ()
       val m = unitOf {first = first, modules = modules, derived = derived, leaves = if first then leaves else [],
                       entity = entity, main = main, others = fn _ => false}
       val own = List.foldl (fn ((x, _, _), s) => M.insert (s, x, ())) M.empty (#values m)
@@ -1774,15 +1814,58 @@ struct
       val () = List.app (fn Core.Val (_, _, e) => List.app visit (C.names e) | _ => ()) vals
       val ownVals = vals @ List.rev (!tuples)
       (* its own types, and those of the units before that its values, its
-         types and its imports' types name *)
+         types and its imports' types name: looked up where they are kept,
+         an imported one's first, and in the order of their names after its
+         own, as from a list of them all, which listed every type of the
+         units before for each unit (build-cache-issues.md, issue 39) *)
       val types =
-        reachableTypesFrom (#types m @ List.map #2 (M.listItems (!importedTypes)), ownVals,
-                            List.mapPartial (fn Core.Data (t, _, _) => SOME t | Core.Newtype (t, _, _, _) => SOME t | _ => NONE)
-                              (#types m)
-                            @ List.foldl (fn (Core.Import (_, t), acc) => tycons (t, acc) | (_, acc) => acc) [] (!imports))
+        let
+          val table = typeTable (#types m)
+          val conOf = conTable (#types m)
+          val (seen, tuples) =
+            reachableBy (fn c => case M.find (!importedTypes, c) of SOME d => SOME d | NONE => M.find (table, c),
+                         fn n => case M.find (!importedCons, n) of SOME t => SOME t | NONE => M.find (conOf, n),
+                         ownVals,
+                         List.mapPartial (fn Core.Data (t, _, _) => SOME t | Core.Newtype (t, _, _, _) => SOME t | _ => NONE)
+                           (#types m)
+                         @ List.foldl (fn (Core.Import (_, t), acc) => tycons (t, acc) | (_, acc) => acc) [] (!imports))
+        in
+          List.filter (seenIn seen) (#types m)
+          @ List.rev (M.foldl (fn (k, (), acc) => case M.find (!importedTypes, k) of SOME d => d :: acc | NONE => acc) [] seen)
+          @ tuples
+        end
     in
       (types @ List.rev (!imports) @ ownVals, #interface m)
     end
+
+  fun unit {interfaces : interface list, modules : module_ list, infer, evidence, derived, prelude, entity, runtime,
+            leaves, main} : Core.program * interface =
+    unitAfter {known = fn () => List.app learn interfaces, first = null interfaces, modules = modules, infer = infer,
+               evidence = evidence, derived = derived, prelude = prelude, entity = entity, runtime = runtime,
+               leaves = leaves, main = main}
+
+  (* ---- A unit after the units before it, each learned once ---- *)
+
+  (* What `unit` learns of the interfaces before a unit, after `begin`: the
+     state of HsDsCore and HsDsEnv and of this structure that `learn` makes,
+     from Core's own types and the runtime's declarations, which `begin`
+     makes; `restoreState` puts it back after `begin`, as `learn` would have
+     made it: `learn` neither counts names nor reads the program *)
+  type learned = state
+
+  fun learnedNone (runtime : Core.program) : learned =
+    (C.reset (); leafKeys := M.empty; tyconCons := M.empty; defaults := M.empty; missing := []; markSets ();
+     importedValues := M.empty; importedTypes := M.empty; importedCons := M.empty; V.forget ();
+     List.app C.declare runtime;
+     saveState ())
+
+  fun learnMore (l : learned, i : interface) : learned = (restoreState l; learn i; saveState ())
+
+  fun unitFrom {learned : learned, first : bool, modules : module_ list, infer, evidence, derived, prelude, entity,
+                runtime, leaves, main} : Core.program * interface =
+    unitAfter {known = fn () => restoreState learned, first = first, modules = modules, infer = infer,
+               evidence = evidence, derived = derived, prelude = prelude, entity = entity, runtime = runtime,
+               leaves = leaves, main = main}
 
   fun missingPrimitives () = List.rev (!missing)
 end

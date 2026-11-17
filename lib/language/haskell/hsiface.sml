@@ -15,7 +15,7 @@ struct
   exception Bad of string
 
   val magic = "HsIface"
-  val version = 3   (* 3: the strictness section (M24), after F's 2 *)
+  val version = 4   (* 3: the strictness section (M24), after F's 2; 4: a class's defaults *)
 
   (* ---- writing ---- *)
 
@@ -80,7 +80,8 @@ struct
      list (fn (w, {key, kind = k, params, synonym, cons, newtype}) =>
              (str (w, key); kind (w, k); int (w, params); option ty (w, synonym); list str (w, cons); bool (w, newtype)))
           (w, tycons);
-     list (fn (w, {key, supers, methods, kind = k}) => (str (w, key); list str (w, supers); list str (w, methods); kind (w, k)))
+     list (fn (w, {key, supers, methods, kind = k, defaults}) =>
+             (str (w, key); list str (w, supers); list str (w, methods); kind (w, k); list str (w, defaults)))
           (w, classes);
      list (fn (w, {id, cls, tycon, vars, ctx, derived, home}) =>
              (str (w, id); str (w, cls); str (w, tycon); int (w, vars); list pred (w, ctx); bool (w, derived); str (w, home)))
@@ -180,7 +181,8 @@ struct
                                       val cons = rlist rstr r
                                   in {key = key, kind = k, params = params, synonym = syn, cons = cons, newtype = rbool r} end) r
       val classes = rlist (fn r => let val key = rstr r val supers = rlist rstr r val methods = rlist rstr r
-                                   in {key = key, supers = supers, methods = methods, kind = rkind r} end) r
+                                       val k = rkind r
+                                   in {key = key, supers = supers, methods = methods, kind = k, defaults = rlist rstr r} end) r
       val instances = rlist (fn r => let val id = rstr r val cls = rstr r val tycon = rstr r val vars = rint r
                                          val ctx = rlist rpred r val derived = rbool r
                                      in {id = id, cls = cls, tycon = tycon, vars = vars, ctx = ctx, derived = derived,

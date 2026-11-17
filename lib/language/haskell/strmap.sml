@@ -43,6 +43,19 @@ struct
       go (m, init)
     end
 
+  (* a key less than `p` precedes every key `p` begins; a key `p` does not
+     begin that is not less than `p` follows them all *)
+  fun foldPrefix f init (m, p) =
+    let
+      fun go (Leaf, acc) = acc
+        | go (Node (_, a, k, v, b), acc) =
+            if String.< (k, p) then go (b, acc)
+            else if String.isPrefix p k then go (b, f (k, v, go (a, acc)))
+            else go (a, acc)
+    in
+      go (m, init)
+    end
+
   fun listItems m = List.rev (foldl (fn (k, v, acc) => (k, v) :: acc) [] m)
 
   fun size m = foldl (fn (_, _, n) => n + 1) 0 m

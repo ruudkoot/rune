@@ -8,6 +8,7 @@ struct
     | Instance of {cls : string, tycon : string}
     | Standard of {space : string, name : string}
     | Entity of string
+    | Reaches of {from : string, to : string}
 
   val note : (read -> unit) ref = ref (fn _ => ())
 
@@ -26,6 +27,7 @@ struct
     | Instance {cls, tycon} => join ["instance", cls, tycon]
     | Standard {space, name} => join ["standard", space, name]
     | Entity k => join ["entity", k]
+    | Reaches {from, to} => join ["reaches", from, to]
 
   fun fromKey s =
     case String.fields (fn c => c = #" ") s of
@@ -35,5 +37,6 @@ struct
     | ["instance", cls, tycon] => SOME (Instance {cls = cls, tycon = tycon})
     | ["standard", space, name] => SOME (Standard {space = space, name = name})
     | ["entity", k] => SOME (Entity k)
+    | ["reaches", from, to] => SOME (Reaches {from = from, to = to})
     | _ => NONE
 end

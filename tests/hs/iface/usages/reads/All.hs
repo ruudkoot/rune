@@ -1,6 +1,6 @@
 -- The reads a unit's compile makes: each import item (H1), each name looked up, a local one too (H1), the instance
--- the module declares looked up first and absent (H2), all of M's exports for `module M` (H7), and the Prelude's
--- names that do-notation's translation asks for (H9).
+-- the module declares looked up first and absent (H2), whether a chain of imports reaches each instance found (5.4),
+-- all of M's exports for `module M` (H7), and the Prelude's names that do-notation's translation asks for (H9).
 module All (module M, f, T) where
 
 import M (g, Q(..))

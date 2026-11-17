@@ -87,6 +87,30 @@ struct
          runtime = CoreRuntime.program CoreRuntime.Lazy, leaves = leaves (), main = main}
     end
 
+  (* `unitFrom (learned, first, group, g, r)` is `unit`'s Core and interface
+     after the units whose interfaces `learned` learned, each once
+     (HsDesugar.learnMore): a driver that desugars a program's units in order
+     learns each unit's interface once, not all of those before a unit for
+     each (build-cache-issues.md, issue 39) *)
+  fun learnedNone () = HsDesugar.learnedNone (CoreRuntime.program CoreRuntime.Lazy)
+  val learnMore = HsDesugar.learnMore
+
+  fun unitFrom (learned : HsDesugar.learned, first : bool, group : string list, g : RhcGraph.graph, r : RhcNames.result)
+      : Core.program * HsDesugar.interface =
+    let
+      val {modules, infer, evidence, derived, prelude, entity} = given r
+      val ids = List.foldl (fn (id, s) => M.insert (s, id, ())) M.empty group
+      val main =
+        case #roots g of
+          root :: _ => if HsModules.moduleName root = "Main" then SOME (mainOf (g, r)) else NONE
+        | [] => NONE
+    in
+      HsDesugar.unitFrom
+        {learned = learned, first = first, modules = List.filter (fn (m : HsDesugar.module_) => M.member (ids, #id m)) modules,
+         infer = infer, evidence = evidence, derived = derived, prelude = prelude, entity = entity,
+         runtime = CoreRuntime.program CoreRuntime.Lazy, leaves = leaves (), main = main}
+    end
+
   (* the program a unit at a time, each group of `g` that holds a module of
      `r` after the interfaces of those before it, the units joined; at
      level 2 each unit's Core is held to CoreLint alone, after the runtime's

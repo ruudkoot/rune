@@ -1105,14 +1105,22 @@ the declaration. `rhc --units` takes `--read-core` files as units, after
 rhc's runtime's.
 
 **What a hit must satisfy.** A key is a unit's name and the hash of every
-member's text (H8; a module's `default` is in its text, H4). An entry's
+member's text, with whether the text is literate, which reads the same
+bytes as another program (H8; a module's `default` is in its text, H4).
+An entry's
 head holds its usages, one for each name its compile took of another unit,
 a value or a type, and what that gave: the unit it came from, the
 latest that declares it, its fingerprint there (`CoreUnits.fingerprints`,
 by recursive group, a value's over its type and the types it mentions) and
 its ABI facts, or `-` where no unit declared it (H1). An entry stands where
 every usage gives now, from the units of this compile, what it gave (H3);
-an entry checked at a lower level of the lint does not. The ABI facts (H9)
+an entry checked at a lower level of the lint does not. A class's
+fingerprint holds which of its methods have a default, of which an instance
+in another unit that leaves the method out is made; and an instance the
+checker finds is read with whether the reading module's imports reach the
+module that declares it (`HsUsage.Reaches`), since that is what puts it in
+scope (5.4), and an import of a module on the way, which is no reader's,
+changes it (`docs/plans/build-cache-issues.md`, issues 25 to 27). The ABI facts (H9)
 are how a value is made in Mid (a function, a suspension, a literal) and
 whether a newtype is a box: a newtype is boxed as its own unit boxes it,
 since a unit that gives it fewer arguments than its parameters makes it a
@@ -1134,8 +1142,8 @@ the units save is the front end, a module's reading, checking and
 desugaring, which is most of a compile (hello whole is 142M VM
 instructions, hello's own unit's back end about 4.3M); the back end runs
 over what the program reaches at each link that changes it. The link memo
-is an entry keyed by the hash of the reached Core's text, which is all the
-back end reads, holding the program's bytecode. No change to Rune's Link
+is an entry keyed by the hash of the units' Core, which is all the back
+end reads, holding the program's bytecode. No change to Rune's Link
 is needed for it, where a Shake over linked bytecode would be one.
 
 **A program of Haskell.** `rhc --units FILE.hs` (`src/rhc/driver.sml`)
@@ -1160,8 +1168,13 @@ units of new names takes its clients where what they read is as it was
 (`CoreUnits.index`): an index of what each is, makes and names, and each
 declaration's text a section of its own, which the store reads and holds
 to its hash only where it is asked for. The link memo is keyed by the
-units' entries' sums, so a link taken reads no Core, and a link compiled
-reads only the declarations main reaches (`CoreUnits.reachIndexed`).
+hash of each unit's Core, its index's text and every declaration's, which
+the unit's entry keeps as a part of its own, so a link taken reads no Core,
+and a link compiled reads only the declarations main reaches
+(`CoreUnits.reachIndexed`). Not by the sums of the units' entries, which
+hold their definitions' places too: a comment or a line moved is an entry
+of other bytes with the same Core, and takes the link
+(`docs/plans/build-cache-issues.md`, issue 35).
 The graph is read by its modules' headers (`RhcGraph.scan`): a module's
 name and the modules its imports name, kept in the store by the hash of its
 text, which the stat memo gives (`UnitStore.hashBy`), so that a module is
@@ -1180,7 +1193,36 @@ or `RHC_STORE` another, `--no-store` or an empty `RHC_STORE` none), which
 it reads first, then any `--layer`, then the snapshot; a compile with
 `-o` keeps its link too, its bytecode by the sums of the units' entries.
 The store is trimmed by `StorePolicy.trimAfter`, as `.rune` is: a store
-of the same limits, a week and 4 GiB. `--whole` reads the library as
+of the same limits, a week and 4 GiB, once the compile is done, after the
+link's memo is looked up and kept (issue 34). The store holds an entry's head to
+its hash before the entry is taken, and each section only as it is read,
+and rhc reads a unit's parts long after it takes the unit; so an entry of
+the program's store is held whole before it is taken, and one that does
+not hold is no entry, and is removed; one of a layer, which rhc never
+writes, is read part by part, and a compile that took one of its parts
+that does not hold stops, naming the layer (issue 28). The link's
+configuration is made where the link is looked up, after the compile's
+options have set the level and the instruction set (issue 29).
+An entry keeps a definition's place by its module, not by the path its
+file was read from -- the interface's places with no file, HsLint's part's
+by their modules -- and a unit taken has its places put back where its
+modules are now (issue 31, as Rune's issue 9 names a file by the unit it
+is the source of): an entry is the bytes a compile anywhere gives, the
+snapshot `make` wrote read by a bin/rhc installed or copied elsewhere.
+A compile that makes several units pays for each what it holds, not what
+the units before it hold (issue 39): each is desugared after the interfaces
+of those before, learned once each as the units are made in order
+(`HsDesugar.learnMore`), and checked by HsLint after the parts of those
+before, joined once each onto what was joined before (`HsLint.join`); each
+is checked with an evidence table of its own; and what is a unit's own is
+found where it is kept -- by its modules' keys (`HsStringMap.foldPrefix`),
+among what was added since the units before were restored, an instance by
+its class and type constructor, a chain of imports searched until it
+reaches the module asked for -- not by a fold over everything known.
+`--verify-store` takes nothing: it makes every unit and the link, and
+holds each entry that stands for one to what making it gave, byte for byte
+(its usages, its interface and every part, HsLint's where both have one),
+as Rune's `--verify-cache` does, and fails where one is not. `--whole` reads the library as
 well, the reference, and keeps nothing. A unit's entry is kept in a configuration with no setting of
 the back end (the instruction set, the level, the width of int), since it
 holds no code, so one snapshot serves the stack machine and the register

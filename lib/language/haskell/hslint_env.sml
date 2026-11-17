@@ -65,7 +65,8 @@ struct
      module of each file: 5.4's scope of instances (R26) *)
   val imports : string list M.map ref = ref M.empty
   val fileModule : string M.map ref = ref M.empty
-  val closures : unit M.map M.map ref = ref M.empty
+  (* what `reaches` found, by `M\tN` *)
+  val closures : bool M.map ref = ref M.empty
 
   fun reset () =
     (tydefs := M.empty; cons := M.empty; fields := M.empty; methods := M.empty; classKinds := M.empty;
@@ -93,22 +94,26 @@ struct
 
   (* 5.4: whether a chain of imports leads from module `m` to `n`, `m`
      among those it reaches; and the module of an instance, by its file,
-     HsLint's own of no file the Prelude's *)
+     HsLint's own of no file the Prelude's. A search breadth first from
+     `m` that stops at `n`, which finds the Prelude or a module `m`
+     imports at once, and not all `m` reaches, which made a module at the
+     end of a chain of n cost as n (build-cache-issues.md, issue 39) *)
   fun reaches (m : string, n : string) : bool =
     m = n orelse
-    M.member (case M.find (!closures, m) of
-                SOME c => c
-              | NONE =>
-                  let
-                    fun go ([], seen) = seen
-                      | go (x :: rest, seen) =
-                          if M.member (seen, x) then go (rest, seen)
-                          else go (getOpt (M.find (!imports, x), []) @ rest, M.insert (seen, x, ()))
-                    val c = go ([m], M.empty)
-                  in
-                    closures := M.insert (!closures, m, c); c
-                  end,
-              n)
+    (case M.find (!closures, m ^ "\t" ^ n) of
+       SOME b => b
+     | NONE =>
+         let
+           fun go ([], [], _) = false
+             | go ([], later, seen) = go (List.rev later, [], seen)
+             | go (x :: rest, later, seen) =
+                 if x = n then true
+                 else if M.member (seen, x) then go (rest, later, seen)
+                 else go (rest, List.revAppend (getOpt (M.find (!imports, x), []), later), M.insert (seen, x, ()))
+           val b = go ([m], [], M.empty)
+         in
+           closures := M.insert (!closures, m ^ "\t" ^ n, b); b
+         end)
   fun moduleOfInst ({span = {file, ...}, ...} : C.inst) =
     if file = "" then !prelude else getOpt (M.find (!fileModule, file), !prelude)
 
@@ -614,7 +619,12 @@ struct
           val kind = getOpt (M.find (!classKinds, T.idKey id), T.Star)
         in
           C.classes := M.insert (!C.classes, T.idKey id,
-                                 {id = id, kind = kind, supers = List.map super (predsOf cx), std = std id})
+                                 {id = id, kind = kind, std = std id,
+                                  (* each class the context names once: the
+                                     context is a set of assertions (4.1.3) *)
+                                  supers = List.foldl (fn (s, acc) => if List.exists (fn x => T.idEq (x, s)) acc then acc
+                                                                       else acc @ [s])
+                                             [] (List.map super (predsOf cx))})
         end
       fun cyclic {id, span, ...} =
         if List.exists (fn d => T.idEq (d, id)) (List.concat (List.map C.closure (C.supers id))) then
@@ -677,9 +687,7 @@ struct
 
   (* the instance of the class for the same type constructor, if any:
      one per class and type in the program (cls.inst.once) *)
-  fun existing (cls, tc) =
-    List.find (fn {head, ...} : C.inst => case headTycon head of SOME tc' => T.idEq (tc, tc') | NONE => false)
-      (C.instsOf cls)
+  fun existing (cls, tc) = M.find (!C.heads, C.headKey (cls, tc))
 
   fun duplicate (span, cls, tc, row) =
     case existing (cls, tc) of
@@ -829,11 +837,15 @@ struct
       val n = Vector.length todo
       val contexts = Array.array (n, [] : T.pred list)
       val writtenInsts = !C.insts
+      val writtenAdded = !C.added
+      val writtenHeads = !C.heads
       fun headOf {tycon, arity, ...} =
         let val k = getOpt (tyconKind tycon, T.Star)
         in List.foldl (fn (i, f) => T.TAp (f, T.TGen i)) (T.TCon {id = tycon, kind = k}) (List.tabulate (arity, fn i => i)) end
       fun install () =
         (C.insts := writtenInsts;
+         C.added := writtenAdded;
+         C.heads := writtenHeads;
          Vector.appi (fn (i, d as {cls, arity, span, ...}) =>
                         C.addInst {head = T.IsIn (cls, headOf d), context = Array.sub (contexts, i), arity = arity,
                                    span = span, derived = true})
@@ -932,7 +944,7 @@ struct
                   (C.supers cls)
               end)
            is)
-      () (!C.insts)
+      () (C.addedBy checked)
 
   (* ---- default declarations (4.3.4) ---- *)
 
@@ -951,8 +963,20 @@ struct
                val {vars, ty = t', ...} = typeSig {fixed = [], context = NONE, ty = t, span = A.spanOfTy t}
                val () = if null vars then () else refuse (A.spanOfTy t, "a default type has no type variable (def.decl)")
                val num = preludeId "Num"
+               (* whether Num t' holds by the instances `scope` takes *)
+               fun holds scope =
+                 let val was = !C.inScope
+                 in
+                   (C.inScope := scope; C.entail [] (T.IsIn (num, t')) before C.inScope := was)
+                   handle e => (C.inScope := was; raise e)
+                 end
              in
-               if C.entail [] (T.IsIn (num, t')) then t'
+               (* 5.4: by the instances in scope in the module, a chain of
+                  its imports reaching theirs *)
+               if holds (fn i => reaches (mid, moduleOfInst i)) then t'
+               else if holds (fn _ => true) then
+                 refuse (A.spanOfTy t, "a default type is an instance of Num where its declaration is, and the instance " ^
+                                       "of " ^ T.showTy t' ^ " is not in scope there (def.decl.num)")
                else refuse (A.spanOfTy t, "a default type is an instance of Num, and " ^ T.showTy t' ^ " is not (def.decl.num)")
              end
          in
@@ -971,66 +995,95 @@ struct
   type saved = {tydefs : tydef M.map, cons : con M.map, fields : field M.map, methods : method M.map,
                 classKinds : T.kind M.map, defaults : T.ty list M.map, instances : instance list,
                 classDecls : classDecl list, prelude : string, programModules : bool M.map,
-                classes : C.class M.map, insts : C.inst list M.map, numId : T.id option,
+                classes : C.class M.map, insts : C.inst list M.map, heads : C.inst M.map, numId : T.id option,
                 imports : string list M.map, fileModule : string M.map}
 
   fun save () : saved =
     {tydefs = !tydefs, cons = !cons, fields = !fields, methods = !methods, classKinds = !classKinds,
      defaults = !defaults, instances = !instances, classDecls = !classDecls, prelude = !prelude,
-     programModules = !programModules, classes = !C.classes, insts = !C.insts, numId = !C.numId,
+     programModules = !programModules, classes = !C.classes, insts = !C.insts, heads = !C.heads, numId = !C.numId,
      imports = !imports, fileModule = !fileModule}
 
   fun restore (s : saved) =
     (tydefs := #tydefs s; cons := #cons s; fields := #fields s; methods := #methods s; classKinds := #classKinds s;
      defaults := #defaults s; instances := #instances s; classDecls := #classDecls s; prelude := #prelude s;
-     programModules := #programModules s; C.classes := #classes s; C.insts := #insts s; C.numId := #numId s;
+     programModules := #programModules s; C.classes := #classes s; C.insts := #insts s; C.added := []; C.heads := #heads s; C.numId := #numId s;
      imports := #imports s; fileModule := #fileModule s; closures := M.empty)
 
   (* the module of a key, `QUAL NAME` *)
   fun qualOf (k : string) = case CharVector.findi (fn (_, c) => c = #" ") k of SOME (i, _) => String.substring (k, 0, i)
                                                                           | NONE => ""
 
+  (* `ownFold f init (m, ids)`: `M.foldl f init m` over the keys of `m`,
+     `QUAL NAME`, whose QUAL is one of `ids`, in the same order, at the
+     cost of those keys and not of every key: a unit's own, beside those
+     of all the units before it (build-cache-issues.md, issue 39) *)
+  fun ownFold f init (m, ids : string list) =
+    let
+      fun distinct (x :: (rest as y :: _)) = if x = y then distinct rest else x :: distinct rest
+        | distinct xs = xs
+    in
+      List.foldl (fn (p, acc) => M.foldPrefix f acc (m, p)) init (distinct (T.sortStrings (List.map (fn i => i ^ " ") ids)))
+    end
+
   (* `part (ids, files, fromNothing)`: what the environment holds of the
      modules `ids`, whose files are `files`: a unit's own, beside the units
      before it; the unit built from nothing also has the Prelude's identity
-     and HsLint's own instances, of no file *)
+     and HsLint's own instances, of no file. Each found where it is kept,
+     by its module's keys, its file, or among the instances added since
+     the units before were restored *)
   fun part (ids : string list, files : string list, fromNothing : bool) : saved =
     let
       fun mine q = List.exists (fn i => i = q) ids
-      fun filteri f m = M.foldl (fn (k, v, acc) => if f k then M.insert (acc, k, v) else acc) M.empty m
-      fun keyed m = filteri (fn k => mine (qualOf k)) m
+      fun keyed m = ownFold (fn (k, v, acc) => M.insert (acc, k, v)) M.empty (m, ids)
+      fun byModule m = List.foldl (fn (i, acc) => case M.find (m, i) of SOME v => M.insert (acc, i, v) | NONE => acc) M.empty ids
       fun ofFile ({span = {file, ...}, ...} : C.inst) =
         if file = "" then fromNothing else List.exists (fn f => f = file) files
+      val insts = C.addedBy ofFile
     in
       {tydefs = keyed (!tydefs), cons = keyed (!cons), fields = keyed (!fields), methods = keyed (!methods),
-       classKinds = keyed (!classKinds), defaults = filteri mine (!defaults),
+       classKinds = keyed (!classKinds), defaults = byModule (!defaults),
        instances = List.filter (fn {module, ...} : instance => mine module) (!instances),
        classDecls = List.filter (fn {module, ...} : classDecl => mine module) (!classDecls),
        prelude = if fromNothing then !prelude else "",
-       programModules = filteri mine (!programModules),
+       programModules = byModule (!programModules),
        classes = keyed (!C.classes),
-       insts = M.foldl (fn (k, is, acc) => case List.filter ofFile is of [] => acc | xs => M.insert (acc, k, xs))
-                 M.empty (!C.insts),
+       insts = insts,
+       heads = C.headsOf insts,
        numId = if fromNothing then !C.numId else NONE,
-       imports = filteri mine (!imports), fileModule = M.foldl (fn (f, m, acc) => if mine m then M.insert (acc, f, m) else acc)
-                                                               M.empty (!fileModule)}
+       imports = byModule (!imports),
+       fileModule = List.foldl (fn (f, acc) => case M.find (!fileModule, f) of
+                                                 SOME m => if mine m then M.insert (acc, f, m) else acc
+                                               | NONE => acc)
+                      M.empty files}
     end
 
   (* parts put together, in order: a key of a later part wins, lists are
-     appended, the instances of one class the earlier part's first *)
+     appended, the instances of one class the earlier part's first. The
+     first part's maps are the start, the later parts' put into them, so
+     that a driver that joins a unit's part onto what it joined before pays
+     for the unit's part, not again for all before it
+     (build-cache-issues.md, issue 39) *)
   fun join (parts : saved list) : saved =
     let
-      fun union f = List.foldl (fn (p, m) => M.foldl (fn (k, v, m) => M.insert (m, k, v)) m (f p)) M.empty parts
-      val insts = List.foldl (fn (p, m) => M.foldl (fn (k, is, m) => M.insert (m, k, getOpt (M.find (m, k), []) @ is))
-                                             m (#insts p))
-                    M.empty parts
+      fun union f =
+        case parts of
+          [] => M.empty
+        | p :: ps => List.foldl (fn (q, m) => M.foldl (fn (k, v, m) => M.insert (m, k, v)) m (f q)) (f p) ps
+      val insts =
+        case parts of
+          [] => M.empty
+        | p :: ps => List.foldl (fn (q, m) => M.foldl (fn (k, is, m) => M.insert (m, k, getOpt (M.find (m, k), []) @ is))
+                                                m (#insts q))
+                       (#insts p) ps
       val classes = union #classes
+      val heads = union #heads
       val prelude = case List.find (fn p => #prelude p <> "") parts of SOME p => #prelude p | NONE => ""
     in
       {tydefs = union #tydefs, cons = union #cons, fields = union #fields, methods = union #methods,
        classKinds = union #classKinds, defaults = union #defaults,
        instances = List.concat (List.map #instances parts), classDecls = List.concat (List.map #classDecls parts),
-       prelude = prelude, programModules = union #programModules, classes = classes, insts = insts,
+       prelude = prelude, programModules = union #programModules, classes = classes, insts = insts, heads = heads,
        imports = union #imports, fileModule = union #fileModule,
        numId = let val num = {qual = if prelude = "" then "haskell98:Prelude" else prelude, name = "Num"} : T.id
                in if M.member (classes, T.idKey num) then SOME num else NONE end}

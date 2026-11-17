@@ -22,7 +22,7 @@ What each means is on [`HS_USAGE`](../sig/HS_USAGE.md); the types are this struc
 
 |  | Member | Is |
 | --- | --- | --- |
-| datatype | [`read`](../sig/HS_USAGE.md#type-read) | `Name` &#124; `Item` &#124; `Exports` &#124; `Instance` &#124; `Standard` &#124; `Entity` |
+| datatype | [`read`](../sig/HS_USAGE.md#type-read) | `Name` &#124; `Item` &#124; `Exports` &#124; `Instance` &#124; `Standard` &#124; `Entity` &#124; `Reaches` |
 | val | [`fromKey`](../sig/HS_USAGE.md#val-fromkey) | `string -> read option` |
 | val | [`key`](../sig/HS_USAGE.md#val-key) | `read -> string` |
 | val | [`read`](../sig/HS_USAGE.md#val-read) | `read -> unit` |

@@ -12,6 +12,7 @@
 - `unit_` (type): [HS_MODULES](../sig/HS_MODULES.md#type-unit_)
 - `unitCon` (val): [HS_TYPES](../sig/HS_TYPES.md#val-unitcon)
 - `unitCore` (type): [CORE_UNITS](../sig/CORE_UNITS.md#type-unitcore)
+- `unitFrom` (val): [HS_DESUGAR](../sig/HS_DESUGAR.md#val-unitfrom)
 - `unitTy` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-unitty)
 - `unitVal` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-unitval)
 - `Unknown` (con): [HS_CHAR](../sig/HS_CHAR.md#con-unknown)

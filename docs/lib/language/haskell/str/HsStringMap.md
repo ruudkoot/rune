@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_STRING_MAP`](../sig/HS_STRING_MAP.md) |
 | Status | required |
-| Members | 8 |
+| Members | 9 |
 | Tests | not listed |
 | Source | [lib/language/haskell/strmap.sml](../../../../../lib/language/haskell/strmap.sml) |
 
@@ -25,6 +25,7 @@ What each means is on [`HS_STRING_MAP`](../sig/HS_STRING_MAP.md); the types are 
 | type | [`map`](../sig/HS_STRING_MAP.md#type-map) | *a type of its own* |
 | val | [`empty`](../sig/HS_STRING_MAP.md#val-empty) | `'a map` |
 | val | [`find`](../sig/HS_STRING_MAP.md#val-find) | `'a map * string -> 'a option` |
+| val | [`foldPrefix`](../sig/HS_STRING_MAP.md#val-foldprefix) | `(string * 'a * 'b -> 'b) -> 'b -> 'a map * string -> 'b` |
 | val | [`foldl`](../sig/HS_STRING_MAP.md#val-foldl) | `(string * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b` |
 | val | [`insert`](../sig/HS_STRING_MAP.md#val-insert) | `'a map * string * 'a -> 'a map` |
 | val | [`listItems`](../sig/HS_STRING_MAP.md#val-listitems) | `'a map -> (string * 'a) list` |
