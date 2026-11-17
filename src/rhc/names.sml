@@ -36,9 +36,10 @@ struct
   fun entityText ({space, home, name} : Mo.entity) = spaceText space ^ home ^ " " ^ name
 
   (* What the groups of a graph leave for the groups after them: the
-     tables of every module's entities and fixities, whether a file is the
-     library's, and what names and the checker have found so far. *)
-  type state = {defs : Mo.def M.map, universe : Mo.entity list, fixities : (A.fixity * int) M.map,
+     tables of every module's entities and fixities (and the entities as
+     added, the latest first), whether a file is the library's, and what
+     names and the checker have found so far. *)
+  type state = {defs : Mo.def M.map, universe : Mo.entity list list, fixities : (A.fixity * int) M.map,
                 library : bool M.map, exports : Mo.entity list M.map, scopes : Mo.scope M.map, diags : G.diag list,
                 modules : (G.node * A.module) list, derived : (string * string * A.decl list) list,
                 evidence : HsEvidence.table, types : HsInfer.env}
@@ -62,7 +63,7 @@ struct
       val defs = List.concat (List.map (fn (n : G.node) => Mo.defs (#id n, #ast n)) nodes)
     in
       {defs = List.foldl (fn (d : Mo.def, t) => M.insert (t, Mo.key (#entity d), d)) (#defs s) defs,
-       universe = #universe s @ List.map #entity defs,
+       universe = List.map #entity defs :: #universe s,
        fixities = List.foldl (fn ((k, f), t) => M.insert (t, k, f)) (#fixities s)
                     (List.concat (List.map (fn (n : G.node) => HsRename.topFixities (#id n, #ast n)) nodes)),
        library = List.foldl (fn (n : G.node, t) => M.insert (t, #file n, #library n)) (#library s) nodes,
@@ -78,7 +79,7 @@ struct
     List.foldl
       (fn ({id, exports, defs, fixities, checked} : HsModIface.t, s : state) =>
          {defs = List.foldl (fn (d : Mo.def, t) => M.insert (t, Mo.key (#entity d), d)) (#defs s) defs,
-          universe = #universe s @ List.map #entity defs,
+          universe = List.map #entity defs :: #universe s,
           fixities = List.foldl (fn ((k, f), t) => M.insert (t, k, f)) (#fixities s) fixities,
           library = #library s, exports = M.insert (#exports s, id, exports), scopes = #scopes s, diags = #diags s,
           modules = #modules s, derived = #derived s, evidence = #evidence s, types = HsInfer.extend (#types s, checked)})
@@ -92,7 +93,7 @@ struct
                        (leafEntities leaves)
     in
       {defs = List.foldl (fn (d : Mo.def, t) => M.insert (t, Mo.key (#entity d), d)) M.empty leafDefs,
-       universe = List.map #entity leafDefs, fixities = M.empty, library = M.empty,
+       universe = [List.map #entity leafDefs], fixities = M.empty, library = M.empty,
        exports = List.foldl (fn ((l, names), m) =>
                                M.insert (m, RhcLibrary.identity l,
                                          List.map (fn n => {space = Mo.Value, home = RhcLibrary.identity l, name = n}) names))
@@ -153,7 +154,9 @@ struct
     let
       val defTable = #defs s
       fun defOf k = M.find (defTable, k)
-      val universe = #universe s
+      (* every entity, which the greatest fixpoint of exports starts from
+         (Mo.solve) and the least reads nothing of *)
+      val universe = case fixpoint of Mo.Greatest => List.concat (List.rev (#universe s)) | Mo.Least => []
       val fixTable = #fixities s
       fun isLibrary (span : HsSource.span) = getOpt (M.find (#library s, #file span), false)
       val exports = ref (#exports s)
@@ -224,7 +227,7 @@ struct
         end
     in
       List.app group gs;
-      {defs = defTable, universe = universe, fixities = fixTable, library = #library s, exports = !exports,
+      {defs = defTable, universe = #universe s, fixities = fixTable, library = #library s, exports = !exports,
        scopes = !scopes, diags = !diags, modules = !out, derived = !derivedOut, evidence = evidence, types = !types}
     end
 

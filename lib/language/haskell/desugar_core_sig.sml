@@ -170,6 +170,16 @@ sig
   (* `forcedOverrides ()` is each constructor `setForced` gave its flags. *)
   val forcedOverrides : unit -> (string * bool list) list
 
+  (* `markForced ()` starts what `forcedSince` reads. *)
+  val markForced : unit -> unit
+
+  (* `forcedSince s` is each constructor given its flags since the last
+     `markForced` that `s`, saved then, has none for, by key.
+
+     It is `forcedOverrides ()` less those of `s`, at the cost of those
+     given since (build-cache-issues.md, issue 39). *)
+  val forcedSince : saved -> (string * bool list) list
+
   (* `caseCon (x, ty, alts, default)` is a `case` on the atom `x` of the
      data type `ty`.
 

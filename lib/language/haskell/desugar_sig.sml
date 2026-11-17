@@ -114,6 +114,33 @@ sig
               main : string option}
              -> Core.program * interface
 
+  (* What the units before a unit leave its desugaring: their interfaces
+     learned, each once.
+
+     A driver that desugars a program's units in order learns each unit's
+     once, not every unit before it for each (build-cache-issues.md,
+     issue 39). *)
+  type learned
+
+  (* `learnedNone runtime` is what is learned before any unit: Core's own
+     types and `runtime`'s declarations. *)
+  val learnedNone : Core.program -> learned
+
+  (* `learnMore (l, i)` is `l` with the unit of interface `i` learned after
+     it. *)
+  val learnMore : learned * interface -> learned
+
+  (* `unitFrom p` is `unit` of the same program after the units whose
+     interfaces `#learned p` learned, in order.
+
+     The Core and the interface are `unit`'s; `first` is whether no unit is
+     before it. *)
+  val unitFrom : {learned : learned, first : bool, modules : module_ list, infer : HsInfer.env,
+                  evidence : HsEvidence.table, derived : (string * string * HsAst.decl list) list,
+                  prelude : string * string -> string option, entity : string * string * string -> string,
+                  runtime : Core.program, leaves : (string * string list) list, main : string option}
+                 -> Core.program * interface
+
   (* ---- The library's units, once ---- *)
 
   (* The library's units, desugared once (D45's saved world), each value's

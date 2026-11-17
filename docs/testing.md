@@ -1289,7 +1289,9 @@ given back, which moves a default of a module that imports neither (5.4);
 `instance-chain-refused`, the same taking an instance out of scope, a
 refusal; `literate`, one text read plain and then literate (a step's
 `rm` names the files it removes, and a step's modules are `.hs` and
-`.lhs`); and `fresh-names` (issue 30), a unit made after one taken,
+`.lhs`), the last a text whose literate reading imports a module its plain
+reading does not, which a header kept of the plain reading would leave
+out; and `fresh-names` (issue 30), a unit made after one taken,
 numbered as a build without the store numbers it, so that a comment in it
 takes the link. Each hole is a mutant of rhc's (`HU01` to `HU09` and `HU11` to
 `HU16`, H9's the Prelude's names of `hs/iface/usages`, `HU11` a unit
@@ -1324,7 +1326,11 @@ made again, or stops naming the layer, never a crash (issue 28).
 an entry planted with another compile's content, whose usages hold, is
 taken by a plain compile and refused by `--verify-store`. `hs/units/trim`
 makes every file of a store nine days old: the next compile takes every
-unit and the link, and the trim, due then, runs after them (issue 34). Core in
+unit and the link, and the trim, due then, runs after them (issue 34).
+`hs/units/elsewhere` reads a store with a bin/rhc whose library is a copy at
+another path: it takes every unit and the link, to the same program, and
+`--verify-store` holds every entry, the snapshot's library among them, to
+what it makes of its copy (issue 31). Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an

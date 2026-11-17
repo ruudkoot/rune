@@ -41,11 +41,16 @@ struct
     end
 
   (* the interfaces of the modules `ids` from a state after their unit *)
+  (* each module's definitions by their keys, `t` or `v` and its identity
+     and a TAB (HsModules.key), in the order of the keys: found where they
+     are kept, and not by a fold over every module's (build-cache-issues.md,
+     issue 39) *)
   fun ofModules (s : N.state, ids : string list) : HsModIface.t list =
     List.map
       (fn id =>
          HsModIface.make {id = id, exports = getOpt (M.find (#exports s, id), []),
-                          defs = List.filter (fn (d : Mo.def) => #home (#entity d) = id) (List.map #2 (M.listItems (#defs s))),
+                          defs = List.rev (List.foldl (fn (p, acc) => M.foldPrefix (fn (_, d, acc) => d :: acc) acc (#defs s, p))
+                                             [] ["t" ^ id ^ "\t", "v" ^ id ^ "\t"]),
                           fixity = fn k => M.find (#fixities s, k), env = #types s})
       ids
 

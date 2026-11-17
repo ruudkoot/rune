@@ -13,7 +13,7 @@ struct
      fixities = List.mapPartial (fn (d : HsModules.def) =>
                                    let val k = HsModules.key (#entity d)
                                    in Option.map (fn f => (k, f)) (fixity k) end) defs,
-     checked = HsInfer.part (env, fn h => h = id)}
+     checked = HsInfer.part (env, id)}
 
   (* ---- canonical text ---- *)
 

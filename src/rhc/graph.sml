@@ -61,13 +61,18 @@ struct
   fun headerSpan (A.Module ({span, ...}, {name, ...})) =
     case name of SOME (A.Name ({span = s, ...}, _)) => s | NONE => {file = #file span, start = 0, stop = 0}
 
-  (* A module without a header is `module Main (main) where` (5.1). *)
-  fun withHeader (m as A.Module (a, {name, exports, imports, decls})) =
+  (* A module without a header is `module Main (main) where` (5.1), its
+     assumed export at the start of its own file, where a diagnostic of it
+     is said, not at the file rhc was given *)
+  fun withHeader (m as A.Module (a as {span = {file, ...}, ...}, {name, exports, imports, decls})) =
     case name of
       SOME _ => m
     | NONE =>
-        A.Module (a, {name = NONE, imports = imports, decls = decls,
-                      exports = SOME [A.Ent (A.noAnn, A.EntVar (A.Name (A.noAnn, {qual = "", name = "main"})))]})
+        let val at : A.ann = {span = {file = file, start = 0, stop = 0}, toks = []}
+        in
+          A.Module (a, {name = NONE, imports = imports, decls = decls,
+                        exports = SOME [A.Ent (at, A.EntVar (A.Name (at, {qual = "", name = "main"})))]})
+        end
 
   fun implicitPrelude () =
     A.Import (A.noAnn, {qualified = false, module = A.Name (A.noAnn, {qual = "", name = "Prelude"}), as_ = NONE,
@@ -198,22 +203,28 @@ struct
 
   (* `reaches (m, n)`: whether a chain of imports leads from the module
      `m` to `n`, `m` itself among those it reaches (5.4: an instance is in
-     scope where one does, R26); a module never read reaches itself alone *)
-  val closures : unit M.map M.map ref = ref M.empty
-  fun closure (m : string) : unit M.map =
-    case M.find (!closures, m) of
-      SOME c => c
-    | NONE =>
-        let
-          fun go ([], seen) = seen
-            | go (x :: rest, seen) =
-                if M.member (seen, x) then go (rest, seen)
-                else go (getOpt (M.find (!importsOf, x), []) @ rest, M.insert (seen, x, ()))
-          val c = go ([m], M.empty)
-        in
-          closures := M.insert (!closures, m, c); c
-        end
-  fun reaches (m : string, n : string) : bool = m = n orelse M.member (closure m, n)
+     scope where one does, R26); a module never read reaches itself alone.
+     A search breadth first from `m` that stops at `n`, each answer kept by
+     `M\tN`: the Prelude or a module `m` imports is found at once, and not
+     after all `m` reaches, which made a module at the end of a chain of n
+     cost as n (build-cache-issues.md, issue 39) *)
+  val closures : bool M.map ref = ref M.empty
+  fun reaches (m : string, n : string) : bool =
+    m = n orelse
+    (case M.find (!closures, m ^ "\t" ^ n) of
+       SOME b => b
+     | NONE =>
+         let
+           fun go ([], [], _) = false
+             | go ([], later, seen) = go (List.rev later, [], seen)
+             | go (x :: rest, later, seen) =
+                 if x = n then true
+                 else if M.member (seen, x) then go (rest, later, seen)
+                 else go (rest, List.revAppend (getOpt (M.find (!importsOf, x), []), later), M.insert (seen, x, ()))
+           val b = go ([m], [], M.empty)
+         in
+           closures := M.insert (!closures, m ^ "\t" ^ n, b); b
+         end)
 
   fun scan {roots : string list, dotted : bool, known : node M.map, library : bool, reader : reader} : plan =
     let

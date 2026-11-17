@@ -59,9 +59,14 @@ struct
     end
 
   (* what the inference found, while its state is kept, of the modules
-     `mine` holds *)
-  fun report (mine : string -> bool) : report =
+     `own` names (`NONE`: of everything): its kinds, classes and derived
+     instances found where they are kept, by the modules' keys and among
+     the instances added since the units before were restored, and not by
+     a fold over all (build-cache-issues.md, issue 39) *)
+  fun report (own : string list option) : report =
     let
+      fun mine m = case own of NONE => true | SOME ids => List.exists (fn i => i = m) ids
+      fun ownFold f init m = case own of NONE => HsStringMap.foldl f init m | SOME ids => HsLintEnv.ownFold f init (m, ids)
       val bindings =
         List.mapPartial (fn {module, id, scheme, signed, restricted, span} =>
                            if not (mine module) then NONE
@@ -81,14 +86,14 @@ struct
           SOME (i, _) => {qual = String.substring (k, 0, i), name = String.extract (k, i + 1, NONE)}
         | NONE => {qual = "", name = k}
       val kinds =
-        HsStringMap.foldl
+        ownFold
           (fn (k, d, acc) =>
              if not (mine (#qual (ofKey k))) then acc
              else
                let val kind = case d of HsLintEnv.Data {kind, ...} => kind | HsLintEnv.Synonym {kind, ...} => kind
                in {module = #qual (ofKey k), name = #name (ofKey k), kind = T.showKind kind} :: acc end)
           [] (!HsLintEnv.tydefs)
-        @ HsStringMap.foldl (fn (_, {id, kind, ...} : HsLintClasses.class, acc) =>
+        @ ownFold (fn (_, {id, kind, ...} : HsLintClasses.class, acc) =>
                                if not (mine (#qual id)) then acc
                                else {module = #qual id, name = #name id, kind = T.showKind kind} :: acc)
             [] (!HsLintClasses.classes)
@@ -98,6 +103,8 @@ struct
          | [p] => p ^ " => "
          | ps => "(" ^ String.concatWith ", " ps ^ ") => ")
         ^ T.showPred (T.IsIn (c, h))
+      fun takes ({head = T.IsIn (_, h), derived, ...} : HsLintClasses.inst) =
+        derived andalso (case T.spine h of (T.TCon {id = {qual, ...}, ...}, _) => qual <> "" andalso mine qual | _ => false)
       val derived =
         HsStringMap.foldl
           (fn (_, is, acc) =>
@@ -110,10 +117,10 @@ struct
                       | _ => NONE)
                  | _ => NONE)
                is @ acc)
-          [] (!HsLintClasses.insts)
+          [] (case own of NONE => !HsLintClasses.insts | SOME _ => HsLintClasses.addedBy takes)
       val classes =
-        HsStringMap.foldl (fn (_, {id, std, ...} : HsLintClasses.class, acc) =>
-                             {name = #name id, numeric = HsLintClasses.isNumeric id, standard = std} :: acc)
+        ownFold (fn (_, {id, std, ...} : HsLintClasses.class, acc) =>
+                   {name = #name id, numeric = HsLintClasses.isNumeric id, standard = std} :: acc)
           [] (!HsLintClasses.classes)
     in
       {bindings = bindings, defaults = defaults, kinds = List.rev kinds, derived = List.rev derived,
@@ -122,7 +129,7 @@ struct
 
   fun infer {groups, main, cycleDefault} : report =
     (ignore (run {groups = groups, main = main, cycleDefault = cycleDefault, derived = [], library = NONE});
-     report (fn _ => true) before clear ())
+     report NONE before clear ())
     handle T.Refuse (span, msg) => (clear (); raise Refused (span, msg))
          | e => (clear (); raise e)
 
@@ -131,7 +138,13 @@ struct
 
   fun library m = String.isPrefix "haskell98:" m
 
-  fun compare ({bindings, defaults, kinds, derived, classes} : report, claims, where_, fault) =
+  (* the classes of a name, numeric and standard where any or all are *)
+  fun named (cs : class_ list) =
+    case cs of
+      [] => NONE
+    | cs => SOME {numeric = List.exists #numeric cs, standard = List.all #standard cs}
+
+  fun compareWith ({bindings, defaults, kinds, derived, ...} : report, classes, claims, where_, fault) =
     HsLintClaims.compare
       {kinds = List.filter (fn {module, ...} => not (library module)) kinds,
        derived = List.filter (fn {module, ...} => not (library module)) derived,
@@ -145,13 +158,21 @@ struct
                                      else SOME {module = module, place = where_ span, preds = preds, choice = choice,
                                                 ruleTwo = ruleTwo, span = span})
                     defaults,
-       classes = fn n =>
-                   case List.filter (fn (c : class_) => #name c = n) classes of
-                     [] => NONE
-                   | cs => SOME {numeric = List.exists #numeric cs, standard = List.all #standard cs},
+       classes = classes,
        fault = fault}
       claims
     handle T.Refuse (span, msg) => raise Refused (span, msg)
+
+  fun compare (r : report, claims, where_, fault) =
+    compareWith (r, fn n => named (List.filter (fn (c : class_) => #name c = n) (#classes r)), claims, where_, fault)
+
+  (* the classes of a name among all the inference knows, while its state
+     is kept: what `compare` finds in a report of every class *)
+  fun classesNamed n =
+    named (HsStringMap.foldl (fn (_, {id, std, ...} : HsLintClasses.class, acc) =>
+                                if #name id = n then {name = n, numeric = HsLintClasses.isNumeric id, standard = std} :: acc
+                                else acc)
+             [] (!HsLintClasses.classes))
 
   val replayRules = HsLintReplay.rules
 
@@ -169,6 +190,7 @@ struct
       val modules = List.concat inferred
       fun mine m = List.exists (fn {id, ...} : module => id = m) modules
       val files = List.map (fn {ast = HsAst.Module ({span, ...}, _), ...} : module => #file span) modules
+      val ids = List.map (fn {id, ...} : module => id) modules
       (* what the target check reads: of the modules inferred, after a
          library's where it was given *)
       val t =
@@ -176,24 +198,24 @@ struct
           {bindings = List.mapPartial (fn {id, scheme, module, ...} => if mine module then SOME {id = id, scheme = scheme}
                                                                       else NONE)
                         (!HsLintInfer.bindings),
-           classes = fn {id = {qual, ...}, ...} : HsLintClasses.class => mine qual,
-           insts = fn {span = {file, ...}, ...} : HsLintClasses.inst =>
-                     if file = "" then not (isSome library) else List.exists (fn f => f = file) files}
+           classes = HsLintEnv.ownFold (fn (_, c, acc) => c :: acc) [] (!HsLintClasses.classes, ids),
+           insts = HsLintClasses.addedBy (fn {span = {file, ...}, ...} : HsLintClasses.inst =>
+                                            if file = "" then not (isSome library) else List.exists (fn f => f = file) files)}
       (* what this check inferred alone, a unit's part (D45) *)
-      val ids = List.map (fn {id, ...} : module => id) modules
       val part = {modules = ids, env = HsLintEnv.part (ids, files, not (isSome library)),
                   infer = HsLintInfer.part ids, counter = !T.counter, target = t}
       val t = case library of SOME l => HsLintTarget.join (#target l, t) | NONE => t
-      val r = report mine
+      val r = report (SOME ids)
       val () =
         case records of
           SOME {table, env, derived} =>
             (HsLintReplay.replay {modules = modules, groups = inferred, records = table, env = env, derived = derived,
                                   cycleDefault = cycleDefault, fault = fault}
              handle T.Refuse (span, msg) => raise Refused (span, msg);
-             compare (r, HsLintReplay.claimsOf {modules = modules, records = table, derived = derived}, where_, fault))
+             compareWith (r, classesNamed, HsLintReplay.claimsOf {modules = modules, records = table, derived = derived},
+                          where_, fault))
         | NONE => ()
-      val () = case claims of SOME c => compare (r, c, where_, fault) | NONE => ()
+      val () = case claims of SOME c => compareWith (r, classesNamed, c, where_, fault) | NONE => ()
     in
       clear (); {report = r, target = t, part = part}
     end

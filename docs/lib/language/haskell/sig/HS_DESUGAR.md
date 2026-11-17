@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 10 of 10 entries documented |
+| Documentation | 14 of 14 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_sig.sml](../../../../../lib/language/haskell/desugar_sig.sml) |
 
@@ -94,6 +94,14 @@ sig
               <a href="#fld-unit.entity">entity</a> : string * string * string -&gt; string, <a href="#fld-unit.runtime">runtime</a> : Core.program, <a href="#fld-unit.leaves">leaves</a> : (string * string list) list,
               <a href="#fld-unit.main">main</a> : string option}
              -&gt; Core.program * interface
+  type <a href="#type-learned">learned</a>
+  val <a href="#val-learnednone">learnedNone</a> : Core.program -&gt; learned
+  val <a href="#val-learnmore">learnMore</a> : learned * interface -&gt; learned
+  val <a href="#val-unitfrom">unitFrom</a> : {<a href="#fld-unitfrom.learned">learned</a> : learned, <a href="#fld-unitfrom.first">first</a> : bool, <a href="#fld-unitfrom.modules">modules</a> : module_ list, <a href="#fld-unitfrom.infer">infer</a> : HsInfer.env,
+                  <a href="#fld-unitfrom.evidence">evidence</a> : HsEvidence.table, <a href="#fld-unitfrom.derived">derived</a> : (string * string * HsAst.decl list) list,
+                  <a href="#fld-unitfrom.prelude">prelude</a> : string * string -&gt; string option, <a href="#fld-unitfrom.entity">entity</a> : string * string * string -&gt; string,
+                  <a href="#fld-unitfrom.runtime">runtime</a> : Core.program, <a href="#fld-unitfrom.leaves">leaves</a> : (string * string list) list, <a href="#fld-unitfrom.main">main</a> : string option}
+                 -&gt; Core.program * interface
   type <a href="#type-library">library</a>
   val <a href="#val-library">library</a> : {<a href="#fld-library.modules">modules</a> : module_ list, <a href="#fld-library.groups">groups</a> : string list list, <a href="#fld-library.infer">infer</a> : HsInfer.env, <a href="#fld-library.evidence">evidence</a> : HsEvidence.table,
                  <a href="#fld-library.derived">derived</a> : (string * string * HsAst.decl list) list, <a href="#fld-library.prelude">prelude</a> : string * string -&gt; string option,
@@ -244,6 +252,67 @@ Core's `main`. The rest is as [`program`](#val-program) takes it.
 | <a name="fld-unit.runtime"></a>`runtime` | `Core.program` |  |
 | <a name="fld-unit.leaves"></a>`leaves` | `(string * string list) list` |  |
 | <a name="fld-unit.main"></a>`main` | `string option` |  |
+
+### <a name="type-learned"></a>`learned`
+
+```sml
+type learned
+```
+
+What the units before a unit leave its desugaring: their interfaces
+learned, each once.
+
+A driver that desugars a program's units in order learns each unit's
+once, not every unit before it for each (build-cache-issues.md,
+issue 39).
+
+### <a name="val-learnednone"></a>`learnedNone`
+
+```sml
+val learnedNone : Core.program -> learned
+```
+
+`learnedNone runtime` is what is learned before any unit: Core's own
+types and `runtime`'s declarations.
+
+### <a name="val-learnmore"></a>`learnMore`
+
+```sml
+val learnMore : learned * interface -> learned
+```
+
+`learnMore (l, i)` is `l` with the unit of interface `i` learned after
+it.
+
+### <a name="val-unitfrom"></a>`unitFrom`
+
+```sml
+val unitFrom : {learned : learned, first : bool, modules : module_ list, infer : HsInfer.env,
+                evidence : HsEvidence.table, derived : (string * string * HsAst.decl list) list,
+                prelude : string * string -> string option, entity : string * string * string -> string,
+                runtime : Core.program, leaves : (string * string list) list, main : string option}
+               -> Core.program * interface
+```
+
+`unitFrom p` is [`unit`](#val-unit) of the same program after the units whose
+interfaces `#learned p` learned, in order.
+
+The Core and the interface are [`unit`](#val-unit)'s; `first` is whether no unit is
+before it.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| <a name="fld-unitfrom.learned"></a>`learned` | `learned` |  |
+| <a name="fld-unitfrom.first"></a>`first` | `bool` |  |
+| <a name="fld-unitfrom.modules"></a>`modules` | `module_ list` |  |
+| <a name="fld-unitfrom.infer"></a>`infer` | `HsInfer.env` |  |
+| <a name="fld-unitfrom.evidence"></a>`evidence` | `HsEvidence.table` |  |
+| <a name="fld-unitfrom.derived"></a>`derived` | `(string * string * HsAst.decl list) list` |  |
+| <a name="fld-unitfrom.prelude"></a>`prelude` | `string * string -> string option` |  |
+| <a name="fld-unitfrom.entity"></a>`entity` | `string * string * string -> string` |  |
+| <a name="fld-unitfrom.runtime"></a>`runtime` | `Core.program` |  |
+| <a name="fld-unitfrom.leaves"></a>`leaves` | `(string * string list) list` |  |
+| <a name="fld-unitfrom.main"></a>`main` | `string option` |  |
 
 ## The library's units, once
 

@@ -104,8 +104,12 @@ struct
 
   fun save () : saved = {tops = !tops, topMono = !topMono, chosen = !chosen, bindings = !bindings}
 
+  (* the types of the top level and the monomorphic variables restored;
+     the defaults chosen and the bindings found those of the modules
+     inferred after, which a report and a part read, and not those of the
+     units before, which they do not (build-cache-issues.md, issue 39) *)
   fun restore (s : saved) =
-    (reset (); tops := #tops s; topMono := #topMono s; chosen := #chosen s; bindings := #bindings s)
+    (reset (); tops := #tops s; topMono := #topMono s)
 
   (* what the inference found of the modules `ids` alone: their types of
      the top level, defaults and bindings; their monomorphic variables
@@ -113,17 +117,18 @@ struct
   fun part (ids : string list) : saved =
     let
       fun mine m = List.exists (fn i => i = m) ids
-      fun qualOf k = case CharVector.findi (fn (_, c) => c = #" ") k of SOME (i, _) => String.substring (k, 0, i)
-                                                                    | NONE => ""
     in
-      {tops = M.foldl (fn (k, v, acc) => if mine (qualOf k) then M.insert (acc, k, v) else acc) M.empty (!tops),
+      {tops = E.ownFold (fn (k, v, acc) => M.insert (acc, k, v)) M.empty (!tops, ids),
        topMono = [],
        chosen = List.filter (fn {module, ...} : default => mine module) (!chosen),
        bindings = List.filter (fn {module, ...} : binding => mine module) (!bindings)}
     end
 
+  (* the first part's map the start, as HsLintEnv.join's *)
   fun join (parts : saved list) : saved =
-    {tops = List.foldl (fn (p, m) => M.foldl (fn (k, v, m) => M.insert (m, k, v)) m (#tops p)) M.empty parts,
+    {tops = case parts of
+              [] => M.empty
+            | p :: ps => List.foldl (fn (q, m) => M.foldl (fn (k, v, m) => M.insert (m, k, v)) m (#tops q)) (#tops p) ps,
      topMono = List.concat (List.map #topMono parts), chosen = List.concat (List.map #chosen parts),
      bindings = List.concat (List.map #bindings parts)}
 
@@ -1015,9 +1020,9 @@ struct
                         val (class, tc) = E.ofInstanceId inst
                         val span = case decls of A.D ({span, ...}, _) :: _ => span | [] => HsSource.noSpan
                       in
-                        case List.find (fn {head, derived, ...} : C.inst =>
-                                          derived andalso (case E.headTycon head of SOME t => T.idEq (t, tc) | NONE => false))
-                               (C.instsOf class) of
+                        case (case M.find (!C.heads, C.headKey (class, tc)) of
+                                SOME (i as {derived = true, ...}) => SOME i
+                              | _ => NONE) of
                           SOME {head = T.IsIn (_, h), context, arity, ...} =>
                             instanceMethods (module, class, h, context, arity, decls)
                         | NONE => refuse (span, "a derived instance of `" ^ plain class ^ "` at `" ^ plain tc ^

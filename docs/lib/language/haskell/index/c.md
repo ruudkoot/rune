@@ -22,6 +22,7 @@
 - `class` (type): [HS_CHAR](../sig/HS_CHAR.md#type-class), [HS_CLASSES](../sig/HS_CLASSES.md#type-class)
 - `class_` (type): [HS_LINT](../sig/HS_LINT.md#type-class_)
 - `classes` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-classes), [HS_INFER](../sig/HS_INFER.md#val-classes)
+- `classesAt` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-classesat)
 - `classify` (val): [HS_CHAR](../sig/HS_CHAR.md#val-classify)
 - `classList` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-classlist)
 - `clause` (type): [HS_MATCH](../sig/HS_MATCH.md#type-clause)

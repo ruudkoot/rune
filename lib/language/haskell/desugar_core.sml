@@ -17,6 +17,8 @@ struct
   (* the fields a constructor forces where it is applied, where they are
      not its fields' `!`: a strict field of a newtype's type, lazy in Core *)
   val forcedMap : bool list M.map ref = ref M.empty
+  (* the constructors `setForced` gave flags since `markForced`, the latest first *)
+  val forcedSet : string list ref = ref []
 
   fun fresh base = (counter := !counter + 1; "%" ^ base ^ Int.toString (!counter))
 
@@ -26,7 +28,8 @@ struct
   fun save () = {counter = !counter, tycons = !tycons, cons = !cons, values = !values, forced = !forcedMap}
 
   fun restore (s : saved) =
-    (counter := #counter s; tycons := #tycons s; cons := #cons s; values := #values s; forcedMap := #forced s)
+    (counter := #counter s; tycons := #tycons s; cons := #cons s; values := #values s; forcedMap := #forced s;
+     forcedSet := [])
 
   (* a name made here, `%`, a base and a number, and its base *)
   fun made x =
@@ -136,6 +139,7 @@ struct
      cons := M.empty;
      values := M.empty;
      forcedMap := M.empty;
+     forcedSet := [];
      List.app (fn (c, k) =>
                  let
                    (* Core's built-in types: Ref's parameter, the others none *)
@@ -421,9 +425,15 @@ struct
       SOME fl => fl
     | NONE => (case conInfo k of SOME {fields, ...} => List.map Core.isEval fields | NONE => [])
 
-  fun setForced (k, fl) = forcedMap := M.insert (!forcedMap, k, fl)
+  fun setForced (k, fl) = (forcedMap := M.insert (!forcedMap, k, fl); forcedSet := k :: !forcedSet)
 
   fun forcedOverrides () = M.listItems (!forcedMap)
+
+  fun markForced () = forcedSet := []
+
+  fun forcedSince (s : saved) =
+    let val keys = List.foldl (fn (k, m) => if M.member (#forced s, k) then m else M.insert (m, k, ())) M.empty (!forcedSet)
+    in List.rev (M.foldl (fn (k, (), acc) => case M.find (!forcedMap, k) of SOME v => (k, v) :: acc | NONE => acc) [] keys) end
 
   fun caseCon (x, ty, alts, default) =
     case dataArgs ty of

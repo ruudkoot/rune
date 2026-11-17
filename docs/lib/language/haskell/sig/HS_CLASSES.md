@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 15 of 15 entries documented |
+| Documentation | 18 of 18 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/classes\_sig.sml](../../../../../lib/language/haskell/classes_sig.sml) |
 
@@ -42,7 +42,10 @@ sig
   val <a href="#val-findclass">findClass</a> : env * string -&gt; class option
   val <a href="#val-findinstance">findInstance</a> : env * string * string -&gt; instance option
   val <a href="#val-instances">instances</a> : env -&gt; instance list
+  val <a href="#val-instancebyid">instanceById</a> : env * string -&gt; instance option
+  val <a href="#val-instancesof">instancesOf</a> : env * string list -&gt; instance list
   val <a href="#val-classlist">classList</a> : env -&gt; class list
+  val <a href="#val-classesat">classesAt</a> : env * string list -&gt; class list
   val <a href="#val-instanceid">instanceId</a> : string * string -&gt; string
   val <a href="#val-showinstance">showInstance</a> : string -&gt; string
   val <a href="#val-superpath">superPath</a> : env * string * string -&gt; string list option
@@ -160,6 +163,26 @@ val instances : env -> instance list
 
 `instances env` is every instance of `env`.
 
+### <a name="val-instancebyid"></a>`instanceById`
+
+```sml
+val instanceById : env * string -> instance option
+```
+
+`instanceById (env, id)` is the instance `id`, a read of nothing.
+
+### <a name="val-instancesof"></a>`instancesOf`
+
+```sml
+val instancesOf : env * string list -> instance list
+```
+
+`instancesOf (env, homes)` is every instance of `env` that a module of
+`homes` declares, in the order of `instances env`.
+
+It costs as those, not as every instance (build-cache-issues.md,
+issue 39).
+
 ### <a name="val-classlist"></a>`classList`
 
 ```sml
@@ -167,6 +190,18 @@ val classList : env -> class list
 ```
 
 `classList env` is every class of `env`.
+
+### <a name="val-classesat"></a>`classesAt`
+
+```sml
+val classesAt : env * string list -> class list
+```
+
+`classesAt (env, prefixes)` is every class of `env` whose key begins
+with one of `prefixes`.
+
+A prefix's classes come after those of the prefixes before it, each
+prefix's in the order of `classList env`.
 
 ### <a name="val-instanceid"></a>`instanceId`
 

@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_DESUGAR`](../sig/HS_DESUGAR.md) |
 | Status | required |
-| Members | 10 |
+| Members | 14 |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar.sml](../../../../../lib/language/haskell/desugar.sml) |
 
@@ -23,8 +23,11 @@ What each means is on [`HS_DESUGAR`](../sig/HS_DESUGAR.md); the types are this s
 |  | Member | Is |
 | --- | --- | --- |
 | type | [`interface`](../sig/HS_DESUGAR.md#type-interface) | `{builtinCons : (string * string) list, constructors : (string * string list) list, core : Core.decl list, defaults : string list, fields : (string * string list) list, forced : (string * bool list) list, leaves : string list, primTypes : (string * string) list}` |
+| type | [`learned`](../sig/HS_DESUGAR.md#type-learned) | *a type of its own* |
 | type | [`library`](../sig/HS_DESUGAR.md#type-library) | *a type of its own* |
 | type | [`module_`](../sig/HS_DESUGAR.md#type-module_) | `{ast : HsAst.module, id : string, library : bool}` |
+| val | [`learnMore`](../sig/HS_DESUGAR.md#val-learnmore) | `learned * interface -> learned` |
+| val | [`learnedNone`](../sig/HS_DESUGAR.md#val-learnednone) | `Core.decl list -> learned` |
 | val | [`library`](../sig/HS_DESUGAR.md#val-library) | `{derived : (string * string * HsAst.decl list) list, entity : string * string * string -> string, evidence : HsEvidence.table, groups : string list list, infer : HsInfer.env, leaves : (string * string list) list, modules : module_ list, prelude : string * string -> string option, runtime : Core.decl list} -> library` |
 | val | [`missingPrimitives`](../sig/HS_DESUGAR.md#val-missingprimitives) | `unit -> string list` |
 | val | [`prepare`](../sig/HS_DESUGAR.md#val-prepare) | `library -> unit` |
@@ -32,6 +35,7 @@ What each means is on [`HS_DESUGAR`](../sig/HS_DESUGAR.md); the types are this s
 | val | [`programOn`](../sig/HS_DESUGAR.md#val-programon) | `library * {derived : (string * string * HsAst.decl list) list, entity : string * string * string -> string, evidence : HsEvidence.table, groups : string list list, infer : HsInfer.env, main : string, modules : module_ list, prelude : string * string -> string option} -> Core.decl list` |
 | val | [`translationNames`](../sig/HS_DESUGAR.md#val-translationnames) | `(string * string * string) list` |
 | val | [`unit`](../sig/HS_DESUGAR.md#val-unit) | `{derived : (string * string * HsAst.decl list) list, entity : string * string * string -> string, evidence : HsEvidence.table, infer : HsInfer.env, interfaces : interface list, leaves : (string * string list) list, main : string option, modules : module_ list, prelude : string * string -> string option, runtime : Core.decl list} -> Core.decl list * interface` |
+| val | [`unitFrom`](../sig/HS_DESUGAR.md#val-unitfrom) | `{derived : (string * string * HsAst.decl list) list, entity : string * string * string -> string, evidence : HsEvidence.table, first : bool, infer : HsInfer.env, learned : learned, leaves : (string * string list) list, main : string option, modules : module_ list, prelude : string * string -> string option, runtime : Core.decl list} -> Core.decl list * interface` |
 
 ---
 

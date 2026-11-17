@@ -31,7 +31,7 @@ What each means is on [`HS_INFER`](../sig/HS_INFER.md); the types are this struc
 | val | [`extend`](../sig/HS_INFER.md#val-extend) | `env * part -> env` |
 | val | [`initial`](../sig/HS_INFER.md#val-initial) | `{primitives : string list} -> env` |
 | val | [`numberFrom`](../sig/HS_INFER.md#val-numberfrom) | `int -> unit` |
-| val | [`part`](../sig/HS_INFER.md#val-part) | `env * (string -> bool) -> part` |
+| val | [`part`](../sig/HS_INFER.md#val-part) | `env * string -> part` |
 | val | [`renumber`](../sig/HS_INFER.md#val-renumber) | `int -> unit` |
 | val | [`setReaches`](../sig/HS_INFER.md#val-setreaches) | `(string * string -> bool) -> unit` |
 | val | [`valueScheme`](../sig/HS_INFER.md#val-valuescheme) | `env * string -> {ctx : {cls : string, ty : HsTypes.ty} list, ty : HsTypes.ty, vars : int} option` |

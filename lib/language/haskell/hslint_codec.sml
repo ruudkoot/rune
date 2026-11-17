@@ -56,7 +56,13 @@ struct
     | T.TGen n => (byte (w, 3); nat (w, n))
   fun pred (w, T.IsIn (c, t)) = (id (w, c); ty (w, t))
   fun scheme (w, T.Forall (ks, (ps, t))) = (list kind (w, ks); list pred (w, ps); ty (w, t))
-  fun span (w, {file, start, stop} : HsSource.span) = (string (w, file); nat (w, start); nat (w, stop))
+  (* A place is written by its module, not by the path its file was read
+     from: `placeOf` gives a file's module while a part is written (its
+     fileModule), so that a part is the same bytes wherever it was made
+     (build-cache-issues.md, issue 31); read back, the module stands for
+     the file, and the part's fileModule maps it to itself *)
+  val placeOf : (string -> string) ref = ref (fn f => f)
+  fun span (w, {file, start, stop} : HsSource.span) = (string (w, !placeOf file); nat (w, start); nat (w, stop))
 
   fun tydef (w, d) =
     case d of
@@ -80,7 +86,8 @@ struct
      map kind (w, #classKinds s); map (list ty) (w, #defaults s); list instance (w, #instances s);
      list classDecl (w, #classDecls s); string (w, #prelude s); map bool (w, #programModules s);
      map cls (w, #classes s); map (list inst) (w, #insts s); option id (w, #numId s);
-     map (list string) (w, #imports s); map string (w, #fileModule s))
+     map (list string) (w, #imports s);
+     map string (w, M.foldl (fn (f, m, acc) => M.insert (acc, !placeOf f, m)) M.empty (#fileModule s)))
 
   fun default (w, {module, span = sp, preds, choice, ruleTwo} : I.default) =
     (string (w, module); span (w, sp); list pred (w, preds); ty (w, choice); bool (w, ruleTwo))
@@ -112,10 +119,14 @@ struct
      list valued (w, dfuns))
 
   fun encode ({modules, env = e, infer = i, counter, target = t} : part) : string =
-    let val w : writer = ref []
+    let
+      val w : writer = ref []
+      val () = placeOf := (fn f => getOpt (M.find (#fileModule e, f), f))
     in
-      string (w, magic); list string (w, modules); env (w, e); infer (w, i); nat (w, counter); target (w, t);
-      String.concat (List.rev (!w))
+      (string (w, magic); list string (w, modules); env (w, e); infer (w, i); nat (w, counter); target (w, t);
+       placeOf := (fn f => f);
+       String.concat (List.rev (!w)))
+      handle ex => (placeOf := (fn f => f); raise ex)
     end
 
   (* ---- reading ---- *)
@@ -193,7 +204,8 @@ struct
     in
       {tydefs = tydefs, cons = cons, fields = fields, methods = methods, classKinds = classKinds, defaults = defaults,
        instances = instances, classDecls = classDecls, prelude = prelude, programModules = programModules,
-       classes = classes, insts = insts, numId = numId, imports = imports, fileModule = rmap rstring r}
+       classes = classes, insts = insts, heads = C.headsOf insts, numId = numId, imports = imports,
+       fileModule = rmap rstring r}
     end
 
   fun rdefault r : I.default =

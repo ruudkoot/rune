@@ -67,7 +67,7 @@ sig
                <a href="#fld-part.cons">cons</a> : (string * {tycon : string, arity : int, fields : string list, strict : bool list}) list,
                <a href="#fld-part.fields">fields</a> : (string * {tycon : string, ty : HsTypes.ty, cons : (string * int) list}) list,
                <a href="#fld-part.methods">methods</a> : (string * {cls : string, scheme : HsTypes.scheme}) list}
-  val <a href="#val-part">part</a> : env * (string -&gt; bool) -&gt; part
+  val <a href="#val-part">part</a> : env * string -&gt; part
   val <a href="#val-extend">extend</a> : env * part -&gt; env
   val <a href="#val-setreaches">setReaches</a> : (string * string -&gt; bool) -&gt; unit
   val <a href="#val-valuescheme">valueScheme</a> : env * string -&gt; HsTypes.scheme option
@@ -217,11 +217,14 @@ modules' parts (HsModIface, the haskell98 roadmap's M21).
 ### <a name="val-part"></a>`part`
 
 ```sml
-val part : env * (string -> bool) -> part
+val part : env * string -> part
 ```
 
-`part (env, mine)` is what `env` holds of the entities whose module's
-identity `mine` accepts, and of the instances it declares.
+`part (env, id)` is what `env` holds of the entities of the module
+`id`, and of the instances it declares.
+
+It costs as those, not as every module's (build-cache-issues.md,
+issue 39).
 
 ### <a name="val-extend"></a>`extend`
 

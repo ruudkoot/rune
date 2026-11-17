@@ -1098,10 +1098,31 @@
     },
     {
      "kind": "val",
+     "name": "instanceById",
+     "spec": "val instanceById : env * string -> instance option",
+     "doc": "`instanceById (env, id)` is the instance `id`, a read of nothing.\n\n",
+     "page": "sig/HS_CLASSES.md#val-instancebyid"
+    },
+    {
+     "kind": "val",
+     "name": "instancesOf",
+     "spec": "val instancesOf : env * string list -> instance list",
+     "doc": "`instancesOf (env, homes)` is every instance of `env` that a module of\n`homes` declares, in the order of `instances env`.\n\nIt costs as those, not as every instance (build-cache-issues.md,\nissue 39).\n\n",
+     "page": "sig/HS_CLASSES.md#val-instancesof"
+    },
+    {
+     "kind": "val",
      "name": "classList",
      "spec": "val classList : env -> class list",
      "doc": "`classList env` is every class of `env`.\n\n",
      "page": "sig/HS_CLASSES.md#val-classlist"
+    },
+    {
+     "kind": "val",
+     "name": "classesAt",
+     "spec": "val classesAt : env * string list -> class list",
+     "doc": "`classesAt (env, prefixes)` is every class of `env` whose key begins\nwith one of `prefixes`.\n\nA prefix's classes come after those of the prefixes before it, each\nprefix's in the order of `classList env`.\n\n",
+     "page": "sig/HS_CLASSES.md#val-classesat"
     },
     {
      "kind": "val",
@@ -1184,6 +1205,34 @@
      "spec": "val unit : {interfaces : interface list, modules : module_ list, infer : HsInfer.env, evidence : HsEvidence.table,\n            derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option,\n            entity : string * string * string -> string, runtime : Core.program, leaves : (string * string list) list,\n            main : string option}\n           -> Core.program * interface",
      "doc": "`unit p` is the Core of the unit of the modules of `p`, after the units\nof its interfaces, in order, and its interface.\n\nThe Core is its types, a copy of each type of the units before that it\nnames, an import of each of their values that it names, and every\nvalue it defines; the runtime's names are left to the runtime's unit.\n`infer` and `evidence` are a checking that holds the unit's modules and\nwhat they import; `leaves` is the first unit's, and `main`, the key of\nthe program's `main`, the unit's that defines it, whose Core then has\nCore's `main`. The rest is as `program` takes it.\n\n",
      "page": "sig/HS_DESUGAR.md#val-unit"
+    },
+    {
+     "kind": "type",
+     "name": "learned",
+     "spec": "type learned",
+     "doc": "What the units before a unit leave its desugaring: their interfaces\nlearned, each once.\n\nA driver that desugars a program's units in order learns each unit's\nonce, not every unit before it for each (build-cache-issues.md,\nissue 39).\n\n",
+     "page": "sig/HS_DESUGAR.md#type-learned"
+    },
+    {
+     "kind": "val",
+     "name": "learnedNone",
+     "spec": "val learnedNone : Core.program -> learned",
+     "doc": "`learnedNone runtime` is what is learned before any unit: Core's own\ntypes and `runtime`'s declarations.\n\n",
+     "page": "sig/HS_DESUGAR.md#val-learnednone"
+    },
+    {
+     "kind": "val",
+     "name": "learnMore",
+     "spec": "val learnMore : learned * interface -> learned",
+     "doc": "`learnMore (l, i)` is `l` with the unit of interface `i` learned after\nit.\n\n",
+     "page": "sig/HS_DESUGAR.md#val-learnmore"
+    },
+    {
+     "kind": "val",
+     "name": "unitFrom",
+     "spec": "val unitFrom : {learned : learned, first : bool, modules : module_ list, infer : HsInfer.env,\n                evidence : HsEvidence.table, derived : (string * string * HsAst.decl list) list,\n                prelude : string * string -> string option, entity : string * string * string -> string,\n                runtime : Core.program, leaves : (string * string list) list, main : string option}\n               -> Core.program * interface",
+     "doc": "`unitFrom p` is `unit` of the same program after the units whose\ninterfaces `#learned p` learned, in order.\n\nThe Core and the interface are `unit`'s; `first` is whether no unit is\nbefore it.\n\n",
+     "page": "sig/HS_DESUGAR.md#val-unitfrom"
     },
     {
      "kind": "type",
@@ -1487,6 +1536,20 @@
     },
     {
      "kind": "val",
+     "name": "markForced",
+     "spec": "val markForced : unit -> unit",
+     "doc": "`markForced ()` starts what `forcedSince` reads.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-markforced"
+    },
+    {
+     "kind": "val",
+     "name": "forcedSince",
+     "spec": "val forcedSince : saved -> (string * bool list) list",
+     "doc": "`forcedSince s` is each constructor given its flags since the last\n`markForced` that `s`, saved then, has none for, by key.\n\nIt is `forcedOverrides ()` less those of `s`, at the cost of those\ngiven since (build-cache-issues.md, issue 39).\n\n",
+     "page": "sig/HS_DS_CORE.md#val-forcedsince"
+    },
+    {
+     "kind": "val",
      "name": "caseCon",
      "spec": "val caseCon : Core.atom * Core.ty * (string * ((string * Core.ty) list -> texp)) list * texp option -> texp",
      "doc": "`caseCon (x, ty, alts, default)` is a `case` on the atom `x` of the\ndata type `ty`.\n\nIt has an alternative for each constructor of `alts`, made of its\nfields' names and types, and `default` for the others, left out where\n`alts` covers them all.\n\n**Raises** `Fail` where `ty` is not a data type.\n\n",
@@ -1604,6 +1667,13 @@
      "page": "sig/HS_DS_ENV.md#val-restore"
     },
     {
+     "kind": "val",
+     "name": "forget",
+     "spec": "val forget : unit -> unit",
+     "doc": "`forget ()` makes nothing known of the types and constructors, as\n`start` does, keeping the program desugared.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-forget"
+    },
+    {
      "kind": "type",
      "name": "known",
      "spec": "type known = {primTypes : (string * string) list, builtinCons : (string * string) list,\n              fields : (string * string list) list}",
@@ -1623,6 +1693,20 @@
      "spec": "val learn : known -> unit",
      "doc": "`learn k` adds `k` to what is known.\n\n",
      "page": "sig/HS_DS_ENV.md#val-learn"
+    },
+    {
+     "kind": "val",
+     "name": "mark",
+     "spec": "val mark : unit -> unit",
+     "doc": "`mark ()` starts what `addedSince` reads: the keys given since.\n\n",
+     "page": "sig/HS_DS_ENV.md#val-mark"
+    },
+    {
+     "kind": "val",
+     "name": "addedSince",
+     "spec": "val addedSince : saved -> known",
+     "doc": "`addedSince s` is what is known now that `s`, saved at the last\n`mark`, does not know, each list by key.\n\nIt is `known ()` less what `s` knows, at the cost of what was added\nand not of all that is known (build-cache-issues.md, issue 39).\n\n",
+     "page": "sig/HS_DS_ENV.md#val-addedsince"
     },
     {
      "kind": "val",
@@ -2203,8 +2287,8 @@
     {
      "kind": "val",
      "name": "part",
-     "spec": "val part : env * (string -> bool) -> part",
-     "doc": "`part (env, mine)` is what `env` holds of the entities whose module's\nidentity `mine` accepts, and of the instances it declares.\n\n",
+     "spec": "val part : env * string -> part",
+     "doc": "`part (env, id)` is what `env` holds of the entities of the module\n`id`, and of the instances it declares.\n\nIt costs as those, not as every module's (build-cache-issues.md,\nissue 39).\n\n",
      "page": "sig/HS_INFER.md#val-part"
     },
     {
@@ -3130,6 +3214,13 @@
      "spec": "val foldl : (string * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b",
      "doc": "`foldl f init m` folds `f` over the keys and values of `m` in the\norder of the keys.\n\n",
      "page": "sig/HS_STRING_MAP.md#val-foldl"
+    },
+    {
+     "kind": "val",
+     "name": "foldPrefix",
+     "spec": "val foldPrefix : (string * 'a * 'b -> 'b) -> 'b -> 'a map * string -> 'b",
+     "doc": "`foldPrefix f init (m, p)` folds `f` over the keys of `m` that begin\nwith `p`, and their values, in the order of the keys.\n\nIt is `foldl` over those keys alone, at the cost of them and not of\nevery key.\n\n",
+     "page": "sig/HS_STRING_MAP.md#val-foldprefix"
     },
     {
      "kind": "val",

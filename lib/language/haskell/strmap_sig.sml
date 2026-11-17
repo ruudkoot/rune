@@ -26,6 +26,13 @@ sig
      order of the keys. *)
   val foldl : (string * 'a * 'b -> 'b) -> 'b -> 'a map -> 'b
 
+  (* `foldPrefix f init (m, p)` folds `f` over the keys of `m` that begin
+     with `p`, and their values, in the order of the keys.
+
+     It is `foldl` over those keys alone, at the cost of them and not of
+     every key. *)
+  val foldPrefix : (string * 'a * 'b -> 'b) -> 'b -> 'a map * string -> 'b
+
   (* `listItems m` is the pairs of `m` in the order of the keys. *)
   val listItems : 'a map -> (string * 'a) list
 

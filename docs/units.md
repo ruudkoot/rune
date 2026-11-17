@@ -1203,6 +1203,22 @@ writes, is read part by part, and a compile that took one of its parts
 that does not hold stops, naming the layer (issue 28). The link's
 configuration is made where the link is looked up, after the compile's
 options have set the level and the instruction set (issue 29).
+An entry keeps a definition's place by its module, not by the path its
+file was read from -- the interface's places with no file, HsLint's part's
+by their modules -- and a unit taken has its places put back where its
+modules are now (issue 31, as Rune's issue 9 names a file by the unit it
+is the source of): an entry is the bytes a compile anywhere gives, the
+snapshot `make` wrote read by a bin/rhc installed or copied elsewhere.
+A compile that makes several units pays for each what it holds, not what
+the units before it hold (issue 39): each is desugared after the interfaces
+of those before, learned once each as the units are made in order
+(`HsDesugar.learnMore`), and checked by HsLint after the parts of those
+before, joined once each onto what was joined before (`HsLint.join`); each
+is checked with an evidence table of its own; and what is a unit's own is
+found where it is kept -- by its modules' keys (`HsStringMap.foldPrefix`),
+among what was added since the units before were restored, an instance by
+its class and type constructor, a chain of imports searched until it
+reaches the module asked for -- not by a fold over everything known.
 `--verify-store` takes nothing: it makes every unit and the link, and
 holds each entry that stands for one to what making it gave, byte for byte
 (its usages, its interface and every part, HsLint's where both have one),

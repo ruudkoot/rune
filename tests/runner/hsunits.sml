@@ -845,9 +845,52 @@ struct
          if all ("again.log", "taken") then () else no "the compile after it does not take every unit and the link")
     end
 
+  (* A store's entries read by a bin/rhc elsewhere (build-cache-issues.md,
+     issue 31): Main and Lib of tests/hs/units/drive through a store, then a
+     bin/rhc whose library is another copy, at another path (its share/rhc
+     copied into the job's directory, its bytecode, VM and snapshot the
+     tree's): it takes every unit and the link from the store, to the same
+     program, and --verify-store holds every entry it takes, the snapshot's
+     library among them, to what it makes of its own copy, the places of an
+     entry being kept by their modules and not by the paths they were read
+     from *)
+  fun elsewhere () =
+    let
+      fun no why = say ("FAIL hs.units.elsewhere: " ^ why ^ "\n")
+      val d = out ^ "/elsewhere"
+      fun f x = d ^ "/" ^ x
+      val () = drived d
+      val copy = f "copy"
+      fun sh cmd = exec {cmd = ["sh", "-c", cmd], dir = SOME d, stdin = "", stdout = f "copy.log", stderr = f "copy.log",
+                         timeout = 300} = 0
+      val bin = fromRoot "bin"
+      val made =
+        sh ("mkdir -p copy/bin copy/share && cp -R '" ^ fromRoot "share/rhc" ^ "' copy/share/rhc && cp '" ^ bin ^ "/rhc' copy/bin/rhc"
+            ^ " && ln -s '" ^ bin ^ "/rhc.rbc' copy/bin/rhc.rbc && ln -s '" ^ bin ^ "/runevm' copy/bin/runevm"
+            ^ " && ln -s '" ^ bin ^ "/rhc.layer' copy/bin/rhc.layer")
+      fun rhc (which, args, log) =
+        execEnv (unsetEnv ["RHC_STORE"])
+          {cmd = [which] @ args @ ["Main.hs", "-o", log ^ ".rbc"], dir = SOME d, stdin = "", stdout = f (log ^ ".log"),
+           stderr = f (log ^ ".log"), timeout = 900} = 0
+      val first = rhc (fromRoot "bin/rhc", ["--store", "st"], "first")
+      val there = rhc (copy ^ "/bin/rhc", ["--store", "st", "--show-units"], "there")
+      val verified = rhc (copy ^ "/bin/rhc", ["--store", "st", "--verify-store"], "verified")
+    in
+      if not made then no ("the copy of rhc is not made: " ^ firstLine (f "copy.log"))
+      else if not first then no ("the first compile fails: " ^ firstLine (f "first.log"))
+      else if not there then no ("the compile of the copy fails: " ^ firstLine (f "there.log"))
+      else if not verified then no ("--verify-store of the copy refuses: " ^ firstLine (f "verified.log"))
+      else
+        ((if List.all (fn u => saysOf (read (f "there.log"), u) = ["taken"]) ["Lib", "Main", "link"] then ()
+          else no "the copy does not take every unit and the link from the store");
+         if bytesOf (f "first.rbc") = bytesOf (f "there.rbc") andalso bytesOf (f "first.rbc") = bytesOf (f "verified.rbc") then ()
+         else no "the copy's programs are not the first's")
+    end
+
   fun command args =
     case args of
       ["hs-units-drive"] => SOME drive
+    | ["hs-units-elsewhere"] => SOME elsewhere
     | ["hs-units-trim"] => SOME trimmed
     | ["hs-units-verify"] => SOME verified
     | ["hs-units-memo"] => SOME memo
@@ -880,7 +923,8 @@ struct
          Tools.job ("snapshot", ["hs-units-snapshot"], [], 600, 2400),
          Tools.job ("default", ["hs-units-default"], [], 600, 3600), Tools.job ("concurrent", ["hs-units-concurrent"], [], 600, 3600),
          Tools.job ("memo", ["hs-units-memo"], [], 600, 3600), Tools.job ("damaged", ["hs-units-damaged"], [], 600, 3600),
-         Tools.job ("verify", ["hs-units-verify"], [], 600, 3600), Tools.job ("trim", ["hs-units-trim"], [], 600, 3600)]
+         Tools.job ("verify", ["hs-units-verify"], [], 600, 3600), Tools.job ("trim", ["hs-units-trim"], [], 600, 3600),
+         Tools.job ("elsewhere", ["hs-units-elsewhere"], [], 600, 3600)]
         @ List.map (fn c => Tools.job ("holes/" ^ c, ["hs-units-hole", c], [], 600, 3600)) (holeCases ())
         @ List.map (fn s => Tools.job ("core/" ^ HsCore.nameOf s, ["hs-units-core", s], [], 500, 1200)) (coreTests ())
       val nightly = List.map (fn c => Tools.job ("random/" ^ c, ["hs-units-random", c], [], 900, 3600)) (holeCases ())

@@ -20,11 +20,11 @@ documented when a comment describes it, alone or together with the entry before 
 | [`CORE_UNITS`](sig/CORE_UNITS.md) | 10 | 10 | 100% | 8 | 8 |
 | [`HS_AST`](sig/HS_AST.md) | 44 | 44 | 100% | 8 | 8 |
 | [`HS_CHAR`](sig/HS_CHAR.md) | 4 | 4 | 100% | 3 | 3 |
-| [`HS_CLASSES`](sig/HS_CLASSES.md) | 15 | 15 | 100% | 11 | 11 |
+| [`HS_CLASSES`](sig/HS_CLASSES.md) | 18 | 18 | 100% | 14 | 14 |
 | [`HS_DERIVE`](sig/HS_DERIVE.md) | 2 | 2 | 100% | 1 | 1 |
-| [`HS_DESUGAR`](sig/HS_DESUGAR.md) | 10 | 10 | 100% | 6 | 6 |
-| [`HS_DS_CORE`](sig/HS_DS_CORE.md) | 46 | 46 | 100% | 41 | 41 |
-| [`HS_DS_ENV`](sig/HS_DS_ENV.md) | 56 | 56 | 100% | 51 | 51 |
+| [`HS_DESUGAR`](sig/HS_DESUGAR.md) | 14 | 14 | 100% | 9 | 9 |
+| [`HS_DS_CORE`](sig/HS_DS_CORE.md) | 48 | 48 | 100% | 43 | 43 |
+| [`HS_DS_ENV`](sig/HS_DS_ENV.md) | 59 | 59 | 100% | 54 | 54 |
 | [`HS_DUMP`](sig/HS_DUMP.md) | 2 | 2 | 100% | 2 | 2 |
 | [`HS_EVIDENCE`](sig/HS_EVIDENCE.md) | 11 | 11 | 100% | 7 | 7 |
 | [`HS_FIXITY`](sig/HS_FIXITY.md) | 4 | 4 | 100% | 2 | 2 |
@@ -43,11 +43,11 @@ documented when a comment describes it, alone or together with the entry before 
 | [`HS_RENAME`](sig/HS_RENAME.md) | 4 | 4 | 100% | 2 | 2 |
 | [`HS_SCC`](sig/HS_SCC.md) | 1 | 1 | 100% | 1 | 1 |
 | [`HS_SOURCE`](sig/HS_SOURCE.md) | 10 | 10 | 100% | 6 | 6 |
-| [`HS_STRING_MAP`](sig/HS_STRING_MAP.md) | 8 | 8 | 100% | 6 | 6 |
+| [`HS_STRING_MAP`](sig/HS_STRING_MAP.md) | 9 | 9 | 100% | 7 | 7 |
 | [`HS_TOKEN`](sig/HS_TOKEN.md) | 9 | 9 | 100% | 5 | 5 |
 | [`HS_TYPES`](sig/HS_TYPES.md) | 43 | 43 | 100% | 29 | 29 |
 | [`HS_USAGE`](sig/HS_USAGE.md) | 5 | 5 | 100% | 4 | 4 |
-| **all** | 474 | 474 | 100% | 303 | 303 |
+| **all** | 487 | 487 | 100% | 315 | 315 |
 
 ## Members a signature describes
 
@@ -56,7 +56,7 @@ sends the reader to the signature that says what each means. A member that no si
 is one a program can name and nothing explains: it is a name beyond the signature, which
 [structures.md](structures.md) lists, or the structure matches no signature of the library.
 
-41 structures have a page, with 474 members, of which 474 (100%) are described by a signature.
+41 structures have a page, with 487 members, of which 487 (100%) are described by a signature.
 
 ## Examples that are run
 

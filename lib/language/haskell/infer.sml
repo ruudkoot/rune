@@ -41,13 +41,18 @@ struct
       [sh, _] => if size sh > 1 then String.extract (sh, 1, NONE) else ""
     | _ => ""
 
-  fun part (env : env, mine : string -> bool) : part =
+  (* each key of the module `id`'s entities, `t` or `v` and `id` and a TAB
+     (HsModules.key), in the order of the keys: its own found where they
+     are kept, and not by a fold over the entities of every module before
+     it (build-cache-issues.md, issue 39) *)
+  fun part (env : env, id : string) : part =
     let
-      fun own m = List.filter (fn (k, _) => mine (homeOfKey k)) (M.listItems m)
+      val prefixes = ["t" ^ id ^ "\t", "v" ^ id ^ "\t"]
+      fun own m = List.rev (List.foldl (fn (p, acc) => M.foldPrefix (fn (k, v, acc) => (k, v) :: acc) acc (m, p)) [] prefixes)
     in
       {values = own (#values env), tycons = List.map #2 (own (#tycons env)),
-       classes = List.filter (fn (c : C.class) => mine (homeOfKey (#key c))) (C.classList (#classes env)),
-       instances = List.filter (fn (i : C.instance) => mine (#home i)) (C.instances (#classes env)),
+       classes = C.classesAt (#classes env, prefixes),
+       instances = C.instancesOf (#classes env, [id]),
        cons = own (#cons env), fields = own (#fields env), methods = own (#methods env)}
     end
 
@@ -1651,11 +1656,15 @@ struct
           val key = K.keyOf c
           val vname = case v of A.Name (_, {name, ...}) => name
           val kind = case List.find (fn (k, _) => k = key) kinds of SOME (_, k) => k | NONE => T.KStar
+          (* the classes the context names, each once: a context is a set
+             of assertions (4.1.3), and a class named twice is one
+             superclass, one field of the dictionary *)
           val supers =
-            List.map #cls (K.contextPreds (#tycons (!genv), fn n => if n = vname then T.TGen 0
-                                                                     else raise Fail (span, "the context of the class `" ^ nameText c ^
-                                                                                            "` names `" ^ n ^ "`, where only its variable `" ^
-                                                                                            vname ^ "` may stand (4.3.1)")) cx)
+            List.foldl (fn (s, acc) => if List.exists (fn x => x = s) acc then acc else acc @ [s]) []
+              (List.map #cls (K.contextPreds (#tycons (!genv), fn n => if n = vname then T.TGen 0
+                                                                       else raise Fail (span, "the context of the class `" ^ nameText c ^
+                                                                                              "` names `" ^ n ^ "`, where only its variable `" ^
+                                                                                              vname ^ "` may stand (4.3.1)")) cx))
           val methods =
             List.concat
               (List.map
@@ -1857,7 +1866,7 @@ struct
                                                  (case T.spine (#ty p) of (T.TGen _, _ :: _) => ", a context that is not simple (R23)"
                                                                          | _ => ""));
                                       [])
-                         val old = case List.find (fn i => #id i = id) (C.instances (#classes (!genv))) of SOME i => #ctx i | NONE => []
+                         val old = case C.instanceById (#classes (!genv), id) of SOME i => #ctx i | NONE => []
                        in
                          if key ctx = key old then changed
                          else
@@ -1990,16 +1999,19 @@ struct
         end
     | classBodies _ = ()
 
-  (* a module's `default` (4.3.4): each type an instance of Num *)
+  (* a module's `default` (4.3.4): each type an instance of Num, by an
+     instance in scope in the module, which a chain of its imports reaches
+     (5.4), as defaulting asks *)
   fun defaultDecl (h, A.D ({span, ...}, A.DDefault ts)) =
         let
           val tys = List.map (fn t => (K.checkType {env = #tycons (!genv), classKind = classKindOf, vars = ref M.empty} (t, T.KStar);
                                        K.convert (#tycons (!genv), fn _ => raise Fail (span, "a default type has no variable")) t)) ts
                     handle HsSource.Error e => (err e; []) | Fail e => (err e; [])
           val num = preludeClass "Num"
+          fun scope t = case T.spine t of (T.TCon tc, _) => outOfScope (h, num, tc) | _ => ""
         in
-          List.app (fn t => if holdsAt ("", [{cls = num, ty = t}], t) then () else
-                              err (span, "the default type `" ^ T.show t ^ "` is not an instance of `Num` (4.3.4)")) tys;
+          List.app (fn t => if holdsAt (h, [{cls = num, ty = t}], t) then () else
+                              err (span, "the default type `" ^ T.show t ^ "` is not an instance of `Num` (4.3.4)" ^ scope t)) tys;
           if M.member (!defaultsOf, h) then err (span, "two `default` declarations in one module (4.3.4)")
           else defaultsOf := M.insert (!defaultsOf, h, (tys, true))
         end
@@ -2078,7 +2090,7 @@ struct
           (fn {id, cls, vars, span, home = h, tycon, constrs, ...} =>
              if List.exists (fn f => f = id) underived then NONE      (* an instance that cannot be derived, said *)
              else
-             case List.find (fn i => #id i = id) (C.instances (#classes (!genv))) of
+             case C.instanceById (#classes (!genv), id) of
                SOME i =>
                  let
                    val (rigids, params) = instanceEvidence (span, i, List.tabulate (vars, fn k => "a" ^ Int.toString (k + 1)))

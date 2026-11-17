@@ -5,6 +5,7 @@
 - `abi` (type): [CORE_TO_MID](../sig/CORE_TO_MID.md#type-abi)
 - `add` (val): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#val-add)
 - `addClass` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-addclass)
+- `addedSince` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-addedsince)
 - `addInstance` (val): [HS_CLASSES](../sig/HS_CLASSES.md#val-addinstance)
 - `advance` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-advance)
 - `all` (val): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#val-all)
