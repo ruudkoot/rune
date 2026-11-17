@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 4 |
 | Documentation | 64 of 64 entries documented |
-| Tests | 1059 checks of 62 entries |
+| Tests | 1076 checks of 62 entries |
 | Source | [lib/basis/sig\_real.sml](../../../../lib/basis/sig_real.sml) |
 
 ## Synopsis
@@ -1059,22 +1059,29 @@ val realRound : real -> real
 > states the rule under [`round`](#val-round) alone, and IEEE 754's rounding to an
 > integral value agrees.
 
-<details><summary>Other implementations (6)</summary>
+<details><summary>Other implementations (13)</summary>
 
-- **Poly/ML** &mdash; round and realRound of 0.49999999999999994 give 1 (they add 0.5 and floor)
-- **Poly/ML** &mdash; Real.realRound (2^52 + 1) is 2^52 + 2
+- **Poly/ML** &mdash; realRound of 0.49999999999999994 is 1 (it adds 0.5 and floors; round gives 0)
+- **Poly/ML** &mdash; Real.realRound (2^52 + 1) is 2^52 + 2, and realRound \~(2^52 + 1) is \~2^52
+- **Poly/ML** &mdash; realRound depends on the rounding mode: it is floor (x + 0.5), or ceil (x - 0.5) for an even number and a half, and the sum is rounded in the mode that is set (libpolyml/reals.cpp, PolyRealRound), so that 0.49999999999999994 gives 1, 2^52 + 1 gives 2^52 + 2, a zero result loses its sign, and under TO\_NEGINF realRound 0.5 is \~0.0
+- **Poly/ML** &mdash; realRound depends on the rounding mode: it adds 0.5 and the sum is rounded in the mode that is set (libpolyml/reals.cpp, PolyRealRound)
 - **Poly/ML** &mdash; Real.realRound (\~0.25) is 0.0, not \~0.0
 - **SML/NJ** &mdash; realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 \<\> 1E300, realCeil maxFinite = inf)
-- **SML/NJ** &mdash; Real.realRound (2^52 + 1) is 2^52
+- **SML/NJ** &mdash; realRound is x + 2^52 - 2^52 (x - 2^52 + 2^52 below zero) to nearest, and the sum is rounded: Real.realRound (2^52 + 1) is 2^52, realRound \~(2^52 + 1) is \~2^52
+- **SML/NJ** &mdash; realRound loses the sign of a zero result whatever the rounding mode: realRound \~0.5 is 0.0
+- **SML/NJ** &mdash; realRound loses the sign of a zero result whatever the rounding mode: realRound \~0.49999999999999994 is 0.0
 - **SML/NJ** &mdash; realCeil, realTrunc and realRound lose the sign of a zero result
+- **MLKit** &mdash; realRound depends on the rounding mode, as (x + 2^52) - 2^52 would: under TO\_POSINF realRound 2.5 is 3.0, under TO\_NEGINF realRound 1.5 is 1.0 and realRound 0.5 is \~0.0
+- **MLKit** &mdash; realRound depends on the rounding mode: under TO\_POSINF realRound 2.5 is 3.0
+- **Poly/ML** &mdash; Real32.realRound depends on the rounding mode: it is floor (x + 0.5), or ceil (x - 0.5) for an even number and a half, in binary32, and the sum is rounded in the mode that is set (libpolyml/reals.cpp, PolyRealFRound), so that the greatest binary32 below one half gives 1 and 2^23 + 1 gives 2^23 + 2
 
 </details>
 
-<details><summary>Tests (20)</summary>
+<details><summary>Tests (25)</summary>
 
-For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `down` &middot; `up` &middot; `negative-down` &middot; `negative-up` &middot; `tie-half` &middot; `tie-one-and-half` &middot; `tie-two-and-half` &middot; `tie-three-and-half` &middot; `tie-negative` &middot; `tie-negative-odd` &middot; `just-below-half` &middot; `large-odd` &middot; `huge` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `negzero-sign` &middot; `law-nearest`
+For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `down` &middot; `up` &middot; `negative-down` &middot; `negative-up` &middot; `tie-half` &middot; `tie-one-and-half` &middot; `tie-two-and-half` &middot; `tie-three-and-half` &middot; `tie-negative` &middot; `tie-negative-odd` &middot; `just-below-half` &middot; `large-odd` &middot; `large-odd-negative` &middot; `just-below-half-negative` &middot; `huge` &middot; `posInf` &middot; `negInf` &middot; `nan` &middot; `negzero-sign` &middot; `law-nearest` &middot; `*` &middot; `law-every-mode`
 
-For `Real32`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `tie-to-even` &middot; `tie-up`
+For `Real32`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `tie-to-even` &middot; `tie-up` &middot; `*`
 
 </details>
 
@@ -1199,23 +1206,28 @@ val round : real -> int
 
 Also in the [top-level environment](../top-level.md): `round`.
 
-<details><summary>Other implementations (5)</summary>
+<details><summary>Other implementations (10)</summary>
 
-- **Poly/ML** &mdash; round and realRound of 0.49999999999999994 give 1 (they add 0.5 and floor)
+- **SML/NJ (64-bit), SML/NJ development** &mdash; round is floor (x + 0.5), or ceil (x - 0.5) where that is odd, and the sums are rounded in the rounding mode that is set (smlnj/init/pervasive.sml): round (2^52 + 1) is 2^52 + 2 to nearest and 2^52 under TO\_NEGINF
+- **SML/NJ (64-bit), SML/NJ development** &mdash; under TO\_POSINF round 2^53 is 2^53 + 2: round is floor (x + 0.5), and x + 0.5 rounds up
+- **SML/NJ** &mdash; round (0.5 + 2^\~53) is 0, not 1: floor (x + 0.5) is 1, since x + 0.5 rounds to 1 (but under TO\_POSINF), and being odd gives way to ceil (x - 0.5), which is 0, ceil being \~1 - floor (\~(x - 0.5 + 1.0)) and the sum rounding to 1 (docs/bugreport/smlnj/Real.ceil)
 - **SML/NJ (32-bit)** &mdash; Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt: round computes ceil (x - 0.5), which is out of range (docs/bugreport/smlnj/Real.ceil)
 - **SML/NJ 110.99.9 (64-bit), SML/NJ development 2026.2** &mdash; floor, ceil, trunc and round do not raise Overflow for a real above maxInt; the result wraps around
 - **SML/NJ 110.99.9 (64-bit), SML/NJ development 2026.2** &mdash; ceil and trunc of minInt (and of minInt - 0.5) give maxInt: floor accepts reals up to 2^62 + 2048, and its tagging wraps them around (docs/bugreport/smlnj/Real.ceil)
 - **SML/NJ 110.99.9 (64-bit), SML/NJ development 2026.2** &mdash; ceil of the largest real below 2^62, an integer, is one less than it: ceil is \~1 - floor (\~(x + 1.0)), and x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
+- **MLKit** &mdash; round is floor (x + 0.5), or floor x where x + 0.5 is whole and floor x even, and x + 0.5 is rounded in the rounding mode that is set (lib/mlkit/basis/Real.sml): round (2^52 + 1) is 2^52 + 2 and round \~(2^52 + 1) is \~2^52 to nearest
+- **MLKit** &mdash; round (0.5 + 2^\~53) is 0, not 1: x + 0.5 rounds to 1 (but under TO\_POSINF), which round takes for a tie, and floor x is 0, which is even
+- **MLKit** &mdash; under TO\_POSINF round (2^62 - 512) is minInt: x + 0.5 rounds up to 2^62, whose floor wraps around (as ceil's does: Real.ceil/Overflow-above-maxInt)
 
 </details>
 
-<details><summary>Tests (28)</summary>
+<details><summary>Tests (40)</summary>
 
-For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `down` &middot; `up` &middot; `negative` &middot; `tie-half` &middot; `tie-one-and-half` &middot; `tie-two-and-half` &middot; `tie-three-and-half` &middot; `tie-negative-half` &middot; `tie-negative` &middot; `tie-negative-odd` &middot; `just-below-half` &middot; `toplevel` &middot; `large` &middot; `Overflow-posInf` (raises Overflow) &middot; `Overflow-negInf` (raises Overflow) &middot; `Domain-nan` (raises Domain) &middot; `Overflow-above-maxInt` &middot; `Overflow-below-minInt` &middot; `Overflow-negative-huge` &middot; `minInt` &middot; `minInt-minus-half-tie-to-even` &middot; `near-maxInt` &middot; `Overflow-maxInt-plus-half-tie-to-even` &middot; `law-halves-to-even` &middot; `tie-to-even`
+For `Real`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `down` &middot; `up` &middot; `negative` &middot; `tie-half` &middot; `tie-one-and-half` &middot; `tie-two-and-half` &middot; `tie-three-and-half` &middot; `tie-negative-half` &middot; `tie-negative` &middot; `tie-negative-odd` &middot; `just-below-half` &middot; `just-below-half-negative` &middot; `toplevel` &middot; `large` &middot; `Overflow-posInf` (raises Overflow) &middot; `Overflow-negInf` (raises Overflow) &middot; `Domain-nan` (raises Domain) &middot; `Overflow-above-maxInt` &middot; `Overflow-below-minInt` &middot; `Overflow-negative-huge` &middot; `minInt` &middot; `minInt-minus-half-tie-to-even` &middot; `near-maxInt` &middot; `Overflow-maxInt-plus-half-tie-to-even` &middot; `large-odd` &middot; `large-odd-negative` &middot; `large-tie-to-even` &middot; `large-tie-to-even-below` &middot; `two-to-the-53` &middot; `two-to-the-53-negative` &middot; `law-halves-to-even` &middot; `*` &middot; `Overflow-*` &middot; `Overflow-*` (raises Overflow) &middot; `Domain-*` (raises Domain) &middot; `law-every-mode` &middot; `tie-to-even`
 
 For `LargeReal`, in [tests/basis/real.sml](../../../../tests/basis/real.sml): `tie-to-even`
 
-For `Real32`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `tie-to-even` &middot; `Domain-nan` (raises Domain)
+For `Real32`, in [tests/basis/real32.sml](../../../../tests/basis/real32.sml): `tie-to-even` &middot; `Domain-nan` (raises Domain) &middot; `*`
 
 </details>
 
