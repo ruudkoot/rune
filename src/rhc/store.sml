@@ -20,14 +20,19 @@ struct
      level 2, before its Core (ruling 66) *)
   (* 4: the hash of a unit's Core, a part of its own, which the link's memo
      is keyed by (build-cache-issues.md, issue 35) *)
-  val version = 4
+  (* 5: the head's digest of the units before the unit, by which an entry
+     stands asking none of its usages (build-cache-issues.md, issue 37's
+     B) *)
+  val version = 5
 
   (* what a compile read, by a name of rhc's (H1, H2, H7, H9), and what it
      gave then *)
   type usage = string * string
   (* An entry's head: its usages; the digest of what the unit exports, which
-     its clients' usages name; and the level of the lint that checked it *)
-  type head = {usages : usage list, exports : string, level : int}
+     its clients' usages name; the level of the lint that checked it; and
+     the digest of the units before it in its compile (`priorOf`), "" where
+     one of them had no entry *)
+  type head = {usages : usage list, exports : string, level : int, prior : string}
   (* its sections, each hashed apart: the unit's interface (HsIface's
      bytes) and its parts, which the client lays out (rhc's driver: the
      desugaring's interface, the fingerprints, HsLint's part, the Core's
@@ -48,8 +53,10 @@ struct
 
   val format : (head, sections) S.format =
     {magic = magic, version = version, hash = hash,
-     writeHead = fn (w, {usages, exports, level}) => (wusages (w, usages); P.string (w, exports); P.int (w, level)),
-     readHead = fn r => let val us = rusages r val e = P.rstring r in {usages = us, exports = e, level = P.rint r} end,
+     writeHead = fn (w, {usages, exports, level, prior}) =>
+                   (wusages (w, usages); P.string (w, exports); P.int (w, level); P.string (w, prior)),
+     readHead = fn r => let val us = rusages r val e = P.rstring r val l = P.rint r
+                        in {usages = us, exports = e, level = l, prior = P.rstring r} end,
      sections = fn {iface, parts, count} => iface :: List.tabulate (count, parts),
      ofSections = fn get => {iface = get 0, parts = fn i => get (i + 1), count = ~1}}
 
@@ -68,20 +75,39 @@ struct
     | SOME (k, v) => SOME (k, v, current (k, v))
 
   (* Whether an entry stands. One checked at a lower level of the lint than
-     this compile checks at does not, nor one of whose usages `judge` finds
-     one that gives now other than it gave its compile (`differing`), from
-     the graph of this compile *)
-  fun holdsBy {level = want : int, judge : usage list -> (string * string * string) option} ({usages, level = l, ...} : head)
+     this compile checks at does not. One whose digest of the units before
+     it is theirs now (`prior ()`) does, each of them the entry it was, so
+     that each of its usages gives what it gave (build-cache-issues.md,
+     issue 37's B). Else one stands where `judge` finds none of its usages
+     that gives now other than it gave its compile (`differing`), from the
+     graph of this compile *)
+  fun holdsBy {level = want : int, prior : unit -> string option,
+               judge : usage list -> (string * string * string) option} ({usages, level = l, prior = b, ...} : head)
       : S.verdict =
     if l < want then S.Refused ("it was checked at a lower level of the lint (" ^ Int.toString l ^ ")")
+    else if b <> "" andalso prior () = SOME b then S.Stands
     else
       case judge usages of
         NONE => S.Stands
       | SOME (k, v, now) => S.Refused ("its compile read " ^ k ^ " as " ^ v ^ ", which is " ^ now ^ " now")
 
-  (* `holdsBy` asking each usage of `current` *)
+  (* `holdsBy` with no digest of the units before, each usage asked of
+     `current` *)
   fun holds {level : int, current : string -> string} : head -> S.verdict =
-    holdsBy {level = level, judge = differing (fn (k, _) => current k)}
+    holdsBy {level = level, prior = fn () => NONE, judge = differing (fn (k, _) => current k)}
+
+  (* The digest of the units before a unit: each one's name, key and
+     entry's sum, in the order of the compile, after what else names their
+     modules (the fixpoint of a cycle's exports), each unit's on the digest
+     of those before it, so that a compile makes each unit's at the cost of
+     one. The sum covers an entry's head and every section (UnitStore), so
+     where each is the same entry, every usage of the unit after them gives
+     what it gave *)
+  fun priorStart (setting : string) : string = P.hash ("prior " ^ setting)
+  fun priorNext (p : string, (name : string, k : string, sum : string)) : string =
+    P.hash (String.concatWith "\n" [p, name, k, sum])
+  fun priorOf (setting : string, units : (string * string * string) list) : string =
+    List.foldl (fn (u, p) => priorNext (p, u)) (priorStart setting) units
 
   (* A part of an entry of the read-only store `dir` (a layer, bin/rhc's
      snapshot) that does not hold what its hash says, read after the entry

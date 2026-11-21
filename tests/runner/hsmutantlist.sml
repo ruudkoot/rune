@@ -229,5 +229,33 @@ struct
           "make them, as at the least",
           "driver.sml", "val twoPhase = case fixpoint of HsModules.Least => true | HsModules.Greatest => false",
           "val twoPhase = case fixpoint of HsModules.Least => true | HsModules.Greatest => true",
+          []),
+     rhc ("HU22", "units", "B: the digest of the units before asked before the lint's level: an entry checked at level 0 " ^
+                   "taken by a compile at level 2",
+          "store.sml",
+          "if l < want then S.Refused (\"it was checked at a lower level of the lint (\" ^ Int.toString l ^ \")\")\n" ^
+          "    else if b <> \"\" andalso prior () = SOME b then S.Stands",
+          "if b <> \"\" andalso prior () = SOME b then S.Stands\n" ^
+          "    else if l < want then S.Refused (\"it was checked at a lower level of the lint (\" ^ Int.toString l ^ \")\")",
+          ["hs/units/configs", "hs/units/store"]),
+     rhc ("HU23", "units",
+          "equivalent: the digest of the units before by their names and keys alone, not their entries. Not seen by any " ^
+          "program: an entry of a key is what its compile makes of the texts its key holds after the units before it, whose " ^
+          "keys the digest holds too, the same at every compile of a configuration; two entries of one key differ where " ^
+          "one was checked at level 2 and the other below, by HsLint's part and the level, which no usage of a unit after " ^
+          "reads",
+          "driver.sml", "SOME (RhcStore.priorNext (p, (#name u, #key u, s)))",
+          "SOME (RhcStore.priorNext (p, (#name u, #key u, \"\")))", []),
+     rhc ("HU24", "units", "B: a unit before that this compile made, and has not kept, counted as the entry it was: an " ^
+                   "import's exports moved, the unit after it taken",
+          "store.sml", "else if b <> \"\" andalso prior () = SOME b then S.Stands",
+          "else if b <> \"\" andalso (case prior () of SOME x => x = b | NONE => true) then S.Stands",
+          [holes ^ "a-exports", holes ^ "h1-name"]),
+     rhc ("HU25", "units",
+          "equivalent: the digest of the units before without the fixpoint of a cycle's exports. Not seen by any program, as " ^
+          "HU21: a unit accepted at both fixpoints has the same exports and scopes at each",
+          "driver.sml",
+          "val namesSetting = \"names \" ^ (case fixpoint of HsModules.Least => \"least\" | HsModules.Greatest => \"greatest\")",
+          "val namesSetting = \"names\"",
           [])]
 end
