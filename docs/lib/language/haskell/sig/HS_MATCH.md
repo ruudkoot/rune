@@ -149,8 +149,11 @@ val marks : string * Core.ty * (string * Core.ty) list * HsDsCore.texp -> HsDsCo
 ```
 
 `marks (t, tupleTy, vs, body)` is `body` after each of the selectors
-`vs` of the tuple `t` is marked one for the collector (sel\_mark,
-the VM's thunk\_selector).
+`vs` of the tuple `t` is marked one for the collector (sel\_mark, the
+VM's thunk\_selector).
+
+Only those `body` names are marked: one nothing names Mid drops,
+unless a mark names it.
 
 ### <a name="val-markfields"></a>`markFields`
 
@@ -163,7 +166,8 @@ is marked one for the collector, of its field of the value `a`, of type
 `t`.
 
 Each of `fs` is the field's index and the selector's Core name and
-type.
+type. A selector nothing names is to be left out: Mid drops it, unless
+a mark names it.
 
 ### <a name="val-onefield"></a>`oneField`
 
