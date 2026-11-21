@@ -907,13 +907,20 @@ struct
           val envB = List.foldl (fn ((n, x, t), e) => V.bind (e, nameText n, Core.Var x, t)) env binds
           (* a pattern binding's own value is a name of Core's alone *)
           val envR = if recursive then envB else env
-          (* the tuple form's selectors marked before the body (D17's C) *)
-          val body = List.foldl (fn ((a, tt, fs), b) => Mt.markFields (a, tt, fs, b)) (k envB) marking
+          val scope = k envB
           (* in order: a pattern binding's value before its variables *)
           fun made scope = List.map (fn (x, t, mk) => let val e = mk scope in (x, getOpt (t, C.lazyTy (#2 e)), e) end) defs
+          val values = made (if recursive then envR else env)
+          (* the tuple form's selectors marked before the body (D17's C): those
+             the body names, or in a recursive group a value of the group; a
+             selector nothing names Mid drops, unless a mark names it *)
+          fun named x = C.mentions (x, #1 scope)
+                        orelse (recursive andalso List.exists (fn (_, _, (e, _)) => C.mentions (x, e)) values)
+          val body = List.foldl (fn ((a, tt, fs), b) => Mt.markFields (a, tt, List.filter (fn (_, x, _) => named x) fs, b))
+                                scope marking
         in
-          if recursive then C.letrec (made envR, body)
-          else List.foldr (fn ((x, t, e), b) => C.let_ (x, t, e, b)) body (made env)
+          if recursive then C.letrec (values, body)
+          else List.foldr (fn ((x, t, e), b) => C.let_ (x, t, e, b)) body values
         end
       fun go ([], env) = k env
         | go (g :: gs, env) = bindGroup (env, g, fn env' => go (gs, env'))

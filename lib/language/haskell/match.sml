@@ -34,19 +34,25 @@ struct
      `t` marked one for the collector (sel_mark, thunk_selector), after the
      selectors are made and before what they scope over *)
   fun markFields (a : Core.atom, t : Core.ty, fs : (int * string * Core.ty) list, (body, bt) : C.texp) : C.texp =
-    let
-      val w = C.fresh "w"
-      fun mark ((i, x, xt), b) =
-        Core.Case (Core.Prim ("sel_mark", [xt, t], [Core.Var x, a, Core.Lit (Core.LInt (IntInf.fromInt i)), Core.Var w]),
-                   "_", [Core.AltDefault b])
-    in
-      (Core.Case (Core.Prim ("real_world", [], []), w, [Core.AltDefault (List.foldr mark body fs)]), bt)
-    end
+    if null fs then (body, bt)
+    else
+      let
+        val w = C.fresh "w"
+        fun mark ((i, x, xt), b) =
+          Core.Case (Core.Prim ("sel_mark", [xt, t], [Core.Var x, a, Core.Lit (Core.LInt (IntInf.fromInt i)), Core.Var w]),
+                     "_", [Core.AltDefault b])
+      in
+        (Core.Case (Core.Prim ("real_world", [], []), w, [Core.AltDefault (List.foldr mark body fs)]), bt)
+      end
+
+  (* the same, for the selectors `body` names: one nothing names Mid drops,
+     unless a mark names it *)
+  fun markNamed (a, t, fs, body as (e, _)) = markFields (a, t, List.filter (fn (_, x, _) => C.mentions (x, e)) fs, body)
 
   (* each selector of the tuple t marked one for the collector: field i of
      t the i-th of `vs` *)
   fun marks (t, tupleTy, vs, body) =
-    markFields (Core.Var t, tupleTy, ListPair.map (fn (i, (x, xt)) => (i, x, xt)) (List.tabulate (length vs, fn i => i), vs), body)
+    markNamed (Core.Var t, tupleTy, ListPair.map (fn (i, (x, xt)) => (i, x, xt)) (List.tabulate (length vs, fn i => i), vs), body)
 
   type clause = A.pat list * (V.env * C.texp -> C.texp)
 
@@ -199,7 +205,7 @@ struct
             val ot = C.lazyTy (#2 occ)
           in
             C.let_ (x, vt, field (#1 occ, ot, k, i),
-                    markFields (#1 occ, ot, [(i, x, vt)], success (V.bind (env, nameText v, Core.Var x, vt))))
+                    markNamed (#1 occ, ot, [(i, x, vt)], success (V.bind (env, nameText v, Core.Var x, vt))))
           end
         else
           (* rule (d): each variable a match of its own, made when forced *)
