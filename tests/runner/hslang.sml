@@ -282,10 +282,52 @@ struct
         end
     end
 
+  (* D17's C for a generalised binding behind rhc's --selectors=generalised
+     (off by default): the option changes the program's desugaring -- its
+     Core marks more selectors -- and the bytecode; without it the bytecode
+     is --selectors=monomorphic's, the default's; and the program prints
+     what it is to print each way *)
+  fun selectorsGeneralised b =
+    let
+      val n = OS.Path.file b
+      val dir = run ^ "/hs-selectors/" ^ n
+      val () = mkdirs dir
+      fun f x = dir ^ "/" ^ x
+      fun fail why = say ("FAIL hs-selectors." ^ n ^ ": " ^ why ^ "\n")
+      fun rhc (flags, out, tag) =
+        exec {cmd = [fromRoot "bin/rhc"] @ flags @ [fromRoot (b ^ ".hs")] @ out, dir = NONE, stdin = "",
+              stdout = f (tag ^ ".out"), stderr = f (tag ^ ".err"), timeout = 600}
+      fun core (flags, tag) = (ignore (rhc (["--desugar-only", "--dump-after=desugar", "--canonical-core"] @ flags, [], tag));
+                               read (f (tag ^ ".out")) ^ read (f (tag ^ ".err")))
+      fun marks text = length (List.filter (fn l => String.isSubstring "sel_mark" l) (String.fields (fn c => c = #"\n") text))
+      val off = core ([], "core-off")
+      val on = core (["--selectors=generalised"], "core-on")
+      fun compile (flags, tag) =
+        if rhc (flags, ["-o", f (tag ^ ".rbc")], tag) <> 0 then (fail (tag ^ ": " ^ firstNonEmpty (f (tag ^ ".err"))); false)
+        else true
+      fun runs tag =
+        (ignore (exec {cmd = [fromRoot "bin/runevm", "--count", f (tag ^ ".rbc")], dir = NONE, stdin = "",
+                       stdout = f (tag ^ ".run"), stderr = f (tag ^ ".runerr"), timeout = 600});
+         if same (f (tag ^ ".run"), fromRoot (b ^ ".expected")) then ()
+         else fail (tag ^ " prints otherwise: " ^ firstNonEmpty (f (tag ^ ".runerr"))))
+    in
+      if marks off = 0 andalso marks on = 0 then fail ("no Core dumped (" ^ dir ^ ")") else ();
+      if marks on <= marks off then fail ("--selectors=generalised marks " ^ Int.toString (marks on) ^ " selectors, without it "
+                                          ^ Int.toString (marks off) ^ ": the desugaring does not change")
+      else ();
+      if compile ([], "off") andalso compile (["--selectors=monomorphic"], "mono") andalso compile (["--selectors=generalised"], "on")
+      then
+        (if same (f "off.rbc", f "mono.rbc") then () else fail "the bytecode without the option is not --selectors=monomorphic's";
+         if same (f "off.rbc", f "on.rbc") then fail "--selectors=generalised leaves the bytecode as it is" else ();
+         List.app runs ["off", "mono", "on"])
+      else ()
+    end
+
   fun command args =
     case args of
       "hs-stub-compile" :: rest => SOME (fn () => stubCompile rest)
     | ["hs-selectors-nursery", b] => SOME (fn () => selectorsNursery b)
+    | ["hs-selectors-generalised", b] => SOME (fn () => selectorsGeneralised b)
     | "hs-stub-run" :: rest => SOME (fn () => stubRun rest)
     | ["hs-programs"] => SOME programs
     | _ => NONE
@@ -326,7 +368,9 @@ struct
                (List.map (fn b => Oracles.jobIn ("RUNE_TEST_RUN=\"$RUNE_TEST_RUN\"/hs-selectors ", OS.Path.file b,
                                                  ["jit-one-with", "bin/rhc", b, b ^ ".hs"], [], 1, 600, 3600))
                          selectors
-                @ [Oracles.jobIn ("", "nursery", ["hs-selectors-nursery", "tests/hs/selectors/count"], [], 1, 600, 3600)]))),
+                @ [Oracles.jobIn ("", "nursery", ["hs-selectors-nursery", "tests/hs/selectors/count"], [], 1, 600, 3600),
+                   Oracles.jobIn ("", "generalised", ["hs-selectors-generalised", "tests/hs/selectors/generalised"], [], 1, 600,
+                                  3600)]))),
        tagged (runnerTags @ runnerCovers)
          (Test.describe "hs/runner"
             [Test.describe "silent" (List.map silent (Lang.programsOf (#lang stub, suffixes, mains))),

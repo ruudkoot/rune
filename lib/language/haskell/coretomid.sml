@@ -1323,6 +1323,30 @@ struct
               letv ("bool", "(prim " ^ name ^ " " ^ String.concatWith " " xs ^ " : " ^ ty ^ ")", fn b =>
                 branching (env, c, fn c => "(if " ^ b ^ " " ^ deliver (env, c, "(con0 0 : bool)", res) ^ " "
                                            ^ deliver (env, c, "(con0 1 : bool)", res) ^ ")")))
+          (* a generalised binding's selector and its tuple (D17's C), each one
+             suspension at every type: marked at unit's, as the same object;
+             where either is held otherwise, no mark *)
+          fun polyMark () =
+            let
+              fun units (TForall (a, _, b)) = units (substTy ([(a, TCon "()")], b))
+                | units t = t
+              fun held (Var y, t) =
+                    (case lookup (env, y) of
+                       {rep = Lazy s, arity, ...} =>
+                         SOME (s ^ (if arity = 0 then "" else typeArgs (y, List.tabulate (arity, fn _ => valTy env (TCon "()")))),
+                               slotTy env (units t))
+                     | _ => NONE)
+                | held _ = NONE
+            in
+              case (atoms, tys) of
+                ([x, t, Lit (LInt i), _], [a, b]) =>
+                  (case (held (x, a), held (t, b)) of
+                     (SOME (xs, xty), SOME (ts, tty)) =>
+                       letv ("unit", "(prim thunk_selector " ^ xs ^ " " ^ ts ^ " " ^ IntInf.toString i ^ " : (" ^ xty ^ " * " ^ tty
+                                     ^ " * int) -> unit)", fn _ => deliver (env, c, "()", res))
+                   | _ => deliver (env, c, "()", res))
+              | _ => raise Fail "CoreToMid: sel_mark's atoms"
+            end
           val i2 = "(int * int)"
           val n2 = "(IntInf.int * IntInf.int)"
           val r2 = "(real * real)"
@@ -1387,8 +1411,10 @@ struct
           | "ref_set" => midAs ("ref_set", "((" ^ S ^ " ref) * " ^ S ^ ") -> unit", "unit")
           | "real_world" => deliver (env, c, "()", res)
           | "sel_mark" =>
-              (case tys of
-                 [a, b] => midAs ("thunk_selector", "(" ^ slotTy env a ^ " * " ^ slotTy env b ^ " * int) -> unit", "unit")
+              (case (tys, atoms) of
+                 ([TForall _, _], _) => polyMark ()
+               | ([_, TForall _], _) => polyMark ()
+               | ([a, b], _) => midAs ("thunk_selector", "(" ^ slotTy env a ^ " * " ^ slotTy env b ^ " * int) -> unit", "unit")
                | _ => raise Fail "CoreToMid: sel_mark's types")
           | "raise" => atomSlots (env, atoms, ps, fn [e] => "(raise " ^ e ^ ")" | _ => raise Fail "raise")
           | "raise_io" => atomSlots (env, atoms, ps, fn (e :: _) => "(raise " ^ e ^ ")" | _ => raise Fail "raise_io")

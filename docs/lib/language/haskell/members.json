@@ -1187,6 +1187,13 @@
     },
     {
      "kind": "val",
+     "name": "generalisedSelectors",
+     "spec": "val generalisedSelectors : bool ref",
+     "doc": "`generalisedSelectors`: whether a local generalised pattern binding\ntakes the tuple form (`rhc --selectors=generalised`); false by default.\n\nA binding the checker generalised, of two variables or more, is then\none tuple of its variables' components at every type, as its value is\none suspension, and each variable that tuple's selector at its own\ntypes, marked (D17's C for a generalised binding); without it each\nvariable is a lazy match of its own (rule (d)).\n\n",
+     "page": "sig/HS_DESUGAR.md#val-generalisedselectors"
+    },
+    {
+     "kind": "val",
      "name": "program",
      "spec": "val program : {modules : module_ list, groups : string list list, infer : HsInfer.env, evidence : HsEvidence.table,\n               derived : (string * string * HsAst.decl list) list, prelude : string * string -> string option,\n               entity : string * string * string -> string, runtime : Core.program, leaves : (string * string list) list,\n               main : string}\n              -> Core.program",
      "doc": "`program {modules, groups, infer, evidence, derived, prelude, entity, runtime, leaves, main}` is the Core program of the checked `modules`.\n\nThe modules are every module of the program and of the library it\nreaches, in `groups`, their strongly connected groups by identity in\norder, each desugared as a unit after those before it (`unit`). Their\nchecking left the environment `infer`, the records `evidence` and the\nmethods of the derived instances, `derived`, each with its module and\nits instance's identity (HsDerive, M14), which are desugared as a\nwritten instance's.\n\n`prelude` and `entity` find what the translations name (HsDsEnv);\n`runtime` is rhc's runtime in Core, whose types it is written against\nand which it does not repeat; `leaves` are the modules of primitives\nthat no file holds, each with what it exports, the runtime's values of\nthose names; `main` is the key of the program's `main`. The result\nholds what `main` reaches, and the data types it names, each body made\nonly where `main` reaches it.\n\n**Raises** `Fail` for what the checker should have refused, or a form\nthis desugaring does not take, with a message.\n\n",

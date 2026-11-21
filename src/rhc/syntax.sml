@@ -322,6 +322,7 @@ struct
               orelse String.isPrefix "--target=" a orelse String.isPrefix "-O" a
               orelse String.isPrefix "--thunks=" a orelse String.isPrefix "--dump-after=" a orelse a = "--pass-stats"
               orelse String.isPrefix "--strings=" a orelse String.isPrefix "--steps=" a orelse String.isPrefix "--depth=" a
+              orelse a = "--selectors=generalised" orelse a = "--selectors=monomorphic"
               orelse String.isPrefix "--match=" a orelse a = "--desugar-only" orelse a = "--desugar-units"
               orelse a = "--canonical-core"
               orelse String.isPrefix "--eta=" a orelse String.isPrefix "--strictness=" a orelse a = "--simplify-stats"
@@ -338,6 +339,10 @@ struct
                gives, or the level's where none does, Sestoft's trees at -O2
                and above (D34, RhcMain.matchOptions) *)
             val () = if List.exists (fn a => a = "--strings=whole") args then strings := CoreRuntime.Whole else ()
+            (* and the desugaring of a generalised binding, the last --selectors's *)
+            val () = HsDesugar.generalisedSelectors :=
+                       List.foldl (fn ("--selectors=generalised", _) => true | ("--selectors=monomorphic", _) => false
+                                    | (_, g) => g) (!HsDesugar.generalisedSelectors) args
             val lastMatch = List.foldl (fn (a, m) => if String.isPrefix "--match=" a then SOME a else m) NONE args
             val level = List.foldl (fn ("-O0", _) => 0 | ("-O1", _) => 1 | ("-O2", _) => 2 | (_, l) => l) (!Pass.level) args
             val () = HsMatch.order := (case lastMatch of

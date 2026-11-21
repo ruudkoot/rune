@@ -151,6 +151,10 @@ struct
     \  --thunks=c            suspensions in Mid by form C's primitives, the one form there is\n\
     \  --fault=F             for the tests of what catches it, a fault of Core to Mid made\n\
     \                        on purpose: thunk-in-slot, force-behind-cast or susp-type-arg\n\
+    \  --selectors=S         a local pattern binding the checker generalised: monomorphic, each\n\
+    \                        variable a lazy match of its own (default, rule (d)); or\n\
+    \                        generalised, one tuple at every type and each variable its\n\
+    \                        selector, marked (D17's C)\n\
     \  --strings=S           a string literal's list: lazy, a cell as it is read (default),\n\
     \                        or whole, every cell at once, for D24's measurement\n\
     \  --desugar-only        on a program of Haskell: check it, desugar it to Core, CoreLint\n\
@@ -235,6 +239,8 @@ struct
         | go ("--no-cheap-eagerness" :: rest) = (cheap := false; go rest)
         | go ("--unfoldings" :: rest) = go rest
         | go ("--fault=susp-type-arg" :: rest) = (fault := SOME CoreToMid.SuspTypeArg; go rest)
+        | go ("--selectors=generalised" :: rest) = (HsDesugar.generalisedSelectors := true; go rest)
+        | go ("--selectors=monomorphic" :: rest) = (HsDesugar.generalisedSelectors := false; go rest)
         | go ("--strings=lazy" :: rest) = (strings := CoreRuntime.Lazy; go rest)
         | go ("--strings=whole" :: rest) = (strings := CoreRuntime.Whole; go rest)
         | go (arg :: rest) =

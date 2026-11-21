@@ -77,7 +77,8 @@ made again.
 - The order of a match changes the library's Core, so the snapshot holds
   the library's units in each, the Report's for `-O0` and `-O1` and
   Sestoft's trees for `-O2` (below). `--strings=whole` changes it too, and
-  so does `--unfoldings` at `-O2` (its units' interfaces), and the snapshot
+  so do `--unfoldings` at `-O2` (its units' interfaces) and
+  `--selectors=generalised`, and the snapshot
   holds none of their units: they are made at the first compile, and kept
   in the program's store (below).
 - `--store DIR` keeps the units in `DIR` in place of `.rhc`, and so does
@@ -183,6 +184,7 @@ of them is a bug of rhc's.
 | `--target=T` | the bytecode: `registers` (the default) or `stack` |
 | `--thunks=c` | suspensions in Mid by form C's primitives, the one form there is |
 | `--match=M` | the order of a match: `report`, the Report's, a clause after another, the default at `-O0` and `-O1`; or `sestoft`, decision trees that make no test the tests made decide, the default at `-O2` and above (D34, below) |
+| `--selectors=S` | a local pattern binding the checker generalised, of two variables or more: `monomorphic` (the default), each variable a lazy match of its own (the Report's rule (d)); or `generalised`, the binding one tuple of its variables' components at every type, as its value is one suspension, and each variable that tuple's selector at its own types, marked for the collector (D17's C); off by default, an entry so desugared kept apart from one without in the store |
 | `--strings=S` | a string literal's list: `lazy`, a cell as it is read (the default), or `whole`, for D24's measurement |
 | `--fault=F` | a fault of Core to Mid made on purpose, for the tests of what catches it |
 | `--steps=N` | stop the interpreter after N steps, a bottom |

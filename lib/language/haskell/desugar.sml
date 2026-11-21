@@ -35,6 +35,10 @@ struct
      the value they take fields of and its type, and each selector's field,
      Core name and type *)
   val pendingMarks : (Core.atom * Core.ty * (int * string * Core.ty) list) list ref = ref []
+  (* whether the bindings being defined are a local group's, whose marks the
+     group places (bindGroup), and not the top level's *)
+  val localGroup = ref false
+  val generalisedSelectors = ref false
   fun listTy t = Core.TApp (Core.TCon "[]", t)
   fun elemOf t = case C.lazyTy t of Core.TApp (Core.TCon "[]", e) => e | t' => raise Untyped ("a list of " ^ CoreText.showTy t')
   fun lazyOpt (SOME t) = SOME (C.lazyTy t) | lazyOpt NONE = NONE
@@ -873,12 +877,85 @@ struct
                   | _ => NONE)
              | _ => NONE)
         | _ => NONE
+      (* one the checker generalised, of two variables or more, local (D17's
+         C for a generalised binding): the tuple of the variables' components
+         a type lambda over gvars, one suspension at every type as the value
+         is, and each variable its selector at its own types, a case of the
+         tuple at them, marked; one of the top level, whose CAFs no mark
+         reaches, or overloaded, stays rule (d); and every one without
+         --selectors=generalised (generalisedSelectors) *)
+      fun generalisedTuple () =
+        let
+          val n = length vars
+          val tup = T.tupleCon n
+          val envG = V.bindTypes (env, List.map (fn a => (a, Core.Star)) gvars)
+          fun monoOf (SOME (E.Binding {scheme = {ty, ...}, params = []})) = SOME (V.ty envG ty)
+            | monoOf (SOME (E.Mono t)) = SOME (V.ty envG t)
+            | monoOf _ = NONE
+          val monos = List.mapPartial monoOf records
+        in
+          if length monos <> n then NONE
+          else
+            let
+              val tupleMono = Core.apply (Core.TCon tup, monos)
+              val ks = C.inferKinds (gvars, fn _ => NONE, [tupleMono])
+              val tupleTy = List.foldr (fn ((a, k), t) => Core.TForall (a, k, t)) tupleMono ks
+              val plain = Mt.plainTuple pat
+              val tupName = if plain then tname else "%tup:" ^ coreOf (hd vars)
+              val names = List.map coreOf vars
+              val vts = List.map (fn rec_ => recordType (env, rec_)) records
+              val () = pendingMarks := (Core.Var tupName, tupleTy, List.tabulate (n, fn i => (i, List.nth (names, i), List.nth (vts, i))))
+                                       :: !pendingMarks
+              fun found env3 v =
+                case V.lookup (env3, nameText v) of
+                  SOME (a, at) => (Core.Atom a, at)
+                | NONE => bug "a pattern binding's variable"
+              (* the value matched once, at gvars, where the pattern is no
+                 tuple of variables, whose value is the tuple already *)
+              fun tupleDef env' =
+                let
+                  val _ = valueDef env'
+                  val envT = V.bindTypes (env', ks)
+                  val tt = valOf (!made)
+                  val at = C.app (C.var (tname, tt), List.map (Core.TyArg o Core.TVar o #1) ks)
+                in
+                  C.lam (List.map Core.TyBinder ks,
+                         C.atom (at, fn occ =>
+                           C.atom (C.fail ("exn_pattern", "irrefutable pattern failed", tupleMono), fn (fa, ft) =>
+                             Mt.pattern (envT, occ, pat, fn env3 => C.con (tup, monos, List.map (found env3) vars), (Core.Atom fa, ft)))))
+                end
+              (* the i-th variable: field i of the tuple at its own types, the
+                 others' at what rule (d) gives them *)
+              fun selectorDef i env' =
+                #2 (withScheme (env', List.nth (records, i), fn (env'', _) =>
+                  let
+                    val inst = List.map (fn (a, _) => V.ty env'' (T.TRigid {id = 0, name = a})) ks
+                    val fts = case C.dataArgs (C.instantiate (tupleTy, inst)) of
+                                SOME (_, args) => C.fieldsAt (tup, args)
+                              | NONE => bug "a generalised binding's tuple"
+                    val fnames = List.map (fn _ => C.fresh "f") fts
+                  in
+                    (Core.Case (Core.App (Core.Atom (Core.Var tupName), List.map Core.TyArg inst), C.fresh "c",
+                                [Core.AltCon (tup, fnames, Core.Atom (Core.Var (List.nth (fnames, i))))]),
+                     C.lazyTy (List.nth (fts, i)))
+                  end))
+              val tupleDefs = if plain then [(tname, SOME tupleTy, valueDef)]
+                              else [(tname, NONE, valueDef), (tupName, SOME tupleTy, tupleDef)]
+            in
+              SOME (tupleDefs @ List.tabulate (n, fn i => (List.nth (names, i), SOME (List.nth (vts, i)), selectorDef i)),
+                    ListPair.map (fn (v, (x, t)) => (v, x, t)) (vars, ListPair.zip (names, vts)))
+            end
+        end
     in
       if Mt.tupleForm (length vars) andalso null gvars then tupleBinding ()
       else
-        case fieldOfVariable () of
+        case (if Mt.tupleForm (length vars) andalso !localGroup andalso !generalisedSelectors then generalisedTuple ()
+              else NONE) of
           SOME made => made
-        | NONE => ((tname, NONE, valueDef) :: List.map #1 vs, List.map #2 vs)
+        | NONE =>
+            case fieldOfVariable () of
+              SOME made => made
+            | NONE => ((tname, NONE, valueDef) :: List.map #1 vs, List.map #2 vs)
     end
 
   (* a group of local declarations (3.12, 4.5.1): by dependency, a `let`
@@ -900,7 +977,9 @@ struct
           val members = List.map (fn key => valOf (M.find (byKey, key))) g
           val recursive = length g > 1 orelse List.exists (fn d => d = hd g) (deps (hd g))
           val () = pendingMarks := []
+          val () = localGroup := true
           val parts = List.map (fn b => definitions (env, b, nameText)) members
+          val () = localGroup := false
           val marking = !pendingMarks
           val defs = List.concat (List.map #1 parts)
           val binds = List.concat (List.map #2 parts)

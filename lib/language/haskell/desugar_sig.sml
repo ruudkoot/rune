@@ -45,6 +45,16 @@ sig
      resolved, and whether it is the library's. *)
   type module_ = {id : string, ast : HsAst.module, library : bool}
 
+  (* `generalisedSelectors`: whether a local generalised pattern binding
+     takes the tuple form (`rhc --selectors=generalised`); false by default.
+
+     A binding the checker generalised, of two variables or more, is then
+     one tuple of its variables' components at every type, as its value is
+     one suspension, and each variable that tuple's selector at its own
+     types, marked (D17's C for a generalised binding); without it each
+     variable is a lazy match of its own (rule (d)). *)
+  val generalisedSelectors : bool ref
+
   (* `program {modules, groups, infer, evidence, derived, prelude, entity,
      runtime, leaves, main}` is the Core program of the checked `modules`.
 
