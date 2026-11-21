@@ -1241,7 +1241,8 @@ its class and type constructor, a chain of imports searched until it
 reaches the module asked for -- not by a fold over everything known.
 `--verify-store` takes nothing: it makes every unit and the link, and
 holds each entry that stands for one to what making it gave, byte for byte
-(its usages, its interface and every part, HsLint's where both have one),
+(its usages but its scope's, its interface and every part, HsLint's where
+both have one),
 as Rune's `--verify-cache` does, and fails where one is not. `--whole` reads the library as
 well, the reference, and keeps nothing. A unit's entry is kept in a configuration with no setting of
 the back end (the instruction set, the level, the width of int), since it

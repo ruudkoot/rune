@@ -1364,7 +1364,11 @@ program, a cycle among its units, through one store at levels 0 and 2 of
 the lint, -O2 and both fixpoints of a cycle's exports, coming back to
 each, and through a twin store whose hits ask every usage: each unit and
 the link taken or made alike, and each program the bytes a compile without
-a store gives (issue 37). Core in
+a store gives (issue 37). `hs/units/verify-scopes` grows an import by
+an entity its client does not name: the client stands by its usages, its
+scope's digests as they were, and `--verify-store` holds the store, those
+digests no part of what it compares, and HsLint's part of a unit numbered
+by the unit, not by the units before it (issues 37 and 40). Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an

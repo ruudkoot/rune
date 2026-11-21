@@ -142,6 +142,19 @@ sig
      part's entry of a name wins, and the rest are appended. *)
   val join : library list -> library
 
+  (* `counterFrom (l, n)` is `l` with the inference after it numbering its
+     type variables from `n`.
+
+     A driver numbers each unit's from the same number, the first unit's
+     end (`counterOf`), so that a unit's part is the same whatever entries
+     of the units before it a compile took; a part holds no variable free,
+     so that two units' alike are none of each other's (build-cache-issues.md,
+     issue 40). *)
+  val counterFrom : library * int -> library
+
+  (* `counterOf l` is the number the inference that made `l` ended at. *)
+  val counterOf : library -> int
+
   (* Bytes that are no part of a unit, and why. *)
   exception Decode of string
 

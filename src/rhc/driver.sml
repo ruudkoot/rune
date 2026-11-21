@@ -390,7 +390,9 @@ struct
      usages, its interface, or a part (HsLint's only where both have one:
      an entry made at a higher level of the lint stands at a lower);
      NONE where it does not. Not its digest of the units before it, which
-     names the entries it was made after, and not what it is made of *)
+     names the entries it was made after, nor its scope's usages, digests
+     of its imports' exports that an entry that stands by its usages keeps
+     as they were (issue 37): neither is what it is made of *)
   fun differs ({head = {usages, ...}, sections} : RhcStore.entry,
                (usages' : RhcStore.usage list, sections' as {iface = iface', parts = parts', count = count'} : RhcStore.sections))
       : string option =
@@ -405,8 +407,9 @@ struct
                                                               else if i = coreSumPart then " (its Core's hash)"
                                                               else " (a declaration of its Core)"))
       fun firstPart i = if i >= count' then NONE else case part i of NONE => firstPart (i + 1) | some => some
+      fun reads us = List.filter (fn (k, _) => not (String.isPrefix "scope " k)) us
     in
-      if usages <> usages' then SOME "its usages"
+      if reads usages <> reads usages' then SOME "its usages"
       else if #iface sections <> iface' then SOME "its interface"
       else if length ps <> count' then SOME "its number of parts"
       else firstPart 0
@@ -730,11 +733,20 @@ struct
         in
           lintJoined := (j, l); l
         end
+      (* where the first unit's inference ended, the library's *)
+      val firstCounter = once (fn () => case #hslint (Vector.sub (unitsAt (), 0)) () of
+                                          SOME l => HsLint.counterOf l
+                                        | NONE => 0)
       fun lint () =
         List.app (fn ({ids, r, index, linted, ...} : made) =>
                     let fun own home = List.exists (fn i => i = home) ids
                     in linted := hslintOf {modules = lintModules (own, r), main = mainIn (own, #roots plan), r = r,
-                                           library = fn () => joinedBefore index}
+                                           (* its inference numbered from where the
+                                              first unit's ended, whatever entries
+                                              of the units between a compile took
+                                              (issue 40) *)
+                                           library = fn () => Option.map (fn l => HsLint.counterFrom (l, firstCounter ()))
+                                                                         (joinedBefore index)}
                     end)
           made
       (* each unit made desugared, in order, and kept: the first unit reads

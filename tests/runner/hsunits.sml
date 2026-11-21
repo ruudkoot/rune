@@ -964,9 +964,38 @@ struct
       ListPair.app one (List.tabulate (length settings, fn i => i + 1), settings)
     end
 
+  (* an import's exports moved where the unit that imports it names
+     nothing of what moved: the unit stands by its usages, its scope's
+     usages, digests of what it imports, as they were made, and
+     --verify-store holds it to what compiling it gives but those, which are
+     no part of what it is made of (build-cache-issues.md, issue 37's A) *)
+  fun verifyScopes () =
+    let
+      fun no why = say ("FAIL hs.units.verify-scopes: " ^ why ^ "\n")
+      val d = out ^ "/verify-scopes"
+      fun f x = d ^ "/" ^ x
+      val () = drived d
+      fun rhc (args, log) = rhcIn (d, NONE, ["--store", "st", "--show-units"] @ args @ ["Main.hs", "-o", "w.rbc"], log) = 0
+      val first = rhc ([], "first.log")
+      val () = write (f "Lib.hs", String.concat (List.map (fn l => if String.isPrefix "module Lib" l then "module Lib (double, greeting, triple) where\n"
+                                                                   else l ^ "\n")
+                                                         (String.fields (fn c => c = #"\n") (read (f "Lib.hs"))))
+                                  ^ "triple :: Int -> Int\ntriple x = 3 * x\n")
+      val second = rhc ([], "second.log")
+      val verified = rhc (["--verify-store"], "verified.log")
+    in
+      if not first then no ("the first compile fails: " ^ firstLine (f "first.log"))
+      else if not second then no ("the compile after Lib grows fails: " ^ firstLine (f "second.log"))
+      else if saysOf (read (f "second.log"), "Main") <> ["taken"] then
+        no "Main, which names nothing Lib gained, is not taken"
+      else if not verified then no ("--verify-store refuses: " ^ firstLine (f "verified.log"))
+      else ()
+    end
+
   fun command args =
     case args of
       ["hs-units-drive"] => SOME drive
+    | ["hs-units-verify-scopes"] => SOME verifyScopes
     | ["hs-units-configs"] => SOME configs
     | ["hs-units-elsewhere"] => SOME elsewhere
     | ["hs-units-trim"] => SOME trimmed
@@ -1003,7 +1032,8 @@ struct
          Tools.job ("memo", ["hs-units-memo"], [], 600, 3600), Tools.job ("damaged", ["hs-units-damaged"], [], 600, 3600),
          Tools.job ("verify", ["hs-units-verify"], [], 600, 3600), Tools.job ("trim", ["hs-units-trim"], [], 600, 3600),
          Tools.job ("elsewhere", ["hs-units-elsewhere"], [], 600, 3600),
-         Tools.job ("configs", ["hs-units-configs"], [], 900, 3600)]
+         Tools.job ("configs", ["hs-units-configs"], [], 900, 3600),
+         Tools.job ("verify-scopes", ["hs-units-verify-scopes"], [], 300, 900)]
         @ List.map (fn c => Tools.job ("holes/" ^ c, ["hs-units-hole", c], [], 600, 3600)) (holeCases ())
         @ List.map (fn s => Tools.job ("core/" ^ HsCore.nameOf s, ["hs-units-core", s], [], 500, 1200)) (coreTests ())
       val nightly = List.map (fn c => Tools.job ("random/" ^ c, ["hs-units-random", c], [], 900, 3600)) (holeCases ())
