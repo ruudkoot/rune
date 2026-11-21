@@ -6,6 +6,7 @@
 - `map` (type): [HS_STRING_MAP](../sig/HS_STRING_MAP.md#type-map)
 - `mark` (type): [HS_LAYOUT](../sig/HS_LAYOUT.md#type-mark)
 - `mark` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-mark)
+- `markFields` (val): [HS_MATCH](../sig/HS_MATCH.md#val-markfields)
 - `markForced` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-markforced)
 - `marks` (val): [HS_MATCH](../sig/HS_MATCH.md#val-marks)
 - `matchType` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-matchtype)

@@ -3,7 +3,9 @@
 -- rule, runtime/gc/gc.h), which the program then does not ENTER. Whether one is reduced must not depend on the order
 -- in which a collection reaches the selector and its tuple, which differs between the interpreter's frames and
 -- compiled code's: interpreted, at tier 1, at tier 2 and under --deopt-stress the program counts the same
--- instructions at the default nursery (hs/selectors/count, Oracles.jitOneWith).
+-- instructions at the default nursery (hs/selectors/count, Oracles.jitOneWith). And bindings of one variable of a
+-- pair a variable holds, (_, qo) = q and ~(_, us) matched against u, each its field's selector of the pair; and a
+-- pattern binding of the top level, (lows, highs), whose selectors are CAFs that capture the pair's.
 module Main (main) where
 
 pairs :: Int -> [(Int, Int)]
@@ -19,6 +21,8 @@ polarish x = (x * cos x, x * sin x)
 fields :: String -> [String]
 fields s = let (a, rest) = break (== ',') s in a : case rest of { [] -> []; (_ : r) -> fields r }
 
+(lows, highs) = span (< 7000) [1 .. 9000 :: Int]
+
 main :: IO ()
 main = do
   let (as, bs) = unzip (pairs 20000)
@@ -32,3 +36,10 @@ main = do
   print (round (sum cs) :: Int, round (sum ss) :: Int)
   let fr = [let (n, f) = properFraction x in fromIntegral (n :: Int) + f | x <- [0.5, 1.75 .. 8000 :: Double]]
   print (round (sum fr) :: Int)
+  let q = parts [1 .. 10000]
+      (_, qo) = q
+  print (length (fst q), sum qo)
+  let u = unzip (pairs 5000)
+  case u of
+    ~(_, us) -> print (sum (fst u), sum us)
+  print (sum lows, length highs)

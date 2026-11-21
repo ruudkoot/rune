@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 12 of 12 entries documented |
+| Documentation | 15 of 15 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/match\_sig.sml](../../../../../lib/language/haskell/match_sig.sml) |
 
@@ -37,7 +37,11 @@ to right (rule (g)); a newtype's casts and forces nothing (rules (k),
 dictionaries the checker chose (rule (h)), a character literal by a
 case on its code point, a string literal as the list of its characters
 (defect 7); `~p` binds each variable of `p` to a match of its own that
-is made only when the variable is forced (rule (d)); `x@p` binds `x`
+is made only when the variable is forced (rule (d)), but where `p` has
+two variables or more, the tuple form's selectors ([`tupleForm`](#val-tupleform)), and
+where its one variable is a field of what a variable holds, that
+field's selector ([`oneField`](#val-onefield)), each marked for the collector (the
+roadmap's D17, C); `x@p` binds `x`
 to the value (rule (e)); `n+k` compares by `>=` and binds `n` to the
 value less `k` (rule (s)); a record pattern tests its constructor and
 matches its fields in the pattern's order (rules (m) to (o)).
@@ -62,6 +66,9 @@ sig
   val <a href="#val-plaintuple">plainTuple</a> : HsAst.pat -&gt; bool
   val <a href="#val-selector">selector</a> : string * Core.ty * (string * Core.ty) list * int -&gt; HsDsCore.texp
   val <a href="#val-marks">marks</a> : string * Core.ty * (string * Core.ty) list * HsDsCore.texp -&gt; HsDsCore.texp
+  val <a href="#val-markfields">markFields</a> : Core.atom * Core.ty * (int * string * Core.ty) list * HsDsCore.texp -&gt; HsDsCore.texp
+  val <a href="#val-onefield">oneField</a> : HsAst.pat -&gt; (string * int) option
+  val <a href="#val-field">field</a> : Core.atom * Core.ty * string * int -&gt; HsDsCore.texp
   type <a href="#type-clause">clause</a> = HsAst.pat list * (HsDsEnv.env * HsDsCore.texp -&gt; HsDsCore.texp)
   val <a href="#val-clauses">clauses</a> : HsDsEnv.env * occurrence list * clause list * (Core.ty -&gt; HsDsCore.texp) -&gt; HsDsCore.texp
   val <a href="#val-pattern">pattern</a> : HsDsEnv.env * occurrence * HsAst.pat * (HsDsEnv.env -&gt; HsDsCore.texp) * HsDsCore.texp
@@ -144,6 +151,41 @@ val marks : string * Core.ty * (string * Core.ty) list * HsDsCore.texp -> HsDsCo
 `marks (t, tupleTy, vs, body)` is `body` after each of the selectors
 `vs` of the tuple `t` is marked one for the collector (sel\_mark,
 the VM's thunk\_selector).
+
+### <a name="val-markfields"></a>`markFields`
+
+```sml
+val markFields : Core.atom * Core.ty * (int * string * Core.ty) list * HsDsCore.texp -> HsDsCore.texp
+```
+
+`markFields (a, t, fs, body)` is `body` after each selector of `fs`
+is marked one for the collector, of its field of the value `a`, of type
+`t`.
+
+Each of `fs` is the field's index and the selector's Core name and
+type.
+
+### <a name="val-onefield"></a>`oneField`
+
+```sml
+val oneField : HsAst.pat -> (string * int) option
+```
+
+`oneField p` is the constructor's Core name and the field's index where
+`p`, of one variable, takes it from a field of the constructor.
+
+`p` is a tuple, or a constructor of a data type of one constructor,
+each of whose patterns is `_` but the variable (the roadmap's D17, C,
+for one variable); NONE for any other.
+
+### <a name="val-field"></a>`field`
+
+```sml
+val field : Core.atom * Core.ty * string * int -> HsDsCore.texp
+```
+
+`field (a, t, k, i)` is field `i` of the value `a`, of type `t`, which
+the constructor `k` made, the type's one constructor.
 
 ### <a name="type-clause"></a>`clause`
 

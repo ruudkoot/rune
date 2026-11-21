@@ -30,19 +30,23 @@ struct
   fun selector (t : string, tupleTy : Core.ty, vs : (string * Core.ty) list, i : int) : C.texp =
     C.caseCon (Core.Var t, tupleTy, [(HsTypes.tupleCon (length vs), fn fields => C.var (List.nth (fields, i)))], NONE)
 
-  (* each selector of the tuple t marked one for the collector
-     (sel_mark, thunk_selector: field i of t), after the selectors are made
-     and before what they scope over *)
-  fun marks (t, tupleTy, vs, (body, bt)) =
+  (* each selector `x` (of type `xt`) of field `i` of the value `a` of type
+     `t` marked one for the collector (sel_mark, thunk_selector), after the
+     selectors are made and before what they scope over *)
+  fun markFields (a : Core.atom, t : Core.ty, fs : (int * string * Core.ty) list, (body, bt) : C.texp) : C.texp =
     let
       val w = C.fresh "w"
-      val indexed = ListPair.zip (List.tabulate (length vs, fn i => i), vs)
-      fun mark ((i, (x, xt)), b) =
-        Core.Case (Core.Prim ("sel_mark", [xt, tupleTy], [Core.Var x, Core.Var t, Core.Lit (Core.LInt (IntInf.fromInt i)), Core.Var w]),
+      fun mark ((i, x, xt), b) =
+        Core.Case (Core.Prim ("sel_mark", [xt, t], [Core.Var x, a, Core.Lit (Core.LInt (IntInf.fromInt i)), Core.Var w]),
                    "_", [Core.AltDefault b])
     in
-      (Core.Case (Core.Prim ("real_world", [], []), w, [Core.AltDefault (List.foldr mark body indexed)]), bt)
+      (Core.Case (Core.Prim ("real_world", [], []), w, [Core.AltDefault (List.foldr mark body fs)]), bt)
     end
+
+  (* each selector of the tuple t marked one for the collector: field i of
+     t the i-th of `vs` *)
+  fun marks (t, tupleTy, vs, body) =
+    markFields (Core.Var t, tupleTy, ListPair.map (fn (i, (x, xt)) => (i, x, xt)) (List.tabulate (length vs, fn i => i), vs), body)
 
   type clause = A.pat list * (V.env * C.texp -> C.texp)
 
@@ -84,6 +88,53 @@ struct
 
   (* a constructor's fields, as a case binds them, matched *)
   fun occurrences fields = List.map (fn (x, t) => (Core.Var x, t)) fields
+
+  (* ---- One variable, a field of a value (D17's C for one variable) ---- *)
+
+  (* whether the constructor of key k is the one constructor of a data type *)
+  fun onlyConstructor k =
+    case C.conInfo (V.conName k) of
+      SOME {tycon, ...} => (case C.tycon tycon of SOME (_, C.DataS [_]) => true | _ => false)
+    | NONE => false
+
+  (* the field a pattern of one variable takes it from: a tuple or a
+     constructor of a data type of one constructor, each of whose patterns
+     is `_` but one, the variable (each maybe in parentheses or lazy, which
+     changes nothing of a variable or `_`); SOME (the constructor's name in
+     Core, the field's index) *)
+  fun oneField (A.P (_, x)) =
+    let
+      fun leaf (A.P (_, y)) =
+        case y of
+          A.PVar _ => SOME true
+        | A.PWild => SOME false
+        | A.PParen p => leaf p
+        | A.PLazy p => leaf p
+        | _ => NONE
+      (* the index of the one variable of ps, every other `_` *)
+      fun at ps =
+        let
+          val leaves = List.map leaf ps
+          val vars = List.filter (fn (_, l) => l = SOME true) (ListPair.zip (List.tabulate (length ps, fn i => i), leaves))
+        in
+          if List.all isSome leaves then (case vars of [(i, _)] => SOME i | _ => NONE) else NONE
+        end
+      fun constructor (c, ps) =
+        let val k = V.valueKey c
+        in if onlyConstructor k then Option.map (fn i => (V.conName k, i)) (at ps) else NONE end
+    in
+      case x of
+        A.PParen p => oneField p
+      | A.PTuple ps => Option.map (fn i => (HsTypes.tupleCon (length ps), i)) (at ps)
+      | A.PCon (c, ps) => constructor (c, ps)
+      | A.PSeq [A.PA l, A.PO (A.ConOp c), A.PA r] => constructor (c, [l, r])
+      | _ => NONE
+    end
+
+  (* the selector of field i of the value `a`, of type `t`, made by the
+     constructor k: a case of that one constructor *)
+  fun field (a : Core.atom, t : Core.ty, k : string, i : int) : C.texp =
+    C.caseCon (a, t, [(k, fn fields => C.var (List.nth (fields, i)))], NONE)
 
   (* the type of a pattern's variable, by its binder's record *)
   fun varType (env, v) =
@@ -136,6 +187,19 @@ struct
             case (plainTuple q, #1 occ) of
               (true, Core.Var x) => selectors x
             | _ => C.let_ (t, tupleTy, m, selectors t)
+          end
+        else if (case (oneField q, #1 occ) of (SOME _, Core.Var _) => true | _ => false) then
+          (* one variable, a field of a value a variable holds, which may be
+             evaluated elsewhere: its selector, marked (D17's C) *)
+          let
+            val (k, i) = valOf (oneField q)
+            val v = hd (variables q)
+            val vt = varType (env, v)
+            val x = C.fresh "z"
+            val ot = C.lazyTy (#2 occ)
+          in
+            C.let_ (x, vt, field (#1 occ, ot, k, i),
+                    markFields (#1 occ, ot, [(i, x, vt)], success (V.bind (env, nameText v, Core.Var x, vt))))
           end
         else
           (* rule (d): each variable a match of its own, made when forced *)
