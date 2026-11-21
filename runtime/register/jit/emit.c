@@ -2169,7 +2169,8 @@ void emit_ENTER(Jit *j, uint32_t pc, int32_t a, int32_t b) { call_object(j, pc, 
    first (compile.c, SLOW_SELECT; vm_selected): where its tuple is
    evaluated, register s is given the field the collector would give it,
    which is tested again, so that a selector reduced by a collection or not
-   counts the same (D17's count), as the interpreter's FORCE. */
+   counts the same (D17's count), as the interpreter's FORCE. Where the
+   program does not rerun (s.b), a call that syncs nothing. */
 void emit_FORCE(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
     AsmLabel have, thunk, enter; as_label_init(&have); as_label_init(&thunk); as_label_init(&enter);
@@ -2189,6 +2190,7 @@ void emit_FORCE(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     Slow *s = ms_slow(M, SLOW_SELECT, j->next);
     if (s) {
         s->a = b;
+        s->b = !j->vm->prog.reruns;
         ms_load_contag(M, R_S1, R_S0);
         as_cmp_ri(A, R_S1, THUNK_SELECTOR);
         as_jcc(A, CC_AE, &s->here);
