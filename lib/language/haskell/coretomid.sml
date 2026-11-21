@@ -1116,11 +1116,23 @@ struct
               and finish (cellEnv, made) =
                 let
                   val cellEnv = funEnv cellEnv
-                  (* each value's suspension, made in the environment of cells *)
+                  (* each value's suspension, made in the environment of cells;
+                     but a selector, by its shape, of a value of the group made
+                     before it takes that value's suspension, which is what its
+                     cell will hold, as its capture: so that the tuple is its
+                     first field, where the collector looks (D17's C), and not
+                     the cell *)
                   fun susps ([], acc) = sets (List.rev acc)
                     | susps ((x, t, rhs, c) :: rest, acc) =
                         let
-                          val (def, code) = thunkCode (cellEnv, x, t, rhs, "")
+                          val codeEnv =
+                            case selected rhs of
+                              SOME (p, _) =>
+                                (case List.find (fn (y, _, _, _) => y = p) acc of
+                                   SOME (_, pt, _, ps) => bindVal (cellEnv, p, {rep = Lazy ps, ty = pt, arity = 0})
+                                 | NONE => cellEnv)
+                            | NONE => cellEnv
+                          val (def, code) = thunkCode (codeEnv, x, t, rhs, "")
                           val V = valTy cellEnv t
                           val s = freshVar ()
                         in

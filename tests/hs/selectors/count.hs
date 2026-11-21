@@ -6,7 +6,8 @@
 -- instructions at the default nursery (hs/selectors/count, Oracles.jitOneWith). And bindings of one variable of a
 -- pair a variable holds, (_, qo) = q and ~(_, us) matched against u, each its field's selector of the pair; and a
 -- pattern binding of the top level, (lows, highs), whose selectors are CAFs that capture the pair's; and a pattern
--- binding one of whose variables nothing names, which is not marked, so that its selector is not made.
+-- binding one of whose variables nothing names, which is not marked, so that its selector is not made; and a
+-- recursive group, whose selectors take the tuple's suspension itself, not its cell.
 module Main (main) where
 
 pairs :: Int -> [(Int, Int)]
@@ -49,3 +50,5 @@ main = do
     ~(_, us) -> print (sum (fst u), sum us)
   print (sum lows, length highs)
   print (firsts 20000 0)
+  let (ys, m, k) = ([1 .. 3000 * m], 1 :: Int, length "abcdef")
+  print (sum ys, k)
