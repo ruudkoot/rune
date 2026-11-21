@@ -369,15 +369,25 @@ static int real_to_int(VM *vm, double r) {
     if (r >= -(double)INT_MIN_VALUE || r < (double)INT_MIN_VALUE) return raise_with(vm, 1, EXN_OVERFLOW);
     return ret(vm, 1, mk_int((int64_t)r));
 }
+/* The whole real nearest x, a tie going to the even one, whatever the
+   rounding mode (real_round, real_round_r); the sign is x's. Not floor
+   (x + 0.5): the sum is rounded, so 2^52 + 1 gives 2^52 + 2 (the sum is a
+   tie, which goes to even), and upward the greatest real below 1/2 gives 1.
+   floor x is exact, and so is d = x - floor x but where -1/2 < x < 0: d is
+   above 1/2 there and rounds to no less, which gives the 0 that is right
+   all the same. A real with a fraction is below 2^52, so below + 1.0 is
+   exact. */
+static double round_to_even(double x) {
+    if (isnan(x) || isinf(x)) return x;
+    double below = floor(x), d = x - below, r;
+    if (d < 0.5) r = below;
+    else if (d > 0.5) r = below + 1.0;
+    else r = fmod(below, 2.0) == 0.0 ? below : below + 1.0;
+    return copysign(r, x);
+}
 static int p_real_floor(VM *vm) { REAL1("real_floor"); return real_to_int(vm, floor(x)); }
 static int p_real_ceil(VM *vm) { REAL1("real_ceil"); return real_to_int(vm, ceil(x)); }
-static int p_real_round(VM *vm) {
-    REAL1("real_round");
-    double r = floor(x + 0.5);
-    /* round half to even */
-    if (r - x == 0.5 && fmod(r, 2.0) != 0.0) r -= 1.0;
-    return real_to_int(vm, r);
-}
+static int p_real_round(VM *vm) { REAL1("real_round"); return real_to_int(vm, round_to_even(x)); }
 static int p_real_trunc(VM *vm) { REAL1("real_trunc"); return real_to_int(vm, trunc(x)); }
 
 /* SML rendering: ~ for minus, E for exponent, always a fractional part or exponent. */
@@ -545,16 +555,7 @@ static int p_real_is_nan(VM *vm) { REAL1("real_is_nan"); return ret(vm, 1, mk_bo
 static int p_real_floor_r(VM *vm) { REAL1("real_floor_r"); return ret(vm, 1, mk_real(floor(x))); }
 static int p_real_ceil_r(VM *vm) { REAL1("real_ceil_r"); return ret(vm, 1, mk_real(ceil(x))); }
 static int p_real_trunc_r(VM *vm) { REAL1("real_trunc_r"); return ret(vm, 1, mk_real(trunc(x))); }
-/* Ties to even whatever the rounding mode is; x - floor x is exact. */
-static int p_real_round_r(VM *vm) {
-    REAL1("real_round_r");
-    if (isnan(x) || isinf(x)) return ret(vm, 1, mk_real(x));
-    double below = floor(x), d = x - below, r;
-    if (d < 0.5) r = below;
-    else if (d > 0.5) r = below + 1.0;
-    else r = fmod(below, 2.0) == 0.0 ? below : below + 1.0;
-    return ret(vm, 1, mk_real(copysign(r, x)));
-}
+static int p_real_round_r(VM *vm) { REAL1("real_round_r"); return ret(vm, 1, mk_real(round_to_even(x))); }
 static int p_real_sign_bit(VM *vm) { REAL1("real_sign_bit"); return ret(vm, 1, mk_bool(signbit(x) != 0)); }
 static int p_real_copy_sign(VM *vm) { REAL2("real_copy_sign"); return ret(vm, 2, mk_real(copysign(x, y))); }
 static int p_real_frexp_man(VM *vm) { REAL1("real_frexp_man"); int e; return ret(vm, 1, mk_real(frexp(x, &e))); }

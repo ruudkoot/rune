@@ -43,6 +43,12 @@ The pinned libffi source and checksum are in `ffi/libffi/source.json`.
 A missing cross prefix builds the unavailable bridge; native include and
 link flags never enter another target's build. Provisioning those prefixes
 is an explicit development step; no build description executes commands.
+The tests that make foreign calls on the Windows VMs (`ffi/shims/windows32`
+and `windows64`, `ffi/windows/runtime32` and `runtime64`) require the
+runner's capability `ffi-windows32` or `ffi-windows64`, which holds where
+`build/foreign-win32-selected` or `build/foreign-win64-selected`, the flags
+those VMs were built with, has `-DRUNE_FFI=1`; elsewhere they are skipped
+with how to provision the prefix.
 Linux x86, AArch64 and big-endian PowerPC64 use separately provisioned target
 prefixes and explicit FFI acceptance VMs. Ordinary portability builds retain
 their existing optional-feature configuration. The capability report names

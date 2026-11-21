@@ -14,7 +14,11 @@
    dictionaries the checker chose (rule (h)), a character literal by a
    case on its code point, a string literal as the list of its characters
    (defect 7); `~p` binds each variable of `p` to a match of its own that
-   is made only when the variable is forced (rule (d)); `x@p` binds `x`
+   is made only when the variable is forced (rule (d)), but where `p` has
+   two variables or more, the tuple form's selectors (`tupleForm`), and
+   where its one variable is a field of what a variable holds, that
+   field's selector (`oneField`), each marked for the collector (the
+   roadmap's D17, C); `x@p` binds `x`
    to the value (rule (e)); `n+k` compares by `>=` and binds `n` to the
    value less `k` (rule (s)); a record pattern tests its constructor and
    matches its fields in the pattern's order (rules (m) to (o)).
@@ -63,6 +67,26 @@ sig
      `vs` of the tuple `t` is marked one for the collector (sel_mark,
      the VM's thunk_selector). *)
   val marks : string * Core.ty * (string * Core.ty) list * HsDsCore.texp -> HsDsCore.texp
+
+  (* `markFields (a, t, fs, body)` is `body` after each selector of `fs`
+     is marked one for the collector, of its field of the value `a`, of type
+     `t`.
+
+     Each of `fs` is the field's index and the selector's Core name and
+     type. *)
+  val markFields : Core.atom * Core.ty * (int * string * Core.ty) list * HsDsCore.texp -> HsDsCore.texp
+
+  (* `oneField p` is the constructor's Core name and the field's index where
+     `p`, of one variable, takes it from a field of the constructor.
+
+     `p` is a tuple, or a constructor of a data type of one constructor,
+     each of whose patterns is `_` but the variable (the roadmap's D17, C,
+     for one variable); NONE for any other. *)
+  val oneField : HsAst.pat -> (string * int) option
+
+  (* `field (a, t, k, i)` is field `i` of the value `a`, of type `t`, which
+     the constructor `k` made, the type's one constructor. *)
+  val field : Core.atom * Core.ty * string * int -> HsDsCore.texp
 
   (* A clause: its patterns, and its right-hand side, made in the scope of
      the patterns' variables and given what to do where its guards all

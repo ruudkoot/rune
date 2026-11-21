@@ -10,9 +10,10 @@
      known bool;
    * a Case of a value whose tag is known is its arm -- a nullary
      constructor, one made in the function, a variable in an arm of a Case
-     of it; in a Case's default, the arms of its tags go from a Case of the
-     same variable, and a default that is such a Case is the rest of the
-     outer one's arms (Mid.Case);
+     of it, or in defaults of Cases of it whose arms leave one tag of its
+     datatype; in a Case's default, the arms of its tags go from a Case of
+     the same variable, and a default that is such a Case is the rest of
+     the outer one's arms (Mid.Case);
    * a primitive of int, word or char on constants is folded, at the
      target's precision (Target.t's intBits), unless it would raise, which
      is left to run -- a division by 0, an overflow;
@@ -200,8 +201,11 @@ struct
 
   (* What a round knows of a variable's tag where it walks a Case of it:
      in an arm, the arm's tag; in the default, none of the arms' tags, nor
-     those it knew none of around it. A variable is a stamp, bound once, so
-     a fact holds wherever it is set, and is taken away after (knowing). *)
+     those it knew none of around it -- its tag where they leave one of its
+     datatype's (tagLeft). A Case is the one test that sets a fact: an If
+     tests a bool, and ToMid and rhc make a test of a tag a Case. A
+     variable is a stamp, bound once, so a fact holds wherever it is set,
+     and is taken away after (knowing). *)
   datatype tagFact = TagIs of int | TagNot of int list
   val tagFacts : tagFact IntMap.map ref = ref IntMap.empty
   val () = CompilerState.cellRoot ("Simplify.tagFacts", tagFacts)
@@ -950,6 +954,37 @@ struct
               List.app (fn (y, u) => bind (y, ([], u))) (!roundParams); exp (!roundInput); roundTypes := SOME t; t
             end
     in IntTable.find (t, x) end
+
+  (* The tag x has where ts, the tags it is known not to have (TagNot),
+     leave one, at a Case of it whose arms of tags other than ts's are of
+     the tags live: a Case of it there is its arm of that tag, as in an arm
+     of a Case of it. Its tags are the Case's arms' where it has no default
+     (MidLint: they are every tag), else its datatype's, by its type as the
+     round found its binder (typeOf: none for one a rewrite of this round
+     made, which the next round sees); none where the type is no
+     datatype's -- an exception, a type variable -- or one whose
+     constructors' layouts an argument gives (Ty.isOpen, Ty.flatOf), which
+     the shapes lint leaves out too. *)
+  fun tagLeft (x : var, ts : int list, live : int list, d : exp option) : int option =
+    case (d, live) of
+      (NONE, [t]) => SOME t
+    | (NONE, _) => NONE
+    | (SOME _, _ :: _ :: _) => NONE
+    | (SOME _, _) =>
+        case typeOf x of
+          SOME (_, t) =>
+            (case Ty.view t of
+               Ty.Con (stamp, _, _) =>
+                 if isSome (Ty.flatOf stamp) orelse Ty.isOpen stamp then NONE
+                 else
+                   (case Ty.datatypeOf stamp of
+                      SOME {cons, ...} =>
+                        (case List.filter (fn (tag, _, _) => not (List.exists (fn u => u = tag) ts)) cons of
+                           [(tag, _, _)] => SOME tag
+                         | _ => NONE)
+                    | NONE => NONE)
+             | _ => NONE)
+        | NONE => NONE
   (* how many copies and lifted functions deep the function being simplified
      is, of those made for local functions given: a copy whose body gives a
      local function of its own to another copy would go on for ever, where
@@ -1361,17 +1396,20 @@ struct
          | Con0 (0, _) => if spend () then simp (c, env, f) else If (Con0 (0, Ty.bool), simp (c, env, t), simp (c, env, f))
          | a => If (a, simp (c, env, t), simp (c, env, f)))
     (* a value whose tag is known -- a nullary constructor, one made in the
-       function, or a variable in an arm of a Case of it -- goes to its arm,
-       or to the default; an arm of a tag the variable has not -- in the
-       default of a Case of it with an arm of that tag -- goes, and a Case
-       left with no arm is its default. A Case with no default keeps every
-       arm, those not reached too: it has an arm of every tag (MidLint),
-       which dropping one would break (ruling 71) *)
+       function, a variable in an arm of a Case of it, or in defaults of
+       Cases of it whose arms leave it one tag (tagLeft) -- goes to its
+       arm, or to the default; an arm of a tag the variable has not -- in
+       the default of a Case of it with an arm of that tag -- goes, and a
+       Case left with no arm is its default. A Case with no default keeps
+       every arm, those not reached too: it has an arm of every tag
+       (MidLint), which dropping one would break (ruling 71) *)
     | Case (a, arms, d) =>
         let
           val a = substAtom (env, a)
           val key = case a of Var (x, []) => SOME x | _ => NONE
           val fact = case key of SOME x => IntMap.find (!tagFacts, x) | NONE => NONE
+          val not' = case fact of SOME (TagNot ts) => ts | _ => []
+          val live = List.filter (fn (t, _) => not (List.exists (fn u => u = t) not')) arms
           val tag =
             case a of
               Con0 (tag, _) => SOME tag
@@ -1379,9 +1417,9 @@ struct
                 (case (IntTable.find (#known env, x), fact) of
                    (SOME (Made (Con (tag, _, _))), _) => SOME tag
                  | (_, SOME (TagIs tag)) => SOME tag
+                 | (_, SOME (TagNot ts)) => tagLeft (x, ts, List.map #1 live, d)
                  | _ => NONE)
             | _ => NONE
-          val not' = case fact of SOME (TagNot ts) => ts | _ => []
           val taken =
             case tag of
               SOME t => (case List.find (fn (t', _) => t' = t) arms of SOME (_, e) => SOME e | NONE => d)
@@ -1405,7 +1443,6 @@ struct
                   else Case (a, arms, d)
               | _ => Case (a, arms, d)
             end
-          val live = List.filter (fn (t, _) => not (List.exists (fn u => u = t) not')) arms
         in
           case taken of
             SOME e => if spend () then simp (c, env, e) else kept (arms, d)

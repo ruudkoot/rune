@@ -1,0 +1,34 @@
+(* run: alone *)
+(* A Case of a variable in a handler, inside an arm of a Case of it: Simplify knows the tag there, and the inner Case
+   is its arm, which takes the value apart in the handler's block with no test of its own. The shapes lint takes what
+   held where the handler was pushed as what holds in its block: the handler is entered from its region alone, which
+   comes after the push, and a variable's tag never changes. Before, it knew nothing there and refused the decon at -O1
+   and -O2, at lint level 1 and up. g5 calls itself in its other arm, so that it is not put in place of its calls; gthrow
+   raises, so that the handler is entered from a call and stays a handler. *)
+(datatype two () (0 "Lo") (1 "Hi" : int))
+(val gE : exncon (return (newexn "E")))
+(funs
+  (fn gthrow ((vu : unit)) : string
+    (let (vb : exn) (mkexn gE ())
+    (raise vb)))
+  (fn g5 ((v1 : two)) : string
+    (case v1
+      (1
+        (handle vx
+          (return (app gthrow ()))
+          (case v1
+            (1
+              (let (v3 : int) (decon 1 v1 : two)
+              (let (v4 : bool) (prim int_lt v3 5 : (int * int) -> bool)
+              (if v4 (return "caught, hi below 5\n") (return "caught, hi\n")))))
+            (else (return "never\n")))))
+      (else
+        (let (v6 : unit) (prim print "lo, then " : string -> unit)
+        (let (v7 : two) (con 1 7 : two)
+        (return (app g5 v7))))))))
+(val g1 : unit
+  (let (v13 : string) (app g5 (con0 0 : two))
+  (let (v14 : unit) (prim print v13 : string -> unit)
+  (let (v12 : two) (con 1 2 : two)
+  (let (v15 : string) (app g5 v12)
+  (return (prim print v15 : string -> unit)))))))

@@ -117,6 +117,12 @@ struct
      {name = "ffi-linux32", probe = "test -r \"${FFI_LINUX32_PREFIX:-build/deps/libffi/linux32/install}/rune-ffi-dependency.json\" && test -x bin/runevm-ffi32 && test -x bin/runevm-stack-ffi32", hint = "make ffi-libffi-linux32 ffi-portability; native32 execution needs an unrestricted host"},
      {name = "ffi-aarch64", probe = "command -v qemu-aarch64 && test -r \"${FFI_AARCH64_PREFIX:-build/deps/libffi/aarch64/install}/rune-ffi-dependency.json\" && test -x bin/runevm-ffi-aarch64.bin && test -x bin/runevm-stack-ffi-aarch64.bin", hint = "make ffi-libffi-aarch64 ffi-portability; install Clang, target sysroot/binutils and qemu-user"},
      {name = "ffi-ppc64", probe = "command -v qemu-ppc64 && test -r \"${FFI_PPC64_PREFIX:-build/deps/libffi/ppc64/install}/rune-ffi-dependency.json\" && test -x bin/runevm-ffi-ppc64.bin && test -x bin/runevm-stack-ffi-ppc64.bin", hint = "make ffi-libffi-ppc64 ffi-portability; install Clang, target sysroot/binutils and qemu-user"},
+     (* the Windows VMs make foreign calls only when built over a provisioned
+        libffi; build/foreign-winNN-selected holds the flags they were built with *)
+     {name = "ffi-windows32", probe = "grep -qF -- -DRUNE_FFI=1 build/foreign-win32-selected",
+      hint = "provision libffi for 32-bit Windows, then build the Windows VMs over it: make ffi-libffi-windows32 windows (docs/ffi/release.md)"},
+     {name = "ffi-windows64", probe = "grep -qF -- -DRUNE_FFI=1 build/foreign-win64-selected",
+      hint = "provision libffi for 64-bit Windows, then build the Windows VMs over it: make ffi-libffi-windows64 windows (docs/ffi/release.md)"},
      {name = "clang", probe = "command -v ${CLANG:-clang}", hint = "install Clang for independent C frontend comparisons"},
      {name = "windows-sdk", probe = "test -d \"$RUNEFFI_WINDOWS_SDK/um\" && test -d \"$RUNEFFI_MSVC_INCLUDE\"",
       hint = "set RUNEFFI_WINDOWS_SDK and RUNEFFI_MSVC_INCLUDE as described in ffi/win32/README.md"},

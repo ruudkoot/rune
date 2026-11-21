@@ -881,7 +881,20 @@ its own, and forcing one is one step.
   reads and the collector shortcuts. A selector (the roadmap's D17, C: Wadler's rule)
   is a suspension a pattern binding of two variables or more, or a lazy pattern of
   them, makes of each variable, whose code takes field i of the tuple of their
-  components, its first capture: `thunk_selector` marks it so (`THUNK`'s state
+  components, its first capture; and one of one variable that takes it from a field
+  of a value a variable holds, of a tuple or of a data type of one constructor
+  (`(_, y) = p`, or `~(x, _)` matched against a variable), makes it that field's
+  selector of the variable's value, which the program may evaluate elsewhere (one
+  whose value the binding makes is rule (d) as before: only its variable evaluates
+  that value, so no collection could give the variable its field). At the top level,
+  where a selector is a CAF, Core to Mid makes one whose code takes a field of a CAF
+  made before it, by its shape (`case p of K x1 ... xn -> xi`, K the one constructor
+  of a data type that is no class's dictionary, or a function of the program that
+  is one, as `fst` and a record's field are, applied to p), take that CAF from what
+  it captures rather than from its global, which the collector does not look in,
+  where the program names the CAF more than once: a top-level pattern binding's
+  selectors among them.
+  `thunk_selector` marks it so (`THUNK`'s state
   `3 + i`), and the collector gives what points to it that field of the tuple once the
   tuple is evaluated, following a chain of them as far as it goes, so that a field the
   program no longer reads does not keep the tuple, and what the tuple's other fields
@@ -1408,7 +1421,8 @@ makes it says:
   tag comes first on every way there (`IfTag`, `Switch`, or `ConTag`
   compared with a constant or with another's `ConTag`), or that
   constructor made it, or every jump to the block's parameter it is passes
-  such a value; a datatype whose layout a functor's argument gives is left
+  such a value -- the ways into a handler's block being those to where it
+  was pushed; a datatype whose layout a functor's argument gives is left
   out.
 
 `--pass-stats` counts what it checked against a known shape and what it

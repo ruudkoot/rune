@@ -301,8 +301,14 @@ struct
   fun posInfFloat () = Real.posInf
   fun negInfFloat () = Real.negInf
   fun maxFiniteFloat () = Real.maxFinite
-  fun P__maxIntReal () = Real.fromInt (valOf Int.maxInt)
-  fun P__minIntReal () = Real.fromInt (valOf Int.minInt)
+  (* the runtime's constants, maxInt and minInt as doubles, rounded once to
+     nearest where the shim is loaded: worked out at each call they would
+     follow the rounding mode, so that floor (2^62 - 512) raised Overflow
+     under TO_NEGINF, maxIntReal () + 1.0 being 2^62 - 512 there *)
+  val maxIntReal = Real.fromInt (valOf Int.maxInt)
+  val minIntReal = Real.fromInt (valOf Int.minInt)
+  fun P__maxIntReal () = maxIntReal
+  fun P__minIntReal () = minIntReal
   val P__max_real = Real.max
   val P__min_real = Real.min
   fun P__real_to_int (x : real) = Real.trunc x

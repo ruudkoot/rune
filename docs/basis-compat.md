@@ -344,7 +344,10 @@ documentation has every line under the member it is about, in a block
   the radix does not have. Of `Real`: `rem` of an infinity or by a zero is a
   zero, `realFloor`/`realCeil`/`realTrunc` are inexact beyond 2^52 and lose
   the sign of a zero, `ceil` of `minPos` is 0, `floor`/`ceil`/`trunc`/`round`
-  wrap around above `maxInt`, `fmt` yields at most 15 digits and pads the
+  wrap around above `maxInt`, `round` is `floor (x + 0.5)` or `ceil (x -
+  0.5)` with the sums rounded in the rounding mode that is set (`round (2^52
+  + 1)` is 2^52 + 2, `round (0.5 + 2^~53)` is 0) and `realRound (2^52 + 1)`
+  is 2^52, `fmt` yields at most 15 digits and pads the
   digits of `minPos`, `scan` is not correctly rounded and consumes a point
   that no digit follows. `Math.atan2` ignores the sign of a zero and is NaN
   for two infinities; `tanh` is NaN for large arguments. `TextIO.inputAll
@@ -373,9 +376,10 @@ documentation has every line under the member it is about, in a block
   bytes, and `lseek` with a negative offset gives a position of its own.
   Its `int` and `word` have 31 bits, which is what the `WIDTH` lines of that
   configuration record.
-* **Poly/ML 5.9.2** (108 lines). `Real.round` and `realRound` of
-  0.49999999999999994 give 1, `realRound (2^52 + 1)` is `2^52 + 2` and
-  `realRound (~0.25)` loses the sign; `toString` and `GEN` print integral
+* **Poly/ML 5.9.2** (108 lines). `realRound` of 0.49999999999999994 is 1
+  (`Real.round` of it is 0), `realRound (2^52 + 1)` is `2^52 + 2`,
+  `realRound (~0.25)` loses the sign, and `realRound` and
+  `Real32.realRound` add 0.5 in the rounding mode that is set; `toString` and `GEN` print integral
   values with `.0` and do not choose the shorter notation; `toDecimal` gives
   `exp = 1` for zeros, infinities and NaNs, and `fmt EXACT` of a zero is
   `"0.0E1"`; `nextAfter (posInf, 0.0)` is `maxFinite`; `Math.pow (±1.0,
@@ -399,6 +403,8 @@ documentation has every line under the member it is about, in a block
   number, `Word.scan` reads `0w` as `0wx`, `IntInf.scan` reads a sign inside
   the digits (and makes numbers that `toString` never ends on). `0.0 +
   ~0.0` is `~0.0` (the optimiser), `ceil` and `trunc` fail at `minInt`,
+  `round` adds 0.5 and rounds the sum (`round (2^52 + 1)` is 2^52 + 2) and
+  `realRound` depends on the rounding mode,
   `toString` and `GEN` are C's `%g` with `.0` added, the signs of NaNs are
   lost or reversed, and `Math.ln` of a NaN is `~inf`; `PackReal` reads past
   a short vector. `Date.toTime` fails before 1970, `offset` reports zones
@@ -564,10 +570,15 @@ reach inside it. The note is
   cannot pass with the host's `exnName` where Rune defines none.
 * `RunePrim` does not go through host functions that the suite shows to be
   wrong: files use `Posix.IO` and not the host's streams (MLton's `inputAll`
-  after `input1`), `real_round` is written with `floor` (Poly/ML's `round`;
-  `trunc`, which would suit a 31-bit `int` better, gives `maxInt` for `minInt`
-  on SML/NJ 110.99.9), and `time_sleep` sleeps again for what is left
-  (Poly/ML 5.9.2 can return early). Where the shim does call the host's
+  after `input1`), `real_round` is the `floor` of `real_round_r`, which
+  decides a tie on the exact `x - floor x`, with the range of `int` checked
+  first as `runtime/prims.c` does (MLKit's `floor` of 2^62 under `TO_POSINF`
+  is `minInt`; the hosts' `round` adds 0.5 and rounds that: Poly/ML's
+  `realRound` of 0.49999999999999994 is 1, SML/NJ's and MLKit's `round` of
+  2^52 + 1 is 2^52 + 2, and what they give depends on the rounding mode;
+  `trunc`, which would suit a 31-bit `int` better, gives `maxInt` for
+  `minInt` on SML/NJ 110.99.9), and `time_sleep` sleeps again
+  for what is left (Poly/ML 5.9.2 can return early). Where the shim does call the host's
   function, the host's bug shows in the `xc1` configuration too: a host line
   that names `*:HOST` explains both. Writing it showed three primitives whose contract was only in the
   C code; `runtime/prims.def` now states the 100000000-element limit of arrays and

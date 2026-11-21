@@ -30,9 +30,11 @@ struct
 
   val boolTy = Core.TCon "Bool"
 
-  (* the selectors of the tuple form a group's pattern bindings made, to be
-     marked for the collector once they are (the roadmap's D17, C; Mt.marks) *)
-  val pendingMarks : (string * Core.ty * (string * Core.ty) list) list ref = ref []
+  (* the selectors a group's pattern bindings made, to be marked for the
+     collector once they are (the roadmap's D17, C; Mt.markFields): each
+     the value they take fields of and its type, and each selector's field,
+     Core name and type *)
+  val pendingMarks : (Core.atom * Core.ty * (int * string * Core.ty) list) list ref = ref []
   fun listTy t = Core.TApp (Core.TCon "[]", t)
   fun elemOf t = case C.lazyTy t of Core.TApp (Core.TCon "[]", e) => e | t' => raise Untyped ("a list of " ^ CoreText.showTy t')
   fun lazyOpt (SOME t) = SOME (C.lazyTy t) | lazyOpt NONE = NONE
@@ -84,6 +86,15 @@ struct
 
   fun simpleVar (A.P (_, A.PVar v)) = SOME v
     | simpleVar _ = NONE
+
+  (* the variable a right-hand side is, `= y` with no guard and no `where` *)
+  fun plainVariable (A.Rhs (_, A.Plain (e, NONE))) =
+        let
+          fun var (A.E (_, A.EVar y)) = SOME y
+            | var (A.E (_, A.EParen e)) = var e
+            | var _ = NONE
+        in var e end
+    | plainVariable _ = NONE
 
   (* the variables an expression's bindings name, by key *)
   fun freeVars b =
@@ -825,7 +836,8 @@ struct
             case V.lookup (env3, nameText v) of
               SOME (a, at) => (Core.Atom a, at)
             | NONE => bug "a pattern binding's variable"
-          val () = pendingMarks := (tname, tupleTy, sel) :: !pendingMarks
+          val () = pendingMarks := (Core.Var tname, tupleTy, ListPair.map (fn (i, (x, xt)) => (i, x, xt)) (List.tabulate (n, fn i => i), sel))
+                                   :: !pendingMarks
           fun tupleDef env' =
             if Mt.plainTuple pat then valueDef env'
             else
@@ -837,9 +849,36 @@ struct
            :: List.tabulate (n, fn i => (List.nth (names, i), SOME (List.nth (vts, i)), fn _ => Mt.selector (tname, tupleTy, sel, i))),
            ListPair.map (fn (v, (x, t)) => (v, x, t)) (vars, sel))
         end
+      (* one variable, of a field of the value of a variable y, which may be
+         evaluated elsewhere: that field's selector of y, marked for the
+         collector (D17's C for one variable); y's monomorphic type the
+         field's data type *)
+      fun fieldOfVariable () =
+        case (vars, records, gvars, Mt.oneField pat, plainVariable r) of
+          ([v], [rec_], [], SOME (k, i), SOME y) =>
+            (case V.lookup (env, nameText y) of
+               SOME (ya as Core.Var _, yt) =>
+                 (case (C.dataArgs yt, C.conInfo k) of
+                    (SOME (tc, _), SOME {tycon, ...}) =>
+                      if tc <> tycon then NONE
+                      else
+                        let
+                          val t = recordType (env, rec_)
+                          val x = coreOf v
+                          val ot = C.lazyTy yt
+                          val () = pendingMarks := (ya, ot, [(i, x, t)]) :: !pendingMarks
+                        in
+                          SOME ([(x, SOME t, fn _ => Mt.field (ya, ot, k, i))], [(v, x, t)])
+                        end
+                  | _ => NONE)
+             | _ => NONE)
+        | _ => NONE
     in
       if Mt.tupleForm (length vars) andalso null gvars then tupleBinding ()
-      else ((tname, NONE, valueDef) :: List.map #1 vs, List.map #2 vs)
+      else
+        case fieldOfVariable () of
+          SOME made => made
+        | NONE => ((tname, NONE, valueDef) :: List.map #1 vs, List.map #2 vs)
     end
 
   (* a group of local declarations (3.12, 4.5.1): by dependency, a `let`
@@ -869,7 +908,7 @@ struct
           (* a pattern binding's own value is a name of Core's alone *)
           val envR = if recursive then envB else env
           (* the tuple form's selectors marked before the body (D17's C) *)
-          val body = List.foldl (fn ((t, tt, sel), b) => Mt.marks (t, tt, sel, b)) (k envB) marking
+          val body = List.foldl (fn ((a, tt, fs), b) => Mt.markFields (a, tt, fs, b)) (k envB) marking
           (* in order: a pattern binding's value before its variables *)
           fun made scope = List.map (fn (x, t, mk) => let val e = mk scope in (x, getOpt (t, C.lazyTy (#2 e)), e) end) defs
         in

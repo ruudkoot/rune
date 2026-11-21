@@ -1,0 +1,136 @@
+(* after simplify *)
+(datatype two () (0 "Lo") (1 "Hi" : int))
+(datatype abc () (0 "A") (1 "B" : int) (2 "C" : int))
+(datatype maybe ('a) (0 "Nothing") (1 "Just" : 'a))
+(val g1 : exncon
+  (return (newexn "E1")))
+(val g2 : exncon
+  (return (newexn "E2")))
+(val g3 : exncon
+  (return (newexn "E3")))
+(funs
+  (fn g4 ((v1 : two)) : string
+    (case v1
+      (0
+        (let (v2 : unit) (prim print "lo, then " : string -> unit)
+        (let (v3 : two) (con 1 7 : two)
+        (return (app g4 v3)))))
+      (else
+        (let (v4 : unit) (prim print "not lo: " : string -> unit)
+        (let (v5 : int) (decon 1 v1 : two)
+        (let (v6 : bool) (prim int_lt v5 5 : (int * int) -> bool)
+        (if v6
+          (return "hi below 5\n")
+          (return "hi\n"))))))))
+  (fn g5 ((v7 : abc)) : string
+    (case v7
+      (0
+        (let (v8 : unit) (prim print "a, then " : string -> unit)
+        (let (v9 : abc) (con 1 2 : abc)
+        (return (app g5 v9)))))
+      (2
+        (return "c\n"))
+      (else
+        (let (v10 : unit) (prim print "b: " : string -> unit)
+        (let (v11 : int) (decon 1 v7 : abc)
+        (let (v12 : bool) (prim int_lt v11 5 : (int * int) -> bool)
+        (if v12
+          (return "below 5\n")
+          (return "5 or more\n"))))))))
+  (fn g6 ((v13 : abc)) : string
+    (case v13
+      (0
+        (let (v14 : unit) (prim print "a, then " : string -> unit)
+        (let (v15 : abc) (con 2 9 : abc)
+        (return (app g6 v15)))))
+      (else
+        (let (v16 : unit) (prim print "not a, " : string -> unit)
+        (case v13
+          (1
+            (let (v17 : int) (decon 1 v13 : abc)
+            (let (v18 : bool) (prim int_lt v17 5 : (int * int) -> bool)
+            (if v18
+              (return "b below 5\n")
+              (return "b\n")))))
+          (else
+            (let (v19 : unit) (prim print "not b, " : string -> unit)
+            (let (v20 : int) (decon 2 v13 : abc)
+            (let (v21 : bool) (prim int_lt v20 5 : (int * int) -> bool)
+            (if v21
+              (return "c below 5\n")
+              (return "c\n")))))))))))
+  (fn g7 ((v22 : abc)) : string
+    (case v22
+      (1
+        (let (v23 : unit) (prim print "b, then " : string -> unit)
+        (let (v24 : abc) (con 2 2 : abc)
+        (return (app g7 v24)))))
+      (else
+        (let (v25 : unit) (prim print "not b, " : string -> unit)
+        (case v22
+          (0
+            (return "a\n"))
+          (else
+            (let (v26 : unit) (prim print "not a, " : string -> unit)
+            (let (v27 : int) (decon 2 v22 : abc)
+            (let (v28 : bool) (prim int_lt v27 5 : (int * int) -> bool)
+            (if v28
+              (return "c below 5\n")
+              (return "c\n")))))))))))
+  (fn g8 ((v29 : string maybe)) : string
+    (case v29
+      (0
+        (let (v30 : unit) (prim print "nothing, then " : string -> unit)
+        (let (v31 : string maybe) (con 1 "x\n" : string maybe)
+        (return (app g8 v31)))))
+      (else
+        (let (v32 : unit) (prim print "just " : string -> unit)
+        (let (v33 : string) (decon 1 v29 : string maybe)
+        (return v33))))))
+  (fn g9 ((v34 : abc)) : string
+    (case v34
+      (0
+        (let (v35 : unit) (prim print "a, then " : string -> unit)
+        (let (v36 : abc) (con 2 1 : abc)
+        (return (app g9 v36)))))
+      (else
+        (let (v37 : unit) (prim print "not a: " : string -> unit)
+        (case v34
+          (1
+            (let (v38 : int) (decon 1 v34 : abc)
+            (let (v39 : bool) (prim int_lt v38 5 : (int * int) -> bool)
+            (if v39
+              (return "b below 5\n")
+              (return "b\n")))))
+          (else
+            (return "c\n")))))))
+  (fn g10 ((v40 : exn)) : string
+    (let (v41 : exncon) (exncon v40)
+    (let (v42 : bool) (prim ptr_eq v41 g1 : (exncon * exncon) -> bool)
+    (if v42
+      (return "e1\n")
+      (let (v43 : unit) (prim print "not e1: " : string -> unit)
+      (let (v44 : exncon) (exncon v40)
+      (let (v45 : bool) (prim ptr_eq v44 g2 : (exncon * exncon) -> bool)
+      (if v45
+        (return "e2\n")
+        (return "neither\n")))))))))
+  (fn g11 ((v46 : unit)) : string
+    (let (v47 : exn) (mkexn g1 ())
+    (raise v47)))
+  (fn g12 ((v48 : two)) : string
+    (case v48
+      (0
+        (let (v49 : unit) (prim print "lo, then " : string -> unit)
+        (let (v50 : two) (con 1 7 : two)
+        (return (app g12 v50)))))
+      (else
+        (handle v51
+          (return (app g11 ()))
+          (let (v52 : int) (decon 1 v48 : two)
+          (let (v53 : bool) (prim int_lt v52 5 : (int * int) -> bool)
+          (if v53
+            (return "caught, hi below 5\n")
+            (return "caught, hi\n")))))))))
+(val g13 : unit
+  (return (prim print "unused\n" : string -> unit)))

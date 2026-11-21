@@ -54,7 +54,14 @@ virtual-memory reservation prevents startup under the smaller bound.
 ## Running the tests
 
 `make check` is `make check-tools`, which builds every tool a test needs,
-and then `bin/rune-test run --tier check`. `bin/rune-test` is the runner
+and then `bin/rune-test run --tier check`. Every other target that runs a
+tier (`make quick`, `make test-stress`, `make test-windows`, ...) names as
+its prerequisites what that tier's tests run -- the runner's tools, the
+VMs, the builds of other machines -- so that it runs alone in a tree where
+nothing else was built: a tool it does not build makes a test fail with
+`not found` (exit 127 from a shell, 126 from a tool of the runner) where
+`make check` passes, or skips one whose capability's probe runs it
+(`bin/rune-windows directory`). `bin/rune-test` is the runner
 (`lib/test/runner`, [lib/test/runner](lib/test/runner/README.md)),
 compiled by `bin/rune` from its inventory, `tests/runner/*.sml`, and run on
 `bin/runevm`. Its tests are trees of commands: each runs as a process in a
