@@ -128,7 +128,8 @@ struct
       val () =
         case look (dir, [], k, judge (2, us)) of
           S.Found ({head = {usages, exports, level}, sections = {iface, parts, ...}}, _) =>
-            need (usages = us andalso exports = "exports of m" andalso level = 2 andalso iface = "m" andalso parts 0 = "code",
+            need (usages = us andalso exports = "exports of m" andalso level = 2 andalso iface = "m"
+                  andalso parts 0 = "code",
                   "a head and its sections are read back as written")
         | _ => need (false, "the entry is found")
       val entries = List.filter (fn (p, _) => not (String.isSubstring "/units/" p)) (files dir)

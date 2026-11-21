@@ -147,7 +147,8 @@ struct
           "classes.sml", "(HsUsage.read (HsUsage.Instance {cls = cls, tycon = tycon}); M.find (instances, instanceId (cls, tycon)))",
           "(M.find (instances, instanceId (cls, tycon)))", [holes ^ "h2-default", holes ^ "h5-context"]),
      rhc ("HU03", "units", "H3: what a unit sees taken from its entry: a usage stands whatever the units before give now",
-          "store.sml", "case List.find (fn (k, v) => current k <> v) usages of", "case List.find (fn (k, v) => false) usages of",
+          "store.sml", "case List.find (fn (k, v) => current (k, v) <> v) usages of",
+          "case List.find (fn (k, v) => false) usages of",
           [holes ^ "h1-name", holes ^ "h2-default"]),
      rhc ("HU04", "units", "H4: a unit's key without its members' texts, the default declaration's among them",
           "driver.sml", "then \" literate\" else \"\"), #hash f))", "then \" literate\" else \"\"), \"\"))", [holes ^ "h2-default"]),
@@ -194,5 +195,39 @@ struct
                    "taken is other Core than a build without the store makes, and a comment makes the link compiled again " ^
                    "(build-cache-issues.md, issue 30)",
           "names.sml", "else HsInfer.numberFrom (programSlot members)", "else HsInfer.renumber unitCounters",
-          [holes ^ "fresh-names"])]
+          [holes ^ "fresh-names"]),
+     (* issue 37's A and B (build-cache-issues.md): a hit in two phases,
+        and one by the units before; each a wrong hit they would make *)
+     rhc ("HU17", "units",
+          "equivalent: an import's digest by its exports' keys alone, not each one's parent and sort. Not seen by any " ^
+          "program: what an import's list selects of a type's or class's constructors, fields and methods is an item's read " ^
+          "(HsUsage.Item), which the second phase asks of the units before, and what an export list's T(..) gives of those " ^
+          "in scope moves T's fingerprint, its constructors, fields or methods, which it asks too (hs/units/holes/a-methods, " ^
+          "two classes' methods swapped)",
+          "driver.sml", "k ^ \" \" ^ sortText sort ^ \" \" ^ (case parent of SOME p => HsModules.key p | NONE => \"\")", "k",
+          []),
+     rhc ("HU18", "units", "A: the digests of the modules an entry names, not whether those are the modules imported now: " ^
+                   "an import that comes to name the program's own module in place of the library's keeps its scope",
+          "driver.sml", "val same = twoPhase andalso not askAll andalso kept = scopes ()",
+          "val same = twoPhase andalso not askAll andalso " ^
+          "List.all (fn (k, v) => digestIn installed (String.extract (k, size scopePrefix, NONE)) = v) kept",
+          [holes ^ "a-shadow"]),
+     rhc ("HU19", "units", "A: a name's entities as they were, their fingerprints with them: an operator's fixity moved " ^
+                   "where it is re-exported is not seen",
+          "driver.sml", "SOME (HsUsage.Name _) => refreshed (own, fn k => M.find (prints, k)) v", "SOME (HsUsage.Name _) => v",
+          [holes ^ "a-fixity"]),
+     rhc ("HU20", "units", "A: a read of the units before, an instance's or a chain of imports', as it was where the scopes " ^
+                   "are: an instance given or taken on the way moves no default",
+          "driver.sml", "| SOME r => answerIn installed r", "| SOME r => v",
+          [holes ^ "instance-chain", holes ^ "h2-default"]),
+     rhc ("HU21", "units",
+          "equivalent: a hit in two phases under the greatest fixpoint of a cycle's exports, which starts from every " ^
+          "entity of the program. Not seen by any program: a cycle's exports move with the fixpoint only where its members " ^
+          "export each other by `module M`, and such a cycle exports at the greatest every entity of the program, the " ^
+          "library's among them, which has two of some names (primAppendFile, PreludeBuiltin's and PreludeRuntime's), and " ^
+          "is refused (5.2); every cycle accepted exports the same at both, so its scopes are what its imports' exports " ^
+          "make them, as at the least",
+          "driver.sml", "val twoPhase = case fixpoint of HsModules.Least => true | HsModules.Greatest => false",
+          "val twoPhase = case fixpoint of HsModules.Least => true | HsModules.Greatest => true",
+          [])]
 end

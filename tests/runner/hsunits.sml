@@ -295,6 +295,9 @@ struct
       step ("type", [("library", "taken"), ("Lib", "compiled"), ("Main", "compiled"), ("link", "compiled")], "hello\n42\n")
     end
 
+  (* the verdict a log's word gives, its letters: `taken`, `compiled` *)
+  fun wordOf w = case String.tokens (not o Char.isAlpha) w of x :: _ => x | [] => w
+
   (* E13's holes (the haskell98 roadmap's *What a cache hit must satisfy*,
      H1 to H8; E13's two GHC cases among them): each case of
      tests/hs/units/holes a program and its steps, each step a directory of
@@ -348,6 +351,10 @@ struct
                     handle IO.Io _ => ""
       fun compiles (cmd, log) = exec {cmd = cmd, dir = SOME d, stdin = "", stdout = f log, stderr = f log, timeout = 900} = 0
       val warm = compiles ([fromRoot "bin/rhc", "--store", "st", "--show-units", "Main.hs", "-o", "w.rbc"], "warm.log")
+      (* the same through a store of its own, each hit judged by every
+         usage asked, as before issue 37's A and B (RHC_HIT=asked) *)
+      val asked = compiles (["env", "RHC_HIT=asked", fromRoot "bin/rhc", "--store", "st-asked", "--show-units", "Main.hs",
+                             "-o", "a.rbc"], "asked.log")
       val whole = compiles ([fromRoot "bin/rhc", "Main.hs", "-o", "j.rbc"], "whole.log")
       fun units' () = String.concatWith "; " (List.filter (fn l => String.isPrefix "rhc: unit" l orelse String.isPrefix "rhc: link" l)
                                                          (lines (read (f "warm.log"))))
@@ -358,6 +365,19 @@ struct
         | [name, what] => String.isSubstring ("rhc: unit " ^ name ^ ": " ^ what) log
         | _ => false
       fun no why = (say ("FAIL " ^ family ^ ": " ^ label ^ ": " ^ why ^ "\n"); false)
+      (* what a compile's log says of each unit and the link: taken,
+         compiled, named, a line each *)
+      fun verdicts log =
+        List.mapPartial
+          (fn l =>
+             if String.isPrefix "rhc: unit " l orelse String.isPrefix "rhc: link: " l then
+               case String.tokens Char.isSpace l of
+                 "rhc:" :: "unit" :: name :: what :: _ => SOME (name ^ " " ^ wordOf what)
+               | "rhc:" :: "link:" :: what :: _ => SOME ("link " ^ wordOf what)
+               | _ => NONE
+             else NONE)
+          (lines (read (f log)))
+      val alike = verdicts "warm.log" = verdicts "asked.log" andalso warm = asked
       (* the units' refusal, which the whole compile's must say too: a unit
          taken that should not be may make a link that does not check *)
       fun refusal () =
@@ -368,7 +388,10 @@ struct
           | NONE => firstLine (f "warm.log")
         end
     in
-      if want = "refused\n" then
+      if not alike then
+        no ("a unit is taken or made otherwise than where every usage is asked: "
+            ^ String.concatWith ", " (verdicts "warm.log") ^ "; asked: " ^ String.concatWith ", " (verdicts "asked.log"))
+      else if want = "refused\n" then
         if warm then no ("the units' compile takes what the whole compile "
                          ^ (if whole then "takes too, where a refusal is wanted" else "refuses: " ^ firstLine (f "whole.log"))
                          ^ " (" ^ units' () ^ ")")
@@ -887,9 +910,64 @@ struct
          else no "the copy's programs are not the first's")
     end
 
+  (* a store shared by compiles of one program at other levels of the
+     lint, optimisations and fixpoints of a cycle's exports, each through
+     one store and a twin of it whose hits are judged by every usage asked
+     (RHC_HIT=asked): each unit and the link taken or made alike, and the
+     program the build without a store's (build-cache-issues.md, issue
+     37's B: a digest of the units before is no hit at a level its entry
+     was not checked at) *)
+  fun configs () =
+    let
+      fun no why = say ("FAIL hs.units.configs: " ^ why ^ "\n")
+      val d = out ^ "/configs"
+      fun f x = d ^ "/" ^ x
+      val () = (rmTree d; mkdirs d)
+      (* a cycle whose exports name each other's entities: a cycle that
+         exports itself by `module M` exports, at the greatest fixpoint,
+         every entity of the program, the library's two of some names
+         among them, and is refused (5.2) *)
+      val () = write (f "A.hs", "module A (a, b) where\n\nimport B\n\na :: Int\na = 1\n")
+      val () = write (f "B.hs", "module B (b) where\n\nimport A\n\nb :: Int\nb = a + 1\n")
+      val () = write (f "C.hs", "module C (c) where\n\nimport A\n\nc :: Int\nc = a + b\n")
+      val () = write (f "Main.hs", "module Main where\n\nimport C\n\nmain :: IO ()\nmain = print c\n")
+      fun rhc (env, args, log) =
+        execEnv (fn e => env @ unsetEnv ["RHC_STORE", "RHC_HIT"] e)
+          {cmd = [fromRoot "bin/rhc"] @ args @ ["Main.hs", "-o", log ^ ".rbc"], dir = SOME d, stdin = "",
+           stdout = f (log ^ ".log"), stderr = f (log ^ ".log"), timeout = 900} = 0
+      fun verdicts log =
+        List.mapPartial (fn l => case String.tokens Char.isSpace l of
+                                   "rhc:" :: "unit" :: name :: what :: _ => SOME (name ^ " " ^ wordOf what)
+                                 | "rhc:" :: "link:" :: what :: _ => SOME ("link " ^ wordOf what)
+                                 | _ => NONE)
+          (lines (read (f (log ^ ".log"))))
+      val settings = [["--lint=0"], ["--lint=2"], ["--lint=0"], ["--lint=2", "-O2"], ["-O2"], ["--names=greatest"],
+                      ["--names=least"], ["--names=greatest", "--lint=2"], ["--lint=0"]]
+      fun one (i, opts) =
+        let
+          val n = Int.toString i
+          val warm = rhc ([], opts @ ["--store", "st", "--show-units"], "warm" ^ n)
+          val asked = rhc (["RHC_HIT=asked"], opts @ ["--store", "st-asked", "--show-units"], "asked" ^ n)
+          val cold = rhc ([], opts @ ["--no-store"], "cold" ^ n)
+          val what = String.concatWith " " opts
+        in
+          if not (warm andalso asked andalso cold) then no (what ^ ": a compile fails: " ^ firstLine (f ("warm" ^ n ^ ".log")))
+          else if verdicts ("warm" ^ n) <> verdicts ("asked" ^ n) then
+            no (what ^ ": a unit is taken or made otherwise than where every usage is asked: "
+                ^ String.concatWith ", " (verdicts ("warm" ^ n)) ^ "; asked: " ^ String.concatWith ", " (verdicts ("asked" ^ n)))
+          else if String.extract (bytesOf (f ("warm" ^ n ^ ".rbc")), 12, NONE)
+                  <> String.extract (bytesOf (f ("cold" ^ n ^ ".rbc")), 12, NONE) then
+            no (what ^ ": the program is not the build without a store's")
+          else ()
+        end
+    in
+      ListPair.app one (List.tabulate (length settings, fn i => i + 1), settings)
+    end
+
   fun command args =
     case args of
       ["hs-units-drive"] => SOME drive
+    | ["hs-units-configs"] => SOME configs
     | ["hs-units-elsewhere"] => SOME elsewhere
     | ["hs-units-trim"] => SOME trimmed
     | ["hs-units-verify"] => SOME verified
@@ -924,7 +1002,8 @@ struct
          Tools.job ("default", ["hs-units-default"], [], 600, 3600), Tools.job ("concurrent", ["hs-units-concurrent"], [], 600, 3600),
          Tools.job ("memo", ["hs-units-memo"], [], 600, 3600), Tools.job ("damaged", ["hs-units-damaged"], [], 600, 3600),
          Tools.job ("verify", ["hs-units-verify"], [], 600, 3600), Tools.job ("trim", ["hs-units-trim"], [], 600, 3600),
-         Tools.job ("elsewhere", ["hs-units-elsewhere"], [], 600, 3600)]
+         Tools.job ("elsewhere", ["hs-units-elsewhere"], [], 600, 3600),
+         Tools.job ("configs", ["hs-units-configs"], [], 900, 3600)]
         @ List.map (fn c => Tools.job ("holes/" ^ c, ["hs-units-hole", c], [], 600, 3600)) (holeCases ())
         @ List.map (fn s => Tools.job ("core/" ^ HsCore.nameOf s, ["hs-units-core", s], [], 500, 1200)) (coreTests ())
       val nightly = List.map (fn c => Tools.job ("random/" ^ c, ["hs-units-random", c], [], 900, 3600)) (holeCases ())

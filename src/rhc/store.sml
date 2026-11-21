@@ -59,16 +59,29 @@ struct
   fun key (unit : string, members : (string * string) list) : string =
     S.key (hash, ["rhc", unit] @ List.map (fn (m, h) => m ^ " " ^ h) members)
 
+  (* The first of `usages` that gives now other than it gave its compile,
+     with what it gives now: `current (k, v)` is what the usage k, which
+     gave v, gives now *)
+  fun differing (current : string * string -> string) (usages : usage list) : (string * string * string) option =
+    case List.find (fn (k, v) => current (k, v) <> v) usages of
+      NONE => NONE
+    | SOME (k, v) => SOME (k, v, current (k, v))
+
   (* Whether an entry stands. One checked at a lower level of the lint than
-     this compile checks at does not, nor one any of whose usages gives now
-     other than it gave its compile; current says what a usage gives now,
-     from the graph of this compile *)
-  fun holds {level = want : int, current : string -> string} ({usages, level = l, ...} : head) : S.verdict =
+     this compile checks at does not, nor one of whose usages `judge` finds
+     one that gives now other than it gave its compile (`differing`), from
+     the graph of this compile *)
+  fun holdsBy {level = want : int, judge : usage list -> (string * string * string) option} ({usages, level = l, ...} : head)
+      : S.verdict =
     if l < want then S.Refused ("it was checked at a lower level of the lint (" ^ Int.toString l ^ ")")
     else
-      case List.find (fn (k, v) => current k <> v) usages of
+      case judge usages of
         NONE => S.Stands
-      | SOME (k, v) => S.Refused ("its compile read " ^ k ^ " as " ^ v ^ ", which is " ^ current k ^ " now")
+      | SOME (k, v, now) => S.Refused ("its compile read " ^ k ^ " as " ^ v ^ ", which is " ^ now ^ " now")
+
+  (* `holdsBy` asking each usage of `current` *)
+  fun holds {level : int, current : string -> string} : head -> S.verdict =
+    holdsBy {level = level, judge = differing (fn (k, _) => current k)}
 
   (* A part of an entry of the read-only store `dir` (a layer, bin/rhc's
      snapshot) that does not hold what its hash says, read after the entry

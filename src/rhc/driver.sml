@@ -369,7 +369,7 @@ struct
                answer : HsUsage.read -> string, earlier : unit_ list, mods : HsModIface.t list, prints : prints,
                desugared : (Core.program * HsDesugar.interface * HsUsage.read list) option ref,
                linted : HsLint.library option ref, sum : string option ref, stored : (RhcStore.entry * string) option,
-               index : int}
+               index : int, scopes : RhcStore.usage list}
 
   (* --verify-store: each unit an entry stands for made too, and its entry
      held to what the unit made gives, byte for byte, as Rune's
@@ -409,6 +409,76 @@ struct
       else if length ps <> count' then SOME "its number of parts"
       else firstPart 0
     end
+
+  (* ---- a hit in two phases (build-cache-issues.md, issue 37's A) ---- *)
+
+  (* A module's scope is a function of its text, which its unit's key
+     holds, and of what each module it imports exports (5.3, 5.5): the
+     entities, and of each the def its import's list and its `T(..)` read,
+     its parent and its sort (HsModules.solve). So an entry keeps, beside
+     its usages, a digest of the exports of each module its unit's modules
+     import, the scope's usages (`scope M`); where each is what it was, and
+     the modules imported are those it names, every name a usage asked
+     stands for the entities it stood for, and only their fingerprints can
+     have moved, which the units before give without the unit's modules
+     read or named. Where one moved, the unit is named and each usage
+     asked, as before. Not under the greatest fixpoint of exports, whose
+     start is every entity of the program. *)
+  val scopePrefix = "scope "
+  fun isScope (k : string) = String.isPrefix scopePrefix k
+
+  fun sortText s =
+    case s of
+      HsModules.Var => "var" | HsModules.Con => "con" | HsModules.Field => "field" | HsModules.Method => "method"
+    | HsModules.TyCon => "tycon" | HsModules.Synonym => "synonym" | HsModules.Class => "class"
+
+  (* the digest of what the module m exports in the state s, of the units
+     before the one that imports it *)
+  fun scopeDigest (s : N.state, m : string) : string =
+    case M.find (#exports s, m) of
+      NONE => "none"
+    | SOME es =>
+        Pickle.hash
+          (String.concatWith "\n"
+             (List.map (fn e =>
+                          let val k = HsModules.key e
+                          in
+                            case M.find (#defs s, k) of
+                              SOME {sort, parent, ...} =>
+                                k ^ " " ^ sortText sort ^ " " ^ (case parent of SOME p => HsModules.key p | NONE => "")
+                            | NONE => k
+                          end)
+                es))
+
+  (* the modules a unit's members import, but its own, in order *)
+  fun importTargets (found : G.found list) : string list =
+    let
+      val own = List.map #id found
+      val all = List.foldl (fn (m, s) => if List.exists (fn i => i = m) own then s else M.insert (s, m, ()))
+                  M.empty (List.concat (List.map #imports found))
+    in
+      List.map #1 (M.listItems all)
+    end
+
+  (* a usage's answer as the units before give it now, where the unit's
+     scopes are what they were: an entity of a unit before has its
+     fingerprint now, one of the unit's own its key (RhcIface.answer) *)
+  fun refreshed (own : string -> bool, fingerprint : string -> string option) (v : string) : string =
+    if v = "(no scope)" then v
+    else
+      let
+        fun homeOf el = case CharVector.findi (fn (_, c) => c = #"\t") el of
+                          SOME (i, _) => if i > 1 then String.substring (el, 1, i - 1) else ""
+                        | NONE => ""
+        fun one el =
+          if own (homeOf el) then el
+          else
+            case CharVector.foldli (fn (i, #"=", _) => SOME i | (_, _, acc) => acc) NONE el of
+              SOME i => let val k = String.substring (el, 0, i) in k ^ "=" ^ getOpt (fingerprint k, "?") end
+            | NONE => el
+      in
+        String.concatWith " " (RhcIface.sortStrings (List.map one (String.tokens (fn c => c = #" ") v)))
+      end
 
   fun front {roots : string list, dotted : bool, fixpoint : HsModules.fixpoint, check : HsInfer.cycleDefault option,
              store : string option, layers : string list, strings : CoreRuntime.strings, show : bool} : front =
@@ -462,6 +532,18 @@ struct
          replay read every record of for each unit (build-cache-issues.md,
          issue 39) *)
       fun start s = startOf (HsEvidence.empty ()) s
+      (* each module's digest, once a compile: what a module exports does
+         not move once its unit is done *)
+      val digests : string M.map ref = ref M.empty
+      fun digestIn (s : N.state) (m : string) =
+        case M.find (!digests, m) of
+          SOME d => d
+        | NONE => let val d = scopeDigest (s, m) in digests := M.insert (!digests, m, d); d end
+      val twoPhase = case fixpoint of HsModules.Least => true | HsModules.Greatest => false
+      (* RHC_HIT=asked: each usage of an entry asked, as a hit was judged
+         before issue 37's A and B, what they keep kept alike: so that a
+         test holds a hit to where it stood (hs/units/holes) *)
+      val askAll = OS.Process.getEnv "RHC_HIT" = SOME "asked"
       fun step (found : G.found list, (done : unit_ list, installed : N.state, prints : string M.map, failed : bool,
                                        made : made list, diags : G.diag list, exports)) =
         let
@@ -481,7 +563,38 @@ struct
             | NONE => let val s = N.groups (N.extend (start installed, nodes ()), [nodes ()], fixpoint, NONE)
                       in nowCell := SOME s; s end
           fun current k = case HsUsage.fromKey k of SOME r => answerIn (now ()) r | NONE => "?"
-          val holds = RhcStore.holds {level = RhcStoreConfig.level (), current = current}
+          (* the modules the unit imports, and the digest of each now *)
+          val targets = importTargets found
+          val scopes = once (fn () => List.map (fn m => (scopePrefix ^ m, digestIn installed m)) targets)
+          (* a usage's answer where the scopes are what they were: a name's
+             entities, and those of an import's item or exports of a module
+             of the unit's own, as they were, with the fingerprints of now;
+             any other read answered on the units before, which give it as
+             the unit's modules named give it, as nothing they read is the
+             unit's *)
+          fun cheap (k, v) =
+            case HsUsage.fromKey k of
+              SOME (HsUsage.Name _) => refreshed (own, fn k => M.find (prints, k)) v
+            | SOME (r as HsUsage.Item {from, ...}) =>
+                if own from then refreshed (own, fn k => M.find (prints, k)) v else answerIn installed r
+            | SOME (r as HsUsage.Exports m) => if own m then v else answerIn installed r
+            | SOME r => answerIn installed r
+            | NONE => "?"
+          (* how the entry taken stood, which --show-units says *)
+          val how = ref ""
+          fun judge usages =
+            let
+              val (kept, reads) = List.partition (fn (k, _) => isScope k) usages
+              val same = twoPhase andalso not askAll andalso kept = scopes ()
+            in
+              if same then
+                case RhcStore.differing cheap reads of
+                  NONE => (how := " (its scopes as they were)"; NONE)
+                | moved => moved
+              else RhcStore.differing (fn (k, _) => current k) reads
+            end
+          fun holds (h : RhcStore.head) =
+            (how := ""; RhcStore.holdsBy {level = RhcStoreConfig.level (), judge = judge} h)
           fun make (why, stored) =
             let
               val (s, reads) =
@@ -506,7 +619,8 @@ struct
               say (name, if failed then "named" else "compiled" ^ why);
               (u, SOME {name = name, key = key, ids = ids, nodes = nodes (), r = r, reads = reads, answer = fn x => answerIn (now ()) x,
                         earlier = done, mods = mods, prints = own', desugared = desugared, linted = linted, sum = sum,
-                        stored = stored, index = length done},
+                        stored = stored, index = length done,
+                        scopes = if twoPhase andalso isSome store then scopes () else []},
                ds, #exports s)
             end
           (* a unit taken: its modules' exports those its entry keeps *)
@@ -515,7 +629,7 @@ struct
               val files = List.foldl (fn (f : G.found, m) => M.insert (m, #id f, #file f)) M.empty found
               val u = takenUnit {name = name, ids = ids, files = files, prints = prints} (sections, sum)
             in
-              say (name, "taken");
+              say (name, "taken" ^ !how);
               (u, NONE, [], List.foldl (fn (m : HsModIface.t, e) => M.insert (e, #id m, #exports m)) exports (#mods u))
             end
           val (u, m, ds, ex) =
@@ -600,8 +714,8 @@ struct
         else
           (kept := true;
            List.app
-             (fn ({name, key, ids, nodes, r, reads, answer, earlier, mods, prints, desugared, linted, sum, stored, index, ...}
-                  : made) =>
+             (fn ({name, key, ids, nodes, r, reads, answer, earlier, mods, prints, desugared, linted, sum, stored, index, scopes,
+                   ...} : made) =>
                 let
                   val learned = learnedBefore index
                   val ((core, desugar), reads') =
@@ -616,7 +730,7 @@ struct
                   fun made () =
                     let
                       val usages = if null earlier then []
-                                   else List.map (fn x => (HsUsage.key x, answer x)) (distinct (M.empty, reads @ reads', []))
+                                   else scopes @ List.map (fn x => (HsUsage.key x, answer x)) (distinct (M.empty, reads @ reads', []))
                       val (index, texts) = CoreUnits.index core
                       val coreSum = Pickle.hash (String.concatWith "\000" (index :: texts))
                       val texts = Vector.fromList texts
