@@ -3,9 +3,9 @@
 **Class 1 of 4: a fault of the compiler or the runtime, which no reading of a
 specification bears on.** `tests/lib/unicode/normalize_props.sml`, ten
 properties of `lib/unicode`'s `Normalize` drawn by `lib/test/property` from
-fixed seeds, passes on every run of MLton, Poly/ML, MLKit, SML/NJ 2026.2,
-SML/NJ 110.99.9 for 32 bits and Rune. On SML/NJ 110.99.9 for 64 bits it
-stops now and then, in a different property each time, with
+fixed seeds, passed in the initial investigation on MLton, Poly/ML, MLKit,
+SML/NJ 2026.2, SML/NJ 110.99.9 for 32 bits and Rune. On SML/NJ 110.99.9 for
+64 bits it stops now and then, in a different property each time, with
 
 ```
 /home/.../bin/sml: Fatal error -- bogus overflow fault: pc = 0x7ac070450659, sig = 11
@@ -61,6 +61,30 @@ passed it. The test draws its two properties through `lib/test/property`.
 `unicode.normalize-props` and for `unit.core` on `native:smlnj-legacy`,
 as it has for `property.shrink`. The library is not changed for it
 (AGENTS.md).
+
+## On SML/NJ 2026.2: the nightly normalization test
+
+In the [2026-11-21 nightly](https://github.com/ruudkoot/rune/actions/runs/44860744095/job/136713304508),
+`lib-hosts/smlnj-dev/unicode.normalize-props` was the only failed test. The
+[artifact](https://github.com/ruudkoot/rune/actions/runs/44860744095/artifacts/14695007805)
+contains the wrapper's `exited with 1` and an empty stderr for this test.
+The SML/NJ session log was written to
+`tests/out/r/<run>/lib-hosts/smlnj-dev/unicode.normalize-props/unicode.normalize-props.run-1`,
+outside the nightly's artifact paths. Both a failed property and the
+[SML/NJ runtime's fatal error handler](https://github.com/smlnj/smlnj/blob/v2026.2/runtime/kernel/error.c#L57-L72)
+can exit with status 1. The cause and any link to the legacy fault remain unknown.
+
+The [2026-11-22 nightly](https://github.com/ruudkoot/rune/actions/runs/44980350666/job/137079285136)
+passed the same test at `697724da`, with the same Ubuntu runner image
+(`20261116.376.1`) and SML/NJ host cache key. The other five native hosts
+passed the test in the failing nightly. All ten properties passed in each
+of 20 local runs on WSL2 with SML/NJ 2026.2, the sources at `697724da`, and
+the native-host runner's limits.
+
+`tests/lib/deviations.txt` marks this test `HOST-FLAKY` on `native:smlnj-dev`.
+The native-host suite still runs it and reports a failure as `EXPLAINED`
+with the recorded reason. To diagnose a recurrence, preserve the raw
+`unicode.normalize-props.run-1` session log with the nightly results.
 
 ## On 32 bits: Rune's compiler, compiling `cross/basis-word`
 
