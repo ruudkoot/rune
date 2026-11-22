@@ -555,6 +555,13 @@
      "page": "sig/CORE_TO_MID.md#val-checking"
     },
     {
+     "kind": "val",
+     "name": "selectorShapes",
+     "spec": "val selectorShapes : bool ref",
+     "doc": "Whether a suspension is marked a selector by its shape (D17's C, gap 4:\n`rhc --selector-shapes=on|off`); true by default.\n\nIts code `case p of K x1 ... xn -> xi` of a data type of one\nconstructor, or a function of the program of that shape -- fst, snd,\na record's field -- applied to p, a local of its own, it is marked\nafter it is made (`thunk_selector`), as GHC recognises a selector\nthunk; without it only the desugaring's marks of pattern bindings\n(`sel_mark`) are made.\n\n",
+     "page": "sig/CORE_TO_MID.md#val-selectorshapes"
+    },
+    {
      "kind": "exception",
      "name": "Breach",
      "spec": "exception Breach of string",

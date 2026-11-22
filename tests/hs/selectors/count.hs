@@ -7,7 +7,8 @@
 -- pair a variable holds, (_, qo) = q and ~(_, us) matched against u, each its field's selector of the pair; and a
 -- pattern binding of the top level, (lows, highs), whose selectors are CAFs that capture the pair's; and a pattern
 -- binding one of whose variables nothing names, which is not marked, so that its selector is not made; and a
--- recursive group, whose selectors take the tuple's suspension itself, not its cell.
+-- recursive group, whose selectors take the tuple's suspension itself, not its cell; and selectors by their shape, a
+-- record's fields and fst and snd of a value a variable holds.
 module Main (main) where
 
 pairs :: Int -> [(Int, Int)]
@@ -28,6 +29,12 @@ fields s = let (a, rest) = break (== ',') s in a : case rest of { [] -> []; (_ :
 firsts :: Int -> Int -> Int
 firsts 0 acc = acc
 firsts k acc = let (a, _b) = properFraction (fromIntegral k / 4 :: Double) in acc `seq` firsts (k - 1) (acc + a)
+
+data Halves = Halves { front :: [Int], back :: [Int] }
+
+halves :: [Int] -> Halves
+halves [] = Halves [] []
+halves (x : xs) = let h = halves xs in if even x then Halves (x : front h) (back h) else Halves (front h) (x : back h)
 
 main :: IO ()
 main = do
@@ -52,3 +59,9 @@ main = do
   print (firsts 20000 0)
   let (ys, m, k) = ([1 .. 3000 * m], 1 :: Int, length "abcdef")
   print (sum ys, k)
+  let h = halves [1 .. 10000]
+  print (sum (front h), length (back h))
+  let s = break (> 6000) [1 .. 9000 :: Int]
+      a = fst s
+      b = snd s
+  print (length a, sum b)

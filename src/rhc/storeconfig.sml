@@ -27,13 +27,18 @@ struct
 
   (* What the link's entry is made of, the program's bytecode: a unit's,
      and the code's instruction set, the level and passes of Mid's
-     pipeline, the width of int and the checks of casts *)
+     pipeline, the width of int and the checks of casts, and whether Core
+     to Mid, which the link runs on the whole program, marks selectors by
+     their shape (--selector-shapes=off: held where it is off, so that the
+     default's configuration is what it was). A unit's entry, its Core and
+     interface, is the same either way, and its configuration leaves it out *)
   fun settings (extra : (string * string) list) : (string * string) list =
     unitSettings extra
     @ [("unitfile", Int.toString UnitFile.version), ("isa", Int.toString (MidPipeline.fingerprint ())),
        ("level", Int.toString (!Pass.level)), ("passes", case !Pass.only of NONE => "-" | SOME ps => String.concatWith "," ps),
        ("intbits", Int.toString (!Target.intBits))]
     @ (if !Lower.checkCasts then [("check-casts", "1")] else [])
+    @ (if !CoreToMid.selectorShapes then [] else [("selector-shapes", "off")])
 
   (* The store a compile of a program of Haskell keeps its units in (the
      haskell98 roadmap's D58): the one --store names, else RHC_STORE's (an

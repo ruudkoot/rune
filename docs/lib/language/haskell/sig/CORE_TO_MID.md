@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 8 of 8 entries documented |
+| Documentation | 9 of 9 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/coretomid\_sig.sml](../../../../../lib/language/haskell/coretomid_sig.sml) |
 
@@ -53,6 +53,7 @@ signature CORE_TO_MID =
 sig
   datatype <a href="#type-fault">fault</a> = <a href="#con-thunkinslot">ThunkInSlot</a> | <a href="#con-forcebehindcast">ForceBehindCast</a> | <a href="#con-susptypearg">SuspTypeArg</a>
   val <a href="#val-checking">checking</a> : bool ref
+  val <a href="#val-selectorshapes">selectorShapes</a> : bool ref
   exception <a href="#exn-breach">Breach</a> of string
   exception <a href="#exn-unsupported">Unsupported</a> of string
   val <a href="#val-program">program</a> : {<a href="#fld-program.fault">fault</a> : fault option} * Core.program -&gt; string
@@ -95,6 +96,22 @@ sets at lint level 2 (M10b).
 A use's type argument is a value's type, never one with `susp` at its
 head (D4); the rule is Core to Mid's and not MidLint's, since SML uses
 its polymorphic functions at `T susp`.
+
+### <a name="val-selectorshapes"></a>`selectorShapes`
+
+```sml
+val selectorShapes : bool ref
+```
+
+Whether a suspension is marked a selector by its shape (D17's C, gap 4:
+`rhc --selector-shapes=on|off`); true by default.
+
+Its code `case p of K x1 ... xn -> xi` of a data type of one
+constructor, or a function of the program of that shape -- fst, snd,
+a record's field -- applied to p, a local of its own, it is marked
+after it is made (`thunk_selector`), as GHC recognises a selector
+thunk; without it only the desugaring's marks of pattern bindings
+(`sel_mark`) are made.
 
 ### <a name="exn-breach"></a>`Breach`
 

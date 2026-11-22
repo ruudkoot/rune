@@ -323,11 +323,64 @@ struct
       else ()
     end
 
+  (* D17's C by shape (gap 4) behind rhc's --selector-shapes, on by default:
+     off, Core to Mid marks fewer selectors and the bytecode changes; the
+     default's bytecode is --selector-shapes=on's; each prints what it is to
+     print; and linked through one store, on, off and on again, each is its
+     own bytecode, the link's entry kept apart by the option (its memo hands
+     neither the other's program) *)
+  fun selectorsShapes b =
+    let
+      val n = OS.Path.file b
+      val dir = run ^ "/hs-selectors/shapes-" ^ n
+      val () = (rmTree dir; mkdirs dir)
+      fun f x = dir ^ "/" ^ x
+      fun fail why = say ("FAIL hs-selectors.shapes: " ^ why ^ " (" ^ dir ^ ")\n")
+      fun rhc (flags, tag) =
+        exec {cmd = [fromRoot "bin/rhc"] @ flags @ [fromRoot (b ^ ".hs"), "-o", f (tag ^ ".rbc")], dir = NONE, stdin = "",
+              stdout = f (tag ^ ".out"), stderr = f (tag ^ ".err"), timeout = 600} = 0
+        orelse (fail (tag ^ ": " ^ firstNonEmpty (f (tag ^ ".err"))); false)
+      (* the marks of Core to Mid's dump: each a `prim thunk_selector`, many to a line *)
+      fun marks tag =
+        let
+          val text = read (f (tag ^ ".out")) ^ read (f (tag ^ ".err"))
+          val pat = "prim thunk_selector"
+          fun go (i, n) = if i + size pat > size text then n
+                          else if String.substring (text, i, size pat) = pat then go (i + size pat, n + 1) else go (i + 1, n)
+        in go (0, 0) end
+      fun runs tag =
+        (ignore (exec {cmd = [fromRoot "bin/runevm", f (tag ^ ".rbc")], dir = NONE, stdin = "",
+                       stdout = f (tag ^ ".run"), stderr = f (tag ^ ".runerr"), timeout = 600});
+         if same (f (tag ^ ".run"), fromRoot (b ^ ".expected")) then ()
+         else fail (tag ^ " prints otherwise: " ^ firstNonEmpty (f (tag ^ ".runerr"))))
+      val store = f "store"
+      val ok = rhc (["--no-store"], "default") andalso rhc (["--no-store", "--selector-shapes=on"], "on")
+               andalso rhc (["--no-store", "--selector-shapes=off"], "off")
+               andalso rhc (["--no-store", "--dump-after=coretomid"], "mid-on")
+               andalso rhc (["--no-store", "--dump-after=coretomid", "--selector-shapes=off"], "mid-off")
+               andalso rhc (["--store", store], "store-on") andalso rhc (["--store", store, "--selector-shapes=off"], "store-off")
+               andalso rhc (["--store", store], "store-on-again")
+    in
+      if not ok then ()
+      else
+        (if same (f "default.rbc", f "on.rbc") then () else fail "the default's bytecode is not --selector-shapes=on's";
+         if same (f "on.rbc", f "off.rbc") then fail "--selector-shapes=off leaves the bytecode as it is" else ();
+         if marks "mid-off" < marks "mid-on" then ()
+         else fail ("Core to Mid marks " ^ Int.toString (marks "mid-on") ^ " selectors with shapes, "
+                    ^ Int.toString (marks "mid-off") ^ " without");
+         if same (f "store-on.rbc", f "on.rbc") then () else fail "linked through the store, on is not on's bytecode";
+         if same (f "store-off.rbc", f "off.rbc") then () else fail "linked through the store after on, off is not off's bytecode";
+         if same (f "store-on-again.rbc", f "on.rbc") then ()
+         else fail "linked through the store after off, on is not on's bytecode";
+         List.app runs ["default", "off"])
+    end
+
   fun command args =
     case args of
       "hs-stub-compile" :: rest => SOME (fn () => stubCompile rest)
     | ["hs-selectors-nursery", b] => SOME (fn () => selectorsNursery b)
     | ["hs-selectors-generalised", b] => SOME (fn () => selectorsGeneralised b)
+    | ["hs-selectors-shapes", b] => SOME (fn () => selectorsShapes b)
     | "hs-stub-run" :: rest => SOME (fn () => stubRun rest)
     | ["hs-programs"] => SOME programs
     | _ => NONE
@@ -370,7 +423,8 @@ struct
                          selectors
                 @ [Oracles.jobIn ("", "nursery", ["hs-selectors-nursery", "tests/hs/selectors/count"], [], 1, 600, 3600),
                    Oracles.jobIn ("", "generalised", ["hs-selectors-generalised", "tests/hs/selectors/generalised"], [], 1, 600,
-                                  3600)]))),
+                                  3600),
+                   Oracles.jobIn ("", "shapes", ["hs-selectors-shapes", "tests/hs/selectors/count"], [], 1, 600, 3600)]))),
        tagged (runnerTags @ runnerCovers)
          (Test.describe "hs/runner"
             [Test.describe "silent" (List.map silent (Lang.programsOf (#lang stub, suffixes, mains))),

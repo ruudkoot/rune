@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`CORE_TO_MID`](../sig/CORE_TO_MID.md) |
 | Status | required |
-| Members | 8 |
+| Members | 9 |
 | Tests | not listed |
 | Source | [lib/language/haskell/coretomid.sml](../../../../../lib/language/haskell/coretomid.sml) |
 
@@ -36,6 +36,7 @@ What each means is on [`CORE_TO_MID`](../sig/CORE_TO_MID.md); the types are this
 | exception | [`Unsupported`](../sig/CORE_TO_MID.md#exn-unsupported) | `of string` |
 | val | [`checking`](../sig/CORE_TO_MID.md#val-checking) | `bool ref` |
 | val | [`program`](../sig/CORE_TO_MID.md#val-program) | `{fault : fault option} * Core.decl list -> string` |
+| val | [`selectorShapes`](../sig/CORE_TO_MID.md#val-selectorshapes) | `bool ref` |
 | val | [`shared`](../sig/CORE_TO_MID.md#val-shared) | `string list` |
 | val | [`unit`](../sig/CORE_TO_MID.md#val-unit) | `{fault : fault option, imports : (string * abi) list, makesShared : bool, newtypes : (string * bool) list} * Core.decl list -> {abi : (string * abi) list, boxed : (string * bool) list, names : (string * string) list, text : string}` |
 

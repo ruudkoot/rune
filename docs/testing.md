@@ -599,7 +599,13 @@ directory (`hs/units/*`, `hs/hslint/faults`'s units), or unsets
   `tests/hs/selectors/count` and two of `tests/hs/lang` whose counts once
   differed by where the engines collect -- and `hs/selectors/nursery` holds
   count's instructions the same interpreted at five nurseries, so that a
-  selector the collector reduced counts as one it did not (D17's count).
+  selector the collector reduced counts as one it did not (D17's count);
+  `hs/selectors/generalised` holds that `--selectors=generalised` changes a
+  generalised binding's desugaring and the bytecode, and that without it
+  the bytecode is `--selectors=monomorphic`'s; and `hs/selectors/shapes`
+  that `--selector-shapes=off` marks fewer selectors at Core to Mid and
+  changes count's bytecode, the default's being `--selector-shapes=on`'s,
+  and that through one store a link with each keeps its own bytecode.
 
 **Round trips** (the roadmap's D28; `tests/runner/hsroundtrip.sml`). On every
 file of `tests/hs/lang`, `tests/hs/accept` and `tests/hs/roundtrip`
