@@ -88,6 +88,12 @@ void jit_depend(JitProgram *jit, uint32_t callee, uint32_t caller) {
 
 static JitProgram *the_program;   /* one VM per process, for --jit-stats */
 struct LandingSeen *jit_landing_seen;
+/* every slot of the cache forgotten (jit.h, jit_landing_seen): those
+   written since the last time, emptied */
+static void landings_forget(JitProgram *jit) {
+    for (uint32_t i = 0; i < jit->nseen_used; i++) jit->seen[jit->seen_used[i]].word = 0;
+    jit->nseen_used = 0;
+}
 static VM *the_vm;
 
 static void jit_make(VM *vm, JitProgram *jit) {
@@ -129,7 +135,7 @@ static void jit_make(VM *vm, JitProgram *jit) {
     vm->jit_calls = jit->calls;
     /* the code of the program before is left where it is: a frame of an
        image never returns into it, since its return word is not carried */
-    memset(jit->seen, 0, sizeof jit->seen);
+    landings_forget(jit);
     jit->code_used = jit->code_mem ? jit->code_used : 0;
     memset(jit->apply_shared, 0, sizeof jit->apply_shared);   /* (the program's stubs may be others) */
     /* what each function's calls must fill: worked out for all now, since
@@ -218,7 +224,7 @@ static void range_dies(JitProgram *jit, uintptr_t lo) {
         else b = mid;
     }
     if (a < jit->nranges && jit->ranges[a].lo == lo) jit->ranges[a].func = UINT32_MAX;
-    memset(jit->seen, 0, sizeof jit->seen);
+    landings_forget(jit);
 }
 void jit_code_placed(JitProgram *jit, uint32_t f, const void *at, size_t size) {
     if (jit->nranges == jit->ranges_cap) {
@@ -235,11 +241,13 @@ void jit_code_placed(JitProgram *jit, uint32_t f, const void *at, size_t size) {
 }
 
 /* A return word that is a landing: the code it is in by the ranges, and
-   the call by the code's landings; the last 256 asked kept */
+   the call by the code's landings; the last asked kept, each in its slot
+   of the JIT_SEEN (jit.h) */
 int jit_landing_info(VM *vm, Value w, uint32_t *func, uint32_t *pc) {
     JitProgram *jit = the_program;
     if (!jit || !jit->nranges) return 0;
-    struct LandingSeen *seen = &jit->seen[jit_seen_slot(w)];
+    uint32_t slot = jit_seen_slot(w);
+    struct LandingSeen *seen = &jit->seen[slot];
     if (seen->word == w) { *func = seen->func; *pc = seen->pc; return 1; }
     uintptr_t at = (uintptr_t)w - JIT_RET_BIAS;
     uint32_t a = 0, b = jit->nranges;
@@ -262,6 +270,7 @@ int jit_landing_info(VM *vm, Value w, uint32_t *func, uint32_t *pc) {
     if (x == co->nlands || co->land_offs[x] != off) return 0;
     *func = r->func;
     *pc = co->land_pcs[x];
+    if (!seen->word) jit->seen_used[jit->nseen_used++] = slot;   /* (at most JIT_SEEN: a slot once, till forgotten) */
     seen->word = w; seen->func = *func; seen->pc = *pc;
     seen->below = REG_HEADER + vm->prog.funcs[*func].nlocals;
     jit->walked_landings++;
@@ -357,6 +366,15 @@ JitProgram *jit_program(VM *vm) {
     if (!the_program) {
         the_program = calloc(1, sizeof(JitProgram));
         if (!the_program) { fprintf(stderr, "runevm: out of memory (JIT)\n"); exit(2); }
+        /* the cache and its list of slots written, pages of their own from
+           the system, zeroed, each touched when first written: not
+           malloc's, whose arena a block this size would rearrange for
+           everything the compiler allocates after it (jit.h) */
+        size_t seen_bytes = (size_t)JIT_SEEN * sizeof *the_program->seen;
+        char *seen = sys_mem_reserve(seen_bytes + (size_t)JIT_SEEN * sizeof *the_program->seen_used, JIT_SEEN_ALIGN, NULL);
+        if (!seen) { fprintf(stderr, "runevm: out of memory (JIT)\n"); exit(2); }
+        the_program->seen = (struct LandingSeen *)seen;
+        the_program->seen_used = (uint32_t *)(seen + seen_bytes);
         jit_landing_seen = the_program->seen;
         if (vm->jit.stats) the_program->prim_calls = calloc(PRIM__COUNT, sizeof(uint64_t));
         the_vm = vm;

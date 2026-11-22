@@ -129,11 +129,16 @@ frame's caller from its header -- the info word where the return word
 is the interpreter's, else the landing's code object, which says the
 caller's function and pc for each of its landings (`jit_landing_info`:
 the code by address among the region's code objects, the landing by its
-offset, the last 256 return words asked kept, with how far below the
-frame the caller's base is). The walks of the collections and of the
-barrier (`vm_frames_from`, `reg_barrier_pass`) step down without a call:
-a return word one of the two they met last, as a deep recursion's frames
-are, or one of the 256, is read in line. Of a header the collector scans
+offset, the return words asked last kept, one a slot of 65536 by a hash
+of the word -- `JIT_SEEN_BITS`, `jit.h`: with 256 the code's layout
+decided which of a program's landings shared a slot, and so what a
+collection of a deep stack cost -- with how far below the frame the
+caller's base is; code that dies forgets them, the slots written since
+the last time emptied).
+The walks of the collections and of the barrier (`vm_frames_from`,
+`reg_barrier_pass`) step down without a call: a return word one of the
+two they met last, as a deep recursion's frames are, or one the cache
+holds, is read in line. Of a header the collector scans
 the closure alone, made `unit` where the frame's function does not read
 one, so that it keeps nothing alive, and makes `unit` the info word of a
 frame compiled code called, which does not write it, where the slot
