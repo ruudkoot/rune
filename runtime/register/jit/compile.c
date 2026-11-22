@@ -869,16 +869,14 @@ static void emit_slow(Masm *m, Slow *sp) {
         ms_reload(m);
         as_jmp(&m->a, &s.back);
     } else if (s.kind == SLOW_SELECT) {
-        /* FORCE of a selector: its field where its tuple is evaluated, in
-           C (jit_h_select), given to register a, and back to test it, in
-           rax; where the program does not rerun (s.b), of the word in rax
-           (jit_h_selected), the homes C would clobber kept around the call
-           as around ms_call_pure's, nothing synced */
+        /* FORCE of a selector: its field where its tuple is evaluated,
+           given to register a, and back to test it, in rax: where the
+           program does not rerun (s.b), by the select stub (masm.h,
+           ms_emit_select), which takes the step in code and calls C only
+           for a chain, keeping the homes itself, so that the code here is
+           a call; else in C (jit_h_select), synced */
         if (s.b) {
-            ms_save_volatile(m, s.pc, s.a);
-            as_mov_rr(&m->a, ms_arg(m, 1), R_S0);
-            ms_call(m, (MsHelper)jit_h_selected);
-            ms_restore_volatile(m, s.pc, s.a);
+            as_call_to(&m->a, m->select);
             ms_set_bits(m, s.a, R_S0);
             as_jmp(&m->a, &s.back);
         } else {
@@ -1174,6 +1172,8 @@ int jit_region_init(VM *vm, JitProgram *jit) {
     as_ret_align(&a);   /* a return word too (native-frames.md, M5) */
     size_t barrier_at = a.n;
     ms_emit_barrier(&a, JIT_WIN, (MsHelper)jit_h_barrier);
+    size_t select_at = a.n;
+    ms_emit_select(&a, JIT_WIN, (MsHelper)jit_h_selected);
     /* every primitive's C, the helpers, and the C library's functions
        that primitives on reals are (jit_libm_of) */
     uint32_t nhelpers = (uint32_t)(sizeof helpers / sizeof helpers[0]), n = 2 * PRIM__COUNT + nhelpers, size = 16;
@@ -1211,6 +1211,7 @@ int jit_region_init(VM *vm, JitProgram *jit) {
     if (vm->frames_active) reg_frames_ret_word(vm);
     /* and the stack's watermark is kept by the barrier from here on (M5) */
     jit->barrier = mem + barrier_at;
+    jit->select = mem + select_at;
     vm->barrier_stub = (Value)(uintptr_t)jit->barrier + JIT_RET_BIAS;
     reg_barrier_arm(vm);
     /* and a call to a function with no code goes here (M6) */
@@ -1250,6 +1251,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     j.m.conv_prim_op = ROP_PRIM;
 #endif
     j.m.box_num = (MsHelper)jit_h_box_num;   /* at either tier: a result past 63 bits on its way to a slot */
+    j.m.select = jit->select;
     j.vm = vm; j.jit = jit; j.f = f;
     j.flags_for = j.flags_prev = -1;
     j.cc_for = j.cc_prev = -1;
