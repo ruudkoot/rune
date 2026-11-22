@@ -1340,6 +1340,20 @@
     },
     {
      "kind": "val",
+     "name": "canonicalTy",
+     "spec": "val canonicalTy : Core.ty -> Core.ty",
+     "doc": "`canonicalTy t` is `t` with each type variable named again by the\nplace it is first met, `tK`.\n\nThe checker numbers a value's type variables by what its unit took\nbefore it, and names them as its source wrote them, text the value's\ntype does not read: so named, a value's type is written alike in each\nunit that imports it, however that unit's compile went\n(build-cache-issues.md, issue 40).\n\n",
+     "page": "sig/HS_DS_CORE.md#val-canonicalty"
+    },
+    {
+     "kind": "val",
+     "name": "canonicalDecl",
+     "spec": "val canonicalDecl : Core.decl -> Core.decl",
+     "doc": "`canonicalDecl d` is `d` with its types' variables named again as\n`canonicalTy` names them, one naming for all of `d`.\n\nA data type's parameters are among them; a value's body is left as\nit is.\n\n",
+     "page": "sig/HS_DS_CORE.md#val-canonicaldecl"
+    },
+    {
+     "kind": "val",
      "name": "declare",
      "spec": "val declare : Core.decl -> unit",
      "doc": "`declare d` adds the data type, newtype, value or import `d` to what is\nknown.\n\nA value is known by its type.\n\n",

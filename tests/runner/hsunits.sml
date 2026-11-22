@@ -992,10 +992,68 @@ struct
       else ()
     end
 
+  (* Main's Core imports a polymorphic value of Lib's, its type variables
+     numbered by what Lib's check took before it, and copies a type of
+     Lib's, its parameter named as Lib's source writes it: Lib gains a value
+     of its own before the one Main takes, then its type's parameter is
+     renamed, so that Main is taken, and --verify-store, compiling both,
+     holds Main's entry to what compiling it gives after each; then Main's
+     comment edited: Main compiled is the Core it was, and the link, kept by
+     its units' Core, is taken. A value's type and a type's declaration,
+     what Lib gives Main, with their variables named by place make it so
+     (build-cache-issues.md, issue 40) *)
+  fun verifyOrder () =
+    let
+      fun no why = say ("FAIL hs.units.verify-order: " ^ why ^ "\n")
+      val d = out ^ "/verify-order"
+      fun f x = d ^ "/" ^ x
+      val main = "module Main (main) where\n\nimport Lib\n\nmain :: IO ()\nmain = print (unbox (Box (twice double 5)))\n"
+      fun lib (more, p) =
+        "module Lib (Box (..), double, twice, unbox) where\n\ndata Box " ^ p ^ " = Box " ^ p ^ "\n\nunbox :: Box c -> c\n"
+        ^ "unbox (Box x) = x\n\ndouble :: Int -> Int\ndouble x = x + x\n\n" ^ more
+        ^ "twice :: (a -> a) -> a -> a\ntwice g = g . g\n"
+      val pairUp = "pairUp :: a -> b -> (a, b)\npairUp x y = (x, y)\n\n"
+      val () = (rmTree d; mkdirs d; write (f "Lib.hs", lib ("", "a")); write (f "Main.hs", main))
+      fun rhc (args, log) = rhcIn (d, NONE, ["--store", "st", "--show-units"] @ args @ ["Main.hs", "-o", "w.rbc"], log) = 0
+      (* Lib edited by `edit`, Main taken, and the store held by --verify-store *)
+      fun step (edit, what) =
+        let
+          val () = write (f "Lib.hs", edit)
+          val log = what ^ ".log"
+        in
+          if not (rhc ([], log)) then (no ("the compile after Lib " ^ what ^ " fails: " ^ firstLine (f log)); false)
+          else if saysOf (read (f log), "Main") <> ["taken"] then (no ("Main is not taken after Lib " ^ what); false)
+          else if not (rhc (["--verify-store"], what ^ "-verified.log")) then
+            (no ("--verify-store refuses after Lib " ^ what ^ ": "
+                 ^ getOpt (List.find (String.isSubstring "--verify-store:") (lines (read (f (what ^ "-verified.log")))),
+                           firstLine (f (what ^ "-verified.log"))));
+             false)
+          else true
+        end
+    in
+      if not (rhc ([], "first.log")) then no ("the first compile fails: " ^ firstLine (f "first.log"))
+      else if not (step (lib (pairUp, "a"), "grows")) then ()
+      else if not (step (lib (pairUp, "b"), "renames")) then ()
+      else
+        let
+          val () = write (f "Main.hs", "-- Main, its comment edited\n" ^ main)
+          val third = rhc ([], "comment.log")
+          val text = read (f "comment.log")
+        in
+          if not third then no ("the compile after Main's comment is edited fails: " ^ firstLine (f "comment.log"))
+          else if saysOf (text, "Main") <> ["compiled"] then no "Main, its comment edited, is not compiled"
+          else if saysOf (text, "link") <> ["taken"] then
+            no ("the link is not taken: Main compiled is other Core than its entry's ("
+                ^ String.concatWith ", " (saysOf (text, "link")) ^ ")")
+          else ()
+        end
+    end
+
   fun command args =
     case args of
       ["hs-units-drive"] => SOME drive
     | ["hs-units-verify-scopes"] => SOME verifyScopes
+    | ["hs-units-verify-order"] => SOME verifyOrder
     | ["hs-units-configs"] => SOME configs
     | ["hs-units-elsewhere"] => SOME elsewhere
     | ["hs-units-trim"] => SOME trimmed
@@ -1033,7 +1091,8 @@ struct
          Tools.job ("verify", ["hs-units-verify"], [], 600, 3600), Tools.job ("trim", ["hs-units-trim"], [], 600, 3600),
          Tools.job ("elsewhere", ["hs-units-elsewhere"], [], 600, 3600),
          Tools.job ("configs", ["hs-units-configs"], [], 900, 3600),
-         Tools.job ("verify-scopes", ["hs-units-verify-scopes"], [], 300, 900)]
+         Tools.job ("verify-scopes", ["hs-units-verify-scopes"], [], 300, 900),
+         Tools.job ("verify-order", ["hs-units-verify-order"], [], 300, 900)]
         @ List.map (fn c => Tools.job ("holes/" ^ c, ["hs-units-hole", c], [], 600, 3600)) (holeCases ())
         @ List.map (fn s => Tools.job ("core/" ^ HsCore.nameOf s, ["hs-units-core", s], [], 500, 1200)) (coreTests ())
       val nightly = List.map (fn c => Tools.job ("random/" ^ c, ["hs-units-random", c], [], 900, 3600)) (holeCases ())

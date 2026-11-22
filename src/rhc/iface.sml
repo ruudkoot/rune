@@ -77,7 +77,8 @@ struct
      `state`: the entities a name stands for in a module's scope, what an
      import item names of a module's exports (and their constructors,
      fields and methods), a module's exports, the instance of a class at
-     a type or none, an entity's fingerprint. An entity of the unit itself
+     a type and the module that declares it, or none, an entity's
+     fingerprint. An entity of the unit itself
      (`own` its module) is by its key; any other with its fingerprint. *)
   fun answer {state : N.state, fingerprint : string -> string option, own : string -> bool} (r : HsUsage.read) : string =
     let
@@ -104,8 +105,12 @@ struct
           end
       | HsUsage.Exports m => String.concatWith " " (sortStrings (List.map Mo.key (exportsOf m)))
       | HsUsage.Instance {cls, tycon} =>
+          (* with the module that declares it: whether the reading module's
+             imports reach the instance was read of that module (HsInfer's
+             Reaches), and an instance moved to another, which they may not
+             reach, is another answer (build-cache-issues.md, issue 41) *)
           (case HsClasses.findInstance (HsInfer.classes (#types state), cls, tycon) of
-             SOME {id, home, ...} => if own home then id else id ^ "=" ^ getOpt (fingerprint id, "?")
+             SOME {id, home, ...} => if own home then id else id ^ " in " ^ home ^ "=" ^ getOpt (fingerprint id, "?")
            | NONE => "none")
       | HsUsage.Standard {space, name} =>
           let

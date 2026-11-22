@@ -257,5 +257,22 @@ struct
           "driver.sml",
           "val namesSetting = \"names \" ^ (case fixpoint of HsModules.Least => \"least\" | HsModules.Greatest => \"greatest\")",
           "val namesSetting = \"names\"",
-          [])]
+          []),
+     one ("HU26", "units", "a value's type in its unit's interface as the checker numbered its variables, not named by " ^
+                   "place: a unit that imports it, taken after the unit grew a value before it, is other Core than compiling " ^
+                   "it gives (issue 40)",
+          "desugar.sml", "SOME (Core.Import (x, C.canonicalTy t))", "SOME (Core.Import (x, t))",
+          ["hs/units/verify-order"]),
+     one ("HU27", "units", "a type's variables kept as the checker numbered them or its source wrote them, not named " ^
+                   "again by place (issue 40)",
+          "desugar_core.sml", "val b = \"t\" ^ Int.toString (!k) in", "val b = a in",
+          ["hs/units/verify-order"]),
+     one ("HU28", "units", "a type's declaration with its parameters as its source wrote them: a unit that copies it, taken " ^
+                   "after the parameter was renamed, is other Core than compiling it gives (issue 40)",
+          "desugar.sml", "in C.declare d; types := C.canonicalDecl d :: !types end", "in C.declare d; types := d :: !types end",
+          ["hs/units/verify-order"]),
+     rhc ("HU29", "units", "an instance read without the module that declares it: one moved to a module the reading " ^
+                   "module's imports do not reach, the same, leaves the unit taken (issue 41)",
+          "iface.sml", "id ^ \" in \" ^ home ^ \"=\" ^ getOpt (fingerprint id, \"?\")", "id ^ \"=\" ^ getOpt (fingerprint id, \"?\")",
+          [holes ^ "instance-moved"])]
 end
