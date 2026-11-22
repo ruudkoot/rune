@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 48 of 48 entries documented |
+| Documentation | 50 of 50 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_core\_sig.sml](../../../../../lib/language/haskell/desugar_core_sig.sml) |
 
@@ -55,6 +55,8 @@ sig
   val <a href="#val-save">save</a> : unit -&gt; saved
   val <a href="#val-restore">restore</a> : saved -&gt; unit
   val <a href="#val-canonical">canonical</a> : Core.exp -&gt; Core.exp
+  val <a href="#val-canonicalty">canonicalTy</a> : Core.ty -&gt; Core.ty
+  val <a href="#val-canonicaldecl">canonicalDecl</a> : Core.decl -&gt; Core.decl
   val <a href="#val-declare">declare</a> : Core.decl -&gt; unit
   val <a href="#val-tuplearity">tupleArity</a> : string -&gt; int option
   val <a href="#val-tupledata">tupleData</a> : int -&gt; Core.decl
@@ -174,6 +176,33 @@ val canonical : Core.exp -> Core.exp
 again, from 1 in the order they are bound, its base kept.
 
 So a value's Core is the same whatever was made before it.
+
+### <a name="val-canonicalty"></a>`canonicalTy`
+
+```sml
+val canonicalTy : Core.ty -> Core.ty
+```
+
+`canonicalTy t` is `t` with each type variable named again by the
+place it is first met, `tK`.
+
+The checker numbers a value's type variables by what its unit took
+before it, and names them as its source wrote them, text the value's
+type does not read: so named, a value's type is written alike in each
+unit that imports it, however that unit's compile went
+(build-cache-issues.md, issue 40).
+
+### <a name="val-canonicaldecl"></a>`canonicalDecl`
+
+```sml
+val canonicalDecl : Core.decl -> Core.decl
+```
+
+`canonicalDecl d` is `d` with its types' variables named again as
+[`canonicalTy`](#val-canonicalty) names them, one naming for all of `d`.
+
+A data type's parameters are among them; a value's body is left as
+it is.
 
 ## The declarations
 

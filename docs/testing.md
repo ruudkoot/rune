@@ -927,7 +927,7 @@ mutant's tree for a job to be run against it by hand). The first fourteen
 seed rhc's lexer, its literate reader, its layout and its parser, CoreLint,
 Core's interpreter and Core's text reader, these last seen by `hs/core`'s
 jobs; HK01 to HK05 the checker, seen by `hs/hslint`'s; HD01 to HD03
-deriving; HM01 to HM03 desugaring, seen by `hs/desugar`'s; HU01 to HU25
+deriving; HM01 to HM03 desugaring, seen by `hs/desugar`'s; HU01 to HU28
 the holes of rhc's units, seen by `hs/units/holes` (*rhc in units*); HW01 and
 HW02 strictness, its workers and wrappers, seen at -O2. F's parser
 mutants (`tests/runner/hssyntax.sml`) are the in-process kind.
@@ -1325,7 +1325,9 @@ make, caught by these cases and `hs/units/configs`), caught by its case;
 without each export's parent and sort, `HU21` and `HU25`, A and B under
 the greatest fixpoint of a cycle's exports as under the least, and `HU23`,
 B's digest without the entries' sums, are `EQUIVALENT`, each with its
-argument. Nightly,
+argument; `HU26` to `HU28`, what a unit gives with its type variables
+as the checker numbered them or its source wrote them, are caught by
+`hs/units/verify-order`. Nightly,
 `hs/units/random/CASE` walks each case's states (the k-th its steps 1 to
 k) in an order drawn at random, through one store, with the same
 comparison at each, so that an entry meets every edit and its undoing in
@@ -1368,7 +1370,14 @@ a store gives (issue 37). `hs/units/verify-scopes` grows an import by
 an entity its client does not name: the client stands by its usages, its
 scope's digests as they were, and `--verify-store` holds the store, those
 digests no part of what it compares, and HsLint's part of a unit numbered
-by the unit, not by the units before it (issues 37 and 40). Core in
+by the unit, not by the units before it (issues 37 and 40).
+`hs/units/verify-order` grows Lib by a value of its own before the
+polymorphic one Main imports, then renames the parameter of a type Main
+copies: Main is taken, and `--verify-store` holds the store after each,
+Main's Core the import's type and the type's declaration with their
+variables named by place, not as Lib's check numbered them or its source
+wrote them; and Main, its comment edited, is compiled to the Core it was,
+and the link taken (issue 40). Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an

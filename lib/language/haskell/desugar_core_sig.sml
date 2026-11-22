@@ -44,6 +44,23 @@ sig
      So a value's Core is the same whatever was made before it. *)
   val canonical : Core.exp -> Core.exp
 
+  (* `canonicalTy t` is `t` with each type variable named again by the
+     place it is first met, `tK`.
+
+     The checker numbers a value's type variables by what its unit took
+     before it, and names them as its source wrote them, text the value's
+     type does not read: so named, a value's type is written alike in each
+     unit that imports it, however that unit's compile went
+     (build-cache-issues.md, issue 40). *)
+  val canonicalTy : Core.ty -> Core.ty
+
+  (* `canonicalDecl d` is `d` with its types' variables named again as
+     `canonicalTy` names them, one naming for all of `d`.
+
+     A data type's parameters are among them; a value's body is left as
+     it is. *)
+  val canonicalDecl : Core.decl -> Core.decl
+
   (* ---- The declarations ---- *)
 
   (* `declare d` adds the data type, newtype, value or import `d` to what is

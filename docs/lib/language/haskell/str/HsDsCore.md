@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_DS_CORE`](../sig/HS_DS_CORE.md) |
 | Status | required |
-| Members | 48 |
+| Members | 50 |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_core.sml](../../../../../lib/language/haskell/desugar_core.sml) |
 
@@ -31,6 +31,8 @@ What each means is on [`HS_DS_CORE`](../sig/HS_DS_CORE.md); the types are this s
 | val | [`atom`](../sig/HS_DS_CORE.md#val-atom) | `texp * (Core.atom * Core.ty -> texp) -> texp` |
 | val | [`atoms`](../sig/HS_DS_CORE.md#val-atoms) | `texp list * ((Core.atom * Core.ty) list -> texp) -> texp` |
 | val | [`canonical`](../sig/HS_DS_CORE.md#val-canonical) | `Core.exp -> Core.exp` |
+| val | [`canonicalDecl`](../sig/HS_DS_CORE.md#val-canonicaldecl) | `Core.decl -> Core.decl` |
+| val | [`canonicalTy`](../sig/HS_DS_CORE.md#val-canonicalty) | `Core.ty -> Core.ty` |
 | val | [`caseCon`](../sig/HS_DS_CORE.md#val-casecon) | `Core.atom * Core.ty * (string * ((string * Core.ty) list -> texp)) list * texp option -> texp` |
 | val | [`cast`](../sig/HS_DS_CORE.md#val-cast) | `texp * Core.ty -> texp` |
 | val | [`con`](../sig/HS_DS_CORE.md#val-con) | `string * Core.ty list * texp list -> texp` |

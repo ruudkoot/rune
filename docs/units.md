@@ -1239,6 +1239,18 @@ found where it is kept -- by its modules' keys (`HsStringMap.foldPrefix`),
 among what was added since the units before were restored, an instance by
 its class and type constructor, a chain of imports searched until it
 reaches the module asked for -- not by a fold over everything known.
+A unit's Core is a function of its source and of what it reads, not of
+the order of the compile (issue 40): the checker numbers a value's type
+variables by what its unit took before it, a type variable keeps the name
+its source wrote, and so do a data type's parameters, text that a unit
+importing the value or copying the type does not read, and which moves
+while that unit is taken; so what a unit gives the units after it, each
+value's type in its interface and each of its data types, has its type
+variables named again by the place each is first met, `tK`
+(`HsDsCore.canonicalTy`, `canonicalDecl`), the unit's own values keeping
+the checker's names, a function of its source; and HsLint numbers a
+unit's inference from where the first unit's ended
+(`HsLint.counterFrom`).
 `--verify-store` takes nothing: it makes every unit and the link, and
 holds each entry that stands for one to what making it gave, byte for byte
 (its usages but its scope's, its interface and every part, HsLint's where

@@ -4,6 +4,8 @@
 
 - `C` (con): [HS_AST](../sig/HS_AST.md#con-c)
 - `canonical` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-canonical), [HS_MOD_IFACE](../sig/HS_MOD_IFACE.md#val-canonical)
+- `canonicalDecl` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-canonicaldecl)
+- `canonicalTy` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-canonicalty)
 - `CASE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-case)
 - `Case` (con): [CORE](../sig/CORE.md#con-case)
 - `caseCon` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-casecon)

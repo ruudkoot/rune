@@ -81,6 +81,56 @@ struct
       exp M.empty e
     end
 
+  (* ---- the checker's names named by place (build-cache-issues.md, issue 40) ---- *)
+
+  (* The checker numbers a value's type variables, `NAME_NUMBER` and
+     `tNUMBER`, by what its unit took before it, and a type variable keeps
+     the name its source wrote; a data type's parameters are as its source
+     wrote them: text of the unit that a unit importing the value, which
+     reads its type, or copying the type, which reads its declaration,
+     does not read. So that unit is taken from the store with the old text
+     of them while that text moves, other Core than compiling it again
+     gives. Named again by the place each is first met, `tK`, one naming
+     for a value's type or a type's declaration, what a unit gives the
+     units after it is a function of what they read. The unit's own values
+     keep the checker's names, its types and its bodies: a function of its
+     source, and the bodies named apart from each other, as the
+     simplifier's binders made distinct want them (a body named by place
+     would number its fresh names otherwise). *)
+  fun renaming () =
+    let
+      val m : string M.map ref = ref M.empty
+      val k = ref 0
+    in
+      fn a =>
+        case M.find (!m, a) of
+          SOME b => b
+        | NONE => let val () = k := !k + 1 val b = "t" ^ Int.toString (!k) in m := M.insert (!m, a, b); b end
+    end
+
+  fun tyBy r t =
+    case t of
+      Core.TVar a => Core.TVar (r a)
+    | Core.TCon _ => t
+    | Core.TApp (f, x) => let val f' = tyBy r f in Core.TApp (f', tyBy r x) end
+    | Core.TFun (a, b) => let val a' = tyBy r a in Core.TFun (a', tyBy r b) end
+    | Core.TForall (a, k, b) => let val a' = r a in Core.TForall (a', k, tyBy r b) end
+    | Core.TEval a => Core.TEval (tyBy r a)
+    | Core.TUTuple ts => Core.TUTuple (List.map (tyBy r) ts)
+
+  fun canonicalTy t = tyBy (renaming ()) t
+  fun canonicalDecl d =
+    let
+      val r = renaming ()
+      fun params ps = List.map (fn (a, k) => (r a, k)) ps
+    in
+      case d of
+        Core.Data (t, ps, cs) => let val ps' = params ps in Core.Data (t, ps', List.map (fn (c, fs) => (c, List.map (tyBy r) fs)) cs) end
+      | Core.Newtype (t, ps, c, f) => let val ps' = params ps in Core.Newtype (t, ps', c, tyBy r f) end
+      | Core.Val (x, ty, e) => Core.Val (x, tyBy r ty, e)
+      | Core.Import (x, ty) => Core.Import (x, tyBy r ty)
+    end
+
   fun kindOfParams ps = List.foldr (fn ((_, k), r) => Core.Arrow (k, r)) Core.Star ps
 
   fun declare d =

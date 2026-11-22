@@ -1276,7 +1276,13 @@ struct
         List.app (fn (t, _, cs, n) => case C.tycon t of
                                          SOME (ks, _) =>
                                            let val d = dataDecl (t, relaxed cs, n, ks)
-                                           in C.declare d; types := d :: !types end
+                                           (* its parameters named by place in
+                                              what the unit gives, not as its
+                                              source wrote them, which a unit
+                                              that copies it does not read
+                                              (issue 40); the bodies made here
+                                              read it as written *)
+                                           in C.declare d; types := C.canonicalDecl d :: !types end
                                        | NONE => ())
           dataDecls
 
@@ -1732,7 +1738,11 @@ struct
               ownsInstance = fn h => M.member (ids, h) orelse others h}
       val new = V.addedSince (#env prior)
       val interface =
-        {core = types @ List.mapPartial (fn (x, SOME t, _) => SOME (Core.Import (x, t)) | _ => NONE) values,
+        (* each value's type with its variables named by place, as a unit
+           after it imports it: not by the checker's numbers, which move
+           with what this unit took before the value, text the importing
+           unit does not read (issue 40) *)
+        {core = types @ List.mapPartial (fn (x, SOME t, _) => SOME (Core.Import (x, C.canonicalTy t)) | _ => NONE) values,
          primTypes = #primTypes new,
          builtinCons = #builtinCons new,
          fields = #fields new,
