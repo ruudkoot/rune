@@ -270,5 +270,9 @@ struct
      one ("HU28", "units", "a type's declaration with its parameters as its source wrote them: a unit that copies it, taken " ^
                    "after the parameter was renamed, is other Core than compiling it gives (issue 40)",
           "desugar.sml", "in C.declare d; types := C.canonicalDecl d :: !types end", "in C.declare d; types := d :: !types end",
-          ["hs/units/verify-order"])]
+          ["hs/units/verify-order"]),
+     rhc ("HU29", "units", "an instance read without the module that declares it: one moved to a module the reading " ^
+                   "module's imports do not reach, the same, leaves the unit taken (issue 41)",
+          "iface.sml", "id ^ \" in \" ^ home ^ \"=\" ^ getOpt (fingerprint id, \"?\")", "id ^ \"=\" ^ getOpt (fingerprint id, \"?\")",
+          [holes ^ "instance-moved"])]
 end
