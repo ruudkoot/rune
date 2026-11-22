@@ -433,7 +433,8 @@ void log_pass_end(VM *vm, const PassMark *m, const char *kind, int64_t pause);
    collector: caf_begin (0: every global a root, as OTHER_ROOTS has them);
    caf_frames, with the stack's roots after it; caf_back, and caf_roots for
    OTHER_ROOTS; caf_code for each object marked whose code may run
-   (caf_runs, caf_code_due); then the frames' closures (caf_aside), each
+   (caf_runs, caf_code_due); then the frames' closures (caf_aside, and
+   caf_aside_bits those of the frames the stack's summary has), each
    marked the frames' alone (caf_only_add), taking its function's table
    where a later reference reaches it (caf_only_take); caf_end. */
 typedef struct CafTables CafTables;
@@ -441,7 +442,8 @@ typedef struct CafAside { Value *slot; Obj **root; Value was; } CafAside;
 int caf_begin(VM *vm);
 void caf_frames(VM *vm, void (*visit)(VM *, Value *), int defer);
 void caf_frames_forget(void);
-int caf_frames_reuse(FrameRef **out, size_t *n, size_t *from);
+int caf_frames_reuse(FrameRef **out, size_t *n, size_t *from, size_t *below);
+void caf_aside_bits(VM *vm, void (*visit)(VM *, Value *));
 const char *caf_stack_check(VM *vm, const FrameRef *f, size_t n, size_t from);
 void caf_back(VM *vm);
 size_t caf_aside(CafAside **out);

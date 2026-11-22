@@ -210,24 +210,26 @@ size_t gc_stack_record(VM *vm, const FrameRef *fr, size_t nf, size_t from) {
     return rec;
 }
 
-/* the summary's slots below from visited, as many as were roots */
-static size_t stack_replay(VM *vm, size_t from, void (*visit)(VM *, Value *)) {
-    const uint64_t *b = vm->gc.stack_roots;
+/* the summary's slots below from visited, but the closures below below
+   (the CAF tables set them aside, caf_frames): as many as were roots */
+static size_t stack_replay(VM *vm, size_t from, size_t below, void (*visit)(VM *, Value *)) {
+    const uint64_t *b = vm->gc.stack_roots, *a = vm->gc.stack_aside;
     size_t n = 0;
     for (size_t w = 0; w << 6 < from; w++) {
-        uint64_t x = b[w];
+        uint64_t x = b[w], skip = w << 6 < below ? a[w] : 0;
         if ((w + 1) << 6 > from) x &= ((uint64_t)1 << (from & 63)) - 1;
-        for (; x; x &= x - 1, n++) visit(vm, &vm->stack[(w << 6) + (size_t)__builtin_ctzll(x)]);
+        for (; x; x &= x - 1, n++)
+            if (!(skip & x & -x)) visit(vm, &vm->stack[(w << 6) + (size_t)__builtin_ctzll(x)]);
     }
     return n;
 }
 
 void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
-    size_t at = 0, live = 0, from = 0, nf = 0;
+    size_t at = 0, live = 0, from = 0, nf = 0, below = 0;
     FrameRef *fr = NULL;
     int cafs = 0;
     if (!vm->frame_live) vm->gc.stack_valid = 0;   /* every slot a root: no summary */
-    else if (!(cafs = caf_frames_reuse(&fr, &nf, &from)))
+    else if (!(cafs = caf_frames_reuse(&fr, &nf, &from, &below)))
         nf = gc_stack_frames(vm, &fr, &from, SIZE_MAX);   /* the frames, the top level's first (native-frames.md, M3), from the lowest that ran */
     /* the summary made again of the slots below the frame that runs; the
        CAF tables' part (caf_frames) for no slot past those below from,
@@ -235,7 +237,7 @@ void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
     size_t rec = vm->frame_live ? gc_stack_record(vm, fr, nf, from) : 0;
     if (!cafs && vm->gc.stack_aside_valid > from) vm->gc.stack_aside_valid = from;
     if (from) {
-        live += stack_replay(vm, from, visit);
+        live += stack_replay(vm, from, below, visit);
         at = from;
     }
 #define STACK_VISIT(vm_, v_) (live++, visit((vm_), (v_)), gc_stack_bit((vm_), (v_), rec))
@@ -359,6 +361,7 @@ static void collect_into(VM *vm, size_t new_size) {
             else { *a[i].root = copy_obj(vm, *a[i].root); o = *a[i].root; }
             if (o && caf_runs(o)) caf_only_add(o);
         }
+        caf_aside_bits(vm, copy_value);
         copy_scan(vm, &c, &at, 2);
         caf_end(vm);
     } else {

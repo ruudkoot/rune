@@ -383,15 +383,19 @@ static int aside_room(size_t n) {
     aside = a; capaside = cap;
     return 1;
 }
+/* the closures of the frames below this slot set aside by the stack's
+   summary's bits (GcState.stack_aside), not in the list: caf_frames to
+   caf_end, 0 where none is */
+static size_t aside_below;
 /* the frames caf_frames walked, and where their slots begin, for
    gc_stack_roots's walk after it in the same collection (once) */
 static FrameRef *reuse_f;
 static size_t reuse_n, reuse_from;
 static int reuse_on;
-int caf_frames_reuse(FrameRef **out, size_t *n, size_t *from) {
+int caf_frames_reuse(FrameRef **out, size_t *n, size_t *from, size_t *below) {
     if (!reuse_on) return 0;
     reuse_on = 0;
-    *out = reuse_f; *n = reuse_n; *from = reuse_from;
+    *out = reuse_f; *n = reuse_n; *from = reuse_from; *below = aside_below;
     return 1;
 }
 void caf_frames_forget(void) { reuse_on = 0; }
@@ -470,6 +474,7 @@ void caf_record(VM *vm, const FrameRef *f, size_t n, size_t from, size_t rec) {
 void caf_frames(VM *vm, void (*visit)(VM *, Value *), int defer) {
     CafTables *t = vm->caf;
     size_t from;
+    aside_below = 0;
     FrameRef *f; size_t n = gc_stack_frames(vm, &f, &from, vm->gc.stack_aside_valid);
     reuse_f = f; reuse_n = n; reuse_from = from; reuse_on = 1;
     t->frames_walked += n;
@@ -483,18 +488,10 @@ void caf_frames(VM *vm, void (*visit)(VM *, Value *), int defer) {
             t->frames_taken++;
             take(vm, t, pt->bits, visit);
         }
-        if (defer)
-            for (size_t w = 0; w << 6 < from; w++) {
-                uint64_t x = vm->gc.stack_aside[w];
-                if ((w + 1) << 6 > from) x &= ((uint64_t)1 << (from & 63)) - 1;
-                for (; x; x &= x - 1) {
-                    Value *slot = &vm->stack[(w << 6) + (size_t)__builtin_ctzll(x)];
-                    if (!val_is_ptr(*slot) || (naside + n >= capaside && !aside_room(2 * capaside + 64))) continue;
-                    CafAside *a = &aside[naside++];
-                    a->slot = slot; a->root = NULL; a->was = *slot;
-                    *slot = mk_unit();
-                }
-            }
+        /* their closures set aside where they are, by the bits: the walk
+           of the stack passes over them (gc_stack_roots), caf_aside_bits
+           takes them last */
+        if (defer) aside_below = from;
     }
     /* the last few (function, pc) taken, a mutual recursion's frames
        coming back to them: a frame of one of them is no new table */
@@ -563,6 +560,20 @@ void caf_back(VM *vm) {
 }
 size_t caf_aside(CafAside **out) { *out = aside; return naside; }
 
+/* each closure set aside by the summary's bits (aside_below) visited, and
+   marked the frames' alone, as caf_aside's are */
+void caf_aside_bits(VM *vm, void (*visit)(VM *, Value *)) {
+    for (size_t w = 0; w << 6 < aside_below; w++) {
+        uint64_t x = vm->gc.stack_aside[w];
+        if ((w + 1) << 6 > aside_below) x &= ((uint64_t)1 << (aside_below & 63)) - 1;
+        for (; x; x &= x - 1) {
+            Value *slot = &vm->stack[(w << 6) + (size_t)__builtin_ctzll(x)];
+            visit(vm, slot);
+            if (val_is_ptr(*slot) && caf_runs(val_ptr(*slot))) caf_only_add(val_ptr(*slot));
+        }
+    }
+}
+
 /* an object marked whose code may run: all its function reaches */
 void caf_code(VM *vm, Obj *o, void (*visit)(VM *, Value *)) {
     Value fv = obj_fields(o)[0];
@@ -583,6 +594,16 @@ void caf_end(VM *vm) {
         if (o) caf_only_take(o);
     }
     naside = 0;
+    for (size_t w = 0; w << 6 < aside_below; w++) {
+        uint64_t x = vm->gc.stack_aside[w];
+        if ((w + 1) << 6 > aside_below) x &= ((uint64_t)1 << (aside_below & 63)) - 1;
+        for (; x; x &= x - 1) {
+            Value v = vm->stack[(w << 6) + (size_t)__builtin_ctzll(x)];
+            t->slots_deferred++;
+            if (val_is_ptr(v)) caf_only_take(val_ptr(v));
+        }
+    }
+    aside_below = 0;
     reuse_on = 0;
     for (uint32_t g = 0; g < t->nglobals; g++)
         if (!t->reached[g] && vm->globals[g] != mk_unit()) {
