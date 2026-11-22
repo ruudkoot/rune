@@ -6112,15 +6112,22 @@ justifies it.
 
 **Measured and decided (owner, 2026-11-14): C, Wadler's rule in the collector.** B was built (branch `hs-d-d17`, `f514128c4`) and tuned at the owner's word (`f80c0d585`); C, a pattern binding's selectors marked by a primitive and reduced by the collector once the tuple is evaluated, and B + C were built beside it (`hs-d-d17c`, `b2e463f45`). The owner kept A against C. On `lines`, `words`, `span`, `break` and `unzip` at 10^5 and 10^6, C keeps 46.7% less at its peak and 45.8% fewer byte-seconds, allocates exactly A's bytes and runs 0.7% fewer bytecodes; on the run set, 174 programs, 3.6% less at the peak (`treejoin` -41.7%, `sorting` -36.1%, `boyer2` -28.9%) for 0.1% more allocation and 0.3% at tier 2. B + C adds nothing over B, since `updatePat` leaves the collector no marked selector. Every collector with the heap checked and both JIT tiers agree with A, and a cycle of selectors ends in `<<loop>>` as under A. SML pays about 2% of its collector's instructions (1.6% to 2.4% by way), 0.01% of a whole run and 0.16% of the compiler compiling itself; C lands as measured, the shortcut keeping M26's guard where a program reruns. Not covered: top-level pattern bindings, bindings of one variable, and a program's own `fst` and `snd` (`impl/d/d17/` in the drafts).
 
-**After the close (owner, 2026-11-17).** The gaps were built and measured (`impl/sel/` in the drafts). Gap 2, a binding of
-one variable of a variable's value, and gap 1, a CAF that selects a field of a CAF, landed (`2ac942b9c`): they change
-no program of the run set and no bytecode or allocation, and keep 47% less at `-O1` on the programs written so (99.9%
-at `-O2`); their losses at tier 2 on those programs at 10^6 are the default collector's sizing, more full collections
-each walking a deep stack, not their code. Gap 4, a program's own `fst`, `snd` and fields known by their shape, paid
-a call out of line for each mark at tier 2 (`hartel/sched` +29.5%), so the mark is built in line and gap 4 measured
-again. Gap 3, a generalised binding, of which the libraries, the run set and the corpus have none, is built and
-measured for the owner, and the two edges of the tuple form found then (a mark keeping a dead selector, and a
-recursive group's selector reading its tuple through a cell) are addressed.
+**After the close (owner, 2026-11-17 to 2026-11-22).** The gaps were built and measured (`impl/sel/` in the drafts).
+Gap 2, a binding of one variable of a variable's value, and gap 1, a CAF that selects a field of a CAF, landed
+(`2ac942b9c`): no program of the run set changes, no bytecode or allocation moves, and programs written so keep 47%
+less at `-O1` (99.9% at `-O2`). The mark is made in line in the register loop and at both tiers of the JIT, and FORCE
+takes a selector's field from its slow path, then through one shared stub (`8f6d7169a`, `24e9c9206`): on the marks C
+already made, the run set runs 0.6% to 1.1% fewer instructions at tier 2. By the owner's word the tuple form's two
+edges were mended: a selector nothing names is left unmarked, so that Mid drops it, and a letrec's selector captures
+its value's suspension, not its cell, so that its mark holds (`cc29bfd19`). Gap 3, a generalised binding, of which the
+libraries, the run set and the corpus have none and which costs code where it fires, is behind
+`--selectors=generalised`, off by default. Gap 4, a program's own `fst`, `snd` and fields known by their shape, as
+GHC's selector thunks are, landed by the owner's word with `--selector-shapes=on|off`, on by default and kept in the
+link memo's key (`82eaeea4a`): the run set pays 0.13% to 0.18% at tier 2 (`hartel/sched` +5.4% and +7.3%), and keeps
+11% to 16.5% less on circsim and ida and about half on programs written so. What the gaps cost at tier 2 on programs
+with a deep stack was the collector's: with less live data the heap is sized smaller, and each extra full collection
+walked the whole stack. The collector's change after the close (*After the close*) brought those losses from 12-32%
+to 5.6-9.4%, and `--heap-stack` takes them lower for a larger heap.
 
 *From the papers (E15b).* B is a desugaring of pattern bindings plus an impure `updatePat`, not a Core construct (Sparud 1993, §3.3). Under form C a sibling's component may be unevaluated, and `FORCE` takes what a `K_IND` holds as the value (`patches/E2-all-forms.patch:1566`), so the write may not be a `K_IND` to a thunk: it retargets the sibling's code and capture, or is made only when the component is evaluated. And the sibling whose force ran the match is under evaluation when `updatePat` runs, so overwriting it is E14's case of a body outliving its own update, which would make D11's pin Haskell's and move it from M26 to M25. The write skips any sibling that is not unevaluated, which avoids both [P1's inference; nothing built]. B changes how pattern bindings and `~p` are desugared, so it touches D34.
 
@@ -8479,7 +8486,10 @@ Against the brief (*The request*):
 | xc2 could not prepare from 2026-10-26: trim-lib wrote an operator's name unquoted in an inline list, and MLton's and Poly/ML's sources need overloading by `topdec`, on master too | the `Real.round` fix | `75a2bde45` |
 | The shapes lint refused a `Decon` in a handler's block where Simplify had folded a `Case` by a known tag | the general fix below | `e51faeffe` |
 | Mid's simplify kept a tag test that could not fail where the tags its tests left out left one (ruling 71's mend) | the owner's question at the close | `646f5bbbd` |
-| rhc's store: fifteen issues, four of them wrong results (a class's defaults, an instance's chain of imports, a literate text, the link's memo across levels and machines), and three of rhc's own | the owner's request at the close | `8134f92fe` (`build-cache-issues.md`, 25 to 39) |
+| rhc's store: seventeen issues, five of them wrong results (a class's defaults, an instance's chain of imports, a literate text, the link's memo across levels and machines, an instance moved out of reach), and three of rhc's own | the owner's request at the close | `8134f92fe`, `390b303bb`, `1e2fead4e` (`build-cache-issues.md`, 25 to 41) |
+| The JIT's 256-slot cache of return words made tier 2 depend on where hot return addresses fell, by up to 7.9% between runs | D17's gaps, measured | `90c729080` |
+| Full collections decoded every frame of a deep stack again, which SML shares where its stack is deep | D17's gaps, measured | `5f2786ae7` |
+| Three hs/jit programs whose count follows the clock were held to their counts | a candidate's checks | `aaff45df6` |
 
 ### Bugs found in other compilers
 
@@ -8494,10 +8504,7 @@ Against the brief (*The request*):
 - **The stack VM's retention of `last`'s dead suspension** (M9's departure): the owner's word was not to fix it (D14).
 - **Imported unfoldings are not read.** A unit's interface carries its unfoldings and strictness signatures only under
   `--unfoldings`, off by default, and no client reads them; cross-module inlining waits for a reader.
-- **What D17's C leaves**, after gaps 1 and 2 landed: gap 4 with the mark in line, gap 3 and the tuple form's two edges
-  (*D17*), under way.
-- **Issue 37 of `build-cache-issues.md`**, a hit naming its modules again: the owner took its A and B, under way. Issue
-  38, a body's edit costing a cold link, is D44's link of C, as decided.
+- **Issue 38 of `build-cache-issues.md`**, a body's edit costing a cold link, is D44's link of C, as decided.
 - **`--no-cache` makes the Basis Library's index again** where no store holds its compiler's: recorded, and left as it
   is by the owner's word.
 - **The LSP oracle's crash on a store a restart had cut** (`docs/bugreport/rune/lsp-oracle-store-sigsegv`): not
@@ -8508,18 +8515,37 @@ Against the brief (*The request*):
 
 ### After the close
 
-The owner's follow-ups of 2026-11-16 and 2026-11-17, each merged when `make check` passed on a candidate that held it:
+The owner's follow-ups of 2026-11-16 to 2026-11-22, each merged when `make check` passed on a candidate that held it:
 
-- `make check` on `cc7dd9a47`: 28,426 tests, 28,421 passed, 5 skipped. It held `Real.round`, the make targets, the
-  shapes lint and rhc's store, merged as `e51faeffe` to `75a2bde45`.
-- `make check` on `504789e36`: 28,428 tests, 28,423 passed, 5 skipped. It added gaps 1 and 2 of D17 and the general
-  `Case` fix, merged as `2ac942b9c` and `646f5bbbd`.
-- The general `Case` fix moves SML's bytes in three of the compiler's functions, 10 fewer register instructions, and
-  in none of the benchmarks or E2's ports; rhc's run set runs 0.071% fewer bytecodes at `-O2`, none more.
-- rhc's store against Rune's 24 cache issues and a tester of mechanical edits (`build-cache-issues.md`, *Found under
-  rhc*): some 4,900 builds of 81 programs at every level, lint and machine, none differing from a build without a
-  store after the fixes, and `--verify-store` to check a warm build.
-- xc2's matrix, repaired: 2,416 of 2,416 over five hosts, 324 of them skips for structures a host lacks.
+| `make check` on | Tests | Passed | It held | Merged as |
+|---|---|---|---|---|
+| `cc7dd9a47` | 28,426 | 28,421 | `Real.round`, the make targets, the shapes lint, rhc's store | `e51faeffe` to `75a2bde45` |
+| `504789e36` | 28,428 | 28,423 | D17's gaps 1 and 2, the general `Case` fix | `2ac942b9c`, `646f5bbbd` |
+| `9bbf03633` | 28,440 | 28,435 | issue 37's A and B, issue 40 in HsLint | `390b303bb` |
+| `7a4a7bc67` | 28,440 | 28,435 | the mark in line, the JIT's cache of 65,536 return words | `8f6d7169a`, `90c729080` |
+| `abd460e45` | 28,443 | 28,438 | issues 40 and 41, D17's (a), (b) and gap 3 | `1e2fead4e`, `cc29bfd19` |
+| `392cbf7ac` | 28,446 | 28,441 | FORCE's shared stub, the collector's change, `--heap-stack` | `24e9c9206`, `5f2786ae7` |
+| `902e9b31e` | 28,447 | 28,442 | D17's gap 4 and `--selector-shapes` | `82eaeea4a` |
+
+Each skipped 5. The changes to the VM were also run on the tree that joined them: the collector's tiers, the heap's,
+stress, both JIT tiers, asan and the hs/jit nightly family, all passing.
+
+- **The general `Case` fix** moves SML's bytes in three of the compiler's functions, 10 fewer register instructions,
+  and in none of the benchmarks or E2's ports; rhc's run set runs 0.071% fewer bytecodes at `-O2`, none more.
+- **rhc's store**, against Rune's 24 cache issues and a tester of mechanical edits (`build-cache-issues.md`, *Found
+  under rhc*): some 21,000 builds of 81 programs at every level, lint and machine, none differing from a build without
+  a store after the fixes; `--verify-store` checks a warm build. With issue 37's A and B a warm build with nothing
+  edited of a chain of 500 modules runs 190M instructions, from 4.1G before issue 36.
+- **The JIT's cache of return words**, 65,536 slots: tier 2 no longer moves by up to 7.9% from run to run with where
+  hot return addresses fall; the run set runs 0.6% fewer instructions at `-O1`, and SML as before.
+- **The collector** decodes at a full collection only the frames run since the last walk of the stack, and visits the
+  slots below from that walk's summary. A deep stack had cost full collections 58% to 79% of their work, in SML as in
+  Haskell; Rune's own SML suites keep shallow stacks, so never showed it. rhc's programs with deep stacks run 19% fewer
+  instructions at `-O1`, `tests/hs/lang` 6.4%, the run set 0.9% and 1.3%, SML's deep recursions up to 80% fewer, and
+  nothing more than 0.5% more. `runevm --heap-stack off|roots|all`, off by default, also counts the stack in the
+  heap's sizing: fewer full collections for a larger heap (a deep SML sum keeping little live data runs 59% fewer
+  instructions in a heap of 159 MB, from 4 MB).
+- **xc2's matrix**, repaired: 2,416 of 2,416 over five hosts, 324 of them skips for structures a host lacks.
 
 ## References
 
