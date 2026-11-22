@@ -252,7 +252,7 @@ struct
           SOME dir =>
             ignore (RhcStore.store {dir = dir, settings = RhcStoreConfig.settings extra, config = config, key = key,
                                     entry = {head = {usages = usages, exports = Pickle.hash (#iface sections),
-                                                     level = RhcStoreConfig.level ()},
+                                                     level = RhcStoreConfig.level (), prior = ""},
                                              sections = sections}})
         | NONE => ()
       (* the unit name of text, read as its program where it is compiled,

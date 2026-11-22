@@ -232,6 +232,10 @@ struct
      counter = List.foldl (fn (p, n) => Int.max (#counter p, n)) 0 parts,
      target = List.foldl (fn (p, t) => HsLintTarget.join (t, #target p)) {values = [], classes = [], dfuns = []} parts}
 
+  fun counterFrom ({modules, env, infer, target, ...} : library, n : int) : library =
+    {modules = modules, env = env, infer = infer, counter = n, target = target}
+  fun counterOf ({counter, ...} : library) = counter
+
   exception Decode of string
   val encode = HsLintCodec.encode
   fun decode s = HsLintCodec.decode s handle HsLintCodec.Bad msg => raise Decode msg

@@ -927,7 +927,7 @@ mutant's tree for a job to be run against it by hand). The first fourteen
 seed rhc's lexer, its literate reader, its layout and its parser, CoreLint,
 Core's interpreter and Core's text reader, these last seen by `hs/core`'s
 jobs; HK01 to HK05 the checker, seen by `hs/hslint`'s; HD01 to HD03
-deriving; HM01 to HM03 desugaring, seen by `hs/desugar`'s; HU01 to HU16
+deriving; HM01 to HM03 desugaring, seen by `hs/desugar`'s; HU01 to HU25
 the holes of rhc's units, seen by `hs/units/holes` (*rhc in units*); HW01 and
 HW02 strictness, its workers and wrappers, seen at -O2. F's parser
 mutants (`tests/runner/hssyntax.sml`) are the in-process kind.
@@ -1276,7 +1276,10 @@ over the last's with `want`, what it prints or `refused`, and `units`, if
 there, a line for each unit the step's compile must say it compiled or took
 (`NAME compiled`, `NAME taken`, `link` for the link): at each step the
 units' compile through one store and the whole compile both give it, and
-where they compile, the same program byte for byte. A name an import comes
+where they compile, the same program byte for byte; and the units' compile
+through a twin store whose hits ask every usage (`RHC_HIT=asked`) takes and
+makes each unit and the link alike, so that a hit of issue 37's A or B
+stands exactly where asking every usage puts one. A name an import comes
 to clash with (H1), an instance two imports away that moves a default (H2,
 H4) and a default declaration edited, a derived instance's context grown
 (H5), a fixity changed (H6), a module's exports grown under `module M`
@@ -1300,10 +1303,29 @@ refusal; `literate`, one text read plain and then literate (a step's
 reading does not, which a header kept of the plain reading would leave
 out; and `fresh-names` (issue 30), a unit made after one taken,
 numbered as a build without the store numbers it, so that a comment in it
-takes the link. Each hole is a mutant of rhc's (`HU01` to `HU09` and `HU11` to
-`HU16`, H9's the Prelude's names of `hs/iface/usages`, `HU11` a unit
-fingerprinted module by module), caught by its case; `HU10`, a unit taken
-keeping its fingerprints unasked, is `EQUIVALENT`. Nightly,
+takes the link. Issue 37's A, whose premise is that a module's scope is a
+function of its text and its imports' exports, has a case for each way an
+import's exports move: `a-exports`, an entity added that the client does
+not name, one that clashes with its own, and one it names taken away;
+`a-reexport`, an entity re-exported, then the module's own in its place, a
+body and then a type edited where it is defined; `a-module`, what `module
+N` exports moved; `a-hiding`, a name hidden that the module stops
+exporting; `a-qualified`, an import qualified alone; `a-instance`, an
+instance moved from one module to another, which no export says;
+`a-fixity`, a re-exported operator's fixity; `a-methods`, a method added
+to a class imported with `C(..)`, and two classes' methods swapped, the
+names exported the same; and `a-shadow`, an import that comes to name a
+module of the program's own in place of the library's. B's `b-before` edits
+one unit before and one after, and steps back to earlier states. Each hole
+is a mutant of rhc's (`HU01` to `HU09` and `HU11` to `HU16`, H9's the
+Prelude's names of `hs/iface/usages`, `HU11` a unit fingerprinted module by
+module; `HU18` to `HU20`, `HU22` and `HU24` the wrong hits A and B would
+make, caught by these cases and `hs/units/configs`), caught by its case;
+`HU10`, a unit taken keeping its fingerprints unasked, `HU17`, A's digest
+without each export's parent and sort, `HU21` and `HU25`, A and B under
+the greatest fixpoint of a cycle's exports as under the least, and `HU23`,
+B's digest without the entries' sums, are `EQUIVALENT`, each with its
+argument. Nightly,
 `hs/units/random/CASE` walks each case's states (the k-th its steps 1 to
 k) in an order drawn at random, through one store, with the same
 comparison at each, so that an entry meets every edit and its undoing in
@@ -1337,7 +1359,16 @@ unit and the link, and the trim, due then, runs after them (issue 34).
 `hs/units/elsewhere` reads a store with a bin/rhc whose library is a copy at
 another path: it takes every unit and the link, to the same program, and
 `--verify-store` holds every entry, the snapshot's library among them, to
-what it makes of its copy (issue 31). Core in
+what it makes of its copy (issue 31). `hs/units/configs` compiles one
+program, a cycle among its units, through one store at levels 0 and 2 of
+the lint, -O2 and both fixpoints of a cycle's exports, coming back to
+each, and through a twin store whose hits ask every usage: each unit and
+the link taken or made alike, and each program the bytes a compile without
+a store gives (issue 37). `hs/units/verify-scopes` grows an import by
+an entity its client does not name: the client stands by its usages, its
+scope's digests as they were, and `--verify-store` holds the store, those
+digests no part of what it compares, and HsLint's part of a unit numbered
+by the unit, not by the units before it (issues 37 and 40). Core in
 units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
 that takes a value of another by an import (`(import x TYPE)`) and a type by
 a copy of its declaration, the units joined (`CoreUnits.join`) and run; an

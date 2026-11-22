@@ -2652,6 +2652,20 @@
      "page": "sig/HS_LINT.md#val-join"
     },
     {
+     "kind": "val",
+     "name": "counterFrom",
+     "spec": "val counterFrom : library * int -> library",
+     "doc": "`counterFrom (l, n)` is `l` with the inference after it numbering its\ntype variables from `n`.\n\nA driver numbers each unit's from the same number, the first unit's\nend (`counterOf`), so that a unit's part is the same whatever entries\nof the units before it a compile took; a part holds no variable free,\nso that two units' alike are none of each other's (build-cache-issues.md,\nissue 40).\n\n",
+     "page": "sig/HS_LINT.md#val-counterfrom"
+    },
+    {
+     "kind": "val",
+     "name": "counterOf",
+     "spec": "val counterOf : library -> int",
+     "doc": "`counterOf l` is the number the inference that made `l` ended at.\n\n",
+     "page": "sig/HS_LINT.md#val-counterof"
+    },
+    {
      "kind": "exception",
      "name": "Decode",
      "spec": "exception Decode of string",

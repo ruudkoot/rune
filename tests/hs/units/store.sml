@@ -9,7 +9,9 @@
    section of a layer's entry is refused where it is read, which is where
    it is asked for, and the overlay's entry is held whole before it is
    taken, a damaged one no entry, and removed; a head is read back as it
-   was written. *)
+   was written; an entry whose digest of the units before it is theirs
+   now stands asking none of its usages, but at a lower level of the lint
+   (build-cache-issues.md, issue 37's B). *)
 structure RhcStoreTests =
 struct
   structure R = RhcStore
@@ -46,7 +48,7 @@ struct
   fun judge (level, table) = R.holds {level = level, current = now table}
 
   fun entry (usages, iface, level) : R.entry =
-    {head = {usages = usages, exports = "exports of " ^ iface, level = level}, sections = {iface = iface, parts = fn _ => "code", count = 1}}
+    {head = {usages = usages, exports = "exports of " ^ iface, level = level, prior = ""}, sections = {iface = iface, parts = fn _ => "code", count = 1}}
 
   fun put (dir, k, e) = ignore (R.store {dir = dir, settings = settings, config = config, key = k, entry = e})
 
@@ -83,6 +85,42 @@ struct
       val () = need (ifaceOf (look (dir, [], k, judge (2, [("v Prelude.map", "Prelude 4")]))) = SOME "main after",
                      "of two entries of a key, the one whose usages hold")
       val () = need (ifaceOf (look (dir, [], k, judge (2, table))) = SOME "main", "and the other, for the other graph")
+    in removeTree dir end
+
+  (* an entry whose digest of the units before it is theirs now stands
+     asking none of its usages; one whose is not, or that has none, stands
+     by its usages; one checked at a lower level of the lint stands by
+     neither (build-cache-issues.md, issue 37's B) *)
+  fun prior () =
+    let
+      val dir = scratch ()
+      val k = R.key ("Main", [("Main", "h1")])
+      val us = [("v Prelude.map", "Prelude 3")]
+      val p = R.priorOf ("names least", [("Prelude", "kp", "sp"), ("A", "ka", "sa")])
+      val () = need (p <> R.priorOf ("names least", [("Prelude", "kp", "sp"), ("A", "ka", "sa2")]),
+                     "a unit's entry before it is in the digest")
+      val () = need (p <> R.priorOf ("names least", [("Prelude", "kp", "sp"), ("A", "ka2", "sa")]), "and its key")
+      val () = need (p <> R.priorOf ("names least", [("Prelude", "kp", "sp")]), "and every unit before it")
+      val () = need (p <> R.priorOf ("names greatest", [("Prelude", "kp", "sp"), ("A", "ka", "sa")]),
+                     "and the fixpoint of a cycle's exports")
+      val () = put (dir, k, {head = {usages = us, exports = "e", level = 2, prior = p},
+                             sections = {iface = "main", parts = fn _ => "code", count = 1}})
+      fun by (level, priorNow, table) =
+        R.holdsBy {level = level, prior = fn () => priorNow, judge = R.differing (fn (k, _) => now table k)}
+      val () = need (ifaceOf (look (dir, [], k, by (2, SOME p, []))) = SOME "main",
+                     "the same units before, the entry stands whatever its usages give")
+      val () = need (ifaceOf (look (dir, [], k, by (2, SOME "other", us))) = SOME "main",
+                     "other units before, the entry stands by its usages")
+      val () = need (ifaceOf (look (dir, [], k, by (2, SOME "other", []))) = NONE,
+                     "and is refused where they do not hold")
+      val () = need (ifaceOf (look (dir, [], k, by (2, NONE, []))) = NONE,
+                     "with a unit before that has no entry, by its usages too")
+      val () = need (ifaceOf (look (dir, [], k, by (3, SOME p, us))) = NONE,
+                     "an entry checked at a lower level of the lint is refused, its units before as they were")
+      val k2 = R.key ("B", [("B", "h2")])
+      val () = put (dir, k2, entry ([("v A.x", "A 1")], "b", 2))
+      val () = need (ifaceOf (look (dir, [], k2, by (2, SOME (R.priorOf ("names least", [])), []))) = NONE,
+                     "an entry with no digest stands by its usages alone")
     in removeTree dir end
 
   (* a key over every member and its text, in the order given *)
@@ -127,8 +165,9 @@ struct
       val () = put (dir, k, entry (us, "m", 2))
       val () =
         case look (dir, [], k, judge (2, us)) of
-          S.Found ({head = {usages, exports, level}, sections = {iface, parts, ...}}, _) =>
-            need (usages = us andalso exports = "exports of m" andalso level = 2 andalso iface = "m" andalso parts 0 = "code",
+          S.Found ({head = {usages, exports, level, prior}, sections = {iface, parts, ...}}, _) =>
+            need (usages = us andalso exports = "exports of m" andalso level = 2 andalso prior = "" andalso iface = "m"
+                  andalso parts 0 = "code",
                   "a head and its sections are read back as written")
         | _ => need (false, "the entry is found")
       val entries = List.filter (fn (p, _) => not (String.isSubstring "/units/" p)) (files dir)
@@ -160,7 +199,7 @@ end
 structure RhcStoreTestMain = Main (struct
   val name = "rhc-store"
   val tests = Test.describe "rhc-store"
-                [Test.it "usages" RhcStoreTests.usages, Test.it "keys" RhcStoreTests.keys,
+                [Test.it "usages" RhcStoreTests.usages, Test.it "prior" RhcStoreTests.prior, Test.it "keys" RhcStoreTests.keys,
                  Test.it "layers" RhcStoreTests.layers, Test.it "damaged" RhcStoreTests.damaged]
 end)
 val () = RhcStoreTestMain.main ()
