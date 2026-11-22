@@ -26,6 +26,9 @@ static void usage(void) {
         "                  and the primitives' handling of heap pointers)\n"
         "  --heap-fill P   grow the heap until at most P percent of it is in use after\n"
         "                  a collection, 1 to 100 (default 50)\n"
+        "  --heap-stack M  what of the stack the heap's size counts as live beside the heap:\n"
+        "                  off (the default), roots (the slots a full collection took as roots)\n"
+        "                  or all (every slot); a deep stack, fewer full collections, a larger heap\n"
         "  --gc-log FILE   write a line about every collection into FILE (docs/runtime.md)\n"
         "  --gc-verify     check the heap before and after every collection (testing the collector)\n"
         "  --gc-compact    compact the old space at every full collection (testing the collector)\n"
@@ -109,7 +112,7 @@ int main(int argc, char **argv) {
     size_t heap = 4u << 20, gc_stress = 0, heap_fill = 50, stack = (size_t)1 << 30;
     size_t heap_limit = 0, equality_work = 0, nursery = (size_t)1 << 20, nursery_max = (size_t)8 << 20;
     int old_kind = OLD_IMMIX, gc_compact = 0, gc_stress_cycles = 0, low_pause = 0, nursery_max_set = 0;   /* --gc throughput, the default (docs/plans/garbage-collector-v2.md, D3) */
-    int gc_stress_full = 0, caf_mode = CAF_MODE_AUTO;
+    int gc_stress_full = 0, caf_mode = CAF_MODE_AUTO, heap_stack = HEAP_STACK_OFF;
     int disasm = 0, trace = 0, stats = 0, count = 0, emulate_fork = 0, checked = 0, gc_verify = 0;
     size_t intinf_bits = 0, intinf_memory = 0;
     int intinf_mode = INTINF_AUTO, intinf_given = 0, intinf_stats = 0;
@@ -162,6 +165,13 @@ int main(int argc, char **argv) {
             else if (strcmp(m, "off") == 0) caf_mode = CAF_MODE_OFF;
             else if (strcmp(m, "on") == 0) caf_mode = CAF_MODE_ON;
             else { fprintf(stderr, "runevm: --caf-tables takes auto, off or on, not %s\n", m); return 2; }
+        }
+        else if (strcmp(argv[i], "--heap-stack") == 0 && i + 1 < argc) {
+            const char *m = argv[++i];
+            if (strcmp(m, "off") == 0) heap_stack = HEAP_STACK_OFF;
+            else if (strcmp(m, "roots") == 0) heap_stack = HEAP_STACK_ROOTS;
+            else if (strcmp(m, "all") == 0) heap_stack = HEAP_STACK_ALL;
+            else { fprintf(stderr, "runevm: --heap-stack takes off, roots or all, not %s\n", m); return 2; }
         }
         else if (strcmp(argv[i], "--nursery") == 0 && i + 1 < argc) {
             if (!size_arg(argv[++i], &nursery)) { usage(); return 2; }
@@ -343,6 +353,7 @@ int main(int argc, char **argv) {
     vm->gc.stress_cycles = gc_stress_cycles;
     vm->gc.stress_full = gc_stress_full;
     vm->caf_mode = caf_mode;
+    vm->gc.heap_stack = heap_stack;
     heap_nursery(vm, nursery);
     if (gc_log) heap_log_open(vm, gc_log);
 #ifdef RUNE_CENSUS

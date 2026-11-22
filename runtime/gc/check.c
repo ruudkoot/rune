@@ -215,6 +215,8 @@ const char *heap_check(VM *vm, const void **at) {
                 check_fail(&c, "a frame below the stack's watermark whose closure is young", fr[k].closure_root);
         const char *why = c.failed ? NULL : vm_frames_check(vm);   /* runtime/register's barrier at it (native-frames.md, M5) */
         if (why) check_fail(&c, why, NULL);
+        why = c.failed ? NULL : gc_stack_check(vm);   /* the stack's summary (copy.c) */
+        if (why) check_fail(&c, why, NULL);
     }
 #define CHECK_VALUE(v) check_value(&c, (v), "a root that is no object's")
 #define CHECK_OBJ(o) check_ptr(&c, *(o), "a root that is no object")

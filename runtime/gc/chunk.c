@@ -158,6 +158,10 @@ void heap_chunks_release(VM *vm) {
     vm->gc.ngray = vm->gc.gray_cap = 0;
     vm->gc.marking = 0;
     free(vm->gc.segs);
+    free(vm->gc.stack_roots);   /* the stack's summary (copy.c) */
+    free(vm->gc.stack_aside);
+    vm->gc.stack_roots = vm->gc.stack_aside = NULL;
+    vm->gc.stack_words = vm->gc.stack_valid = vm->gc.stack_aside_valid = vm->gc.stack_low = 0;
     vm->gc.born = vm->gc.queue = NULL;
     vm->gc.segs = NULL;
     vm->gc.nborn = vm->gc.born_cap = vm->gc.nqueue = vm->gc.queue_cap = vm->gc.nsegs = vm->gc.segs_cap = 0;

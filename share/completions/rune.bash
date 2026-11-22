@@ -41,6 +41,10 @@ _runevm() {
         --heap-size|--heap-fill|--gc-stress|--name)
             return
             ;;
+        --heap-stack)
+            COMPREPLY=($(compgen -W 'off roots all' -- "$cur"))
+            return
+            ;;
         --restore)
             COMPREPLY=($(compgen -f -- "$cur"))
             return
@@ -48,7 +52,7 @@ _runevm() {
     esac
 
     if [[ $cur == -* ]]; then
-        COMPREPLY=($(compgen -W '--heap-size --heap-fill --disasm --trace --stats --count
+        COMPREPLY=($(compgen -W '--heap-size --heap-fill --heap-stack --disasm --trace --stats --count
             --gc-stress --emulate-fork --restore --name --jit=off --jit=baseline --jit=opt --jit=all
             --version --help' -- "$cur"))
         return

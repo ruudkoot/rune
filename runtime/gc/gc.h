@@ -276,6 +276,48 @@ void collect_pass(VM *vm, size_t new_size);
    frame's registers as far as they are live, a dead one that holds a
    pointer made unit (copy.c) */
 void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *));
+/* The stack's summary (vm.h, GcState.stack_roots; copy.c). The frames a
+   walk of the whole stack decodes, in vm_frames_from's buffer: those from
+   the lowest that has run since the summary was made, where it describes
+   the slots below them, at most bound of them (*from: where their slots
+   begin, the slots below being the summary's); else every frame (*from
+   0). */
+size_t gc_stack_frames(VM *vm, FrameRef **out, size_t *from, size_t bound);
+/* room in the summary's bits for slots [0, n): 0 where there is no memory */
+int gc_stack_room(VM *vm, size_t n);
+/* The summary made again by a walk that decodes the frames fr[0, nf),
+   whose slots begin at from, the summary's being below (gc_stack_roots,
+   minor.c's minor_stack): the slots it is to describe, [0, rec), below the
+   frame that runs, their bits from from cleared (0: none, no memory);
+   each slot the walk visits given its bit (gc_stack_bit); and, once the
+   walk is done, the summary's from then on (gc_stack_recorded), the
+   frames that have run since none. caf_record makes the CAF tables' part
+   (caf.c). */
+size_t gc_stack_record(VM *vm, const FrameRef *fr, size_t nf, size_t from);
+static inline void gc_stack_bit(VM *vm, const Value *v, size_t rec) {
+    size_t i = (size_t)(v - vm->stack);
+    if (i < rec) vm->gc.stack_roots[i >> 6] |= (uint64_t)1 << (i & 63);
+}
+static inline void gc_stack_recorded(VM *vm, size_t rec) {
+    vm->gc.stack_valid = rec;
+    vm->gc.stack_low = vm_frame_id(vm);
+}
+void caf_record(VM *vm, const FrameRef *f, size_t n, size_t from, size_t rec);
+size_t caf_aside_made(VM *vm);
+/* --gc-verify (check.c): what is wrong with the summary, the frames below
+   the lowest that has run decoded again, or NULL */
+const char *gc_stack_check(VM *vm);
+/* the bits [lo, hi) of b cleared */
+static inline void gc_bits_clear(uint64_t *b, size_t lo, size_t hi) {
+    if (lo >= hi) return;
+    for (; lo < hi && (lo & 63); lo++) b[lo >> 6] &= ~((uint64_t)1 << (lo & 63));
+    if (hi - lo >= 64) {
+        size_t w = (hi - lo) >> 6;
+        memset(b + (lo >> 6), 0, w * sizeof *b);
+        lo += w << 6;
+    }
+    for (; lo < hi; lo++) b[lo >> 6] &= ~((uint64_t)1 << (lo & 63));
+}
 
 /* The old space (vm->gc.old_kind; docs/plans/garbage-collector-v2.md, M4):
    OLD_COPY, chunks that a full collection copies (copy.c), or OLD_MARK,
@@ -392,7 +434,8 @@ void log_pass_end(VM *vm, const PassMark *m, const char *kind, int64_t pause);
    collector: caf_begin (0: every global a root, as OTHER_ROOTS has them);
    caf_frames, with the stack's roots after it; caf_back, and caf_roots for
    OTHER_ROOTS; caf_code for each object marked whose code may run
-   (caf_runs, caf_code_due); then the frames' closures (caf_aside), each
+   (caf_runs, caf_code_due); then the frames' closures (caf_aside, and
+   caf_aside_bits those of the frames the stack's summary has), each
    marked the frames' alone (caf_only_add), taking its function's table
    where a later reference reaches it (caf_only_take); caf_end. */
 typedef struct CafTables CafTables;
@@ -400,7 +443,9 @@ typedef struct CafAside { Value *slot; Obj **root; Value was; } CafAside;
 int caf_begin(VM *vm);
 void caf_frames(VM *vm, void (*visit)(VM *, Value *), int defer);
 void caf_frames_forget(void);
-int caf_frames_reuse(FrameRef **out, size_t *n);
+int caf_frames_reuse(FrameRef **out, size_t *n, size_t *from, size_t *below);
+void caf_aside_bits(VM *vm, void (*visit)(VM *, Value *));
+const char *caf_stack_check(VM *vm, const FrameRef *f, size_t n, size_t from);
 void caf_back(VM *vm);
 size_t caf_aside(CafAside **out);
 void caf_roots(VM *vm, void (*visit)(VM *, Value *), void (*visit_obj)(VM *, Obj **));

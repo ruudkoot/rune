@@ -1153,6 +1153,52 @@ struct
          check ("heap limit stricter", vmRun ["--heap-limit", "4096", "--restore", img] = 2 andalso contains (f "err", "heap limit exceeded")))
     end
 
+  (* ---- tests/runtime: --heap-stack, what of the stack the heap's sizing
+     counts as live data (docs/runtime.md, The heap): taken, refused where
+     it names no way, and on a recursion 100,000 deep that makes lists live a
+     while, fewer full collections counting the stack's roots than nothing,
+     and fewer still counting all of it, the output the same *)
+  fun heapStack (rune, vm) =
+    let
+      val dir = run ^ "/heap-stack/" ^ String.translate (fn #"/" => "_" | c => str c) vm
+      val () = (rmTree dir; mkdirs dir)
+      fun f x = dir ^ "/" ^ x
+      fun vmRun (args, n) = exec {cmd = [vm] @ args, dir = SOME dir, stdin = "", stdout = f (n ^ ".out"), stderr = f (n ^ ".err"), timeout = 120}
+      fun fulls n =
+        case List.find (String.isSubstring " full collections") (lines (read (f (n ^ ".err")))) of
+          SOME l => (case String.tokens (fn c => c = #" ") (Substring.string (#1 (Substring.position " full collections" (Substring.full l)))) of
+                       [] => NONE | ws => Int.fromString (List.last ws))
+        | NONE => NONE
+      val src = String.concatWith "\n"
+        ["fun upto (i, n) = let fun go (k, acc) = if k < i then acc else go (k - 1, k :: acc) in go (n, []) end",
+         "fun churn (0, kept, acc) = acc",
+         "  | churn (k, kept, acc) =",
+         "      let val l = upto (k, k + 50000)",
+         "          val kept' = l :: (case kept of a :: _ => [a] | [] => [])",
+         "      in churn (k - 1, kept', (acc + List.length l) mod 1000003) end",
+         "fun deep 0 = churn (40, [], 0)",
+         "  | deep n = n mod 7 + deep (n - 1)",
+         "val () = print (Int.toString (deep 100000) ^ \"\\n\")", ""]
+      val () = write (f "deep.sml", src)
+      fun check (what, ok) = if ok then () else fail ("heap-stack " ^ vm ^ ": " ^ what)
+    in
+      if exec {cmd = [fromRoot rune, "-o", f "deep.rbc", f "deep.sml"], dir = SOME dir, stdin = "",
+               stdout = f "cerr", stderr = f "cerr", timeout = 120} <> 0
+      then fail ("heap-stack: does not compile: " ^ firstLine (f "cerr"))
+      else
+        let val runs = List.map (fn m => (m, vmRun (["--heap-stack", m, "--stats", f "deep.rbc"], m))) ["off", "roots", "all"]
+            val bad = vmRun (["--heap-stack", "some", f "deep.rbc"], "bad")
+        in
+          List.app (fn (m, code) => check (m ^ " runs", code = 0 andalso read (f (m ^ ".out")) = "300034\n")) runs;
+          check ("a way that is none refused", bad = 2 andalso contains (f "bad.err", "--heap-stack takes off, roots or all"));
+          case (fulls "off", fulls "roots", fulls "all") of
+            (SOME off, SOME roots, SOME all) =>
+              (check ("roots no more full collections than off: " ^ Int.toString roots ^ " against " ^ Int.toString off, roots <= off);
+               check ("all fewer full collections than off: " ^ Int.toString all ^ " against " ^ Int.toString off, all < off))
+          | _ => check ("--stats gives the full collections", false)
+        end
+    end
+
   (* ---- tests/runtime: the collector's log, a line for each collection *)
   val gcColumns = String.tokens Char.isSpace
     "seq kind vmgc bytes objects instrs boxes box_bytes used_before copied copied_objs promoted slots live_slots frames other_roots cards_dirty cards_scanned remembered live_after heap_size pause_ns cpu_ns rss_bytes t_ns cards_young fields_scanned"
@@ -1398,6 +1444,7 @@ struct
     | ["compiler-astlint-faults"] => SOME astlintFaultTests
     | ["limits", rune, vm] => SOME (fn () => limits (rune, vm))
     | ["gc-log", rune, vm] => SOME (fn () => gcLog (rune, vm))
+    | ["heap-stack", rune, vm] => SOME (fn () => heapStack (rune, vm))
     | ["colour-contrast"] => SOME (fn () => contrast false)
     | ["colour-contrast-fault"] => SOME (fn () => contrast true)
     | ["build-generators"] => SOME (fn () => generators "scripts/gen-build-files.sh")
@@ -1502,6 +1549,12 @@ struct
             ([tagged ["test"] (job ("stack", ["limits", "bin/rune-stack", "bin/runevm-stack"], [], 300, 600)),
               tagged ["test-register"] (job ("register", ["limits", "bin/rune", "bin/runevm"], [], 300, 600))]
              @ (if native then [tagged ["test-native"] (job ("native", ["limits", "bin/rune-stack", "bin/runevm-native"], [], 500, 600))]
+                else []))),
+       tagged ["check", "covers:tests/runtime/*"]
+         (Test.describe "heap-stack"
+            ([tagged ["test"] (job ("stack", ["heap-stack", "bin/rune-stack", "bin/runevm-stack"], [], 300, 600)),
+              tagged ["test-register"] (job ("register", ["heap-stack", "bin/rune", "bin/runevm"], [], 300, 600))]
+             @ (if native then [tagged ["test-native"] (job ("native", ["heap-stack", "bin/rune-stack", "bin/runevm-native"], [], 500, 600))]
                 else []))),
        tagged ["check", "covers:tests/runtime/*"]
          (Test.describe "gc-log"

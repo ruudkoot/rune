@@ -548,11 +548,8 @@ int vm_frame_find(VM *vm, size_t id, FrameRef *f) {
     return more && f->id == id;
 }
 
-int caf_frames_reuse(FrameRef **out, size_t *n);   /* runtime/gc/caf.c */
 size_t vm_frames_from(VM *vm, size_t low, FrameRef **out) {
     *out = NULL;
-    /* a full collection with CAF tables: the walk caf_frames made, again */
-    if (vm->caf && low == 0) { size_t n; if (caf_frames_reuse(out, &n)) return n; }
     if (!vm->frames_active || vm->fp < 3 || vm->fp > vm->stack_cap || low > vm->fp) return 0;
     /* filled from the end, the walk being from the top: a frame is four
        slots at least (a register and its header), which bounds how many */
