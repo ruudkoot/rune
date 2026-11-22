@@ -750,9 +750,53 @@ the store, as issue 5's is.
   half of a warm build with nothing edited (15M of 26M for a seven-module
   program, 61M of 78M for `fluid`'s eighteen). Not wrong, and cheaper than
   checking, but what a hit costs grows with the program, not with what
-  changed. Status: open; usages read against each import's exports, as
-  GHC records them, would need no scope of the reader's, and are the
-  design's to change.
+  changed. Status: fixed (2026-11-21), by both of the ways the owner
+  chose of those `impl/bc/issue37.md` set out (the roadmap's drafts), each
+  standing exactly where asking every usage stands. B: an entry's head
+  keeps a digest of the units before it in its compile, each one's name,
+  key and entry's sum, each on the digest before it, after the fixpoint of
+  a cycle's exports (`RhcStore.priorOf`; RhcStore's version 5); where the
+  units before are those entries now, every usage gives what it gave, and
+  the entry stands asking none, after the lint's level. A: an entry keeps a
+  usage `scope M` for each module its unit imports, a digest of what M
+  exports, each entity with its parent and its sort; where the modules
+  imported are those and each digest is what it was, a module's scope is
+  what it was (its text is in the key; 5.3, 5.5), so a name's usage stands
+  for the entities it stood for, and only their fingerprints are asked, of
+  the units before, as is every read of theirs (an item, an instance, a
+  chain of imports), with nothing of the unit read or named; where one
+  moved, or under `--names=greatest`, the unit is named and every usage
+  asked, as before, and a digest that moved refuses nothing. `--show-units`
+  says how a unit taken stood (`its units before as they were`, `its
+  scopes as they were`). `RHC_HIT=asked` asks every usage, keeping the same
+  entries, and every step of the holes' cases, of `hs/units/configs` and of
+  the tester is held to a twin store compiled so: each unit and the link
+  taken or made alike. Cases for each way an import's exports move
+  (`a-exports`, `a-reexport`, `a-module`, `a-hiding`, `a-qualified`,
+  `a-instance`, `a-fixity`, `a-methods`, `a-shadow`), B's `b-before` (an
+  edit before and after, steps back), `hs/units/configs` (one store at
+  levels 0 and 2, -O2 and both fixpoints) and the store's own test of the
+  digest. Mutants `HU17` to `HU25`: those of wrong hits caught (`HU18` to
+  `HU20`, `HU22`, `HU24`), the rest argued equivalent. What is left: an
+  entry that stands by its usages after its imports' exports moved keeps
+  the digests it was made with, and one that stands after a unit before it
+  was made again keeps its digest of the units before, the store keeping
+  no newer head of an entry taken, so that every later compile asks it
+  by the second way, or every usage, until it is made again. In rhc's VM
+  instructions at `-O1` (`impl/bc/perf/table-37.md` and
+  `table-runset-37.md` of the drafts, haskell98's 646f5bbbd without and
+  with A and B): a unit taken costs 0.30M where the units before it are as
+  they were (B), 0.39M to 0.48M after an edit before it (A), against 1.9M
+  to 2.0M; a warm build with nothing edited of a chain of 500 modules
+  1,007M to 190M (0.15 of a build without a store), of 100 204M to 42M,
+  `fluid`'s 78M to 42M; a line above every definition of a chain's first
+  module, at 500, 1,027M to 267M. Over the nine programs and both levels of
+  the lint, nothing edited costs 0.22 of what it cost, a line above every
+  definition 0.34 to 0.37, an edited body or interface 0.55 to 0.69 (what
+  is left is the link, issue 38); over the tester's 81 programs at level 0,
+  nothing edited 0.57 (2,232M to 1,263M in all, 0.06 of their builds
+  without a store), a comment or a line above every definition 0.78, a
+  body 0.96.
 
 * **38. A warm build after an edit of a body costs a build without a
   store.** Found under rhc (the haskell98 roadmap, 2026-11-16), measuring
@@ -816,6 +860,43 @@ the store, as issue 5's is.
   level 0 and 0.974 at level 2 (nofib's `infer`, 15 units, 0.93), and their
   first builds 0.980 and 0.975. A warm build with nothing edited costs
   what it did (issue 37's).
+
+* **40. An entry is not what a compile in another order makes.** Found
+  under rhc (the haskell98 roadmap, 2026-11-21), holding the tester's
+  stores to `--verify-store` after their walks (issue 37's round). Two
+  things an entry holds are numbered by what came before it in its
+  compile, not by the unit alone: HsLint's part keeps the counter its
+  inference ended at, which started where the units before it ended
+  theirs (`HsLint.join`, the largest of their counters), and a unit's Core
+  imports the types of another's values with the type variables that
+  unit's check numbered, which differ between that unit's entries made in
+  other orders. So where a unit was made after units taken, made in
+  another order or another walk, `--verify-store`, which makes every unit
+  in one compile, refuses the entry: of the tester's 81 programs walked 41
+  steps each (seed 600), the 65 whose last state compiles, 29 refused for
+  HsLint's part (level 2) or the hash of a Core (`nofib`'s `sched`: an
+  import's type variables `m_5946116000016` where the compile gives
+  `..19`), the same with the rhc before issue 37's A and B (four of them
+  walked again with it); and 6 for a digest of A's, its scope's usages,
+  which an entry that stands by its usages keeps as they were made, and
+  which `--verify-store` no longer holds it to (issue 37). Nothing the
+  program is made of moves (the tester's every warm build is the bytes of
+  the build without a store), and a usage reads neither. Status: HsLint's
+  half fixed (2026-11-21): each unit's inference numbers its variables
+  from where the first unit's ended (`HsLint.counterFrom`, `counterOf`),
+  not from where the units before it ended theirs, a part holding no
+  variable free; `hs/units/verify-scopes` (an import grows by what its
+  client does not name, and `--verify-store` holds the store at level 2),
+  which the rhc before refuses. Of 81 programs walked again 21 steps each
+  (seed 800), the 64 whose last state compiles, 2 refused, both for a
+  Core. (A first fix gave each unit a range of its own, as its check has,
+  past what HsLint's part writes of a number, 2^35: the tester refused it
+  at once, a unit's entry that could not be read back.) The Core's half is
+  open: the check numbers a unit's type variables from its range, and the
+  variables it takes before a value's are not the unit's alone where the
+  units before it moved, so that an import's type in a unit after it is
+  written with another's names; a Core's types with their variables named
+  by place would make it so.
 
 ## Found on the way, outside the cache
 
@@ -1079,3 +1160,18 @@ seeds are with the roadmap's drafts (`impl/bc/`).
   7 failing, two of a table with two rows more than E9's (the two new
   cases now come under their clauses' rows) and five of a case renamed
   while they ran, all of which, renamed, pass.
+* **Issue 37's A and B** (2026-11-17 to 21, branch `hs-bc3`, merged with
+  haskell98's 646f5bbbd): the holes' cases, `hs/units/configs` and the
+  store's test, each step held to a twin store whose hits ask every usage;
+  rhc's mutants of the units, `HU01` to `HU25`, 20 caught and 5 argued
+  equivalent; `hs/*` at the check tier, 5,050 of 5,050, and 5,051 of 5,051
+  after issue 40's half; the tester with a twin store whose hits ask every
+  usage, at every configuration (both levels of the lint, -O0 to -O2, both
+  machines), over the 81 programs: 3,321 builds before the merge (seed
+  400), and 8,343 after (seeds 600 and 700, 41 steps a program, and 800,
+  21), none disagreeing with the build without a store or `--whole`, and
+  none taking or making a unit otherwise than the twin; `--verify-store`
+  over the stores the walk of seed 800 left (issue 40, above); ten rounds
+  of nine compiles at once on one store (90, none disagreeing); 110
+  compiles killed at a random moment, 53 of them while they ran, each
+  followed by a compile through the store, none disagreeing.
