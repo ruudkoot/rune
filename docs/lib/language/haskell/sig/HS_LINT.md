@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 24 of 24 entries documented |
+| Documentation | 26 of 26 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/hslint\_sig.sml](../../../../../lib/language/haskell/hslint_sig.sml) |
 
@@ -62,6 +62,8 @@ sig
                <a href="#fld-check.claims">claims</a> : claims option, <a href="#fld-check.where_">where_</a> : HsSource.span -&gt; string, <a href="#fld-check.fault">fault</a> : string, <a href="#fld-check.library">library</a> : library option}
               -&gt; {report : report, target : target, part : library}
   val <a href="#val-join">join</a> : library list -&gt; library
+  val <a href="#val-counterfrom">counterFrom</a> : library * int -&gt; library
+  val <a href="#val-counterof">counterOf</a> : library -&gt; int
   exception <a href="#exn-decode">Decode</a> of string
   val <a href="#val-encode">encode</a> : library -&gt; string
   val <a href="#val-decode">decode</a> : string -&gt; library
@@ -353,6 +355,29 @@ val join : library list -> library
 
 `join parts` is the parts of units put together, in order: a later
 part's entry of a name wins, and the rest are appended.
+
+### <a name="val-counterfrom"></a>`counterFrom`
+
+```sml
+val counterFrom : library * int -> library
+```
+
+`counterFrom (l, n)` is `l` with the inference after it numbering its
+type variables from `n`.
+
+A driver numbers each unit's from the same number, the first unit's
+end ([`counterOf`](#val-counterof)), so that a unit's part is the same whatever entries
+of the units before it a compile took; a part holds no variable free,
+so that two units' alike are none of each other's (build-cache-issues.md,
+issue 40).
+
+### <a name="val-counterof"></a>`counterOf`
+
+```sml
+val counterOf : library -> int
+```
+
+`counterOf l` is the number the inference that made `l` ended at.
 
 ### <a name="exn-decode"></a>`Decode`
 

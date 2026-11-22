@@ -1175,6 +1175,26 @@ and a link compiled reads only the declarations main reaches
 hold their definitions' places too: a comment or a line moved is an entry
 of other bytes with the same Core, and takes the link
 (`docs/plans/build-cache-issues.md`, issue 35).
+Asking a usage names the unit's modules, its own scopes, and an entry is
+judged in up to two cheaper ways first, which stand exactly where asking
+every usage stands (issue 37). B: an entry's head keeps a digest of the
+units before it in its compile, each one's name, key and entry's sum
+(`RhcStore.priorOf`, with the fixpoint of a cycle's exports), and where the
+units before it now are those entries, every usage gives what it gave,
+and the entry stands asking none; after a unit made by this compile, which
+has no entry yet, or another, it is asked. A: a module's scope is a
+function of its text, in the key, and of what each module it imports
+exports, the entities and of each its parent and its sort (5.3, 5.5); an
+entry keeps a usage `scope M` for each module its unit imports, a digest
+of those, and where the modules imported are the same and each digest is,
+every name a usage asked stands for the entities it stood for, and only
+their fingerprints are asked, of the units before, with nothing of the
+unit read or named; where one moved, the unit is named and its usages
+asked. The scope's usages are not the entry's own: one moved refuses
+nothing. Under `--names=greatest`, which starts a cycle's exports from
+every entity of the program, A is not taken. `RHC_HIT=asked` judges each
+entry by asking every usage, keeping the same entries: the holes' cases and
+`hs/units/configs` hold each hit of A and B to where it asks one.
 The graph is read by its modules' headers (`RhcGraph.scan`): a module's
 name and the modules its imports name, kept in the store by the hash of its
 text, which the stat memo gives (`UnitStore.hashBy`), so that a module is
@@ -1221,7 +1241,8 @@ its class and type constructor, a chain of imports searched until it
 reaches the module asked for -- not by a fold over everything known.
 `--verify-store` takes nothing: it makes every unit and the link, and
 holds each entry that stands for one to what making it gave, byte for byte
-(its usages, its interface and every part, HsLint's where both have one),
+(its usages but its scope's, its interface and every part, HsLint's where
+both have one),
 as Rune's `--verify-cache` does, and fails where one is not. `--whole` reads the library as
 well, the reference, and keeps nothing. A unit's entry is kept in a configuration with no setting of
 the back end (the instruction set, the level, the width of int), since it

@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_LINT`](../sig/HS_LINT.md) |
 | Status | required |
-| Members | 24 |
+| Members | 26 |
 | Tests | not listed |
 | Source | [lib/language/haskell/hslint.sml](../../../../../lib/language/haskell/hslint.sml) |
 
@@ -37,6 +37,8 @@ What each means is on [`HS_LINT`](../sig/HS_LINT.md); the types are this structu
 | val | [`check`](../sig/HS_LINT.md#val-check) | `{claims : claims option, cycleDefault : bool, fault : string, groups : module list list, library : library option, main : string option, records : {derived : (string * string * HsAst.decl list) list, env : HsInfer.env, table : HsEvidence.table} option, where_ : {file : string, start : int, stop : int} -> string} -> {part : library, report : report, target : target}` |
 | val | [`claims`](../sig/HS_LINT.md#val-claims) | `string -> claims` |
 | val | [`compare`](../sig/HS_LINT.md#val-compare) | `report * claims * ({file : string, start : int, stop : int} -> string) * string -> unit` |
+| val | [`counterFrom`](../sig/HS_LINT.md#val-counterfrom) | `library * int -> library` |
+| val | [`counterOf`](../sig/HS_LINT.md#val-counterof) | `library -> int` |
 | val | [`decode`](../sig/HS_LINT.md#val-decode) | `string -> library` |
 | val | [`dump`](../sig/HS_LINT.md#val-dump) | `report * ({file : string, start : int, stop : int} -> string) * bool -> string` |
 | val | [`encode`](../sig/HS_LINT.md#val-encode) | `library -> string` |
