@@ -420,6 +420,42 @@ static void string_compare(Jit *j, int32_t p, int32_t d, int32_t x, int32_t y, A
 
 static void alloc(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d, int32_t a, int32_t b, const uint8_t *L);
 /* PRIM p d args in line, or 0 where p is not one done in line */
+/* thunk_selector's mark in line (D17's C), as the loop has it (fastprim.h):
+   slow is where an index that is no int goes, NULL where the section
+   vouches for an int (ms_imm_trusted), which no code then tests */
+static void mark_selector(Jit *j, int32_t d, int32_t x, int32_t y, int32_t z, AsmLabel *slow) {
+    /* D17's C, as the loop has it (fastprim.h): the state THUNK_SELECTOR + i
+       in R_S3, to slow where i is no int; then nothing, unless s is an
+       unevaluated suspension of two fields or more whose first is t's
+       word, when its contag's low byte becomes that state */
+    AsmLabel done; as_label_init(&done);
+    ms_need_word(M, x);
+    ms_need_word(M, y);
+    ms_one_imm(M, z, T_INT, slow);
+    ms_untag(M, R_S0, T_INT);
+    as_cmp_ri(A, R_S0, 256 - THUNK_SELECTOR);
+    as_jcc(A, CC_AE, &done);          /* unsigned: a negative i too */
+    as_mov_rr(A, R_S3, R_S0);
+    as_add_ri(A, R_S3, THUNK_SELECTOR);
+    ms_load_bits(M, R_S1, x);
+    ms_jump_if_immediate(M, R_S1, &done);
+    ms_load_kind(M, R_S2, R_S1);
+    as_cmp_ri(A, R_S2, K_THUNK);
+    as_jcc(A, CC_NE, &done);
+    ms_load_contag(M, R_S2, R_S1);
+    as_cmp_ri(A, R_S2, THUNK_UNEVALUATED);
+    as_jcc(A, CC_NE, &done);
+    ms_load_len(M, R_S2, R_S1);
+    as_cmp_ri(A, R_S2, 2);
+    as_jcc(A, CC_B, &done);
+    ms_load_field_bits(M, R_S2, R_S1, 1);
+    ms_cmp_bits(M, R_S2, y);
+    as_jcc(A, CC_NE, &done);
+    ms_set_selector(M, R_S1, R_S3);
+    as_bind(A, &done);
+    ms_set(M, d, T_UNIT, 0);
+    as_label_free(&done);
+}
 static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t n) {
     if (n == 0 || n > 3) return 0;
     int32_t x = read_i32(L), y = n > 1 ? read_i32(L + 4) : x, z = n > 2 ? read_i32(L + 8) : x;
@@ -465,6 +501,10 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     default:
         return 0;
     }
+    /* thunk_selector where tier 2's homes vouch for its index an int: no
+       slow path, which no code would jump to (its stub was 165 bytes of
+       x86-64 at every mark: gap 4's tuning) */
+    if (p == PRIM_thunk_selector && n == 3 && ms_imm_trusted(M, z, T_INT)) { mark_selector(j, d, x, y, z, NULL); return 1; }
     /* the slow path: the helper; its index, since nothing here adds another */
     Slow *s = ms_slow(M, SLOW_PRIM, j->next);
     if (!s) return 1;
@@ -800,40 +840,7 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         as_label_free(&captures); as_label_free(&done);
         break;
     }
-    case PRIM_thunk_selector: {
-        /* D17's C, as the loop has it (fastprim.h): the state THUNK_SELECTOR + i
-           in R_S3, to slow where i is no int; then nothing, unless s is an
-           unevaluated suspension of two fields or more whose first is t's
-           word, when its contag's low byte becomes that state */
-        AsmLabel done; as_label_init(&done);
-        ms_need_word(M, x);
-        ms_need_word(M, y);
-        ms_one_imm(M, z, T_INT, slow);
-        ms_untag(M, R_S0, T_INT);
-        as_cmp_ri(A, R_S0, 256 - THUNK_SELECTOR);
-        as_jcc(A, CC_AE, &done);          /* unsigned: a negative i too */
-        as_mov_rr(A, R_S3, R_S0);
-        as_add_ri(A, R_S3, THUNK_SELECTOR);
-        ms_load_bits(M, R_S1, x);
-        ms_jump_if_immediate(M, R_S1, &done);
-        ms_load_kind(M, R_S2, R_S1);
-        as_cmp_ri(A, R_S2, K_THUNK);
-        as_jcc(A, CC_NE, &done);
-        ms_load_contag(M, R_S2, R_S1);
-        as_cmp_ri(A, R_S2, THUNK_UNEVALUATED);
-        as_jcc(A, CC_NE, &done);
-        ms_load_len(M, R_S2, R_S1);
-        as_cmp_ri(A, R_S2, 2);
-        as_jcc(A, CC_B, &done);
-        ms_load_field_bits(M, R_S2, R_S1, 1);
-        ms_cmp_bits(M, R_S2, y);
-        as_jcc(A, CC_NE, &done);
-        ms_set_selector(M, R_S1, R_S3);
-        as_bind(A, &done);
-        ms_set(M, d, T_UNIT, 0);
-        as_label_free(&done);
-        break;
-    }
+    case PRIM_thunk_selector: mark_selector(j, d, x, y, z, slow); break;
     case PRIM_ref_set:
         ms_need_word(M, y);
         ms_load_obj(M, R_S0, x, K_REF, slow);
