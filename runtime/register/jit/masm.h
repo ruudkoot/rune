@@ -140,6 +140,7 @@ typedef struct Masm {
     uint32_t nslots;      /* the registers and what a primitive's arguments push: the frame's slots */
     uint32_t nfields;     /* the fields of the object ms_alloc last made, or UINT32_MAX where the object in hand is another's */
     const void *leave;    /* the leave stub: where the code hands the VM back */
+    const void *select;   /* the select stub (ms_emit_select), in the region */
     int placed;           /* where the code will run is known (the Asm's base): the region's stubs and trampolines are in reach of a direct jump or call */
     int verify;           /* --gc-verify or --gc-stress: the homes checked against their slots after a call into C (ms_reload, M7) */
     AsmLabel *(*home_fails)(struct Masm *m, uint32_t r);   /* where register r's home and slot disagree: a fatal error (compile.c) */
@@ -484,5 +485,15 @@ void ms_emit_call_interp(Asm *a, int win, MsHelper helper, AsmLabel *leave, int 
    where the frame's own return word goes, and on there with the value.
    Its address is odd (as_ret_align): it is a return word. */
 void ms_emit_barrier(Asm *a, int win, MsHelper helper);
+/* The select stub (D17's C; compile.c, SLOW_SELECT): called (as_call_to)
+   with a selector in R_S0 -- a suspension, its contag THUNK_SELECTOR or
+   more -- whose program does not rerun; back (as_ret) with R_S0 what
+   vm_selected gives of it: the field of its tuple where the tuple is
+   evaluated, by gc_select's step in code; the selector itself where the
+   tuple is not, at once; and through a chain of selectors, helper's
+   (jit_h_selected) answer, every home C clobbers kept around the call.
+   The scratch registers and the flags clobbered, no home: one copy for
+   every FORCE, whose own code is a call. */
+void ms_emit_select(Asm *a, int win, MsHelper helper);
 
 #endif

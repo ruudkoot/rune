@@ -2018,6 +2018,79 @@ void ms_emit_barrier(Asm *a, int win, MsHelper helper) {
     as_jmp_r(&m.a, R_S1);
     *a = m.a;
 }
+void ms_emit_select(Asm *a, int win, MsHelper helper) {
+    Masm m;
+    memset(&m, 0, sizeof m);
+    m.a = *a; m.win = win; m.nfields = UINT32_MAX;
+    AsmLabel same, take, chain;
+    as_label_init(&same); as_label_init(&take); as_label_init(&chain);
+    /* its tuple, through one indirection: a constructor of tag 0 */
+    ms_load_len(&m, R_S1, R_S0);
+    as_cmp_ri(&m.a, R_S1, 2);
+    as_jcc(&m.a, CC_B, &same);
+    ms_load_field_bits(&m, R_S1, R_S0, 1);
+    ms_jump_if_immediate(&m, R_S1, &same);
+    ms_load_kind(&m, R_S2, R_S1);
+    AsmLabel con; as_label_init(&con);
+    as_cmp_ri(&m.a, R_S2, K_IND);
+    as_jcc(&m.a, CC_NE, &con);
+    ms_load_field_bits(&m, R_S1, R_S1, 0);
+    ms_jump_if_immediate(&m, R_S1, &same);
+    ms_load_kind(&m, R_S2, R_S1);
+    as_bind(&m.a, &con);
+    as_label_free(&con);
+    as_cmp_ri(&m.a, R_S2, K_CON);
+    as_jcc(&m.a, CC_NE, &same);
+    ms_load_contag(&m, R_S2, R_S1);
+    as_cmp_ri(&m.a, R_S2, 0);
+    as_jcc(&m.a, CC_NE, &same);
+    /* field i, i = contag - THUNK_SELECTOR, within the tuple */
+    ms_load_contag(&m, R_S2, R_S0);
+    as_sub_ri(&m.a, R_S2, THUNK_SELECTOR);
+    ms_load_len(&m, R_S3, R_S1);
+    as_cmp_rr(&m.a, R_S2, R_S3);
+    as_jcc(&m.a, CC_AE, &same);
+    as_ld64x(&m.a, R_S2, R_S1, R_S2, 8, (int32_t)FIELD_OFF(0));
+    /* a field that is a selector: C goes on from the selector */
+    ms_jump_if_immediate(&m, R_S2, &take);
+    ms_load_kind(&m, R_S3, R_S2);
+    as_cmp_ri(&m.a, R_S3, K_THUNK);
+    as_jcc(&m.a, CC_NE, &take);
+    ms_load_contag(&m, R_S3, R_S2);
+    as_cmp_ri(&m.a, R_S3, THUNK_SELECTOR);
+    as_jcc(&m.a, CC_AE, &chain);
+    as_bind(&m.a, &take);
+    as_mov_rr(&m.a, R_S0, R_S2);
+    as_bind(&m.a, &same);
+    as_ret(&m.a);
+    /* a chain of selectors: vm_selected from the first, which steps it as
+       the collector would (Brent's method on a cycle), every home C would
+       clobber kept in the VM's cells around the call, as the stub's caller
+       keeps none */
+    as_bind(&m.a, &chain);
+    for (int k = 0; k < AS_NHOMES_G; k++) { int r = as_home_g(win, k); if (!as_keeps_g(win, r)) as_st64(&m.a, VMR, gspill(r), r); }
+    for (int k = 0; k < AS_NHOMES_F; k++) { int f = as_home_f(win, k); if (!as_keeps_f(win, f)) as_fst(&m.a, VMR, fspill(f), f); }
+#if JIT_TARGET == 2
+    as_st64(&m.a, VMR, gspill(X30), X30);   /* the stub's return, which the call takes */
+#else
+    as_sub_ri(&m.a, R_SP, 8);               /* the stack as at a call of compiled code, which the call of the stub moved */
+#endif
+    as_mov_rr(&m.a, ms_arg(&m, 1), R_S0);
+    as_mov_rr(&m.a, ms_arg(&m, 0), VMR);
+    uint64_t at = 0;
+    memcpy(&at, &helper, sizeof helper);
+    as_call_c(&m.a, win, at);
+#if JIT_TARGET == 2
+    as_ld64(&m.a, X30, VMR, gspill(X30));
+#else
+    as_add_ri(&m.a, R_SP, 8);
+#endif
+    for (int k = 0; k < AS_NHOMES_G; k++) { int r = as_home_g(win, k); if (!as_keeps_g(win, r)) as_ld64(&m.a, r, VMR, gspill(r)); }
+    for (int k = 0; k < AS_NHOMES_F; k++) { int f = as_home_f(win, k); if (!as_keeps_f(win, f)) as_fld(&m.a, f, VMR, fspill(f)); }
+    as_ret(&m.a);
+    as_label_free(&same); as_label_free(&take); as_label_free(&chain);
+    *a = m.a;
+}
 void ms_emit_call_interp(Asm *a, int win, MsHelper helper, AsmLabel *leave, int callret) {
     Masm m;
     memset(&m, 0, sizeof m);

@@ -462,10 +462,14 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   (`thunk_selector`, D17's C) is in line too, in the loop and at both
   tiers: the suspension's kind, state, length and first field tested, and
   the state's low byte written (`ms_set_selector`), as BLACKHOLE writes
-  it; an `i` that is no int is the primitive's. `FORCE` of a selector
-  calls `vm_selected` from its slow path, in a program that does not
-  rerun with nothing synced (`jit_h_selected`), since it reads the heap
-  alone. The
+  it; an `i` that is no int is the primitive's, and where tier 2's homes
+  vouch for an int it has no slow path at all. `FORCE` of a selector, in
+  a program that does not rerun, calls the select stub of the region
+  from its slow path (`ms_emit_select`), which takes the selector's step
+  in code -- the selector as it is where its tuple is not evaluated, the
+  field where it is -- and calls `vm_selected` only for a chain of
+  selectors, keeping every home C clobbers itself, so that each FORCE's
+  slow path is a call; a program that reruns calls it synced. The
   primitives that are a function of the C library on reals and nothing
   else (`real_exp`, `real_ln`, `real_sin`, `real_cos`, `real_tan`,
   `real_atan`, `real_sinh`, `real_cosh`, `real_tanh`, `real_atan2`,
