@@ -358,6 +358,31 @@ the store, as issue 5's is.
   link's configuration is made where the link is looked up, and
   `--strictness=` leaves the memo out (`hs/units/memo`).
 
+* **41. An instance read without the module that declares it.** Found under
+  rhc (the haskell98 roadmap, 2026-11-22), by the tester at seed 900 (issue
+  40's round): in both of nofib's `gg`, an instance moved, the same, from
+  `GRIP` to `Pool`, `Activity`, which uses it and whose imports reach
+  `GRIP` and not `Pool`, was taken and the program built, where the build
+  without a store refuses it (5.4, R26: no chain of imports leads from
+  `Activity` to the instance); a build of each, at -O1 and -O2 with the
+  lint at level 2, on either machine, and the two programs walked again
+  alone by the rhc before issue 40's round (9bbf03633), 82 builds, disagree
+  at the same two steps. A unit's read of an instance was answered by the
+  instance's identity, its class and type, and its fingerprint, and whether
+  the reading module's imports reach it was read of the module that
+  declared it then (HsInfer's `Reaches`): an instance moved to another
+  module, the same, gives the read the same answer, and the reach is asked
+  of the module it left, which the imports still reach. A twin store whose
+  hits ask every usage takes the unit too. Status: fixed. An instance's
+  read is answered with the module that declares it (`RhcIface.answer`), so
+  that one moved is another answer and the unit is made again, as the build
+  without a store makes it. The probe is `hs/units/holes/instance-moved`
+  (an instance moved from the module on the client's chain of imports to
+  one of the program off it), which the rhc before fails; the mutant `HU29`
+  drops the module. The tester at seed 900 again with the fix: both builds
+  of the two steps refuse, as the build without a store does, and none of
+  the walk's 3,321 builds disagrees (issue 40, below).
+
 ## A hit that cannot link
 
 * **4. An entry whose code names a unit no longer there.** An entry is
@@ -881,8 +906,8 @@ the store, as issue 5's is.
   which an entry that stands by its usages keeps as they were made, and
   which `--verify-store` no longer holds it to (issue 37). Nothing the
   program is made of moves (the tester's every warm build is the bytes of
-  the build without a store), and a usage reads neither. Status: HsLint's
-  half fixed (2026-11-21): each unit's inference numbers its variables
+  the build without a store), and a usage reads neither. Status: fixed.
+  HsLint's half (2026-11-21): each unit's inference numbers its variables
   from where the first unit's ended (`HsLint.counterFrom`, `counterOf`),
   not from where the units before it ended theirs, a part holding no
   variable free; `hs/units/verify-scopes` (an import grows by what its
@@ -891,12 +916,63 @@ the store, as issue 5's is.
   (seed 800), the 64 whose last state compiles, 2 refused, both for a
   Core. (A first fix gave each unit a range of its own, as its check has,
   past what HsLint's part writes of a number, 2^35: the tester refused it
-  at once, a unit's entry that could not be read back.) The Core's half is
-  open: the check numbers a unit's type variables from its range, and the
-  variables it takes before a value's are not the unit's alone where the
-  units before it moved, so that an import's type in a unit after it is
-  written with another's names; a Core's types with their variables named
-  by place would make it so.
+  at once, a unit's entry that could not be read back.) The Core's half
+  (2026-11-22, branch `hs-bc4`): what a unit gives the units after it has
+  its type variables named by the place each is first met, `tK`
+  (`HsDsCore.canonicalTy`, `canonicalDecl`): each value's type in its
+  interface, which a unit that imports the value writes in its `(import
+  ...)`, and each of the source's data types and newtypes, which a unit
+  that uses one copies; the unit's own values keep the checker's names,
+  numbered from the unit's own range, a function of its source. The check
+  numbers a value's type variables by what its unit took before it, and
+  keeps the name its source wrote (`QSort.sort`'s `a_1` against the `t_1`
+  of an inferred type, `nofib`'s `awards`), text of that unit the importing
+  unit does not read; and, found on the way, a data type's parameter is as
+  its source wrote it, so that one renamed (`data Box a` to `data Box b`)
+  leaves the unit that copies the type taken, which `--verify-store`
+  refuses, with the rhc before as well. Naming the bodies too, tried first,
+  moved the simplifier's fresh names at -O2 (`x~N`, numbered on through the
+  program, which binders now alike took more of): the programs at -O2 other
+  bytes, the same code; and naming the desugarer's own types, the list's,
+  IO's, the tuples' and the classes' dictionaries', moved them too, and set
+  the list apart from the runtime's declaration of it
+  (`hs/snapshot/lang/sample`); neither reads text a unit does not read.
+  `hs/units/verify-order`: Lib grows a value before the polymorphic one
+  Main imports, then renames the parameter of a type Main copies, Main
+  taken and `--verify-store` holding the store after each, and Main, its
+  comment edited, is compiled to the Core it was and the link taken; the
+  rhc before refuses each step, each tried alone. No expected file holds a
+  Core the desugarer writes (`tests/hs/core`'s are written by hand): none
+  changes. The programs are the bytes the rhc before makes, the tester's 81
+  and `tests/hs/lang`'s 591 at -O0, -O1 and -O2 (2,016 compiles). The
+  library's snapshot, 75 files, 41,239,895 bytes before and 41,202,879
+  after (41,206,527 with issue 41's fix, its reads of instances longer): of
+  its 2,271 declarations 552 moved, 546 imports and 6 data types, each only
+  renamed, and no value (as the tester's `rich`, its 7 units in a store: 77
+  of 198, 74 imports and 3 data types). The walk of seed 800 (81 programs,
+  21 steps, 1,701 builds, every configuration, the twin on) again, the same
+  walk by the rhc before and by this round's (with issue 41's fix; the
+  tester's choice of a cycle no longer by the hashing of strings), none
+  disagreeing: its stores, 144, 4 refused before and none after (126
+  verified, 18 whose last state is refused); the link's memo, kept by its
+  units' Core, taken at 635 of the 1,383 builds accepted before and 642
+  after (45.9% to 46.4%; 59.6% to 60.4% of those after an accepted build of
+  the same configuration), 7 steps from compiled to taken and none the
+  other way, each a unit made again to the Core it was: a comment, a
+  chain's edit, a fixity, an import. The 29 programs whose stores round 3's
+  walk refused, walked again the same way (seed 600, 41 steps, 1,189
+  builds) by the rhc before and after: their 58 stores, 6 refused before
+  (`sched`, `grep` and `expert`, each a Core's hash) and none after. Each
+  of the 29's last states compiled into a store alone and into one after
+  the program's first state, at -O1 and at -O2 with the lint at 2: every
+  entry's sections alike in the two, by either rhc, the heads apart (the
+  digests of the units before), so that those two orders do not move what
+  this half is about, a unit taken while a unit it reads was made again,
+  which a walk does. The tester at seed 900 (81 programs, 41 steps), which
+  found issue 41 with this half's rhc, with this round's: 3,321 builds,
+  none disagreeing and none taking or making a unit otherwise than the
+  twin; its 155 stores, 148 verified and none refused (7 whose last state
+  is refused).
 
 ## Found on the way, outside the cache
 
@@ -1175,3 +1251,16 @@ seeds are with the roadmap's drafts (`impl/bc/`).
   of nine compiles at once on one store (90, none disagreeing); 110
   compiles killed at a random moment, 53 of them while they ran, each
   followed by a compile through the store, none disagreeing.
+* **Issue 40's Core half, and 41** (2026-11-22, branch `hs-bc4` from
+  9bbf03633): `hs/units/verify-order` and `hs/units/holes/instance-moved`,
+  which the rhc before fails; rhc's mutants of the files changed, `HU26`
+  to `HU29`, all caught; `hs/*` at the check tier, 5,053 of 5,053; the
+  programs the bytes the rhc before makes, 672 (the tester's 81 and
+  `tests/hs/lang`'s 591) at -O0, -O1 and -O2; the tester with a twin
+  store whose hits ask every usage, at every configuration: seed 800 (81
+  programs, 21 steps, 1,701 builds) by the rhc before and after on the same
+  walk, seed 600 over the 29 programs issue 40 found (1,189 builds) by
+  both, and seed 900 (3,321 builds) after, each walk's stores held to
+  `--verify-store` (issue 40, above), none of the rhc after's disagreeing
+  with the build without a store or `--whole`, nor taking or making a
+  unit otherwise than the twin.

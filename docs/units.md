@@ -1120,7 +1120,9 @@ in another unit that leaves the method out is made; and an instance the
 checker finds is read with whether the reading module's imports reach the
 module that declares it (`HsUsage.Reaches`), since that is what puts it in
 scope (5.4), and an import of a module on the way, which is no reader's,
-changes it (`docs/plans/build-cache-issues.md`, issues 25 to 27). The ABI facts (H9)
+changes it (`docs/plans/build-cache-issues.md`, issues 25 to 27), and its
+read answered with that module, so that an instance moved, the same, to a
+module the imports may not reach is another answer (issue 41). The ABI facts (H9)
 are how a value is made in Mid (a function, a suspension, a literal) and
 whether a newtype is a box: a newtype is boxed as its own unit boxes it,
 since a unit that gives it fewer arguments than its parameters makes it a
