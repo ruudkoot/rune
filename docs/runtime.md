@@ -395,11 +395,14 @@ deep recursion is not scanned again at every minor collection. A full
 collection, and the start of the low-pause collector's cycle, take the whole
 stack; on the register VM they decode again only the frames that ran since
 the last collection, and for the frames below them take the slots that the
-last walk -- a minor collection's or a full one's -- found roots, which it
-keeps a bit a slot (the stack's summary, `runtime/gc/copy.c`; for a program
-with suspensions also the frames' closures and the tables of where they
-wait, *CAF tables* below): those frames have not run, returned or been
-returned into since, so their roots are the same slots. So a deep recursion
+last walk -- a full collection's, or, once the run has made one, a minor
+collection's -- found roots, which it keeps a bit a slot (the stack's
+summary, `runtime/gc/copy.c`): those frames have not run, returned or been
+returned into since, so their roots are the same slots. For a program with
+suspensions a minor collection keeps each frame's function and place as
+well, and the next full collection makes of those that are still there the
+closures' bits and the tables of where they wait (*CAF tables* below), most
+of a minor collection's frames being gone by then. So a deep recursion
 is not decoded again at every full collection either, where each used to
 walk every frame -- its header, its return word, its live registers -- which
 in rhc's programs that consume a lazy list recursively, a million frames

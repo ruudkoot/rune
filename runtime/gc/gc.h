@@ -303,6 +303,7 @@ static inline void gc_stack_recorded(VM *vm, size_t rec) {
     vm->gc.stack_low = vm_frame_id(vm);
 }
 void caf_record(VM *vm, const FrameRef *f, size_t n, size_t from, size_t rec);
+size_t caf_aside_made(VM *vm);
 /* --gc-verify (check.c): what is wrong with the summary, the frames below
    the lowest that has run decoded again, or NULL */
 const char *gc_stack_check(VM *vm);

@@ -295,7 +295,8 @@ const char *gc_stack_check(VM *vm) {
     if (from > vm->sp) return "the stack's summary describes slots above sp";
     size_t nf = vm_frames_from(vm, 0, &fr), k = 0, at = 0;
     const uint64_t *bits = vm->gc.stack_roots, *aside = vm->gc.stack_aside;
-    size_t aside_to = vm->gc.stack_aside_valid < from ? vm->gc.stack_aside_valid : from;
+    size_t aside_to = vm->caf ? caf_aside_made(vm) : 0;   /* the closures' bits made (caf.c) */
+    if (aside_to > from) aside_to = from;
 #define BIT(b_, i_) ((int)(((b_)[(i_) >> 6] >> ((i_) & 63)) & 1))
     for (; k + 1 < nf && at < from; k++) {
         const FrameRef *f = &fr[k];
@@ -326,7 +327,8 @@ const char *gc_stack_check(VM *vm) {
         }
     }
 #undef BIT
-    if (aside_to && vm->caf) return caf_stack_check(vm, fr, nf, aside_to);
+    size_t tables_to = vm->gc.stack_aside_valid < from ? vm->gc.stack_aside_valid : from;
+    if (tables_to && vm->caf) return caf_stack_check(vm, fr, nf, tables_to);
     return NULL;
 }
 

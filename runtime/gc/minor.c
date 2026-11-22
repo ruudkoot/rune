@@ -193,33 +193,35 @@ static void promote_obj(VM *vm, Obj **o) {
    (copy.c, gc_stack_roots) made again of what it decodes, where the
    summary has the slots below: where no frame below the watermark has run
    since it was made; else the frames below the watermark are the lowest
-   that ran since, for the summary as for the next minor collection. */
-static void minor_stack(VM *vm, size_t low) {
-    FrameRef *fr = NULL;
-    size_t nf = vm_frames_from(vm, low, &fr);   /* the frames from the watermark's up (native-frames.md, M3) */
-    size_t at = nf && low ? fr[0].head : 0, live = 0, from = at, rec = 0;
-    if (!vm->frame_live) vm->gc.stack_valid = 0;   /* every slot a root: no summary */
-    else if (low <= vm->gc.stack_low && from <= vm->gc.stack_valid) rec = gc_stack_record(vm, fr, nf, from);
-    if (!rec && low < vm->gc.stack_low) vm->gc.stack_low = low;
+   that ran since, for the summary as for the next minor collection. Not
+   before the run's first full collection (or cycle of the low-pause
+   collector): a run that makes none would pay for a summary nothing reads
+   (merge, of the 32 benchmarks, 1.5% of its instructions), and the walk
+   that makes none tests nothing for it (record, a constant of each copy
+   of the loop). */
+#if defined(__GNUC__)
+__attribute__((always_inline))
+#endif
+static inline size_t minor_frames(VM *vm, const FrameRef *fr, size_t nf, size_t at, size_t rec, int record) {
     uint64_t *bits = vm->gc.stack_roots;
-#define MINOR_VISIT(vm_, v_) (live++, promote_value((vm_), (v_)), gc_stack_bit((vm_), (v_), rec))
-    if (vm->frame_live)
-        for (size_t k = 0; k + 1 < nf; k++) {
-            const FrameRef *f = &fr[k];
-            size_t end = fr[k + 1].base < vm->sp ? fr[k + 1].base : vm->sp;
-            uint32_t n = vm->prog.funcs[f->func].nlocals;
-            uint64_t regs = vm_callback_live(vm, f);
-            GC_BELOW_FRAME(vm, f, at, end, MINOR_VISIT);
-            for (uint32_t r = 0; r < n && at < end; r++, at++) {
-                if (r >= 64 || ((regs >> r) & 1)) {
-                    live++;
-                    promote_value(vm, &vm->stack[at]);
-                    if (rec) bits[at >> 6] |= (uint64_t)1 << (at & 63);   /* (a waiting frame's registers: below rec) */
-                } else if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
-            }
-            vm->gc_counts.frames++;
+    size_t live = 0;
+#define MINOR_VISIT(vm_, v_) (live++, promote_value((vm_), (v_)), record ? gc_stack_bit((vm_), (v_), rec) : (void)0)
+    for (size_t k = 0; k + 1 < nf; k++) {
+        const FrameRef *f = &fr[k];
+        size_t end = fr[k + 1].base < vm->sp ? fr[k + 1].base : vm->sp;
+        uint32_t n = vm->prog.funcs[f->func].nlocals;
+        uint64_t regs = vm_callback_live(vm, f);
+        GC_BELOW_FRAME(vm, f, at, end, MINOR_VISIT);
+        for (uint32_t r = 0; r < n && at < end; r++, at++) {
+            if (r >= 64 || ((regs >> r) & 1)) {
+                live++;
+                promote_value(vm, &vm->stack[at]);
+                if (record) bits[at >> 6] |= (uint64_t)1 << (at & 63);   /* (a waiting frame's registers: below rec) */
+            } else if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
         }
-    if (vm->frame_live && nf && vm_frame_top_live(vm, &fr[nf - 1])) {
+        vm->gc_counts.frames++;
+    }
+    if (nf && vm_frame_top_live(vm, &fr[nf - 1])) {
         /* the frame that runs, where compiled code said what of it is live
            (VM.top_live, M6): as a frame that waits */
         const FrameRef *f = &fr[nf - 1];
@@ -232,6 +234,33 @@ static void minor_stack(VM *vm, size_t low) {
     }
     for (; at < vm->sp; at++) MINOR_VISIT(vm, &vm->stack[at]);
 #undef MINOR_VISIT
+    return live;
+}
+/* the two copies, each a function of its own: inlined into minor_pass,
+   whose registers the loop then shared, the copy that makes no summary
+   cost merge 1.0% more than the walk of before it, where alone it costs
+   0.2% */
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static size_t minor_frames_bare(VM *vm, const FrameRef *fr, size_t nf, size_t at) { return minor_frames(vm, fr, nf, at, 0, 0); }
+#if defined(__GNUC__)
+__attribute__((noinline))
+#endif
+static size_t minor_frames_kept(VM *vm, const FrameRef *fr, size_t nf, size_t at, size_t rec) { return minor_frames(vm, fr, nf, at, rec, 1); }
+static void minor_stack(VM *vm, size_t low) {
+    FrameRef *fr = NULL;
+    size_t nf = vm_frames_from(vm, low, &fr);   /* the frames from the watermark's up (native-frames.md, M3) */
+    size_t at = nf && low ? fr[0].head : 0, live = 0, from = at, rec = 0;
+    if (!vm->frame_live) {
+        vm->gc.stack_valid = 0;   /* every slot a root: no summary */
+        for (; at < vm->sp; at++) { live++; promote_value(vm, &vm->stack[at]); }
+    } else {
+        if ((vm->gc.fulls || vm->gc.cycles) && low <= vm->gc.stack_low && from <= vm->gc.stack_valid)
+            rec = gc_stack_record(vm, fr, nf, from);
+        live = rec ? minor_frames_kept(vm, fr, nf, at, rec) : minor_frames_bare(vm, fr, nf, at);
+    }
+    if (!rec && low < vm->gc.stack_low) vm->gc.stack_low = low;
     vm_clean_stack(vm);   /* the stack's clean part, above sp (gc_stack_roots, M6) */
     if (rec) {
         caf_record(vm, fr, nf, from, rec);
