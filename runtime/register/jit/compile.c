@@ -325,6 +325,10 @@ void jit_h_update(VM *vm, int32_t v) { obj_become_ind(vm, running_suspension(vm)
    register's home itself, a home C keeps being left as it was by the
    reload (ms_reload) */
 Value jit_h_select(VM *vm, int32_t r) { return vm_selected(vm, vm->stack[vm->fp + (size_t)r]); }
+/* the same of the word v, where the program does not rerun: vm_selected
+   then reads the heap alone, allocating nothing, raising nothing and
+   moving nothing, so that the code calls it with nothing synced */
+Value jit_h_selected(VM *vm, Value v) { return vm_selected(vm, v); }
 
 Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n) {
     return vm_alloc_fields(vm, (uint8_t)kind, (uint16_t)contag, n);
@@ -867,13 +871,24 @@ static void emit_slow(Masm *m, Slow *sp) {
     } else if (s.kind == SLOW_SELECT) {
         /* FORCE of a selector: its field where its tuple is evaluated, in
            C (jit_h_select), given to register a, and back to test it, in
-           rax */
-        ms_sync(m, s.pc, 0);
-        as_mov_ri(&m->a, ms_arg(m, 1), s.a);
-        ms_call(m, (MsHelper)jit_h_select);
-        ms_reload(m);
-        ms_set_bits(m, s.a, R_S0);
-        as_jmp(&m->a, &s.back);
+           rax; where the program does not rerun (s.b), of the word in rax
+           (jit_h_selected), the homes C would clobber kept around the call
+           as around ms_call_pure's, nothing synced */
+        if (s.b) {
+            ms_save_volatile(m, s.pc, s.a);
+            as_mov_rr(&m->a, ms_arg(m, 1), R_S0);
+            ms_call(m, (MsHelper)jit_h_selected);
+            ms_restore_volatile(m, s.pc, s.a);
+            ms_set_bits(m, s.a, R_S0);
+            as_jmp(&m->a, &s.back);
+        } else {
+            ms_sync(m, s.pc, 0);
+            as_mov_ri(&m->a, ms_arg(m, 1), s.a);
+            ms_call(m, (MsHelper)jit_h_select);
+            ms_reload(m);
+            ms_set_bits(m, s.a, R_S0);
+            as_jmp(&m->a, &s.back);
+        }
     } else if (s.kind == SLOW_LOOP) {
         /* ENTER of a suspension under evaluation: Loop raised from the
            instruction, the VM exact, as RAISE raises (jit_h_loop), and on
@@ -1128,7 +1143,8 @@ static int emit_function(Jit *j, Scan *sc) {
 static const MsHelper helpers[] = {
     (MsHelper)jit_h_prim, (MsHelper)jit_h_alloc, (MsHelper)jit_h_return, (MsHelper)jit_h_grow,
     (MsHelper)jit_h_push_handler, (MsHelper)jit_h_raise, (MsHelper)jit_h_loop, (MsHelper)jit_h_string_order, (MsHelper)jit_h_values_equal,
-    (MsHelper)jit_h_box_real, (MsHelper)jit_h_box_num, (MsHelper)jit_h_primpush, (MsHelper)jit_h_called, (MsHelper)jit_h_enter_interp
+    (MsHelper)jit_h_box_real, (MsHelper)jit_h_box_num, (MsHelper)jit_h_primpush, (MsHelper)jit_h_called, (MsHelper)jit_h_enter_interp,
+    (MsHelper)jit_h_selected
 };
 /* The region: the stubs that enter and leave compiled code, the stub of
    its fatal errors, and a trampoline for every call into C it makes

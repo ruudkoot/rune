@@ -453,7 +453,14 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   collector's bits kept (`ms_set_kind`), as the loop has it; of one that
   captures nothing, which may be a constant the program shares, a
   suspension of one field made beside it, its function's (an allocation
-  in line, `FILL_SUSP`), as the primitive makes it. The
+  in line, `FILL_SUSP`), as the primitive makes it. A selector's mark
+  (`thunk_selector`, D17's C) is in line too, in the loop and at both
+  tiers: the suspension's kind, state, length and first field tested, and
+  the state's low byte written (`ms_set_selector`), as BLACKHOLE writes
+  it; an `i` that is no int is the primitive's. `FORCE` of a selector
+  calls `vm_selected` from its slow path, in a program that does not
+  rerun with nothing synced (`jit_h_selected`), since it reads the heap
+  alone. The
   primitives that are a function of the C library on reals and nothing
   else (`real_exp`, `real_ln`, `real_sin`, `real_cos`, `real_tan`,
   `real_atan`, `real_sinh`, `real_cosh`, `real_tanh`, `real_atan2`,
