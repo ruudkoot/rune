@@ -8,9 +8,11 @@
 - `nfd` (val): [NORMALIZE](../sig/NORMALIZE.md#val-nfd)
 - `nfdList` (val): [NORMALIZE](../sig/NORMALIZE.md#val-nfdlist)
 - `No` (con): [NORMALIZE](../sig/NORMALIZE.md#con-no)
+- `NonspacingMark` (con): [CODE_POINT](../sig/CODE_POINT.md#con-nonspacingmark)
 - `NotCharacter` (con): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#con-notcharacter)
 - `NotNFKC` (con): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#con-notnfkc)
 - `NotXID` (con): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#con-notxid)
+- `Number` (con): [CODE_POINT](../sig/CODE_POINT.md#con-number)
 
 ---
 

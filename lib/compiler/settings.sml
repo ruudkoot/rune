@@ -10,7 +10,7 @@ struct
   val () = CompilerState.cellRoot ("CompilerSettings.cacheDir", cacheDir)
   (* the directory whose .rune is a compile's store where neither
      --cache-dir nor RUNE_CACHE names one: its workspace's, else its build
-     file's or its first input's (UnitCache.directory) *)
+     file's or its first input's (StorePolicy.directory) *)
   val storeHome : string option ref = ref NONE
   val () = CompilerState.cellRoot ("CompilerSettings.storeHome", storeHome)
   val noCache = ref false

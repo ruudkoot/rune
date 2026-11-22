@@ -1,0 +1,4 @@
+(True,True,LT,'b','a')
+(True,False,True,True)
+('b','a','A',65,'\NUL')
+("abcde","acegi","xyz","abc")

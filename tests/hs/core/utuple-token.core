@@ -1,0 +1,16 @@
+; run:
+; The state token bound by an unboxed tuple's alternative, then a component
+; of a tuple that a case takes apart: Core to Mid binds the token (erased)
+; where it takes the alternative apart, so that the type of the tuple is
+; known. The Core simplifier leaves this shape where --fuel stops it between
+; a case of a case and the case of the tuple it makes.
+(val act (-> World (utuple World Int)) (\ ((w World)) (utuple w 41)))
+(val main (-> World (utuple World `()`))
+  (\ ((w0 World))
+    (case (act w0) u0
+      ((utuple w1 r1)
+        (case (let (y Int r1) (utuple w1 y)) u1
+          ((utuple w2 r2)
+            (case r2 v
+              (_ (case (prim print_str "ok\n" w2) w3
+                   (_ (let (unit `()` (con `()`)) (utuple w3 unit))))))))))))

@@ -1,0 +1,1 @@
+parse-in.hs:3:1: error: expected `in` after the declarations of `let`, found the end of a layout block

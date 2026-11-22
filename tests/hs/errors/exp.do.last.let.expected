@@ -1,0 +1,1 @@
+the last statement of a `do` block is a `let`, not an expression

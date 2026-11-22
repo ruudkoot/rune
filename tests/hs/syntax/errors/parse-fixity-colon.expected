@@ -1,0 +1,1 @@
+parse-fixity-colon.hs:2:10: error: `:` in a fixity declaration: its fixity is fixed

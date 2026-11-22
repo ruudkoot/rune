@@ -1,0 +1,3 @@
+module M where
+f = let x = 1 in do x
+  where g = case x of y -> y

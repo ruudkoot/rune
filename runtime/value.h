@@ -53,7 +53,7 @@ typedef uint64_t Value;
 enum ObjKind {
     K_TUPLE = 1,  /* len fields; also vectors */
     K_CON,        /* contag; 1 field, the argument -- or the n fields of an argument that is a tuple of n (CONN) */
-    K_CLOSURE,    /* field 0 = the function index, an immediate; fields 1.. = environment */
+    K_CLOSURE,    /* field 0 = the function index, an immediate (CLOSURE_NARY of it for one of more parameters); fields 1.. = environment */
     K_STRING,     /* len bytes */
     K_REF,        /* 1 field */
     K_ARRAY,      /* len fields */
@@ -65,15 +65,48 @@ enum ObjKind {
     K_BYTES,      /* an array of bytes: len bytes, laid out as a string's and as C has them; it can be written, and its
                      identity is the address (Word8Array, CharArray; heap-layout M8) */
     K_REALS,      /* reals side by side: len doubles, raw, as C has an array of them (RealArray, RealVector) */
-    /* Reserved for a lazy front end (docs/plans/heap-layout.md, *A lazy front
-       end*): a suspension, and what it becomes once it has its value. No
-       program of SML makes one, and the collector, the images and the
-       loader take a kind past K_LAST for a corrupt heap. */
+    /* A suspension of a lazy front end (docs/plans/language/haskell98.md,
+       D11): a flat closure of a function of one argument, field 0 the
+       function's index and the others what it captured, which ENTER enters
+       as CALL enters a K_CLOSURE; its contag is its state (THUNK_*, below).
+       No program of SML makes one: thunk_make makes it of a fresh closure. */
     K_THUNK,
+    /* What a suspension becomes once it has its value, in place
+       (obj_become_ind): field 0 is the value, the others are dead. The
+       collector gives a field that points to one what it holds. */
     K_IND
 };
-#define K_LAST K_REALS   /* the last kind an object has today */
+#define K_LAST K_IND   /* the last kind an object has */
+/* What field 0 of a closure of a function f of k >= 2 parameters holds (eval/apply,
+   the haskell98 roadmap's D15 C, its contag k): not f but -2 - f, negative as a
+   partial application's -1 is, so that a call of one argument tests no
+   parameters -- the check of the index it makes anyway sends both to the general
+   path (item 24, option 1). Its own inverse: a call of k arguments, and whatever
+   reads a closure's function (the collector's CAF tables), takes f back by it. */
+#define CLOSURE_NARY(f) (-2 - (int64_t)(f))
 _Static_assert(K_IND < 16, "a kind fits four bits, which is what the header keeps for it (D4 A)");
+/* A K_THUNK's state, in its contag: unevaluated, or under evaluation once
+   its code has said BLACKHOLE, having read what it captured first. Under
+   evaluation the collector follows none of its fields, which is how the
+   captures of a thunk that runs are let go (D12), and a second ENTER is a
+   loop. A selector (the haskell98 roadmap's D17, C: Wadler's rule) is
+   unevaluated too, THUNK_SELECTOR + i: a suspension whose code gives field
+   i of the tuple its first capture holds, which thunk_selector marked; a
+   collection gives a field that points to one that field of the tuple,
+   once the tuple is evaluated (runtime/gc/gc.h). Below 256, since the
+   JIT's BLACKHOLE writes the low byte alone. */
+enum { THUNK_UNEVALUATED = 0, THUNK_BLACKHOLE = 1, THUNK_SELECTOR = 3 };
+/* a suspension's state unevaluated: its code not yet run, a selector's too */
+static inline int thunk_unevaluated(unsigned contag) { return contag == THUNK_UNEVALUATED || contag >= THUNK_SELECTOR; }
+/* A K_IND's contag: what the suspension's was (an update keeps it), or
+   IND_RUNNING once a collection found a frame running it as its closure
+   (gc_pin_running, runtime/gc/copy.c). Lazy ML's
+   suspension does not go under evaluation, so its code may outlive its own
+   update -- a force of it from inside updated it first -- and writes it
+   again through its frame's closure (UPDATE): such an indirection is never
+   given what it holds, or the second update would be lost or written over
+   the first value (the haskell98 roadmap's D57, M26; E14). */
+enum { IND_RUNNING = 2 };
 
 struct Obj {
     uint8_t kind;
@@ -272,6 +305,7 @@ static inline int obj_kind(const Obj *o) { return o->kind; }
 #endif
 static inline uint32_t obj_len(const Obj *o) { return o->len; }
 static inline uint16_t obj_contag(const Obj *o) { return o->contag; }
+static inline void obj_set_contag(Obj *o, uint16_t c) { o->contag = c; }
 /* the header of a fresh object; the fields are the caller's to fill */
 static inline void obj_init(Obj *o, int kind, uint16_t contag, uint32_t len) {
     o->kind = (uint8_t)kind;
@@ -308,6 +342,7 @@ extern uint8_t *rune_cards;   /* CARD_COUNT bytes (runtime/heap.c) */
 #endif
 struct VM;
 static inline void gc_barrier(struct VM *vm, Obj *o, Value *f, Value v);
+static inline void gc_barrier_code(struct VM *vm, Obj *o);
 /* a store into an object that exists (ref_set, array_update, SETENV),
    through the barrier */
 static inline void obj_set_field(struct VM *vm, Obj *o, uint32_t i, Value v) {
@@ -315,28 +350,52 @@ static inline void obj_set_field(struct VM *vm, Obj *o, uint32_t i, Value v) {
     gc_barrier(vm, o, f, v);
     *f = v;
 }
-/* An object becomes an indirection to a value, in place: the header's kind
-   is rewritten and the first field is the value, which is what a lazy front
-   end's update of a suspension is (docs/plans/heap-layout.md, *A lazy front
-   end*; no program of SML does it). The store goes through the barrier, the
-   object existing and the value being newer. The length stays, so the
-   object keeps its size; the collector follows the first field alone
-   (runtime/heap.c), the others being dead from here on. */
-static inline void obj_become_ind(struct VM *vm, Obj *o, Value v) {
-    /* the fields after the first are let go as if overwritten: what a
-       snapshot reaches by them is kept (the low-pause collector's cycle) */
-    for (uint32_t i = 1; i < o->len; i++) gc_barrier(vm, o, &OBJ_FIELDS(o)[i], mk_unit());
-    gc_barrier(vm, o, &OBJ_FIELDS(o)[0], v);
-    o->kind = (uint8_t)((o->kind & OBJ_GC_BITS) | K_IND);
-    OBJ_FIELDS(o)[0] = v;
-}
 /* whether the object's payload holds values the collector follows */
 static inline int obj_has_fields(const Obj *o) {
     int k = obj_kind(o);
     return k != K_STRING && k != K_REAL && k != K_BOX && k != K_BYTES && k != K_REALS;
 }
-/* how many of them it follows: every field, or an indirection's one */
-static inline uint32_t obj_scanned_fields(const Obj *o) { return obj_kind(o) == K_IND ? 1 : o->len; }
+/* how many of them it follows, from the first: every field; an
+   indirection's one; none of a suspension under evaluation. The kinds
+   below K_THUNK, every one a program of SML makes, take one comparison. */
+static inline uint32_t obj_scanned_fields(const Obj *o) {
+    int k = obj_kind(o);
+    if (k < K_THUNK) return o->len;
+    return k == K_IND ? 1 : o->contag == THUNK_BLACKHOLE ? 0 : o->len;
+}
+/* whether a frame's closure has the environment its code reads (ENV): a
+   closure's, or a suspension's until its code says BLACKHOLE */
+static inline int obj_has_env(const Obj *o) {
+    int k = obj_kind(o);
+    return k == K_CLOSURE || (k == K_THUNK && thunk_unevaluated(o->contag));
+}
+/* A fresh closure becomes a suspension of the same fields, in place
+   (thunk_make): the kind rewritten beside the collector's bits. */
+static inline void obj_become_thunk(Obj *o) { o->kind = (uint8_t)((o->kind & OBJ_GC_BITS) | K_THUNK); }
+/* A suspension goes under evaluation (BLACKHOLE): a header write. What it
+   held is let go; while the low-pause collector's cycle marks, the caller
+   shades it first, as a store over it would (vm_blackhole, runtime/vm.h). */
+static inline void obj_blackhole(Obj *o) { o->contag = THUNK_BLACKHOLE; }
+/* An object becomes an indirection to a value, in place: the header's kind
+   is rewritten and the first field is the value, which is what a lazy front
+   end's update of a suspension is (UPDATE; no program of SML does it). The
+   store goes through the barrier, the object existing and the value being
+   newer. The length stays, so the object keeps its size; the collector
+   follows the first field alone, the others being dead from here on. */
+static inline void obj_become_ind(struct VM *vm, Obj *o, Value v) {
+    /* the fields after the first that the collector followed are let go as
+       if overwritten: what a snapshot reaches by them is kept (the
+       low-pause collector's cycle). Those of a suspension under evaluation
+       were let go when it went under (obj_blackhole), and hold what may be
+       gone since. A suspension not yet evaluated, whose code may run, has
+       that code's globals taken first (gc_barrier_code). */
+    gc_barrier_code(vm, o);
+    uint32_t n = obj_scanned_fields(o);
+    for (uint32_t i = 1; i < n; i++) gc_barrier(vm, o, &OBJ_FIELDS(o)[i], mk_unit());
+    gc_barrier(vm, o, &OBJ_FIELDS(o)[0], v);
+    o->kind = (uint8_t)((o->kind & OBJ_GC_BITS) | K_IND);
+    OBJ_FIELDS(o)[0] = v;
+}
 
 /* ---- sizes ---- */
 /* the payload of an object, rounded to what the heap allocates: PAYLOAD_MIN
@@ -392,5 +451,26 @@ Value mk_box_vm(struct VM *vm, uint64_t bits);   /* the K_BOX of a number that h
 static inline int obj_forwarded(const Obj *o) { return obj_kind(o) == K_FORWARD; }
 static inline Obj *obj_forwarding(const Obj *o) { Obj *n; memcpy(&n, obj_bytes_c(o), sizeof n); return n; }
 static inline void obj_forward(Obj *o, Obj *to) { o->kind = K_FORWARD; memcpy(OBJ_BYTES(o), &to, sizeof to); }
+
+/* Whether the collector may give a field that points to v what v holds:
+   v an indirection no frame runs (IND_RUNNING), whose value is no
+   suspension and no indirection itself -- looked at through its forwarding
+   pointer where this collection has copied it already. A suspension's
+   value may be a suspension ('a susp susp, which lazy ML has and Haskell
+   cannot make): a field that held the outer must not come to hold the
+   inner, whose force would then run it (the haskell98 roadmap's D57, M26;
+   E2's kernels/nested.sml). Asked only where a function of the program
+   says UPDATE and not BLACKHOLE (Program's reruns); elsewhere every
+   indirection is shortcut, as before. */
+static inline int ind_may_shortcut(Value v) {
+    const Obj *o = val_ptr(v);
+    if (obj_kind(o) != K_IND || obj_contag(o) == IND_RUNNING) return 0;
+    Value w = OBJ_FIELDS(o)[0];
+    if (!val_is_ptr(w)) return 1;
+    const Obj *t = val_ptr(w);
+    if (obj_forwarded(t)) t = obj_forwarding(t);
+    int k = obj_kind(t);
+    return k != K_THUNK && k != K_IND;
+}
 
 #endif

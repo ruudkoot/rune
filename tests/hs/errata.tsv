@@ -1,0 +1,19 @@
+date	section	erratum	rows	adds	note
+Dec 2005	2.2	the comment production admits --:, which should be a varsym	lex.comment.dashcolon lex.comment.line.eof lex.ref.chapter9		
+Jul 2004	3.17.2 case 6	"the field list" is the pattern's field list	pat.m.label.order		
+Jan 2005	3.17.2 case 6	a constructor pattern is matched, not matched against	pat.m.label.same		
+Mar 2008	3.17.2 case 8	n+k: the x of the condition and the binding is v	pat.m.npk.succeed pat.m.npk.bind		
+Jul 2004	4.4.2	=<< is infixr 1, missing from Table 4.1; the HTML caption numbers the table 2	dec.fix.table.bindr pre.r.fixity.bindm		the caption is not a clause
+May 2003	6.3.4	the enumFrom family at Float and Double is said to be strict; the Prelude's code is not, and gets a seq	std.enum.strict.float		
+Jun 2003	6.4.6	properFraction's wording fails at zero	std.coerce.proper.sign std.coerce.proper.zero		
+Feb 2008	7.2	the do example's prompts are not seen for buffering: putStrLn for putStr	io.seq.do		
+Feb 2003	8.2	lex: an identifier may begin with an underscore (isIdInit)	pre.r.lex.idinit		
+Sep 2004	9.5	the export production names var, not qvar, after a class, as 5.2 does	syn.r.export.classqvar syn.export.3 mod.exp.class.sub.unqualified		
+Aug 2005	12	approxRational returns the simplest rational within the closed interval, not the open	lib.r.ratio.approx.interval std.coerce.approx		
+Mar 2003	15	the Ix law is bogus: map (index (l,u)) (range (l,u)) == [0 .. rangeSize (l,u) - 1]	lib.r.ix.law.map		
+Sep 2008	17	genericTake, genericDrop and genericSplitAt treat a negative count as 0, as the Prelude does	lib.r.list.generic.take lib.r.list.generic.drop lib.r.list.generic.splitat lib.list.generictake lib.list.genericdrop lib.list.genericsplitat		
+Mar 2003	19	readLitChar "converts the string to the character it encodes": a word missing	lib.r.char.readlitchar		
+Nov 2006	21.3.2	"doing so is not an error": a verb missing	lib.r.io.hclose.twice		
+Jul 2003	online index	either has no type in the online index, and print's is wrong			no row is drawn from the index
+Oct 2006	online index	the example of break in the online index is wrong			no row is drawn from the index
+Jun 2005	printed index	the printed index has no entry for the keywords and where			the printed book only

@@ -1,0 +1,1 @@
+lex-bad-escape.hs:2:7: error: an escape that is none of the Report's in a string literal

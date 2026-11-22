@@ -1,0 +1,81 @@
+(* Core in units (the haskell98 roadmap's M21): a program of several units,
+   each a Core program that names what it takes of the others, a value by
+   an import (`(import x TYPE)`) and a type by a copy of its declaration,
+   joined into one program, which Core's interpreter runs and a compile
+   whole takes.
+
+   Area: Languages *)
+signature CORE_UNITS =
+sig
+  (* what makes units that do not join: a type two units declare apart, or
+     an import at another type than its definition's *)
+  exception Error of string
+
+  (* `join units` is the program of the units, in order, each type
+     declared once and each import given its definition.
+
+     A data type or newtype is kept where it is first declared, every unit
+     that declares it declaring the same; an import is dropped where a unit
+     defines its value, at the type the import gives it, and kept where
+     none does. *)
+  val join : Core.program list -> Core.program
+
+  (* `unresolved p` is the imports of p that no declaration of p defines,
+     in order *)
+  val unresolved : Core.program -> string list
+
+  (* `uses d` is what the declaration `d` names of the top level, each once.
+
+     Its values are the variables it names that no binder of it binds; its
+     types the type constructors it names; its constructors those it makes
+     or takes apart. A name may be in more than one, as `:` is a value of
+     the runtime and a constructor of the list. *)
+  val uses : Core.decl -> {values : string list, types : string list, cons : string list}
+
+  (* `reach (p, roots)` is what the values `roots` reach of p, in p's order.
+
+     A value reaches the values, types and constructors it names, a
+     constructor its type, and a type the types of its fields; an import
+     reached is kept, as a whole program has none (the haskell98 roadmap's
+     M21: units joined and compiled whole, what main reaches). *)
+  val reach : Core.program * string list -> Core.program
+
+  (* `index p` is the unit `p` as an index and its declarations' texts.
+
+     The index says of each declaration, by its number, what it is, its
+     name, what it makes and what it names, so that `reachIndexed` reads
+     only the texts of the declarations a program reaches. *)
+  val index : Core.program -> string * string list
+
+  (* A unit's Core as the reach is given it: by its index and a function
+     from a declaration's number to its text, or in hand. *)
+  datatype unitCore = Indexed of string * (int -> string) | InHand of Core.program
+
+  (* `reachIndexed (units, roots)` is `reach (join ps, roots)` where `ps` is
+     the units' programs, a declaration read only where it is reached.
+
+     A type is the first unit's that declares it, as `join` keeps it.
+     Raises `Error` where an index is no index. *)
+  val reachIndexed : unitCore list * string list -> Core.program
+
+  (* `interface (p, exports)` is what a client of the unit p needs of the
+     names it exports, as Core: each type it mentions declared, and each
+     value imported.
+
+     Each exported value is an import at its type, and each exported type
+     and every type the exports' types mention, through the types' own
+     fields, is declared as p declares it, in p's order; a name p does not
+     declare is a built-in type's, or another unit's the client has. *)
+  val interface : Core.program * string list -> Core.program
+
+  (* `fingerprints hash iface` is each declaration of the interface by its
+     name with its fingerprint, which moves where what a client reads of it
+     moves.
+
+     A type's is its recursive group's: the hash of the group's
+     declarations and of the fingerprints of the types outside it that they
+     mention, so that a group hashes as one. A value's is the hash of its
+     type and of the fingerprints of the types it mentions. A type no
+     declaration of the interface gives is its name. *)
+  val fingerprints : (string -> string) -> Core.program -> (string * string) list
+end

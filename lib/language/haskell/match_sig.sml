@@ -1,0 +1,123 @@
+(* Pattern matching in the Report's order (the haskell98 roadmap's M15,
+   D34), and decision trees in Sestoft's order.
+
+   The rules of 3.17.3 are taken literally at `-O0` and `-O1`; the trees
+   are rhc's at `-O2` and above (D34, the owner's decision of 2026-11-15).
+
+   The Report's order: the clauses one after another, and in each the
+   patterns from left to right, each from the outside in (3.17.2). A
+   clause that fails goes to the next, which a lazy `let` of the rest of
+   the match holds (rule (c)'s `y`), so no clause is copied (defect 14).
+   A constructor's pattern forces its value and matches its fields left
+   to right (rule (g)); a newtype's casts and forces nothing (rules (k),
+   (l)); a numeric literal compares by `==` at its type with the
+   dictionaries the checker chose (rule (h)), a character literal by a
+   case on its code point, a string literal as the list of its characters
+   (defect 7); `~p` binds each variable of `p` to a match of its own that
+   is made only when the variable is forced (rule (d)), but where `p` has
+   two variables or more, the tuple form's selectors (`tupleForm`), and
+   where its one variable is a field of what a variable holds, that
+   field's selector (`oneField`), each marked for the collector (the
+   roadmap's D17, C); `x@p` binds `x`
+   to the value (rule (e)); `n+k` compares by `>=` and binds `n` to the
+   value less `k` (rule (s)); a record pattern tests its constructor and
+   matches its fields in the pattern's order (rules (m) to (o)).
+
+   Sestoft's order (Sestoft 1996) matches the same patterns in the same
+   order, but makes no test whose outcome the tests made already decide:
+   a decision tree whose right-hand sides are functions of their
+   variables, so that none is copied. Its only freedom is in tests on
+   values already forced (D34). A clause with a pattern it does not take
+   apart (a literal, `~p`, `n+k`, a newtype's or a record's) is matched
+   from there on in the Report's way.
+
+   Area: Languages *)
+signature HS_MATCH =
+sig
+  (* How clauses are matched. *)
+  datatype order = Report | Sestoft
+
+  (* `order` is the order of every match: `Report` unless set; rhc sets it
+     by `--match`, or by the level, `Sestoft` at `-O2` and above. *)
+  val order : order ref
+
+  (* What is matched: an atom of Core and its type. *)
+  type occurrence = Core.atom * Core.ty
+
+  (* `tupleForm n` is whether a pattern binding or a lazy pattern of `n`
+     variables takes the tuple form (the roadmap's D17, C).
+
+     The tuple of the variables' components is bound once, and each variable
+     is its selector, which the collector reduces once the tuple is
+     evaluated (Wadler 1987); otherwise rule (d), each variable a match of
+     its own. *)
+  val tupleForm : int -> bool
+
+  (* `plainTuple p` is whether `p` is a tuple of variables alone, whose
+     value is the tuple of their components already. *)
+  val plainTuple : HsAst.pat -> bool
+
+  (* `selector (t, tupleTy, vs, i)` is the selector of the i-th of the
+     variables `vs` from `t`, the tuple of their components: its i-th field.
+
+     `vs` are Core names and types, and `tupleTy` the tuple's type. *)
+  val selector : string * Core.ty * (string * Core.ty) list * int -> HsDsCore.texp
+
+  (* `marks (t, tupleTy, vs, body)` is `body` after each of the selectors
+     `vs` of the tuple `t` is marked one for the collector (sel_mark, the
+     VM's thunk_selector).
+
+     Only those `body` names are marked: one nothing names Mid drops,
+     unless a mark names it. *)
+  val marks : string * Core.ty * (string * Core.ty) list * HsDsCore.texp -> HsDsCore.texp
+
+  (* `markFields (a, t, fs, body)` is `body` after each selector of `fs`
+     is marked one for the collector, of its field of the value `a`, of type
+     `t`.
+
+     Each of `fs` is the field's index and the selector's Core name and
+     type. A selector nothing names is to be left out: Mid drops it, unless
+     a mark names it. *)
+  val markFields : Core.atom * Core.ty * (int * string * Core.ty) list * HsDsCore.texp -> HsDsCore.texp
+
+  (* `oneField p` is the constructor's Core name and the field's index where
+     `p`, of one variable, takes it from a field of the constructor.
+
+     `p` is a tuple, or a constructor of a data type of one constructor,
+     each of whose patterns is `_` but the variable (the roadmap's D17, C,
+     for one variable); NONE for any other. *)
+  val oneField : HsAst.pat -> (string * int) option
+
+  (* `field (a, t, k, i)` is field `i` of the value `a`, of type `t`, which
+     the constructor `k` made, the type's one constructor. *)
+  val field : Core.atom * Core.ty * string * int -> HsDsCore.texp
+
+  (* A clause: its patterns, and its right-hand side, made in the scope of
+     the patterns' variables and given what to do where its guards all
+     fail. *)
+  type clause = HsAst.pat list * (HsDsEnv.env * HsDsCore.texp -> HsDsCore.texp)
+
+  (* `clauses (env, occurrences, rows, failure)` matches the occurrences
+     against each clause of `rows` in turn.
+
+     Each pattern is matched against its occurrence; the match is the
+     right-hand side of the first clause that matches, or `failure t` where
+     none does, `t` the type of the match. *)
+  val clauses : HsDsEnv.env * occurrence list * clause list * (Core.ty -> HsDsCore.texp) -> HsDsCore.texp
+
+  (* `pattern (env, occurrence, p, success, failure)` matches one
+     occurrence against `p` in the Report's way.
+
+     It is `success` in the scope of `p`'s variables where it matches, and
+     `failure`, an atom, where it does not. *)
+  val pattern : HsDsEnv.env * occurrence * HsAst.pat * (HsDsEnv.env -> HsDsCore.texp) * HsDsCore.texp
+                -> HsDsCore.texp
+
+  (* `variables p` is the variables `p` binds, in order, by their names in
+     the renamed tree. *)
+  val variables : HsAst.pat -> HsAst.name list
+
+  (* `lazy p` is whether `p` never fails and forces nothing: a variable,
+     `_`, `~p` and `x@p` of one of these. *)
+  val lazy : HsAst.pat -> bool
+end

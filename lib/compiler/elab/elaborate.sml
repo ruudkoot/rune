@@ -4,9 +4,7 @@ structure Elaborate =
 struct
   open Ast Types Env
 
-  val stampCounter = ref 0
-  val () = CompilerState.cellRoot ("Elaborate.stampCounter", stampCounter)
-  fun freshStamp () = let val s = !stampCounter in stampCounter := s + 1; s end
+  val freshStamp = Stamp.fresh
 
   val allowPrim = ref false
   val () = CompilerState.cellRoot ("Elaborate.allowPrim", allowPrim)
@@ -974,6 +972,7 @@ struct
   val () = CompilerState.cellRoot ("Elaborate.records", records)
   val nextRecordId = ref 0
   val () = CompilerState.cellRoot ("Elaborate.nextRecordId", nextRecordId)
+  val () = Pass.counter nextRecordId
   val inReach : reach IntMap.map ref = ref IntMap.empty
   val () = CompilerState.cellRoot ("Elaborate.inReach", inReach)
   fun forgetRecords () = (records := IntMap.empty; nextRecordId := 0; inReach := IntMap.empty)

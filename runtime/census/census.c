@@ -305,7 +305,7 @@ static inline uint64_t est_age(uint32_t k) {
     return census_clock - (lo + hi) / 2;
 }
 static const char *const tag_names[NTAG] = { "UNIT", "INT", "WORD", "REAL", "CHAR", "CON0", "PTR" };
-_Static_assert(K_LAST == 13 && K_REALS == 13 && K_REAL == 10, "the kinds of docs/census.md, format 2");
+_Static_assert(K_LAST == 15 && K_THUNK == 14 && K_REALS == 13 && K_REAL == 10, "the kinds of docs/census.md, format 2");
 static const char *const kind_names[16] = { "?", "TUPLE", "CON", "CLOSURE", "STRING", "REF", "ARRAY", "EXN", "EXNCON",
                                             "FORWARD", "REAL", "BOX", "BYTES", "REALS", "THUNK", "IND" };
 static const char *const rep_names[NREP] = { "ANY", "INT", "WORD", "REAL", "CHAR", "CON0", "PTR", "CON", "UNIT", "unknown" };

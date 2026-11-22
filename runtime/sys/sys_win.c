@@ -1717,6 +1717,15 @@ FILE *sys_fopen(const char *path, const char *mode) {
     if (!f) { int e = errno; _close(fd); errno = e; }
     return f;
 }
+/* read and write, the file made where it is not there and kept where it
+   is (OPEN_EXISTING, else CREATE_NEW: open_fd's OPEN_ALWAYS) */
+FILE *sys_fopen_rw(const char *path) {
+    int fd = open_fd(path, 2 | 0100, 0666, 0);
+    if (fd < 0) { errno = last; return NULL; }
+    FILE *f = _fdopen(fd, "r+b");
+    if (!f) { int e = errno; _close(fd); errno = e; }
+    return f;
+}
 static void drop_locks(int fd);
 int sys_close_fd(int fd) {
     Sock *s = sock_of(fd);

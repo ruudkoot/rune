@@ -1,0 +1,42 @@
+# structure HsIface
+
+[Haskell 98 front end](../README.md) &rsaquo; Languages &rsaquo; [Structures](../structures.md) &rsaquo; **HsIface**
+
+|  |  |
+| --- | --- |
+| Signature | [`HS_IFACE`](../sig/HS_IFACE.md) |
+| Status | required |
+| Members | 6 |
+| Tests | not listed |
+| Source | [lib/language/haskell/hsiface.sml](../../../../../lib/language/haskell/hsiface.sml) |
+
+## Synopsis
+
+```sml
+structure HsIface :> HS_IFACE
+```
+
+HsIface: a unit's interface written as bytes and read back. A number
+is a varint, seven bits a byte, the least first, a whole number
+zigzagged; a string is the number of its place in the table of strings
+the text begins with, each written once, in the order the interface
+first names it, so that the keys and names an interface repeats cost a
+number each to write and to read, and are one string each once read; a
+list is its length and its items; a choice is a byte.
+
+## Members
+
+What each means is on [`HS_IFACE`](../sig/HS_IFACE.md); the types are this structure's own.
+
+|  | Member | Is |
+| --- | --- | --- |
+| type | [`t`](../sig/HS_IFACE.md#type-t) | `{modules : {checked : {classes : {defaults : string list, key : string, kind : HsTypes.kind, methods : string list, supers : string list} list, cons : (string * {arity : int, fields : string list, strict : bool list, tycon : string}) list, fields : (string * {cons : (string * int) list, ty : HsTypes.ty, tycon : string}) list, instances : {cls : string, ctx : {cls : string, ty : HsTypes.ty} list, derived : bool, home : string, id : string, tycon : string, vars : int} list, methods : (string * {cls : string, scheme : {ctx : {cls : string, ty : HsTypes.ty} list, ty : HsTypes.ty, vars : int}}) list, tycons : {cons : string list, key : string, kind : HsTypes.kind, newtype : bool, params : int, synonym : HsTypes.ty option} list, values : (string * {ctx : {cls : string, ty : HsTypes.ty} list, ty : HsTypes.ty, vars : int}) list}, defs : {arity : int, entity : {home : string, name : string, space : HsModules.space}, parent : {home : string, name : string, space : HsModules.space} option, sort : HsModules.sort, span : {file : string, start : int, stop : int}} list, exports : {home : string, name : string, space : HsModules.space} list, fixities : (string * (HsAst.fixity * int)) list, id : string} list, strictness : (string * string) list, unfoldings : string list}` |
+| exception | [`Bad`](../sig/HS_IFACE.md#exn-bad) | `of string` |
+| val | [`decode`](../sig/HS_IFACE.md#val-decode) | `string -> t` |
+| val | [`decodeModule`](../sig/HS_IFACE.md#val-decodemodule) | `string -> {checked : {classes : {defaults : string list, key : string, kind : HsTypes.kind, methods : string list, supers : string list} list, cons : (string * {arity : int, fields : string list, strict : bool list, tycon : string}) list, fields : (string * {cons : (string * int) list, ty : HsTypes.ty, tycon : string}) list, instances : {cls : string, ctx : {cls : string, ty : HsTypes.ty} list, derived : bool, home : string, id : string, tycon : string, vars : int} list, methods : (string * {cls : string, scheme : {ctx : {cls : string, ty : HsTypes.ty} list, ty : HsTypes.ty, vars : int}}) list, tycons : {cons : string list, key : string, kind : HsTypes.kind, newtype : bool, params : int, synonym : HsTypes.ty option} list, values : (string * {ctx : {cls : string, ty : HsTypes.ty} list, ty : HsTypes.ty, vars : int}) list}, defs : {arity : int, entity : {home : string, name : string, space : HsModules.space}, parent : {home : string, name : string, space : HsModules.space} option, sort : HsModules.sort, span : {file : string, start : int, stop : int}} list, exports : {home : string, name : string, space : HsModules.space} list, fixities : (string * (HsAst.fixity * int)) list, id : string}` |
+| val | [`encode`](../sig/HS_IFACE.md#val-encode) | `t -> string` |
+| val | [`encodeModule`](../sig/HS_IFACE.md#val-encodemodule) | `{checked : {classes : {defaults : string list, key : string, kind : HsTypes.kind, methods : string list, supers : string list} list, cons : (string * {arity : int, fields : string list, strict : bool list, tycon : string}) list, fields : (string * {cons : (string * int) list, ty : HsTypes.ty, tycon : string}) list, instances : {cls : string, ctx : {cls : string, ty : HsTypes.ty} list, derived : bool, home : string, id : string, tycon : string, vars : int} list, methods : (string * {cls : string, scheme : {ctx : {cls : string, ty : HsTypes.ty} list, ty : HsTypes.ty, vars : int}}) list, tycons : {cons : string list, key : string, kind : HsTypes.kind, newtype : bool, params : int, synonym : HsTypes.ty option} list, values : (string * {ctx : {cls : string, ty : HsTypes.ty} list, ty : HsTypes.ty, vars : int}) list}, defs : {arity : int, entity : {home : string, name : string, space : HsModules.space}, parent : {home : string, name : string, space : HsModules.space} option, sort : HsModules.sort, span : {file : string, start : int, stop : int}} list, exports : {home : string, name : string, space : HsModules.space} list, fixities : (string * (HsAst.fixity * int)) list, id : string} -> string` |
+
+---
+
+<sub>Generated by runedoc from lib/language/haskell/hsiface.sml; do not edit.</sub>

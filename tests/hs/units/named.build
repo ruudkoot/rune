@@ -1,0 +1,9 @@
+(* A unit's Mid text naming another unit's global (the haskell98 roadmap's
+   M21; MidText.parseWith's named): the test, on Mid's layer of the
+   compiler, with rhc's Config, as rhc.build is. *)
+libraries unicode json test/unit end
+../../../src/rhc/config.sml
+use ../../../lib/compiler/mid.build
+files
+  named.sml
+end

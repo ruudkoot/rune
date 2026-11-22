@@ -1,0 +1,7 @@
+(* The client of mid-client.build on the compiler's internals: the same
+   program through Rune's pass list (Pipeline), which must give the same
+   bytes (compiler/mid-client); a friend of the compiler's library. *)
+libraries unicode json end
+../../build/config.sml
+use ../../lib/compiler/internal.build
+files ../../tests/compiler/mid-client.sml ../../tests/compiler/pipeline-client.sml end

@@ -12,7 +12,8 @@
               (raise
                 (mkexn g1 7))
               v2)
-            (try
+            (join j1 ()
+              (raise v3)
               (if
                 (prim ptr_eq
                   (exncon v3)
@@ -20,6 +21,5 @@
                 (let v4
                   (exnarg v3 : int)
                   (let v5 v4 v5))
-                fail)
-              (raise v3))))))
+                (jump j1)))))))
     ()))

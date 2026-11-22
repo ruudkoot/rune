@@ -671,9 +671,9 @@ struct
             val () = success r
         in case List.rev (lines (#output r)) of
              (* json is written on unicode, which comes before it *)
-             main :: b :: a :: json :: json_sig :: security :: _ =>
+             main :: b :: a :: json :: json_sig :: unicode :: _ =>
                need (String.isSuffix "lib/json/json_sig.sml" json_sig andalso String.isSuffix "lib/json/json.sml" json
-                     andalso String.isSuffix "lib/unicode/security.sml" security
+                     andalso String.isSubstring "lib/unicode/" unicode
                      andalso [a, b, main] = ["a.sml", "b.sml", "main.sml"], "the closure's files are not those of the build: " ^ #output r)
            | _ => raise Failed ("the closure of a build differs: " ^ #output r)
         end

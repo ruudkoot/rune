@@ -4,10 +4,8 @@
      parameter, a let, a letrec, a handler;
    * every binder's stamp is bound once in the whole program, which the code
      generator relies on (its slots are by stamp);
-   * every Fail is in tail position of the body of a Try of the same
-     function, where it jumps to the Try's fallback with the stack as the
-     Try found it; every Jump in tail position of the scope of its join
-     point, in the same function, with an argument of each parameter's type;
+   * every Jump in tail position of the scope of its join point, in the
+     same function, with an argument of each parameter's type;
    * every right-hand side of a letrec is a function;
    * it is well typed (Ty): every node has the type its parts give it, a use
      of a variable at an instance (Inst) is one of its scheme, which gives
@@ -25,7 +23,7 @@ struct
   open Lambda
 
   (* What checking an expression finds: its type, or that it never
-     returns (a Fail, a raise), which fits wherever a type is wanted. *)
+     returns (a jump, a raise), which fits wherever a type is wanted. *)
   datatype found = T of Ty.ty | Never
 
   fun check (e : lexp) : unit =
@@ -58,10 +56,10 @@ struct
                SOME a => a
              | NONE => Error.bug (what ^ ": " ^ Ty.toString t ^ " has no constructor " ^ Int.toString tag))
         | _ => Error.bug (what ^ ": " ^ Ty.toString t ^ " is no datatype")
-      (* scope: the type of each variable in scope; tail: whether a Fail here
-         is in tail position of a Try's body, and the join points a Jump here
-         is in tail position of the scope of, with their parameters' types *)
-      val no : bool * Ty.ty list IntMap.map = (false, IntMap.empty)
+      (* scope: the type of each variable in scope; tail: the join points a
+         Jump here is in tail position of the scope of, with their
+         parameters' types *)
+      val no : Ty.ty list IntMap.map = IntMap.empty
       (* the generic variables fixed here -- those of the types of the
          variables a Fn or a Join binds around it, which are monomorphic --
          and where each variable was bound, with its own where a Fn binds it
@@ -81,7 +79,7 @@ struct
             | SOME (g, u) =>
                 Error.bug ("v" ^ Int.toString x ^ " of type " ^ Ty.toString s ^ " used at " ^ Ty.toString t ^ ", which makes 'a"
                            ^ Int.toString g ^ ", fixed where v" ^ Int.toString x ^ " is bound, " ^ Ty.toString u)
-      fun go (e, scope : Ty.ty IntMap.map, tail : bool * Ty.ty list IntMap.map) : found =
+      fun go (e, scope : Ty.ty IntMap.map, tail : Ty.ty list IntMap.map) : found =
         case e of
           Var x =>
             (case IntMap.find (scope, x) of
@@ -181,8 +179,6 @@ struct
         | If (c, t, f) =>
             (expect ("a condition", go (c, scope, no), Ty.bool);
              join ("the branches of an if", go (t, scope, tail), go (f, scope, tail)))
-        | Try (a, b) => join ("a try and its fallback", go (a, scope, (true, #2 tail)), go (b, scope, tail))
-        | Fail => if #1 tail then Never else Error.bug "a Fail is not in tail position of a Try"
         | Join (j, ps, b, sc) =>
             (bind j;
              List.app (fn (x, _) => bind x) ps;
@@ -190,10 +186,10 @@ struct
                val fx = List.foldl (fn ((_, t), m) => addGens (m, t)) (!fixed) ps
                val () = List.app (fn (x, _) => IntTable.insert (fixedAt, x, fx)) ps
                val found = fixedIn (fx, fn () => go (b, List.foldl (fn ((x, t), m) => IntMap.insert (m, x, t)) scope ps, tail))
-               val inScope = go (sc, scope, (#1 tail, IntMap.insert (#2 tail, j, List.map #2 ps)))
+               val inScope = go (sc, scope, IntMap.insert (tail, j, List.map #2 ps))
              in join ("a join point and its scope", found, inScope) end)
         | Jump (j, args) =>
-            (case IntMap.find (#2 tail, j) of
+            (case IntMap.find (tail, j) of
                SOME ts =>
                  if List.length ts = List.length args then
                    (ListPair.app (fn (a, t) => expect ("an argument of join point j" ^ Int.toString j, go (a, scope, no), t))

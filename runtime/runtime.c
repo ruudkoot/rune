@@ -315,6 +315,23 @@ int vm_raise_builtin(VM *vm, int k) {
     return vm_raise(vm, mk_ptr(e));
 }
 
+/* ENTER of a suspension under evaluation: Loop raised (vm.h, loop_exn) */
+int vm_raise_loop(VM *vm) {
+    CENSUS_RUNTIME_BEGIN();
+    if (!vm->loop_exn) {
+        Obj *name = vm_string_from(vm, "Loop", 4);
+        vm_push(vm, mk_ptr(name));
+        Obj *con = vm_alloc_fields(vm, K_EXNCON, 0, 1);
+        obj_fill_field(con, 0, vm_pop(vm));
+        vm->loop_exn = con;
+    }
+    Obj *e = vm_alloc_fields(vm, K_EXN, 0, 2);
+    obj_fill_field(e, 0, mk_ptr(vm->loop_exn));
+    obj_fill_field(e, 1, mk_unit());
+    CENSUS_RUNTIME_END();
+    return vm_raise(vm, mk_ptr(e));
+}
+
 /* The user's interrupt, taken at a poll where vm_interrupted (D11): the
    flag cleared and the exception rt_interrupt_catch gave raised, as RAISE
    raises it, from the instruction the VM is at. The flag is set by no
@@ -363,6 +380,10 @@ void vm_init(VM *vm, size_t heap) {
     vm->nfiles = 3;
     if (!vm->stack_limit) vm->stack_limit = STACK_LIMIT_DEFAULT;
     vm->unit_return = UINT32_MAX;
+    vm->apply_stubs = NULL;
+    vm->apply_kmax = vm->apply_rmax = 0;
+    vm->apply_return = UINT32_MAX;
+    vm->apply_nfuncs = 0;
     heap_init(vm, heap);
 }
 
@@ -382,12 +403,14 @@ int vm_release(VM *vm) {
     free(vm->prog.lines);
     for (uint32_t i = 0; vm->prog.inlines && i < vm->prog.ninlines; i++) free(vm->prog.inlines[i].name);
     free(vm->prog.inlines);
+    caf_free(vm);
     free(vm->globals);
     free(vm->global_set);
     for (uint32_t i = 0; i < vm->nunit_sessions; i++) free(vm->unit_sessions[i]);
     free(vm->unit_sessions);
     free(vm->unit_exports);
     free(vm->unit_table);
+    free(vm->apply_stubs);
     free(vm->stack);
     free(vm->frames);
     free(vm->frame_buf);
@@ -427,6 +450,7 @@ void vm_exit(VM *vm, int status) {
                 vm->gc_count, (unsigned long long)vm->bytes_allocated, vm->gc.size, heap_used(vm),
                 (unsigned long long)vm->copied, vm->max_live, (long long)(vm->gc_user_us + vm->gc_sys_us),
                 (long long)vm->gc_longest_us);
+    if (vm->stats && vm->caf) caf_stats(vm, stderr);
     if (vm->stats && vm->gc.nursery)   /* the nursery's (runtime/gc/minor.c) */
         fprintf(stderr, "runevm: nursery %zu bytes: %llu minor and %llu full collections, promoted %llu, "
                 "large objects %llu (%llu bytes), %zu bytes of them live\n",

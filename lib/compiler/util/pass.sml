@@ -68,12 +68,14 @@ struct
   val instructions : (unit -> int) ref = ref (fn () => ~1)
   val () = CompilerState.cellRoot ("Pass.instructions", instructions)
   (* the compiler's counters of names -- stamps, type names, functions,
-     labels -- which no check may move (Pipeline sets it): a check that
-     took a fresh name would make the names after it others than a compile
-     without it does, and one did hide a bug it should have caught
-     (docs/plans/correctness/linting.md, E3) *)
-  val counters : (unit -> int list) ref = ref (fn () => [])
+     labels -- which no check may move (each module that keeps one says so,
+     `counter`): a check that took a fresh name would make the names after
+     it others than a compile without it does, and one did hide a bug it
+     should have caught (docs/plans/correctness/linting.md, E3) *)
+  val counters : int ref list ref = ref [Stamp.counter]
   val () = CompilerState.cellRoot ("Pass.counters", counters)
+  fun counter (r : int ref) : unit = counters := r :: !counters
+  fun countersNow () : int list = List.map ! (!counters)
   val fuel : int option ref = ref NONE
   val () = CompilerState.cellRoot ("Pass.fuel", fuel)
 
@@ -168,7 +170,7 @@ struct
     if not (linting' level) then ()
     else
       let
-        val names = !counters ()
+        val names = countersNow ()
         val entry =
           if !stats then
             SOME (case List.find (fn (k, _) => k = key) (!checked) of
@@ -201,7 +203,7 @@ struct
                               | e => (current := outer; raise e)
         val () = count ()
       in
-        if !counters () = names then () else found "the check moved the compiler's counters of names"
+        if countersNow () = names then () else found "the check moved the compiler's counters of names"
       end
 
   (* the checks of every pass, level 2 *)

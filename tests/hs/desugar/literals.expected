@@ -1,0 +1,13 @@
+fromInteger 5
+(fromInteger 16,fromInteger 8)
+fromInteger 2+fromInteger 3
+negate (fromInteger 4)
+fromRational 2/1
+seven
+minus one
+other
+zerooneminus threemany
+(1,0)
+half
+not half
+2

@@ -360,7 +360,7 @@ int load_program_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_t
     uint8_t *starts = validate_program(p, err, errlen);
     if (!starts) return 0;
     free(starts);
-    return 1;
+    return vm_isa_after_load(vm, err, errlen);
 }
 
 /* The entry covering pc: the last one that begins at or before it, found by
@@ -567,6 +567,7 @@ uint32_t program_add_function(VM *vm, const char *name, const uint8_t *code, uin
     uint8_t *starts = validate_program_from(p, m.nfuncs, err, errlen);
     if (!starts) { undo(vm, m); return UINT32_MAX; }
     free(starts);
+    caf_reset(vm);   /* the CAF tables made again, with it (runtime/gc/caf.c) */
     return m.nfuncs;
 }
 
@@ -863,6 +864,7 @@ int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_
         uint8_t *starts = validate_program_from(p, func_base, err, errlen);
         if (!starts) { undo(vm, m); goto done; }
         free(starts);
+        caf_reset(vm);   /* the CAF tables made again, with its code and globals (runtime/gc/caf.c) */
     }
 
     /* what it exports: the functions its file names, and every global it sets */
@@ -881,6 +883,10 @@ int64_t load_unit_mem(VM *vm, const uint8_t *data, size_t size, char *err, size_
     /* The reserved top-level export also records an empty, successfully
        linked unit. Merely interning a referenced name above is not enough. */
     if (!unit_export(vm, session, -1, 0, func_base)) { undo(vm, m); FAIL("out of memory"); }
+    /* the general path's functions its code needs that the program has not
+       (D15 C: a closure of more parameters, or a call of more arguments,
+       than any before it) */
+    if (!vm_isa_after_load(vm, err, errlen)) { undo(vm, m); goto done; }
     result = func_base;
 done:
 #undef FAIL

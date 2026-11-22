@@ -1,0 +1,2 @@
+module M where
+pop s = (s, case s of r -> i r where i x = x)

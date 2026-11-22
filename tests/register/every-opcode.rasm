@@ -80,6 +80,33 @@ sw3:
   RESULT 4
   CALLK &show 1 4
   RESULT 8
+  # CLOSUREN, CALLN, TAILCALLN: sub3 (a - b - c) made a closure of three
+  # parameters and given three, 20 - 5 - 3 = 12; given two, a partial
+  # application (the general path), then the third; tailn, which gives
+  # them by TAILCALLN; and mkadd, a closure of one, given two at once
+  CLOSUREN 1 &sub3 3 0
+  INT 2 20
+  INT 3 5
+  INT 4 3
+  CALLN 1 3 2 3 4
+  RESULT 5
+  CALLK &show 1 5
+  RESULT 8
+  CALLN 1 2 2 3
+  RESULT 6
+  CALL 6 4
+  RESULT 5
+  CALLK &show 1 5
+  RESULT 8
+  CALLK &tailn 3 2 3 4
+  RESULT 5
+  CALLK &show 1 5
+  RESULT 8
+  CLOSURE 6 &mkadd 0
+  CALLN 6 2 2 3
+  RESULT 5
+  CALLK &show 1 5
+  RESULT 8
   # exceptions: NEWEXN, MKEXN, RAISE, PUSHHANDLER, CATCH, EXNCON, EXNARG,
   # BUILTINEXN, POPHANDLER
   NEWEXN 1 %exn
@@ -119,6 +146,34 @@ handler2:
   RESULT 4
   CALL 1 2
   RESULT 4
+  CALLK &show 1 4
+  RESULT 8
+  # suspensions: PRIM thunk_make of a closure of susp over 30, FORCE, ENTER,
+  # and in susp's code BLACKHOLE and UPDATE: 34 when it runs, 34 again from
+  # the indirection it becomes, and 5, which is no suspension
+  INT 1 30
+  CLOSURE 2 &susp 1 1
+  PRIM thunk_make 3 2
+  FORCE 4 3 @f1
+  UNIT 5
+  ENTER 3 5
+  RESULT 4
+f1:
+  CALLK &show 1 4
+  RESULT 8
+  FORCE 4 3 @f2
+  UNIT 5
+  ENTER 3 5
+  RESULT 4
+f2:
+  CALLK &show 1 4
+  RESULT 8
+  INT 6 5
+  FORCE 4 6 @f3
+  UNIT 5
+  ENTER 6 5
+  RESULT 4
+f3:
   CALLK &show 1 4
   RESULT 8
   # PRIMPUSH and RESULT with a primitive that answers and saves nothing,
@@ -176,6 +231,32 @@ function twiddle 5
 yes:
   ENV 4 0
   RET 4
+
+# sub3 a b c: a - b - c, made a closure of three parameters (CLOSUREN)
+function sub3 4
+  PRIM int_sub 3 0 1
+  PRIM int_sub 3 3 2
+  RET 3
+
+# tailn a b c: sub3 a b c, by a tail call through its closure (TAILCALLN)
+function tailn 4
+  CLOSUREN 3 &sub3 3 0
+  TAILCALLN 3 3 0 1 2
+
+# mkadd x: a closure of adder over x
+function mkadd 2
+  CLOSURE 1 &adder 1 0
+  RET 1
+
+# susp: a suspension's code, which reads what it captured, goes under
+# evaluation, and becomes its value
+function susp 4
+  ENV 1 0
+  BLACKHOLE
+  INT 2 4
+  PRIM int_add 3 1 2
+  UPDATE 3
+  RET 3
 
 # finish: prints done and stops
 function finish 3

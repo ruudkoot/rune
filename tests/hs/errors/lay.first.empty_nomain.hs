@@ -1,0 +1,5 @@
+-- rows: R4 deviation
+-- Report 9.3 and 5 (R4, the owner's call of 2026-11-10): a file with no lexeme gets no {n} from L and is no module by
+-- the grammar; rhc takes it as the module Main with no main (5.1's abbreviation, module Main (main) where), a deviation
+-- from the grammar taken literally (tests/hs/deviations.tsv), and refuses it by chapter 5's rule, as its export of
+-- main names nothing. This file is all comment, so that it can say what it tests: L sees it as it sees an empty file.

@@ -1,0 +1,866 @@
+# The Report's names: what `bin/rhc --dump-names` printed of the Report's 20 modules as printed (E16's reading of the
+# illustrations, the 8 names that do not resolve as printed left out), the table of results/E16/check_merge.txt: 663 export
+# pairs, 35 fixities, 164 instances (tests/hs/names/report at f9e7110df, less rhc's modules of primitives). The overlay
+# changes it by the lines of overlay.names (hs/library/report).
+EXPORT	haskell98:Array	thaskell98:Array Array
+EXPORT	haskell98:Array	thaskell98:Ix Ix
+EXPORT	haskell98:Array	vhaskell98:Array !
+EXPORT	haskell98:Array	vhaskell98:Array //
+EXPORT	haskell98:Array	vhaskell98:Array accum
+EXPORT	haskell98:Array	vhaskell98:Array accumArray
+EXPORT	haskell98:Array	vhaskell98:Array array
+EXPORT	haskell98:Array	vhaskell98:Array assocs
+EXPORT	haskell98:Array	vhaskell98:Array bounds
+EXPORT	haskell98:Array	vhaskell98:Array elems
+EXPORT	haskell98:Array	vhaskell98:Array indices
+EXPORT	haskell98:Array	vhaskell98:Array ixmap
+EXPORT	haskell98:Array	vhaskell98:Array listArray
+EXPORT	haskell98:Array	vhaskell98:Ix inRange
+EXPORT	haskell98:Array	vhaskell98:Ix index
+EXPORT	haskell98:Array	vhaskell98:Ix range
+EXPORT	haskell98:Array	vhaskell98:Ix rangeSize
+EXPORT	haskell98:CPUTime	vhaskell98:CPUTime cpuTimePrecision
+EXPORT	haskell98:CPUTime	vhaskell98:CPUTime getCPUTime
+EXPORT	haskell98:Char	thaskell98:Prelude Char
+EXPORT	haskell98:Char	thaskell98:Prelude String
+EXPORT	haskell98:Char	vhaskell98:Char chr
+EXPORT	haskell98:Char	vhaskell98:Char digitToInt
+EXPORT	haskell98:Char	vhaskell98:Char intToDigit
+EXPORT	haskell98:Char	vhaskell98:Char isAlpha
+EXPORT	haskell98:Char	vhaskell98:Char isAlphaNum
+EXPORT	haskell98:Char	vhaskell98:Char isAscii
+EXPORT	haskell98:Char	vhaskell98:Char isControl
+EXPORT	haskell98:Char	vhaskell98:Char isDigit
+EXPORT	haskell98:Char	vhaskell98:Char isHexDigit
+EXPORT	haskell98:Char	vhaskell98:Char isLatin1
+EXPORT	haskell98:Char	vhaskell98:Char isLower
+EXPORT	haskell98:Char	vhaskell98:Char isOctDigit
+EXPORT	haskell98:Char	vhaskell98:Char isPrint
+EXPORT	haskell98:Char	vhaskell98:Char isSpace
+EXPORT	haskell98:Char	vhaskell98:Char isUpper
+EXPORT	haskell98:Char	vhaskell98:Char lexLitChar
+EXPORT	haskell98:Char	vhaskell98:Char ord
+EXPORT	haskell98:Char	vhaskell98:Char readLitChar
+EXPORT	haskell98:Char	vhaskell98:Char showLitChar
+EXPORT	haskell98:Char	vhaskell98:Char toLower
+EXPORT	haskell98:Char	vhaskell98:Char toUpper
+EXPORT	haskell98:Complex	thaskell98:Complex Complex
+EXPORT	haskell98:Complex	vhaskell98:Complex :+
+EXPORT	haskell98:Complex	vhaskell98:Complex cis
+EXPORT	haskell98:Complex	vhaskell98:Complex conjugate
+EXPORT	haskell98:Complex	vhaskell98:Complex imagPart
+EXPORT	haskell98:Complex	vhaskell98:Complex magnitude
+EXPORT	haskell98:Complex	vhaskell98:Complex mkPolar
+EXPORT	haskell98:Complex	vhaskell98:Complex phase
+EXPORT	haskell98:Complex	vhaskell98:Complex polar
+EXPORT	haskell98:Complex	vhaskell98:Complex realPart
+EXPORT	haskell98:Directory	thaskell98:Directory Permissions
+EXPORT	haskell98:Directory	vhaskell98:Directory Permissions
+EXPORT	haskell98:Directory	vhaskell98:Directory createDirectory
+EXPORT	haskell98:Directory	vhaskell98:Directory doesDirectoryExist
+EXPORT	haskell98:Directory	vhaskell98:Directory doesFileExist
+EXPORT	haskell98:Directory	vhaskell98:Directory executable
+EXPORT	haskell98:Directory	vhaskell98:Directory getCurrentDirectory
+EXPORT	haskell98:Directory	vhaskell98:Directory getDirectoryContents
+EXPORT	haskell98:Directory	vhaskell98:Directory getModificationTime
+EXPORT	haskell98:Directory	vhaskell98:Directory getPermissions
+EXPORT	haskell98:Directory	vhaskell98:Directory readable
+EXPORT	haskell98:Directory	vhaskell98:Directory removeDirectory
+EXPORT	haskell98:Directory	vhaskell98:Directory removeFile
+EXPORT	haskell98:Directory	vhaskell98:Directory renameDirectory
+EXPORT	haskell98:Directory	vhaskell98:Directory renameFile
+EXPORT	haskell98:Directory	vhaskell98:Directory searchable
+EXPORT	haskell98:Directory	vhaskell98:Directory setCurrentDirectory
+EXPORT	haskell98:Directory	vhaskell98:Directory setPermissions
+EXPORT	haskell98:Directory	vhaskell98:Directory writable
+EXPORT	haskell98:IO	vhaskell98:IO bracket
+EXPORT	haskell98:IO	vhaskell98:IO bracket_
+EXPORT	haskell98:IO	vhaskell98:IO try
+EXPORT	haskell98:Ix	thaskell98:Ix Ix
+EXPORT	haskell98:Ix	vhaskell98:Ix inRange
+EXPORT	haskell98:Ix	vhaskell98:Ix index
+EXPORT	haskell98:Ix	vhaskell98:Ix range
+EXPORT	haskell98:Ix	vhaskell98:Ix rangeSize
+EXPORT	haskell98:List	vhaskell98:List \\
+EXPORT	haskell98:List	vhaskell98:List delete
+EXPORT	haskell98:List	vhaskell98:List deleteBy
+EXPORT	haskell98:List	vhaskell98:List deleteFirstsBy
+EXPORT	haskell98:List	vhaskell98:List elemIndex
+EXPORT	haskell98:List	vhaskell98:List elemIndices
+EXPORT	haskell98:List	vhaskell98:List find
+EXPORT	haskell98:List	vhaskell98:List findIndex
+EXPORT	haskell98:List	vhaskell98:List findIndices
+EXPORT	haskell98:List	vhaskell98:List genericDrop
+EXPORT	haskell98:List	vhaskell98:List genericIndex
+EXPORT	haskell98:List	vhaskell98:List genericLength
+EXPORT	haskell98:List	vhaskell98:List genericReplicate
+EXPORT	haskell98:List	vhaskell98:List genericSplitAt
+EXPORT	haskell98:List	vhaskell98:List genericTake
+EXPORT	haskell98:List	vhaskell98:List group
+EXPORT	haskell98:List	vhaskell98:List groupBy
+EXPORT	haskell98:List	vhaskell98:List inits
+EXPORT	haskell98:List	vhaskell98:List insert
+EXPORT	haskell98:List	vhaskell98:List insertBy
+EXPORT	haskell98:List	vhaskell98:List intersect
+EXPORT	haskell98:List	vhaskell98:List intersectBy
+EXPORT	haskell98:List	vhaskell98:List intersperse
+EXPORT	haskell98:List	vhaskell98:List isPrefixOf
+EXPORT	haskell98:List	vhaskell98:List isSuffixOf
+EXPORT	haskell98:List	vhaskell98:List mapAccumL
+EXPORT	haskell98:List	vhaskell98:List mapAccumR
+EXPORT	haskell98:List	vhaskell98:List maximumBy
+EXPORT	haskell98:List	vhaskell98:List minimumBy
+EXPORT	haskell98:List	vhaskell98:List nub
+EXPORT	haskell98:List	vhaskell98:List nubBy
+EXPORT	haskell98:List	vhaskell98:List partition
+EXPORT	haskell98:List	vhaskell98:List sort
+EXPORT	haskell98:List	vhaskell98:List sortBy
+EXPORT	haskell98:List	vhaskell98:List tails
+EXPORT	haskell98:List	vhaskell98:List transpose
+EXPORT	haskell98:List	vhaskell98:List unfoldr
+EXPORT	haskell98:List	vhaskell98:List union
+EXPORT	haskell98:List	vhaskell98:List unionBy
+EXPORT	haskell98:List	vhaskell98:List unzip4
+EXPORT	haskell98:List	vhaskell98:List unzip5
+EXPORT	haskell98:List	vhaskell98:List unzip6
+EXPORT	haskell98:List	vhaskell98:List unzip7
+EXPORT	haskell98:List	vhaskell98:List zip4
+EXPORT	haskell98:List	vhaskell98:List zip5
+EXPORT	haskell98:List	vhaskell98:List zip6
+EXPORT	haskell98:List	vhaskell98:List zip7
+EXPORT	haskell98:List	vhaskell98:List zipWith4
+EXPORT	haskell98:List	vhaskell98:List zipWith5
+EXPORT	haskell98:List	vhaskell98:List zipWith6
+EXPORT	haskell98:List	vhaskell98:List zipWith7
+EXPORT	haskell98:List	vhaskell98:PreludeList !!
+EXPORT	haskell98:List	vhaskell98:PreludeList ++
+EXPORT	haskell98:List	vhaskell98:PreludeList all
+EXPORT	haskell98:List	vhaskell98:PreludeList and
+EXPORT	haskell98:List	vhaskell98:PreludeList any
+EXPORT	haskell98:List	vhaskell98:PreludeList break
+EXPORT	haskell98:List	vhaskell98:PreludeList concat
+EXPORT	haskell98:List	vhaskell98:PreludeList concatMap
+EXPORT	haskell98:List	vhaskell98:PreludeList cycle
+EXPORT	haskell98:List	vhaskell98:PreludeList drop
+EXPORT	haskell98:List	vhaskell98:PreludeList dropWhile
+EXPORT	haskell98:List	vhaskell98:PreludeList elem
+EXPORT	haskell98:List	vhaskell98:PreludeList filter
+EXPORT	haskell98:List	vhaskell98:PreludeList foldl
+EXPORT	haskell98:List	vhaskell98:PreludeList foldl1
+EXPORT	haskell98:List	vhaskell98:PreludeList foldr
+EXPORT	haskell98:List	vhaskell98:PreludeList foldr1
+EXPORT	haskell98:List	vhaskell98:PreludeList head
+EXPORT	haskell98:List	vhaskell98:PreludeList init
+EXPORT	haskell98:List	vhaskell98:PreludeList iterate
+EXPORT	haskell98:List	vhaskell98:PreludeList last
+EXPORT	haskell98:List	vhaskell98:PreludeList length
+EXPORT	haskell98:List	vhaskell98:PreludeList lines
+EXPORT	haskell98:List	vhaskell98:PreludeList lookup
+EXPORT	haskell98:List	vhaskell98:PreludeList map
+EXPORT	haskell98:List	vhaskell98:PreludeList maximum
+EXPORT	haskell98:List	vhaskell98:PreludeList minimum
+EXPORT	haskell98:List	vhaskell98:PreludeList notElem
+EXPORT	haskell98:List	vhaskell98:PreludeList null
+EXPORT	haskell98:List	vhaskell98:PreludeList or
+EXPORT	haskell98:List	vhaskell98:PreludeList product
+EXPORT	haskell98:List	vhaskell98:PreludeList repeat
+EXPORT	haskell98:List	vhaskell98:PreludeList replicate
+EXPORT	haskell98:List	vhaskell98:PreludeList reverse
+EXPORT	haskell98:List	vhaskell98:PreludeList scanl
+EXPORT	haskell98:List	vhaskell98:PreludeList scanl1
+EXPORT	haskell98:List	vhaskell98:PreludeList scanr
+EXPORT	haskell98:List	vhaskell98:PreludeList scanr1
+EXPORT	haskell98:List	vhaskell98:PreludeList span
+EXPORT	haskell98:List	vhaskell98:PreludeList splitAt
+EXPORT	haskell98:List	vhaskell98:PreludeList sum
+EXPORT	haskell98:List	vhaskell98:PreludeList tail
+EXPORT	haskell98:List	vhaskell98:PreludeList take
+EXPORT	haskell98:List	vhaskell98:PreludeList takeWhile
+EXPORT	haskell98:List	vhaskell98:PreludeList unlines
+EXPORT	haskell98:List	vhaskell98:PreludeList unwords
+EXPORT	haskell98:List	vhaskell98:PreludeList unzip
+EXPORT	haskell98:List	vhaskell98:PreludeList unzip3
+EXPORT	haskell98:List	vhaskell98:PreludeList words
+EXPORT	haskell98:List	vhaskell98:PreludeList zip
+EXPORT	haskell98:List	vhaskell98:PreludeList zip3
+EXPORT	haskell98:List	vhaskell98:PreludeList zipWith
+EXPORT	haskell98:List	vhaskell98:PreludeList zipWith3
+EXPORT	haskell98:Locale	thaskell98:Locale TimeLocale
+EXPORT	haskell98:Locale	vhaskell98:Locale TimeLocale
+EXPORT	haskell98:Locale	vhaskell98:Locale amPm
+EXPORT	haskell98:Locale	vhaskell98:Locale dateFmt
+EXPORT	haskell98:Locale	vhaskell98:Locale dateTimeFmt
+EXPORT	haskell98:Locale	vhaskell98:Locale defaultTimeLocale
+EXPORT	haskell98:Locale	vhaskell98:Locale months
+EXPORT	haskell98:Locale	vhaskell98:Locale time12Fmt
+EXPORT	haskell98:Locale	vhaskell98:Locale timeFmt
+EXPORT	haskell98:Locale	vhaskell98:Locale wDays
+EXPORT	haskell98:Maybe	thaskell98:Prelude Maybe
+EXPORT	haskell98:Maybe	vhaskell98:Maybe catMaybes
+EXPORT	haskell98:Maybe	vhaskell98:Maybe fromJust
+EXPORT	haskell98:Maybe	vhaskell98:Maybe fromMaybe
+EXPORT	haskell98:Maybe	vhaskell98:Maybe isJust
+EXPORT	haskell98:Maybe	vhaskell98:Maybe isNothing
+EXPORT	haskell98:Maybe	vhaskell98:Maybe listToMaybe
+EXPORT	haskell98:Maybe	vhaskell98:Maybe mapMaybe
+EXPORT	haskell98:Maybe	vhaskell98:Maybe maybeToList
+EXPORT	haskell98:Maybe	vhaskell98:Prelude Just
+EXPORT	haskell98:Maybe	vhaskell98:Prelude Nothing
+EXPORT	haskell98:Maybe	vhaskell98:Prelude maybe
+EXPORT	haskell98:Monad	thaskell98:Monad MonadPlus
+EXPORT	haskell98:Monad	thaskell98:Prelude Functor
+EXPORT	haskell98:Monad	thaskell98:Prelude Monad
+EXPORT	haskell98:Monad	vhaskell98:Monad ap
+EXPORT	haskell98:Monad	vhaskell98:Monad filterM
+EXPORT	haskell98:Monad	vhaskell98:Monad foldM
+EXPORT	haskell98:Monad	vhaskell98:Monad guard
+EXPORT	haskell98:Monad	vhaskell98:Monad join
+EXPORT	haskell98:Monad	vhaskell98:Monad liftM
+EXPORT	haskell98:Monad	vhaskell98:Monad liftM2
+EXPORT	haskell98:Monad	vhaskell98:Monad liftM3
+EXPORT	haskell98:Monad	vhaskell98:Monad liftM4
+EXPORT	haskell98:Monad	vhaskell98:Monad liftM5
+EXPORT	haskell98:Monad	vhaskell98:Monad mapAndUnzipM
+EXPORT	haskell98:Monad	vhaskell98:Monad mplus
+EXPORT	haskell98:Monad	vhaskell98:Monad msum
+EXPORT	haskell98:Monad	vhaskell98:Monad mzero
+EXPORT	haskell98:Monad	vhaskell98:Monad unless
+EXPORT	haskell98:Monad	vhaskell98:Monad when
+EXPORT	haskell98:Monad	vhaskell98:Monad zipWithM
+EXPORT	haskell98:Monad	vhaskell98:Monad zipWithM_
+EXPORT	haskell98:Monad	vhaskell98:Prelude =<<
+EXPORT	haskell98:Monad	vhaskell98:Prelude >>
+EXPORT	haskell98:Monad	vhaskell98:Prelude >>=
+EXPORT	haskell98:Monad	vhaskell98:Prelude fail
+EXPORT	haskell98:Monad	vhaskell98:Prelude fmap
+EXPORT	haskell98:Monad	vhaskell98:Prelude mapM
+EXPORT	haskell98:Monad	vhaskell98:Prelude mapM_
+EXPORT	haskell98:Monad	vhaskell98:Prelude return
+EXPORT	haskell98:Monad	vhaskell98:Prelude sequence
+EXPORT	haskell98:Monad	vhaskell98:Prelude sequence_
+EXPORT	haskell98:Numeric	vhaskell98:Numeric floatToDigits
+EXPORT	haskell98:Numeric	vhaskell98:Numeric fromRat
+EXPORT	haskell98:Numeric	vhaskell98:Numeric lexDigits
+EXPORT	haskell98:Numeric	vhaskell98:Numeric readDec
+EXPORT	haskell98:Numeric	vhaskell98:Numeric readFloat
+EXPORT	haskell98:Numeric	vhaskell98:Numeric readHex
+EXPORT	haskell98:Numeric	vhaskell98:Numeric readInt
+EXPORT	haskell98:Numeric	vhaskell98:Numeric readOct
+EXPORT	haskell98:Numeric	vhaskell98:Numeric readSigned
+EXPORT	haskell98:Numeric	vhaskell98:Numeric showEFloat
+EXPORT	haskell98:Numeric	vhaskell98:Numeric showFFloat
+EXPORT	haskell98:Numeric	vhaskell98:Numeric showFloat
+EXPORT	haskell98:Numeric	vhaskell98:Numeric showGFloat
+EXPORT	haskell98:Numeric	vhaskell98:Numeric showHex
+EXPORT	haskell98:Numeric	vhaskell98:Numeric showInt
+EXPORT	haskell98:Numeric	vhaskell98:Numeric showIntAtBase
+EXPORT	haskell98:Numeric	vhaskell98:Numeric showOct
+EXPORT	haskell98:Numeric	vhaskell98:Numeric showSigned
+EXPORT	haskell98:Prelude	thaskell98:Prelude Bool
+EXPORT	haskell98:Prelude	thaskell98:Prelude Bounded
+EXPORT	haskell98:Prelude	thaskell98:Prelude Char
+EXPORT	haskell98:Prelude	thaskell98:Prelude Double
+EXPORT	haskell98:Prelude	thaskell98:Prelude Either
+EXPORT	haskell98:Prelude	thaskell98:Prelude Enum
+EXPORT	haskell98:Prelude	thaskell98:Prelude Eq
+EXPORT	haskell98:Prelude	thaskell98:Prelude Float
+EXPORT	haskell98:Prelude	thaskell98:Prelude Floating
+EXPORT	haskell98:Prelude	thaskell98:Prelude Fractional
+EXPORT	haskell98:Prelude	thaskell98:Prelude Functor
+EXPORT	haskell98:Prelude	thaskell98:Prelude IO
+EXPORT	haskell98:Prelude	thaskell98:Prelude Int
+EXPORT	haskell98:Prelude	thaskell98:Prelude Integer
+EXPORT	haskell98:Prelude	thaskell98:Prelude Integral
+EXPORT	haskell98:Prelude	thaskell98:Prelude Maybe
+EXPORT	haskell98:Prelude	thaskell98:Prelude Monad
+EXPORT	haskell98:Prelude	thaskell98:Prelude Num
+EXPORT	haskell98:Prelude	thaskell98:Prelude Ord
+EXPORT	haskell98:Prelude	thaskell98:Prelude Ordering
+EXPORT	haskell98:Prelude	thaskell98:Prelude Real
+EXPORT	haskell98:Prelude	thaskell98:Prelude RealFloat
+EXPORT	haskell98:Prelude	thaskell98:Prelude RealFrac
+EXPORT	haskell98:Prelude	thaskell98:Prelude String
+EXPORT	haskell98:Prelude	thaskell98:PreludeIO FilePath
+EXPORT	haskell98:Prelude	thaskell98:PreludeIO IOError
+EXPORT	haskell98:Prelude	thaskell98:PreludeText Read
+EXPORT	haskell98:Prelude	thaskell98:PreludeText ReadS
+EXPORT	haskell98:Prelude	thaskell98:PreludeText Show
+EXPORT	haskell98:Prelude	thaskell98:PreludeText ShowS
+EXPORT	haskell98:Prelude	thaskell98:Ratio Rational
+EXPORT	haskell98:Prelude	vhaskell98:Prelude $
+EXPORT	haskell98:Prelude	vhaskell98:Prelude $!
+EXPORT	haskell98:Prelude	vhaskell98:Prelude &&
+EXPORT	haskell98:Prelude	vhaskell98:Prelude *
+EXPORT	haskell98:Prelude	vhaskell98:Prelude **
+EXPORT	haskell98:Prelude	vhaskell98:Prelude +
+EXPORT	haskell98:Prelude	vhaskell98:Prelude -
+EXPORT	haskell98:Prelude	vhaskell98:Prelude .
+EXPORT	haskell98:Prelude	vhaskell98:Prelude /
+EXPORT	haskell98:Prelude	vhaskell98:Prelude /=
+EXPORT	haskell98:Prelude	vhaskell98:Prelude <
+EXPORT	haskell98:Prelude	vhaskell98:Prelude <=
+EXPORT	haskell98:Prelude	vhaskell98:Prelude =<<
+EXPORT	haskell98:Prelude	vhaskell98:Prelude ==
+EXPORT	haskell98:Prelude	vhaskell98:Prelude >
+EXPORT	haskell98:Prelude	vhaskell98:Prelude >=
+EXPORT	haskell98:Prelude	vhaskell98:Prelude >>
+EXPORT	haskell98:Prelude	vhaskell98:Prelude >>=
+EXPORT	haskell98:Prelude	vhaskell98:Prelude EQ
+EXPORT	haskell98:Prelude	vhaskell98:Prelude False
+EXPORT	haskell98:Prelude	vhaskell98:Prelude GT
+EXPORT	haskell98:Prelude	vhaskell98:Prelude Just
+EXPORT	haskell98:Prelude	vhaskell98:Prelude LT
+EXPORT	haskell98:Prelude	vhaskell98:Prelude Left
+EXPORT	haskell98:Prelude	vhaskell98:Prelude Nothing
+EXPORT	haskell98:Prelude	vhaskell98:Prelude Right
+EXPORT	haskell98:Prelude	vhaskell98:Prelude True
+EXPORT	haskell98:Prelude	vhaskell98:Prelude ^
+EXPORT	haskell98:Prelude	vhaskell98:Prelude ^^
+EXPORT	haskell98:Prelude	vhaskell98:Prelude abs
+EXPORT	haskell98:Prelude	vhaskell98:Prelude acos
+EXPORT	haskell98:Prelude	vhaskell98:Prelude acosh
+EXPORT	haskell98:Prelude	vhaskell98:Prelude asTypeOf
+EXPORT	haskell98:Prelude	vhaskell98:Prelude asin
+EXPORT	haskell98:Prelude	vhaskell98:Prelude asinh
+EXPORT	haskell98:Prelude	vhaskell98:Prelude atan
+EXPORT	haskell98:Prelude	vhaskell98:Prelude atan2
+EXPORT	haskell98:Prelude	vhaskell98:Prelude atanh
+EXPORT	haskell98:Prelude	vhaskell98:Prelude ceiling
+EXPORT	haskell98:Prelude	vhaskell98:Prelude compare
+EXPORT	haskell98:Prelude	vhaskell98:Prelude const
+EXPORT	haskell98:Prelude	vhaskell98:Prelude cos
+EXPORT	haskell98:Prelude	vhaskell98:Prelude cosh
+EXPORT	haskell98:Prelude	vhaskell98:Prelude curry
+EXPORT	haskell98:Prelude	vhaskell98:Prelude decodeFloat
+EXPORT	haskell98:Prelude	vhaskell98:Prelude div
+EXPORT	haskell98:Prelude	vhaskell98:Prelude divMod
+EXPORT	haskell98:Prelude	vhaskell98:Prelude either
+EXPORT	haskell98:Prelude	vhaskell98:Prelude encodeFloat
+EXPORT	haskell98:Prelude	vhaskell98:Prelude enumFrom
+EXPORT	haskell98:Prelude	vhaskell98:Prelude enumFromThen
+EXPORT	haskell98:Prelude	vhaskell98:Prelude enumFromThenTo
+EXPORT	haskell98:Prelude	vhaskell98:Prelude enumFromTo
+EXPORT	haskell98:Prelude	vhaskell98:Prelude error
+EXPORT	haskell98:Prelude	vhaskell98:Prelude even
+EXPORT	haskell98:Prelude	vhaskell98:Prelude exp
+EXPORT	haskell98:Prelude	vhaskell98:Prelude exponent
+EXPORT	haskell98:Prelude	vhaskell98:Prelude fail
+EXPORT	haskell98:Prelude	vhaskell98:Prelude flip
+EXPORT	haskell98:Prelude	vhaskell98:Prelude floatDigits
+EXPORT	haskell98:Prelude	vhaskell98:Prelude floatRadix
+EXPORT	haskell98:Prelude	vhaskell98:Prelude floatRange
+EXPORT	haskell98:Prelude	vhaskell98:Prelude floor
+EXPORT	haskell98:Prelude	vhaskell98:Prelude fmap
+EXPORT	haskell98:Prelude	vhaskell98:Prelude fromEnum
+EXPORT	haskell98:Prelude	vhaskell98:Prelude fromInteger
+EXPORT	haskell98:Prelude	vhaskell98:Prelude fromIntegral
+EXPORT	haskell98:Prelude	vhaskell98:Prelude fromRational
+EXPORT	haskell98:Prelude	vhaskell98:Prelude fst
+EXPORT	haskell98:Prelude	vhaskell98:Prelude gcd
+EXPORT	haskell98:Prelude	vhaskell98:Prelude id
+EXPORT	haskell98:Prelude	vhaskell98:Prelude isDenormalized
+EXPORT	haskell98:Prelude	vhaskell98:Prelude isIEEE
+EXPORT	haskell98:Prelude	vhaskell98:Prelude isInfinite
+EXPORT	haskell98:Prelude	vhaskell98:Prelude isNaN
+EXPORT	haskell98:Prelude	vhaskell98:Prelude isNegativeZero
+EXPORT	haskell98:Prelude	vhaskell98:Prelude lcm
+EXPORT	haskell98:Prelude	vhaskell98:Prelude log
+EXPORT	haskell98:Prelude	vhaskell98:Prelude logBase
+EXPORT	haskell98:Prelude	vhaskell98:Prelude mapM
+EXPORT	haskell98:Prelude	vhaskell98:Prelude mapM_
+EXPORT	haskell98:Prelude	vhaskell98:Prelude max
+EXPORT	haskell98:Prelude	vhaskell98:Prelude maxBound
+EXPORT	haskell98:Prelude	vhaskell98:Prelude maybe
+EXPORT	haskell98:Prelude	vhaskell98:Prelude min
+EXPORT	haskell98:Prelude	vhaskell98:Prelude minBound
+EXPORT	haskell98:Prelude	vhaskell98:Prelude mod
+EXPORT	haskell98:Prelude	vhaskell98:Prelude negate
+EXPORT	haskell98:Prelude	vhaskell98:Prelude not
+EXPORT	haskell98:Prelude	vhaskell98:Prelude odd
+EXPORT	haskell98:Prelude	vhaskell98:Prelude otherwise
+EXPORT	haskell98:Prelude	vhaskell98:Prelude pi
+EXPORT	haskell98:Prelude	vhaskell98:Prelude pred
+EXPORT	haskell98:Prelude	vhaskell98:Prelude properFraction
+EXPORT	haskell98:Prelude	vhaskell98:Prelude quot
+EXPORT	haskell98:Prelude	vhaskell98:Prelude quotRem
+EXPORT	haskell98:Prelude	vhaskell98:Prelude realToFrac
+EXPORT	haskell98:Prelude	vhaskell98:Prelude recip
+EXPORT	haskell98:Prelude	vhaskell98:Prelude rem
+EXPORT	haskell98:Prelude	vhaskell98:Prelude return
+EXPORT	haskell98:Prelude	vhaskell98:Prelude round
+EXPORT	haskell98:Prelude	vhaskell98:Prelude scaleFloat
+EXPORT	haskell98:Prelude	vhaskell98:Prelude seq
+EXPORT	haskell98:Prelude	vhaskell98:Prelude sequence
+EXPORT	haskell98:Prelude	vhaskell98:Prelude sequence_
+EXPORT	haskell98:Prelude	vhaskell98:Prelude significand
+EXPORT	haskell98:Prelude	vhaskell98:Prelude signum
+EXPORT	haskell98:Prelude	vhaskell98:Prelude sin
+EXPORT	haskell98:Prelude	vhaskell98:Prelude sinh
+EXPORT	haskell98:Prelude	vhaskell98:Prelude snd
+EXPORT	haskell98:Prelude	vhaskell98:Prelude sqrt
+EXPORT	haskell98:Prelude	vhaskell98:Prelude subtract
+EXPORT	haskell98:Prelude	vhaskell98:Prelude succ
+EXPORT	haskell98:Prelude	vhaskell98:Prelude tan
+EXPORT	haskell98:Prelude	vhaskell98:Prelude tanh
+EXPORT	haskell98:Prelude	vhaskell98:Prelude toEnum
+EXPORT	haskell98:Prelude	vhaskell98:Prelude toInteger
+EXPORT	haskell98:Prelude	vhaskell98:Prelude toRational
+EXPORT	haskell98:Prelude	vhaskell98:Prelude truncate
+EXPORT	haskell98:Prelude	vhaskell98:Prelude uncurry
+EXPORT	haskell98:Prelude	vhaskell98:Prelude undefined
+EXPORT	haskell98:Prelude	vhaskell98:Prelude until
+EXPORT	haskell98:Prelude	vhaskell98:Prelude ||
+EXPORT	haskell98:Prelude	vhaskell98:PreludeIO appendFile
+EXPORT	haskell98:Prelude	vhaskell98:PreludeIO catch
+EXPORT	haskell98:Prelude	vhaskell98:PreludeIO getChar
+EXPORT	haskell98:Prelude	vhaskell98:PreludeIO getContents
+EXPORT	haskell98:Prelude	vhaskell98:PreludeIO getLine
+EXPORT	haskell98:Prelude	vhaskell98:PreludeIO interact
+EXPORT	haskell98:Prelude	vhaskell98:PreludeIO ioError
+EXPORT	haskell98:Prelude	vhaskell98:PreludeIO print
+EXPORT	haskell98:Prelude	vhaskell98:PreludeIO putChar
+EXPORT	haskell98:Prelude	vhaskell98:PreludeIO putStr
+EXPORT	haskell98:Prelude	vhaskell98:PreludeIO putStrLn
+EXPORT	haskell98:Prelude	vhaskell98:PreludeIO readFile
+EXPORT	haskell98:Prelude	vhaskell98:PreludeIO readIO
+EXPORT	haskell98:Prelude	vhaskell98:PreludeIO readLn
+EXPORT	haskell98:Prelude	vhaskell98:PreludeIO userError
+EXPORT	haskell98:Prelude	vhaskell98:PreludeIO writeFile
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList !!
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList ++
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList all
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList and
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList any
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList break
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList concat
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList concatMap
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList cycle
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList drop
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList dropWhile
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList elem
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList filter
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList foldl
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList foldl1
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList foldr
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList foldr1
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList head
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList init
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList iterate
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList last
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList length
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList lines
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList lookup
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList map
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList maximum
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList minimum
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList notElem
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList null
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList or
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList product
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList repeat
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList replicate
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList reverse
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList scanl
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList scanl1
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList scanr
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList scanr1
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList span
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList splitAt
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList sum
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList tail
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList take
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList takeWhile
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList unlines
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList unwords
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList unzip
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList unzip3
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList words
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList zip
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList zip3
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList zipWith
+EXPORT	haskell98:Prelude	vhaskell98:PreludeList zipWith3
+EXPORT	haskell98:Prelude	vhaskell98:PreludeText lex
+EXPORT	haskell98:Prelude	vhaskell98:PreludeText read
+EXPORT	haskell98:Prelude	vhaskell98:PreludeText readList
+EXPORT	haskell98:Prelude	vhaskell98:PreludeText readParen
+EXPORT	haskell98:Prelude	vhaskell98:PreludeText reads
+EXPORT	haskell98:Prelude	vhaskell98:PreludeText readsPrec
+EXPORT	haskell98:Prelude	vhaskell98:PreludeText show
+EXPORT	haskell98:Prelude	vhaskell98:PreludeText showChar
+EXPORT	haskell98:Prelude	vhaskell98:PreludeText showList
+EXPORT	haskell98:Prelude	vhaskell98:PreludeText showParen
+EXPORT	haskell98:Prelude	vhaskell98:PreludeText showString
+EXPORT	haskell98:Prelude	vhaskell98:PreludeText shows
+EXPORT	haskell98:Prelude	vhaskell98:PreludeText showsPrec
+EXPORT	haskell98:PreludeIO	thaskell98:PreludeIO FilePath
+EXPORT	haskell98:PreludeIO	thaskell98:PreludeIO IOError
+EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO appendFile
+EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO catch
+EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO getChar
+EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO getContents
+EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO getLine
+EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO interact
+EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO ioError
+EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO print
+EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO putChar
+EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO putStr
+EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO putStrLn
+EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO readFile
+EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO readIO
+EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO readLn
+EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO userError
+EXPORT	haskell98:PreludeIO	vhaskell98:PreludeIO writeFile
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList !!
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList ++
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList all
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList and
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList any
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList break
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList concat
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList concatMap
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList cycle
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList drop
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList dropWhile
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList elem
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList filter
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList foldl
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList foldl1
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList foldr
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList foldr1
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList head
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList init
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList iterate
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList last
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList length
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList lines
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList lookup
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList map
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList maximum
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList minimum
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList notElem
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList null
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList or
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList product
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList repeat
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList replicate
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList reverse
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList scanl
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList scanl1
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList scanr
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList scanr1
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList span
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList splitAt
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList sum
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList tail
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList take
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList takeWhile
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList unlines
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList unwords
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList unzip
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList unzip3
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList words
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList zip
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList zip3
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList zipWith
+EXPORT	haskell98:PreludeList	vhaskell98:PreludeList zipWith3
+EXPORT	haskell98:PreludeText	thaskell98:PreludeText Read
+EXPORT	haskell98:PreludeText	thaskell98:PreludeText ReadS
+EXPORT	haskell98:PreludeText	thaskell98:PreludeText Show
+EXPORT	haskell98:PreludeText	thaskell98:PreludeText ShowS
+EXPORT	haskell98:PreludeText	vhaskell98:PreludeText lex
+EXPORT	haskell98:PreludeText	vhaskell98:PreludeText read
+EXPORT	haskell98:PreludeText	vhaskell98:PreludeText readList
+EXPORT	haskell98:PreludeText	vhaskell98:PreludeText readParen
+EXPORT	haskell98:PreludeText	vhaskell98:PreludeText reads
+EXPORT	haskell98:PreludeText	vhaskell98:PreludeText readsPrec
+EXPORT	haskell98:PreludeText	vhaskell98:PreludeText show
+EXPORT	haskell98:PreludeText	vhaskell98:PreludeText showChar
+EXPORT	haskell98:PreludeText	vhaskell98:PreludeText showList
+EXPORT	haskell98:PreludeText	vhaskell98:PreludeText showParen
+EXPORT	haskell98:PreludeText	vhaskell98:PreludeText showString
+EXPORT	haskell98:PreludeText	vhaskell98:PreludeText shows
+EXPORT	haskell98:PreludeText	vhaskell98:PreludeText showsPrec
+EXPORT	haskell98:Random	thaskell98:Random Random
+EXPORT	haskell98:Random	thaskell98:Random RandomGen
+EXPORT	haskell98:Random	thaskell98:Random StdGen
+EXPORT	haskell98:Random	vhaskell98:Random genRange
+EXPORT	haskell98:Random	vhaskell98:Random getStdGen
+EXPORT	haskell98:Random	vhaskell98:Random getStdRandom
+EXPORT	haskell98:Random	vhaskell98:Random mkStdGen
+EXPORT	haskell98:Random	vhaskell98:Random newStdGen
+EXPORT	haskell98:Random	vhaskell98:Random next
+EXPORT	haskell98:Random	vhaskell98:Random random
+EXPORT	haskell98:Random	vhaskell98:Random randomIO
+EXPORT	haskell98:Random	vhaskell98:Random randomR
+EXPORT	haskell98:Random	vhaskell98:Random randomRIO
+EXPORT	haskell98:Random	vhaskell98:Random randomRs
+EXPORT	haskell98:Random	vhaskell98:Random randoms
+EXPORT	haskell98:Random	vhaskell98:Random setStdGen
+EXPORT	haskell98:Random	vhaskell98:Random split
+EXPORT	haskell98:Ratio	thaskell98:Ratio Ratio
+EXPORT	haskell98:Ratio	thaskell98:Ratio Rational
+EXPORT	haskell98:Ratio	vhaskell98:Ratio %
+EXPORT	haskell98:Ratio	vhaskell98:Ratio approxRational
+EXPORT	haskell98:Ratio	vhaskell98:Ratio denominator
+EXPORT	haskell98:Ratio	vhaskell98:Ratio numerator
+EXPORT	haskell98:System	thaskell98:System ExitCode
+EXPORT	haskell98:System	vhaskell98:System ExitFailure
+EXPORT	haskell98:System	vhaskell98:System ExitSuccess
+EXPORT	haskell98:System	vhaskell98:System exitFailure
+EXPORT	haskell98:System	vhaskell98:System exitWith
+EXPORT	haskell98:System	vhaskell98:System getArgs
+EXPORT	haskell98:System	vhaskell98:System getEnv
+EXPORT	haskell98:System	vhaskell98:System getProgName
+EXPORT	haskell98:System	vhaskell98:System system
+EXPORT	haskell98:Time	thaskell98:Time CalendarTime
+EXPORT	haskell98:Time	thaskell98:Time ClockTime
+EXPORT	haskell98:Time	thaskell98:Time Day
+EXPORT	haskell98:Time	thaskell98:Time Month
+EXPORT	haskell98:Time	thaskell98:Time TimeDiff
+EXPORT	haskell98:Time	vhaskell98:Time April
+EXPORT	haskell98:Time	vhaskell98:Time August
+EXPORT	haskell98:Time	vhaskell98:Time CalendarTime
+EXPORT	haskell98:Time	vhaskell98:Time December
+EXPORT	haskell98:Time	vhaskell98:Time February
+EXPORT	haskell98:Time	vhaskell98:Time Friday
+EXPORT	haskell98:Time	vhaskell98:Time January
+EXPORT	haskell98:Time	vhaskell98:Time July
+EXPORT	haskell98:Time	vhaskell98:Time June
+EXPORT	haskell98:Time	vhaskell98:Time March
+EXPORT	haskell98:Time	vhaskell98:Time May
+EXPORT	haskell98:Time	vhaskell98:Time Monday
+EXPORT	haskell98:Time	vhaskell98:Time November
+EXPORT	haskell98:Time	vhaskell98:Time October
+EXPORT	haskell98:Time	vhaskell98:Time Saturday
+EXPORT	haskell98:Time	vhaskell98:Time September
+EXPORT	haskell98:Time	vhaskell98:Time Sunday
+EXPORT	haskell98:Time	vhaskell98:Time Thursday
+EXPORT	haskell98:Time	vhaskell98:Time TimeDiff
+EXPORT	haskell98:Time	vhaskell98:Time Tuesday
+EXPORT	haskell98:Time	vhaskell98:Time Wednesday
+EXPORT	haskell98:Time	vhaskell98:Time addToClockTime
+EXPORT	haskell98:Time	vhaskell98:Time calendarTimeToString
+EXPORT	haskell98:Time	vhaskell98:Time ctDay
+EXPORT	haskell98:Time	vhaskell98:Time ctHour
+EXPORT	haskell98:Time	vhaskell98:Time ctIsDST
+EXPORT	haskell98:Time	vhaskell98:Time ctMin
+EXPORT	haskell98:Time	vhaskell98:Time ctMonth
+EXPORT	haskell98:Time	vhaskell98:Time ctPicosec
+EXPORT	haskell98:Time	vhaskell98:Time ctSec
+EXPORT	haskell98:Time	vhaskell98:Time ctTZ
+EXPORT	haskell98:Time	vhaskell98:Time ctTZName
+EXPORT	haskell98:Time	vhaskell98:Time ctWDay
+EXPORT	haskell98:Time	vhaskell98:Time ctYDay
+EXPORT	haskell98:Time	vhaskell98:Time ctYear
+EXPORT	haskell98:Time	vhaskell98:Time diffClockTimes
+EXPORT	haskell98:Time	vhaskell98:Time formatCalendarTime
+EXPORT	haskell98:Time	vhaskell98:Time getClockTime
+EXPORT	haskell98:Time	vhaskell98:Time tdDay
+EXPORT	haskell98:Time	vhaskell98:Time tdHour
+EXPORT	haskell98:Time	vhaskell98:Time tdMin
+EXPORT	haskell98:Time	vhaskell98:Time tdMonth
+EXPORT	haskell98:Time	vhaskell98:Time tdPicosec
+EXPORT	haskell98:Time	vhaskell98:Time tdSec
+EXPORT	haskell98:Time	vhaskell98:Time tdYear
+EXPORT	haskell98:Time	vhaskell98:Time toCalendarTime
+EXPORT	haskell98:Time	vhaskell98:Time toClockTime
+EXPORT	haskell98:Time	vhaskell98:Time toUTCTime
+FIX	vhaskell98:Array !	infixl	9
+FIX	vhaskell98:Array //	infixl	9
+FIX	vhaskell98:Complex :+	infix	6
+FIX	vhaskell98:List \\	infix	5
+FIX	vhaskell98:Prelude $	infixr	0
+FIX	vhaskell98:Prelude $!	infixr	0
+FIX	vhaskell98:Prelude &&	infixr	3
+FIX	vhaskell98:Prelude *	infixl	7
+FIX	vhaskell98:Prelude **	infixr	8
+FIX	vhaskell98:Prelude +	infixl	6
+FIX	vhaskell98:Prelude -	infixl	6
+FIX	vhaskell98:Prelude .	infixr	9
+FIX	vhaskell98:Prelude /	infixl	7
+FIX	vhaskell98:Prelude /=	infix	4
+FIX	vhaskell98:Prelude <	infix	4
+FIX	vhaskell98:Prelude <=	infix	4
+FIX	vhaskell98:Prelude =<<	infixr	1
+FIX	vhaskell98:Prelude ==	infix	4
+FIX	vhaskell98:Prelude >	infix	4
+FIX	vhaskell98:Prelude >=	infix	4
+FIX	vhaskell98:Prelude >>	infixl	1
+FIX	vhaskell98:Prelude >>=	infixl	1
+FIX	vhaskell98:Prelude ^	infixr	8
+FIX	vhaskell98:Prelude ^^	infixr	8
+FIX	vhaskell98:Prelude div	infixl	7
+FIX	vhaskell98:Prelude mod	infixl	7
+FIX	vhaskell98:Prelude quot	infixl	7
+FIX	vhaskell98:Prelude rem	infixl	7
+FIX	vhaskell98:Prelude seq	infixr	0
+FIX	vhaskell98:Prelude ||	infixr	2
+FIX	vhaskell98:PreludeList !!	infixl	9
+FIX	vhaskell98:PreludeList ++	infixr	5
+FIX	vhaskell98:PreludeList elem	infix	4
+FIX	vhaskell98:PreludeList notElem	infix	4
+FIX	vhaskell98:Ratio %	infixl	7
+INSTANCE	haskell98:Array	thaskell98:Prelude Eq	thaskell98:Array Array	written
+INSTANCE	haskell98:Array	thaskell98:Prelude Functor	thaskell98:Array Array	written
+INSTANCE	haskell98:Array	thaskell98:Prelude Ord	thaskell98:Array Array	written
+INSTANCE	haskell98:Array	thaskell98:PreludeText Read	thaskell98:Array Array	written
+INSTANCE	haskell98:Array	thaskell98:PreludeText Show	thaskell98:Array Array	written
+INSTANCE	haskell98:Complex	thaskell98:Prelude Eq	thaskell98:Complex Complex	derived
+INSTANCE	haskell98:Complex	thaskell98:Prelude Floating	thaskell98:Complex Complex	written
+INSTANCE	haskell98:Complex	thaskell98:Prelude Fractional	thaskell98:Complex Complex	written
+INSTANCE	haskell98:Complex	thaskell98:Prelude Num	thaskell98:Complex Complex	written
+INSTANCE	haskell98:Complex	thaskell98:PreludeText Read	thaskell98:Complex Complex	derived
+INSTANCE	haskell98:Complex	thaskell98:PreludeText Show	thaskell98:Complex Complex	derived
+INSTANCE	haskell98:Directory	thaskell98:Prelude Eq	thaskell98:Directory Permissions	written
+INSTANCE	haskell98:Directory	thaskell98:Prelude Ord	thaskell98:Directory Permissions	written
+INSTANCE	haskell98:Directory	thaskell98:PreludeText Read	thaskell98:Directory Permissions	written
+INSTANCE	haskell98:Directory	thaskell98:PreludeText Show	thaskell98:Directory Permissions	written
+INSTANCE	haskell98:Ix	thaskell98:Ix Ix	t ()	written
+INSTANCE	haskell98:Ix	thaskell98:Ix Ix	t (,)	written
+INSTANCE	haskell98:Ix	thaskell98:Ix Ix	thaskell98:Prelude Bool	written
+INSTANCE	haskell98:Ix	thaskell98:Ix Ix	thaskell98:Prelude Char	written
+INSTANCE	haskell98:Ix	thaskell98:Ix Ix	thaskell98:Prelude Int	written
+INSTANCE	haskell98:Ix	thaskell98:Ix Ix	thaskell98:Prelude Integer	written
+INSTANCE	haskell98:Ix	thaskell98:Ix Ix	thaskell98:Prelude Ordering	written
+INSTANCE	haskell98:Locale	thaskell98:Prelude Eq	thaskell98:Locale TimeLocale	derived
+INSTANCE	haskell98:Locale	thaskell98:Prelude Ord	thaskell98:Locale TimeLocale	derived
+INSTANCE	haskell98:Locale	thaskell98:PreludeText Show	thaskell98:Locale TimeLocale	derived
+INSTANCE	haskell98:Monad	thaskell98:Monad MonadPlus	t []	written
+INSTANCE	haskell98:Monad	thaskell98:Monad MonadPlus	thaskell98:Prelude Maybe	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Bounded	t ()	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Bounded	t (,)	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Bounded	t (,,)	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Bounded	thaskell98:Prelude Bool	derived
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Bounded	thaskell98:Prelude Char	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Bounded	thaskell98:Prelude Int	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Bounded	thaskell98:Prelude Ordering	derived
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Enum	t ()	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Enum	thaskell98:Prelude Bool	derived
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Enum	thaskell98:Prelude Char	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Enum	thaskell98:Prelude Double	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Enum	thaskell98:Prelude Float	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Enum	thaskell98:Prelude Int	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Enum	thaskell98:Prelude Integer	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Enum	thaskell98:Prelude Ordering	derived
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Eq	t ()	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Eq	t (,)	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Eq	t (,,)	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Eq	t []	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Eq	thaskell98:Prelude Bool	derived
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Eq	thaskell98:Prelude Char	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Eq	thaskell98:Prelude Double	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Eq	thaskell98:Prelude Either	derived
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Eq	thaskell98:Prelude Float	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Eq	thaskell98:Prelude Int	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Eq	thaskell98:Prelude Integer	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Eq	thaskell98:Prelude Maybe	derived
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Eq	thaskell98:Prelude Ordering	derived
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Floating	thaskell98:Prelude Double	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Floating	thaskell98:Prelude Float	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Fractional	thaskell98:Prelude Double	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Fractional	thaskell98:Prelude Float	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Functor	t []	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Functor	thaskell98:Prelude IO	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Functor	thaskell98:Prelude Maybe	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Integral	thaskell98:Prelude Int	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Integral	thaskell98:Prelude Integer	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Monad	t []	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Monad	thaskell98:Prelude IO	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Monad	thaskell98:Prelude Maybe	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Num	thaskell98:Prelude Double	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Num	thaskell98:Prelude Float	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Num	thaskell98:Prelude Int	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Num	thaskell98:Prelude Integer	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Ord	t ()	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Ord	t (,)	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Ord	t (,,)	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Ord	t []	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Ord	thaskell98:Prelude Bool	derived
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Ord	thaskell98:Prelude Char	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Ord	thaskell98:Prelude Double	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Ord	thaskell98:Prelude Either	derived
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Ord	thaskell98:Prelude Float	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Ord	thaskell98:Prelude Int	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Ord	thaskell98:Prelude Integer	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Ord	thaskell98:Prelude Maybe	derived
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Ord	thaskell98:Prelude Ordering	derived
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Real	thaskell98:Prelude Double	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Real	thaskell98:Prelude Float	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Real	thaskell98:Prelude Int	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude Real	thaskell98:Prelude Integer	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude RealFloat	thaskell98:Prelude Double	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude RealFloat	thaskell98:Prelude Float	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude RealFrac	thaskell98:Prelude Double	written
+INSTANCE	haskell98:Prelude	thaskell98:Prelude RealFrac	thaskell98:Prelude Float	written
+INSTANCE	haskell98:Prelude	thaskell98:PreludeText Read	thaskell98:Prelude Bool	derived
+INSTANCE	haskell98:Prelude	thaskell98:PreludeText Read	thaskell98:Prelude Either	derived
+INSTANCE	haskell98:Prelude	thaskell98:PreludeText Read	thaskell98:Prelude Maybe	derived
+INSTANCE	haskell98:Prelude	thaskell98:PreludeText Read	thaskell98:Prelude Ordering	derived
+INSTANCE	haskell98:Prelude	thaskell98:PreludeText Show	thaskell98:Prelude Bool	derived
+INSTANCE	haskell98:Prelude	thaskell98:PreludeText Show	thaskell98:Prelude Either	derived
+INSTANCE	haskell98:Prelude	thaskell98:PreludeText Show	thaskell98:Prelude Maybe	derived
+INSTANCE	haskell98:Prelude	thaskell98:PreludeText Show	thaskell98:Prelude Ordering	derived
+INSTANCE	haskell98:PreludeIO	thaskell98:Prelude Eq	thaskell98:PreludeIO IOError	written
+INSTANCE	haskell98:PreludeIO	thaskell98:PreludeText Show	thaskell98:PreludeIO IOError	written
+INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Read	t ()	written
+INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Read	t (,)	written
+INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Read	t []	written
+INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Read	thaskell98:Prelude Char	written
+INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Read	thaskell98:Prelude Double	written
+INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Read	thaskell98:Prelude Float	written
+INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Read	thaskell98:Prelude Int	written
+INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Read	thaskell98:Prelude Integer	written
+INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Show	t ()	written
+INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Show	t (,)	written
+INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Show	t []	written
+INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Show	thaskell98:Prelude Char	written
+INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Show	thaskell98:Prelude Double	written
+INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Show	thaskell98:Prelude Float	written
+INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Show	thaskell98:Prelude Int	written
+INSTANCE	haskell98:PreludeText	thaskell98:PreludeText Show	thaskell98:Prelude Integer	written
+INSTANCE	haskell98:Random	thaskell98:PreludeText Read	thaskell98:Random StdGen	written
+INSTANCE	haskell98:Random	thaskell98:PreludeText Show	thaskell98:Random StdGen	written
+INSTANCE	haskell98:Random	thaskell98:Random Random	thaskell98:Prelude Bool	written
+INSTANCE	haskell98:Random	thaskell98:Random Random	thaskell98:Prelude Char	written
+INSTANCE	haskell98:Random	thaskell98:Random Random	thaskell98:Prelude Double	written
+INSTANCE	haskell98:Random	thaskell98:Random Random	thaskell98:Prelude Float	written
+INSTANCE	haskell98:Random	thaskell98:Random Random	thaskell98:Prelude Int	written
+INSTANCE	haskell98:Random	thaskell98:Random Random	thaskell98:Prelude Integer	written
+INSTANCE	haskell98:Random	thaskell98:Random RandomGen	thaskell98:Random StdGen	written
+INSTANCE	haskell98:Ratio	thaskell98:Prelude Enum	thaskell98:Ratio Ratio	written
+INSTANCE	haskell98:Ratio	thaskell98:Prelude Eq	thaskell98:Ratio Ratio	derived
+INSTANCE	haskell98:Ratio	thaskell98:Prelude Fractional	thaskell98:Ratio Ratio	written
+INSTANCE	haskell98:Ratio	thaskell98:Prelude Num	thaskell98:Ratio Ratio	written
+INSTANCE	haskell98:Ratio	thaskell98:Prelude Ord	thaskell98:Ratio Ratio	written
+INSTANCE	haskell98:Ratio	thaskell98:Prelude Real	thaskell98:Ratio Ratio	written
+INSTANCE	haskell98:Ratio	thaskell98:Prelude RealFrac	thaskell98:Ratio Ratio	written
+INSTANCE	haskell98:Ratio	thaskell98:PreludeText Read	thaskell98:Ratio Ratio	written
+INSTANCE	haskell98:Ratio	thaskell98:PreludeText Show	thaskell98:Ratio Ratio	written
+INSTANCE	haskell98:System	thaskell98:Prelude Eq	thaskell98:System ExitCode	derived
+INSTANCE	haskell98:System	thaskell98:Prelude Ord	thaskell98:System ExitCode	derived
+INSTANCE	haskell98:System	thaskell98:PreludeText Read	thaskell98:System ExitCode	derived
+INSTANCE	haskell98:System	thaskell98:PreludeText Show	thaskell98:System ExitCode	derived
+INSTANCE	haskell98:Time	thaskell98:Ix Ix	thaskell98:Time Day	derived
+INSTANCE	haskell98:Time	thaskell98:Ix Ix	thaskell98:Time Month	derived
+INSTANCE	haskell98:Time	thaskell98:Prelude Bounded	thaskell98:Time Day	derived
+INSTANCE	haskell98:Time	thaskell98:Prelude Bounded	thaskell98:Time Month	derived
+INSTANCE	haskell98:Time	thaskell98:Prelude Enum	thaskell98:Time Day	derived
+INSTANCE	haskell98:Time	thaskell98:Prelude Enum	thaskell98:Time Month	derived
+INSTANCE	haskell98:Time	thaskell98:Prelude Eq	thaskell98:Time CalendarTime	derived
+INSTANCE	haskell98:Time	thaskell98:Prelude Eq	thaskell98:Time ClockTime	written
+INSTANCE	haskell98:Time	thaskell98:Prelude Eq	thaskell98:Time Day	derived
+INSTANCE	haskell98:Time	thaskell98:Prelude Eq	thaskell98:Time Month	derived
+INSTANCE	haskell98:Time	thaskell98:Prelude Eq	thaskell98:Time TimeDiff	derived
+INSTANCE	haskell98:Time	thaskell98:Prelude Ord	thaskell98:Time CalendarTime	derived
+INSTANCE	haskell98:Time	thaskell98:Prelude Ord	thaskell98:Time ClockTime	written
+INSTANCE	haskell98:Time	thaskell98:Prelude Ord	thaskell98:Time Day	derived
+INSTANCE	haskell98:Time	thaskell98:Prelude Ord	thaskell98:Time Month	derived
+INSTANCE	haskell98:Time	thaskell98:Prelude Ord	thaskell98:Time TimeDiff	derived
+INSTANCE	haskell98:Time	thaskell98:PreludeText Read	thaskell98:Time CalendarTime	derived
+INSTANCE	haskell98:Time	thaskell98:PreludeText Read	thaskell98:Time Day	derived
+INSTANCE	haskell98:Time	thaskell98:PreludeText Read	thaskell98:Time Month	derived
+INSTANCE	haskell98:Time	thaskell98:PreludeText Read	thaskell98:Time TimeDiff	derived
+INSTANCE	haskell98:Time	thaskell98:PreludeText Show	thaskell98:Time CalendarTime	derived
+INSTANCE	haskell98:Time	thaskell98:PreludeText Show	thaskell98:Time Day	derived
+INSTANCE	haskell98:Time	thaskell98:PreludeText Show	thaskell98:Time Month	derived
+INSTANCE	haskell98:Time	thaskell98:PreludeText Show	thaskell98:Time TimeDiff	derived

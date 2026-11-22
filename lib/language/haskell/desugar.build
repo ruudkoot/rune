@@ -1,0 +1,16 @@
+(* Desugaring to Core (the haskell98 roadmap's M15): typed Core as it is
+   built, what a checked program's names, types, records and dictionaries
+   are in Core, pattern matching in the Report's order, and the
+   translations of chapters 3 and 4. It is written on the Basis Library,
+   names.build, types.build and core.build, and is used by the library's
+   library.build. *)
+files
+  desugar_core_sig.sml
+  desugar_core.sml
+  desugar_env_sig.sml
+  desugar_env.sml
+  match_sig.sml
+  match.sml
+  desugar_sig.sml
+  desugar.sml
+end

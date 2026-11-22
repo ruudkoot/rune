@@ -725,8 +725,8 @@ the cache (S65).
 **One program of the units' Mid** (`--units --whole`; the incremental
 roadmap's M7 and D6). A compile in units links its units' code; with
 `--whole` it makes one program as a whole-program compile does. Each unit's
-Mid -- what `ToMid` made of it, before the optional passes, with the
-datatypes its types name and its functions' names, which the next unit's
+Mid -- what `ToMid` made of it, before the optional passes, its functions
+with their labels, with the datatypes its types name, which the next unit's
 compile does not keep -- is written with its names by key, as a basis
 writes them (`UnitMid`), kept in its cache entry, and read back as the
 session names it, whether the unit was compiled or taken from the cache;
@@ -842,6 +842,14 @@ input, which put `rune.build`'s in `build/.rune`, by its first line
 paths are from the root of the filesystem where a compile in another
 directory could mean another file by them (the stat memo, the link memo), so
 that compiles in several directories share it.
+
+**Whose it is.** The store's code (`UnitStore`) knows nothing of SML: an
+entry's format, head and key are its client's. Where the store is, its
+overlay and its layers, and how it is kept small are `StorePolicy`'s
+(`lib/compiler/driver/storepolicy.sml`, in the layer from Mid on), which a
+compiler of another language takes as it is, from `CompilerSettings`, without
+naming `UnitCache`, which keeps SML's units there (the haskell98 roadmap's
+M20). Two compilers that share a store share its budget for trimming.
 
 **Keys and entries.** A unit's key is its logical name, the hash of its
 text and its settings (*The cache*, above); an entry's head is what the
@@ -1080,6 +1088,212 @@ date against a touch, an edit, the output removed and overwritten, and a
 (`warm-plan`), which a build after each edit -- of a comment, of a fixity
 directive changed, added, removed, made `nonfix` or put in a `local` -- reads
 as the edit says, and `--verify-cache` holds to the files' texts.
+
+## rhc's units
+
+rhc, the Haskell 98 compiler of the haskell98 roadmap
+([plans/language/haskell98.md](plans/language/haskell98.md), M21;
+[rhc.md](rhc.md)), keeps its units in the same store as a client of its own
+(`src/rhc/store.sml`, `RhcStore`): its own format, head, `holds`, key and
+settings, in configurations of rhc's (`RhcStoreConfig`): a unit's of its
+`Config.identity` and what changes a unit's Core (the form of string
+literals, the order of matching), a link's of those and the instruction
+set, the level and passes besides. A unit is an SCC of a
+program's modules; Core in units (`lib/language/haskell/coreunits.sml`)
+names another unit's value by `(import x TYPE)` and its type by a copy of
+the declaration. `rhc --units` takes `--read-core` files as units, after
+rhc's runtime's.
+
+**What a hit must satisfy.** A key is a unit's name and the hash of every
+member's text, with whether the text is literate, which reads the same
+bytes as another program (H8; a module's `default` is in its text, H4).
+An entry's
+head holds its usages, one for each name its compile took of another unit,
+a value or a type, and what that gave: the unit it came from, the
+latest that declares it, its fingerprint there (`CoreUnits.fingerprints`,
+by recursive group, a value's over its type and the types it mentions) and
+its ABI facts, or `-` where no unit declared it (H1). An entry stands where
+every usage gives now, from the units of this compile, what it gave (H3);
+an entry checked at a lower level of the lint does not. A class's
+fingerprint holds which of its methods have a default, of which an instance
+in another unit that leaves the method out is made; and an instance the
+checker finds is read with whether the reading module's imports reach the
+module that declares it (`HsUsage.Reaches`), since that is what puts it in
+scope (5.4), and an import of a module on the way, which is no reader's,
+changes it (`docs/plans/build-cache-issues.md`, issues 25 to 27), and its
+read answered with that module, so that an instance moved, the same, to a
+module the imports may not reach is another answer (issue 41). The ABI facts (H9)
+are how a value is made in Mid (a function, a suspension, a literal) and
+whether a newtype is a box: a newtype is boxed as its own unit boxes it,
+since a unit that gives it fewer arguments than its parameters makes it a
+box, and another that did not would read its values otherwise. H2, H5, H6
+and H7 come with the front end's interfaces (`HsModIface`, `HsUsage`).
+
+**Two links.** `--link=units`, the default over Core, links each unit's own
+code (Link, `UnitFile`): every unit links whole, since Shake runs on a
+whole program alone, so a program carries all of every unit it imports;
+with the library as one unit, hello is 932,791 bytes against 17,773 whole
+and starts in 3,850 instructions against 1,403
+(`~/.cache/claude-rune-drafts/haskell98/impl/b/m21-measure.md`). So rhc's
+programs use `--link=whole`, the roadmap's C: a unit's entry keeps its Core
+and its interface, not code; the link joins the units' Core
+(`CoreUnits.join`), keeps what `main` reaches (`CoreUnits.reach`) and
+compiles that whole, Shake and all, so a program's size and start-up are a
+whole program's and its bytes are a whole compile's of the same Core. What
+the units save is the front end, a module's reading, checking and
+desugaring, which is most of a compile (hello whole is 142M VM
+instructions, hello's own unit's back end about 4.3M); the back end runs
+over what the program reaches at each link that changes it. The link memo
+is an entry keyed by the hash of the units' Core, which is all the back
+end reads, holding the program's bytecode. No change to Rune's Link
+is needed for it, where a Shake over linked bytecode would be one.
+
+**A program of Haskell.** `rhc --units FILE.hs` (`src/rhc/driver.sml`)
+takes each group of the module graph as a unit: named and checked from the
+interfaces of the units before it (`RhcIface`), desugared alone
+(`RhcDesugar.unit`), its interface (`HsIface`: each module's `HsModIface`,
+in bytes, each string once in a table), the desugaring's interface, its
+fingerprints and its Core kept, each a section of its own; its usages are the reads the
+naming, the checking and the desugaring made (`HsUsage`), each answered on
+the state of the units before with the unit's modules named
+(`RhcIface.answer`), an entity of another unit with its fingerprint. The
+first unit, the library's, reads only its own source and rhc's leaves, so
+it keeps none. A unit's fingerprints (`HsModIface.fingerprints`, which its
+importers' usages name) are by recursive group over all its modules, so that
+a group of types that spans the members of a cycle hashes as one (H8, M22);
+they are kept with it, with each fingerprint of another unit's they were
+made from: a unit taken reuses them where those are still what they were,
+else makes them again. A usage names no unit: under the link of C a client's
+Core names another unit's entities by their modules, so a cycle split in two
+units of new names takes its clients where what they read is as it was
+(`tests/hs/units/holes/h8-split`). A unit's Core is kept by its declarations
+(`CoreUnits.index`): an index of what each is, makes and names, and each
+declaration's text a section of its own, which the store reads and holds
+to its hash only where it is asked for. The link memo is keyed by the
+hash of each unit's Core, its index's text and every declaration's, which
+the unit's entry keeps as a part of its own, so a link taken reads no Core,
+and a link compiled reads only the declarations main reaches
+(`CoreUnits.reachIndexed`). Not by the sums of the units' entries, which
+hold their definitions' places too: a comment or a line moved is an entry
+of other bytes with the same Core, and takes the link
+(`docs/plans/build-cache-issues.md`, issue 35).
+Asking a usage names the unit's modules, its own scopes, and an entry is
+judged in up to two cheaper ways first, which stand exactly where asking
+every usage stands (issue 37). B: an entry's head keeps a digest of the
+units before it in its compile, each one's name, key and entry's sum
+(`RhcStore.priorOf`, with the fixpoint of a cycle's exports), and where the
+units before it now are those entries, every usage gives what it gave,
+and the entry stands asking none; after a unit made by this compile, which
+has no entry yet, or another, it is asked. A: a module's scope is a
+function of its text, in the key, and of what each module it imports
+exports, the entities and of each its parent and its sort (5.3, 5.5); an
+entry keeps a usage `scope M` for each module its unit imports, a digest
+of those, and where the modules imported are the same and each digest is,
+every name a usage asked stands for the entities it stood for, and only
+their fingerprints are asked, of the units before, with nothing of the
+unit read or named; where one moved, the unit is named and its usages
+asked. The scope's usages are not the entry's own: one moved refuses
+nothing. Under `--names=greatest`, which starts a cycle's exports from
+every entity of the program, A is not taken. `RHC_HIT=asked` judges each
+entry by asking every usage, keeping the same entries: the holes' cases and
+`hs/units/configs` hold each hit of A and B to where it asks one.
+The graph is read by its modules' headers (`RhcGraph.scan`): a module's
+name and the modules its imports name, kept in the store by the hash of its
+text, which the stat memo gives (`UnitStore.hashBy`), so that a module is
+parsed only where its unit is made or its usages are asked, and the
+library's, whose unit keeps none, never once it is taken.
+
+**The snapshot** (D45's A, rulings 66 and 67). `make bin/rhc` compiles
+the library once into a store, `bin/rhc.layer`, from a Main that imports
+every module of it, at `RUNE_LINT=2`, and `bin/rhc` names it
+(`--snapshot`). Every check and compile of `bin/rhc FILE.hs`, with `-o`,
+`--typecheck-only` or neither (a run on Core's interpreter), takes the
+library's units from it, read only, and reads, names, checks and desugars
+the program's own modules a unit at a time (`RhcDriver.front`), and keeps
+them in the program's store, `.rhc` beside its file (D58; `--store DIR`
+or `RHC_STORE` another, `--no-store` or an empty `RHC_STORE` none), which
+it reads first, then any `--layer`, then the snapshot; a compile with
+`-o` keeps its link too, its bytecode by the sums of the units' entries.
+The store is trimmed by `StorePolicy.trimAfter`, as `.rune` is: a store
+of the same limits, a week and 4 GiB, once the compile is done, after the
+link's memo is looked up and kept (issue 34). The store holds an entry's head to
+its hash before the entry is taken, and each section only as it is read,
+and rhc reads a unit's parts long after it takes the unit; so an entry of
+the program's store is held whole before it is taken, and one that does
+not hold is no entry, and is removed; one of a layer, which rhc never
+writes, is read part by part, and a compile that took one of its parts
+that does not hold stops, naming the layer (issue 28). The link's
+configuration is made where the link is looked up, after the compile's
+options have set the level and the instruction set (issue 29).
+An entry keeps a definition's place by its module, not by the path its
+file was read from -- the interface's places with no file, HsLint's part's
+by their modules -- and a unit taken has its places put back where its
+modules are now (issue 31, as Rune's issue 9 names a file by the unit it
+is the source of): an entry is the bytes a compile anywhere gives, the
+snapshot `make` wrote read by a bin/rhc installed or copied elsewhere.
+A compile that makes several units pays for each what it holds, not what
+the units before it hold (issue 39): each is desugared after the interfaces
+of those before, learned once each as the units are made in order
+(`HsDesugar.learnMore`), and checked by HsLint after the parts of those
+before, joined once each onto what was joined before (`HsLint.join`); each
+is checked with an evidence table of its own; and what is a unit's own is
+found where it is kept -- by its modules' keys (`HsStringMap.foldPrefix`),
+among what was added since the units before were restored, an instance by
+its class and type constructor, a chain of imports searched until it
+reaches the module asked for -- not by a fold over everything known.
+A unit's Core is a function of its source and of what it reads, not of
+the order of the compile (issue 40): the checker numbers a value's type
+variables by what its unit took before it, a type variable keeps the name
+its source wrote, and so do a data type's parameters, text that a unit
+importing the value or copying the type does not read, and which moves
+while that unit is taken; so what a unit gives the units after it, each
+value's type in its interface and each of its data types, has its type
+variables named again by the place each is first met, `tK`
+(`HsDsCore.canonicalTy`, `canonicalDecl`), the unit's own values keeping
+the checker's names, a function of its source; and HsLint numbers a
+unit's inference from where the first unit's ended
+(`HsLint.counterFrom`).
+`--verify-store` takes nothing: it makes every unit and the link, and
+holds each entry that stands for one to what making it gave, byte for byte
+(its usages but its scope's, its interface and every part, HsLint's where
+both have one),
+as Rune's `--verify-cache` does, and fails where one is not. `--whole` reads the library as
+well, the reference, and keeps nothing. A unit's entry is kept in a configuration with no setting of
+the back end (the instruction set, the level, the width of int), since it
+holds no code, so one snapshot serves the stack machine and the register
+machine; the link's entry keeps them. A module's header is kept by the
+name it is read for and its text's hash, not its file, so a snapshot made
+in one place is read in another. `make` drops from the snapshot every
+configuration of another rhc (`rhc --prune-store`), so it holds this rhc's
+entries alone. At level 2 a unit made is checked by HsLint
+(`HsLint.check`) after what it found of the units before it, each unit's
+part of its entry joined (`HsLint.join`): its own modules inferred, their
+records replayed, its Core held to the inference; and what it found of its
+own modules is kept as a part of its entry (`HsLint.encode`), so the
+library, whose part the snapshot keeps, is never inferred again.
+
+**What it costs.** As it ships, `bin/rhc hello.hs -o OUT` at
+`RUNE_LINT=2` runs 59M VM instructions (42M at level 0; with
+`--typecheck-only` 20M; with `--whole` 288M), 1.26G of the machine's
+(`perf stat -e instructions:u`, the process whole) against 4.34G whole and
+1.81G from the saved world it replaced (D45's B until ruling 67); over 51
+run programs of `tests/hs/lang`, an even sample, its compile at level 2 is
+a median 0.76 of the saved world's (0.78 in all) and 0.46 of a whole one's
+in all, each program byte for byte the whole compile's. Loading
+`bin/rhc.rbc` is 0.24G of it, where restoring the world's image was 0.67G.
+The link's whole compile of what `main` reaches is three quarters of a
+compile, a third of that the checks of level 2; HsLint is 4%. Measured at
+level 0, hello compiled whole is 145M; in units with a store and nothing
+edited about 9M (the graph read 1M, the library taken 4.5M, Main taken
+2.3M, the link taken), with hello edited about 41M (Main compiled 20M, the
+link's reach 6M and its compile 9M). A clause program's compile (13 of
+`tests/hs/lang`'s run programs of one module, an even sample) at level 0:
+whole from source 147M to 379M, median 214M; against the snapshot with a
+fresh overlay 46M to 302M, median 118M; again, nothing edited, 9M to 26M,
+median 11M; each program byte for byte the whole compile's. Against the
+snapshot the link's compile is most of it where a program reaches much of
+the library (`Double`'s `show`: 224M of 302M), since the link compiles
+whole what `main` reaches.
 
 ## The graph
 

@@ -1,0 +1,4 @@
+; fail: [app] in val g: f, of type Int, is given 1
+; CoreLint, app: what is not a function is applied
+(val f Int 3)
+(val g Int (f 1))

@@ -3,6 +3,12 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) **o** [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [y](y.md)
 
 - `Obsolete` (con): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#con-obsolete)
+- `OpenPunctuation` (con): [CODE_POINT](../sig/CODE_POINT.md#con-openpunctuation)
+- `Other` (con): [CODE_POINT](../sig/CODE_POINT.md#con-other)
+- `OtherLetter` (con): [CODE_POINT](../sig/CODE_POINT.md#con-otherletter)
+- `OtherNumber` (con): [CODE_POINT](../sig/CODE_POINT.md#con-othernumber)
+- `OtherPunctuation` (con): [CODE_POINT](../sig/CODE_POINT.md#con-otherpunctuation)
+- `OtherSymbol` (con): [CODE_POINT](../sig/CODE_POINT.md#con-othersymbol)
 
 ---
 

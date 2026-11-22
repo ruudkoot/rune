@@ -1,0 +1,8 @@
+; run: --read-core tests/hs/core/lib/base.core
+; A bottom: a suspension forced under its own evaluation, x = x + 1, found
+; when it is entered again; after what the program printed, rhc says so and
+; ends with status 1, as for every bottom.
+(val x Int (case x v (_ (prim int_add v 1))))
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (putStrLn "before" w) r ((utuple w1 _) (printInt x w1)))))

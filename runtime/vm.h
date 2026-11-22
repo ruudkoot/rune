@@ -113,6 +113,22 @@ typedef struct Program {
     LineEntry *lines;
     uint32_t ninlines;
     Inlined *inlines;
+    /* whether a function of it says UPDATE and not BLACKHOLE: a suspension
+       in lazy ML's reading, which a force from inside its own code runs
+       again while it runs (D57); the collector pins what such a frame runs
+       (gc_pin_running). One that says BLACKHOLE, at its entry as Haskell's
+       do, is not run again while it runs */
+    int reruns;
+    /* whether a function of it says UPDATE or BLACKHOLE: a program with
+       suspensions, whose full collections keep a global only where live
+       code reaches it (runtime/gc/caf.c; the haskell98 roadmap's D19). No
+       program of SML has one but lazy ML's */
+    int suspends;
+    /* the most parameters a CLOSUREN or ARITY of the code gives a closure,
+       and the most arguments a CALLN or TAILCALLN gives (0: none), which
+       the check of the code finds (D15 C: the general path's
+       functions it needs, vm_isa_after_load) */
+    uint32_t apply_amax, apply_nmax;
 } Program;
 /* the representations section freed with the program (runtime/loader.c) */
 void program_free_meta(Program *p);
@@ -127,6 +143,14 @@ typedef struct UnitExport {
     uint32_t kind;       /* 0 a function, 1 a global */
     uint32_t index;
 } UnitExport;
+
+/* --caf-tables=MODE (runtime/gc/caf.c): auto, the tables where the program
+   has suspensions; off, every global a root; on, the tables in any program */
+enum { CAF_MODE_AUTO, CAF_MODE_OFF, CAF_MODE_ON };
+struct VM;
+void caf_reset(struct VM *vm);   /* the tables made again: a unit loaded, an image read */
+void caf_free(struct VM *vm);
+void caf_stats(struct VM *vm, FILE *out);
 
 /* ---------------------------------------------------------------- machine */
 
@@ -184,6 +208,9 @@ typedef struct JitOptions {
 } JitOptions;
 
 #define NUM_BUILTIN_EXNS 8
+/* the most arguments a call through a closure hands the general path's
+   shared cases in compiled code (VM.apply_args; item 24) */
+#define VM_APPLY_ARGS 8
 
 /* Where the next object goes: the state of the thread that allocates. There
    is one thread, and one of these, in the VM; a nursery of a thread's own or
@@ -220,6 +247,8 @@ typedef struct SfClass {
    chunks of 2 MiB, the one alloc fills last; its size is what a semispace
    was, the bytes of objects it may hold before it is collected, and
    collected into a list of its own (runtime/gc/copy.c). */
+/* --heap-stack's ways (GcState.heap_stack) */
+enum { HEAP_STACK_OFF = 0, HEAP_STACK_ROOTS = 1, HEAP_STACK_ALL = 2 };
 typedef struct GcState {
     Chunk *first, *last; /* the heap's chunks, in the order they were filled; last is alloc's */
     size_t closed;       /* the bytes of objects in every chunk but last */
@@ -264,6 +293,7 @@ typedef struct GcState {
        marked, the most it may mark (the heap's at its start), and of what
        it marked the boxes (box_bytes_live) */
     uint64_t marking;
+    int cycle_cafs;        /* the cycle keeps its globals by the CAF tables (runtime/gc/caf.c, caf_cycle_begin) */
     Obj **gray;
     size_t ngray, gray_cap;
     size_t cycle_marked, cycle_work, cycle_boxes;
@@ -275,6 +305,7 @@ typedef struct GcState {
     uint32_t gray_at;
     uint64_t cycles, slices;
     int stress_cycles;     /* --gc-stress-cycles: --gc-stress's collection a minor one, which begins a cycle where none marks, each slice marking little */
+    int stress_full;       /* --gc-stress-full: --gc-stress's collection a full one */
     int full_wanted;       /* vm_collect's: a full collection, not a cycle's end alone */
     size_t nursery_min, nursery_max;   /* the nursery's bounds (D2): after a full collection it is half the heap's room, within these; nursery_max 0: fixed */
     /* The large-object space (runtime/gc/los.c): objects of los_min bytes
@@ -289,6 +320,28 @@ typedef struct GcState {
     size_t nqueue, queue_cap;
     uint64_t minors, fulls, promoted, large_objects, large_bytes;
     size_t old_boxes;    /* of box_bytes_live, the old space's (the nursery's die with it) */
+    /* The stack's summary (runtime/gc/copy.c, gc_stack_roots): which slots
+       the collections' walks of the stack found roots, a bit a slot, below
+       the frame that ran then. The frames below the lowest that has run
+       since are as those walks left them, so the next walk takes their
+       roots from the bits and decodes only the frames above: a full
+       collection does not decode a deep recursion again.
+       stack_valid: the slots [0, stack_valid) the bits describe;
+       stack_low: the frame that ran when they were made, or the lowest
+       watermark since of a minor collection that did not make them again
+       (minor.c); stack_aside: a bit a slot, the closure of a frame, which
+       the CAF tables take last (caf.c), for the slots
+       [0, stack_aside_valid) */
+    uint64_t *stack_roots, *stack_aside;
+    size_t stack_words, stack_valid, stack_aside_valid, stack_low;
+    /* --heap-stack (runtime/gc/copy.c, grown's callers): what of the stack
+       the heap's sizing counts as live data beside the heap's -- nothing
+       (HEAP_STACK_OFF, the default), the slots the last walk of the whole
+       stack found roots (HEAP_STACK_ROOTS, stack_root_bytes), or every
+       slot (HEAP_STACK_ALL) -- so that a run whose full collections each
+       take a deep stack makes fewer of them, for a larger heap */
+    int heap_stack;
+    size_t stack_root_bytes;
     HeapSeg *segs;       /* an image read back, until heap_relocate */
     size_t nsegs, segs_cap;
 } GcState;
@@ -401,6 +454,12 @@ typedef struct VM {
     size_t hp, handlers_cap;
 
     Obj *builtin_exns[NUM_BUILTIN_EXNS];
+    /* Loop, the exception ENTER raises of a suspension under evaluation (a
+       loop: docs/bytecode.md, ENTER; the haskell98 roadmap's D12 and ruling
+       58), which rhc's top level takes for NonTermination: a constructor of
+       the VM's own, of no SML name, made at the first loop (vm_raise_loop)
+       and a root from then on; no image keeps it */
+    Obj *loop_exn;
 
     GcState gc;              /* the collector's own */
 #ifdef RUNE_CENSUS
@@ -515,6 +574,14 @@ typedef struct VM {
     uint32_t unit_slots;
     uint32_t unit_return;
     char unit_error[256];
+    /* D15 C (runtime/register/isa_regs.c, reg_apply): the functions of the
+       general path of a call, which the loader adds to a program with an
+       n-ary call or closure, found by their names: <apply return>, which
+       returns its argument, and <apply K R>, which applies a closure of K
+       parameters to K arguments and what that returns to R more. A table by
+       name, made again when the program has another number of functions. */
+    uint32_t *apply_stubs;   /* apply_kmax * apply_rmax, row k - 1; UINT32_MAX for none */
+    uint32_t apply_kmax, apply_rmax, apply_return, apply_nfuncs;
     /* The constants a minor collection has taken as roots, from 0: they
        never change, so those below it point into the old space and are not
        taken again (runtime/gc/gc.h, MINOR_ROOTS); a unit loaded adds above
@@ -556,6 +623,16 @@ typedef struct VM {
     Value callback_result;
     unsigned callback_depth;
     int (*callback_loop)(struct VM *); /* process-local engine entry, never serialized */
+    /* CAF tables (runtime/gc/caf.c): made at the first full collection of a
+       program with suspensions, NULL before; and --caf-tables's mode */
+    struct CafTables *caf;
+    int caf_mode;
+    /* The arguments' words that a call through a closure in compiled code
+       hands the general path's cases shared by every call of as many (the
+       haskell98 roadmap's item 24; register/jit/emit.c, apply_shared):
+       read at once by code that calls nothing and collects nothing, so no
+       root. */
+    Value apply_args[VM_APPLY_ARGS];
 } VM;
 
 /* Whether p points into the room objects are made in (alloc). Young and
@@ -580,6 +657,7 @@ static inline size_t heap_used(const VM *vm) { return vm->gc.closed + vm->gc.los
    measures one. Before the store: *f is the value overwritten. */
 void gc_write(Obj *o, Value *f);
 void gc_shade_old(VM *vm, Obj *o, Value old);
+void gc_shade_code(VM *vm, Obj *o);
 static inline void gc_barrier(VM *vm, Obj *o, Value *f, Value v) {
 #ifdef RUNE_BARRIER_CARDS
     rune_cards[((uintptr_t)f >> CARD_SHIFT) & (CARD_COUNT - 1)] = 1;
@@ -589,6 +667,28 @@ static inline void gc_barrier(VM *vm, Obj *o, Value *f, Value v) {
        (runtime/gc/cycle.c) */
     if (vm->gc.marking) gc_shade_old(vm, o, *f);
     if (vm->gc.nursery && val_is_ptr(v) && heap_is_young(vm, val_ptr(v)) && !heap_is_young(vm, o)) gc_write(o, f);
+}
+/* THE BARRIER's part for code, while a cycle of the low-pause collector
+   keeps the globals by the CAF tables (runtime/gc/caf.c): a suspension
+   whose code may run stops being one (BLACKHOLE, UPDATE), its code then
+   running in a frame the cycle's snapshot never saw, so the globals that
+   code reads are taken now, as marking the suspension would have taken
+   them; else the cycle's end makes unit a global the code goes on to read
+   (D19's B under --gc low-pause). Every engine's BLACKHOLE and UPDATE come
+   here while a cycle marks (the JIT's through SLOW_THUNK). */
+static inline void gc_barrier_code(VM *vm, Obj *o) {
+    if (vm->gc.marking && vm->gc.cycle_cafs) gc_shade_code(vm, o);
+}
+/* A suspension goes under evaluation (BLACKHOLE): what it captured is let
+   go as if each field were overwritten, which the snapshot of the
+   low-pause collector's cycle may reach by those fields alone; and the
+   globals its code reads taken (gc_barrier_code). */
+static inline void vm_blackhole(VM *vm, Obj *o) {
+    if (vm->gc.marking) {
+        gc_barrier_code(vm, o);
+        for (uint32_t i = 1; i < obj_scanned_fields(o); i++) gc_shade_old(vm, o, obj_field(o, i));
+    }
+    obj_blackhole(o);
 }
 
 /* heap.c */
@@ -602,6 +702,9 @@ Obj *vm_string_from(VM *vm, const char *s, uint32_t len);
    of every object every collection visits */
 static inline size_t obj_size(const Obj *o) { return obj_size_of(obj_kind(o), obj_len(o)); }
 void vm_gc(VM *vm, size_t needed);
+/* a selector whose tuple is evaluated: the field the collector would give
+   for it, where FORCE would ENTER it (D17's count); else v */
+Value vm_selected(const VM *vm, Value v);
 void vm_collect(VM *vm);   /* Runtime.collect: a full collection, the low-pause collector's cycle ended first */
 uint64_t vm_share(VM *vm);   /* Runtime.share: equal immutable objects made one (runtime/gc/share.c); the bytes freed */
 int heap_relocate(VM *vm, uintptr_t old_base);  /* after an image is read: 0 when it is not sound */
@@ -799,6 +902,7 @@ void vm_frames_to_interpreter(VM *vm);
 VM_NORETURN void vm_exit(VM *vm, int status);
 int vm_raise(VM *vm, Value exn);            /* unwinds; returns 1 (never returns on uncaught) */
 int vm_raise_builtin(VM *vm, int k);
+int vm_raise_loop(VM *vm);
 int vm_interrupt(VM *vm);                   /* the interrupt waiting raised, the VM exact (VM.interrupt) */
 /* whether a poll raises the interrupt: one waits, and the mask lets it */
 static inline int vm_interrupted(const VM *vm) { return (vm->interrupt & 1) && !vm->interrupt_mask; }
@@ -953,10 +1057,25 @@ typedef struct Relocation {
 int relocate_code(uint8_t *code, const Relocation *r, char *err, size_t errlen);
 /* into out, at least 16 bytes: the code; its frame's size; how long */
 uint32_t return_function_code(uint8_t *out, uint32_t *nlocals);
+/* what the instruction set adds to a program it has loaded: the functions
+   of the general path of a call (D15 C), <apply return> and <apply K R>,
+   where the program has a closure of more parameters than one or a call
+   of more arguments, those it has not already: after a program is loaded,
+   and after each unit (load_unit_mem). 1, or 0 and why. */
+int vm_isa_after_load(VM *vm, char *err, size_t errlen);
+/* The stack bytecode's general path of a call through a closure (D15 C;
+   runtime/stack/isa_stack.c), for its loop and runeopt's glue: the closure
+   and n arguments on the stack's top; a frame made (pushed at the
+   closure, returning to ret_pc and from native code to back; for a tail
+   call in the running one's place) and vm->pc its function's code, or a
+   partial application left on the stack for the instruction at ret_pc,
+   vm->pc. */
+enum { STACK_APPLY_ENTERED = 0, STACK_APPLY_VALUE = 1 };
+int stack_apply(VM *vm, uint32_t n, int tail, uint32_t ret_pc, const void *back);
 
 /* What each VM's instruction set gives (runtime/stack/isa_stack.c, runtime/register/isa_regs.c):
    the fingerprint an .rbc must carry, and the first bytes of an image. */
-#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 15 isa 00000000")
+#define ISA_IMAGE_MAGIC_SIZE sizeof("runevm image 16 isa 00000000")
 extern const uint32_t isa_fingerprint;
 extern const char isa_image_magic[ISA_IMAGE_MAGIC_SIZE];
 const LineEntry *line_at(const Program *p, uint32_t pc);

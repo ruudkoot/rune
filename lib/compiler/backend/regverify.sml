@@ -229,9 +229,9 @@ struct
       fun constRep k =
         if k < 0 orelse k >= nconsts then ANY
         else case Vector.sub (consts, k) of
-               Lambda.CInt _ => RINT | Lambda.CWord _ => RWORD | Lambda.CInt64 _ => RINT64
-             | Lambda.CWord64 _ => RWORD64 | Lambda.CReal _ => RREAL | Lambda.CString _ => RPTR
-             | Lambda.CChar _ => RCHAR
+               Literal.CInt _ => RINT | Literal.CWord _ => RWORD | Literal.CInt64 _ => RINT64
+             | Literal.CWord64 _ => RWORD64 | Literal.CReal _ => RREAL | Literal.CString _ => RPTR
+             | Literal.CChar _ => RCHAR
 
       (* the labels of the program: the function that has it, where it is
          a handler's what its block begins with, the state of the ways into
@@ -664,7 +664,9 @@ struct
                 else case idx (nth (ops, #closes info)) of
                        ~1 => ()
                      | i => (Array.update (closed, i, true);
-                             if arityOf i <> 1 then breach ("a closure of f" ^ i2s (nth (ops, #closes info)) ^ ", of arity " ^ i2s (arityOf i)) else ())
+                             (* CLOSUREN's function has the parameters it says (D15 C) *)
+                             if arityOf i <> (if opc = R.CLOSUREN then nth (ops, 2) else 1)
+                             then breach ("a closure of f" ^ i2s (nth (ops, #closes info)) ^ ", of arity " ^ i2s (arityOf i)) else ())
               val () = if #known info < 0 then () else case idx (nth (ops, #known info)) of ~1 => () | i => Array.update (calledKnown, i, true)
               (* the writes *)
               val () = writes (opc, ops, info, #wr info)
@@ -694,6 +696,14 @@ struct
                       if t' >= 0 then (if t' = t then () else (arrive (l, 0, ~1, 0); stop ()))
                       else (arrive (l, 0, s, notBase + t); setFact (s, 1 + t))
                     end
+                  else if opc = R.FORCE then
+                    (* FORCE goes on only where its value is a suspension,
+                       a pointer, which ENTER then reads: where it holds an
+                       int -- a value cast into a suspension and captured,
+                       of the closure's slot -- it jumps (by hand; docs/ir.md,
+                       Suspensions) *)
+                    let val s = nth (ops, 1)
+                    in arrive (l, 0, ~1, 0); setCell (s, cell (RPTR, 0)) end
                   else arrive (l, 0, ~1, 0)
               | R.Jump => (arrive (l, 1, ~1, 0); stop ())
               | R.Return => (leaving opc; stop ())

@@ -175,6 +175,12 @@ typedef struct JitProgram {
        function's code (M4); its stubs enter native code and leave it */
     uint8_t *code_mem;
     size_t code_cap, code_used;
+    /* the general path's cases shared by the calls through a closure of n
+       arguments, [0][n] and of tail calls [1][n], placed from the region's
+       top down to code_top as a call first wants them, NULL before (item
+       24; jit/emit.c, apply_shared); a program made again forgets them */
+    size_t code_top;
+    const void *apply_shared[2][VM_APPLY_ARGS + 1];
     const void *enter_at, *leave_at;
     const void *fatal_at;       /* the stub of the fatal errors, beside them */
     JitFatalSite *fatals;           /* the fatal errors of the code, by the number it gives the stub; the process's */
@@ -227,16 +233,18 @@ typedef struct JitProgram {
     const void *call_interp;    /* the stub a call goes to where the callee has no code (M6), in the region */
     const void *ret_tramp;      /* the return trampoline (VM.ret_tramp, M6), in the region: a new world's VM is given it again (jit_make) */
     const void *barrier;        /* the stack's return barrier (VM.barrier_stub; native-frames.md, M5), in the region: and the barrier too */
+    const void *select;         /* the select stub (masm.h, ms_emit_select; D17's C), in the region */
     uint32_t deopt_stress;      /* --deopt-stress=N (M11): the code counts instruction boundaries here and leaves at every Nth */
     uint64_t deopt_count;
     uint64_t deopts;            /* how many times it left so */
     /* the code in the region by address (native-frames.md, M4): a range
        per function's code as it was compiled, in the order of the region
        and so of address, its function UINT32_MAX once it is invalidated;
-       and a cache of the return words it was asked of last */
+       and a cache of the return words it was asked of last (JIT_SEEN_BITS) */
     struct CodeRange { uintptr_t lo, hi; uint32_t func; } *ranges;
     uint32_t nranges, ranges_cap;
-    struct LandingSeen { Value word; uint32_t func, pc; size_t below; } seen[256];   /* below: how far below the frame its caller's base is, the caller's registers and the header */
+    struct LandingSeen *seen;   /* JIT_SEEN of them (jit_landing_seen) */
+    uint32_t *seen_used, nseen_used;   /* the slots written since they were last forgotten, each once */
     uint64_t walked_landings;   /* --jit-stats: the return words of compiled code the walks of the frames read */
 } JitProgram;
 /* the lowest register of function f a call must fill with unit */
@@ -274,10 +282,31 @@ void jit_depend(JitProgram *jit, uint32_t callee, uint32_t caller);
    RESULT of the call (the walk of the frames, runtime/register/isa_regs.c);
    0 where it is none */
 int jit_landing_info(VM *vm, Value w, uint32_t *func, uint32_t *pc);
-/* the return words it was asked of last, by jit_seen_slot (JitProgram.seen;
-   NULL while there is no program): looked at in line by the walk first */
+/* The return words it was asked of last (JitProgram.seen; NULL while there
+   is no program), by jit_seen_slot, one slot a word: looked at in line by
+   the walk first. Code that dies (jit_invalidate), and a program made
+   again (jit_make), forget them: the slots written since the last time
+   (JitProgram.seen_used) are emptied, not the whole cache, which a memset
+   of each function's at jit_make made 1.5 MiB a function; and a lookup
+   tests the word alone, as it did (an epoch's test cost a deep stack's
+   walk 0.5%: rec, 100,000 frames).
+   JIT_SEEN_BITS is 16, 65536 slots (1.5 MiB, 24 bytes a slot, one cache a
+   process): with 256 (8 bits), two landings a program's frames return to
+   often shared a slot as the code's layout fell -- the build's, and the
+   region's address in each run -- and then a walk of the frames read the
+   code's ranges for most frames, a collection of a deep stack the slower
+   by it: nofib's gg at -O1 +8% at tier 2 on one build of the VM against
+   another, 0.2% apart with 65536 (haskell98 M25, D17; SEL, impl/sel).
+   The slots and the list of those written (256 KiB) are pages of their
+   own (sys_mem_reserve), which the system gives zeroed as they are first
+   written: a program that walks few frames touches few of them, and
+   malloc's arena is as it was. */
+#define JIT_SEEN_BITS 16
+#define JIT_SEEN (1u << JIT_SEEN_BITS)
+#define JIT_SEEN_ALIGN 65536   /* for sys_mem_reserve: a page and Windows' granularity, which any multiple of JIT_SEEN is a multiple of */
+struct LandingSeen { Value word; uint32_t func, pc; size_t below; };   /* below: how far below the frame its caller's base is, the caller's registers and the header; word 0: empty */
 extern struct LandingSeen *jit_landing_seen;
-static inline uint32_t jit_seen_slot(Value w) { return (uint32_t)((w >> 1) * 0x9E3779B97F4A7C15u >> 56); }
+static inline uint32_t jit_seen_slot(Value w) { return (uint32_t)((w >> 1) * 0x9E3779B97F4A7C15u >> (64 - JIT_SEEN_BITS)); }
 /* function f's code is placed at at, size bytes: its range, for jit_landing_info */
 void jit_code_placed(JitProgram *jit, uint32_t f, const void *at, size_t size);
 /* runtime/register/isa_regs.c: the frames whose return word is a landing

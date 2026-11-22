@@ -1,10 +1,12 @@
 name	kind	signature	realisations	status	origin	source
+CODE_POINT	signature			required	declared	lib/unicode/code_point_sig.sml
 DISPLAY_WIDTH	signature			required	declared	lib/unicode/display_width_sig.sml
 GRAPHEME	signature			required	declared	lib/unicode/grapheme_sig.sml
 IDENTIFIER	signature			required	declared	lib/unicode/identifier_sig.sml
 NORMALIZE	signature			required	declared	lib/unicode/normalize_sig.sml
 UNICODE_SECURITY	signature			required	declared	lib/unicode/security_sig.sml
 UTF8	signature			required	declared	lib/unicode/utf8_sig.sml
+CodePoint	structure	CODE_POINT		required	claimed	lib/unicode/code_point.sml
 DisplayWidth	structure	DISPLAY_WIDTH		required	claimed	lib/unicode/display_width.sml
 Grapheme	structure	GRAPHEME		required	claimed	lib/unicode/grapheme.sml
 Identifier	structure	IDENTIFIER		required	claimed	lib/unicode/identifier.sml

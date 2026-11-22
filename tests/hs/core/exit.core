@@ -1,0 +1,8 @@
+; run: --read-core tests/hs/core/lib/base.core
+; exit: the program ends where it says, with its status, and what it
+; printed before written; nothing after it runs.
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (putStrLn "before" w) r
+      ((utuple w1 _)
+        (case (prim exit 3 w1) w2 (_ (putStrLn "after" w2)))))))

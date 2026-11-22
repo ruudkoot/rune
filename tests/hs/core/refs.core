@@ -1,0 +1,16 @@
+; run: --read-core tests/hs/core/lib/base.core
+; Cells, through the state token: a new cell holds what it is given, not
+; forced, so a bottom can sit in it; a write puts in another, which a read
+; then gives.
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (b Int (error @Int "never forced"))
+    (case (prim ref_new @Int b w) n
+      ((utuple w1 c)
+        (case (prim ref_get @Int c w1) g
+          ((utuple w2 x)
+            (case (putStrLn "read, unforced" w2) o1
+              ((utuple w3 _)
+                (case (prim ref_set @Int c 5 w3) w4
+                  (_ (case (prim ref_get @Int c w4) g2
+                       ((utuple w5 y) (printInt y w5))))))))))))))

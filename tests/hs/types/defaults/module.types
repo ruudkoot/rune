@@ -1,0 +1,3 @@
+# defaults under --cycle-default=module
+TYPE	A	a	[Char]
+TYPE	B	b	Int

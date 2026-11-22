@@ -1,0 +1,6 @@
+(* The client of mid-client.build with a name of the elaborator, which the
+   layer does not have, so that it does not compile (compiler/mid-client). *)
+libraries unicode json end
+../../build/config.sml
+use ../../lib/compiler/mid.build
+files ../../tests/compiler/mid-client.sml ../../tests/compiler/mid-client-elab.sml end

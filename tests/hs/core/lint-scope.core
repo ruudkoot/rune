@@ -1,0 +1,3 @@
+; fail: [scope] in val f: the variable y is not bound
+; CoreLint, scope: every variable bound
+(val f (-> Int Int) (\ ((x Int)) y))

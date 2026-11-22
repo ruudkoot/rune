@@ -297,5 +297,22 @@ struct
                    valOf (Real32.fromDecimal {class = IEEEReal.NORMAL, sign = true, digits = [1], exp = 0})))
   val () = T.check ("Real32.toDecimal/TO_POSINF-shortest",
                     fn () => #digits (inMode IEEEReal.TO_POSINF (fn () => Real32.toDecimal (s 0.1))) = [1])
+  (* round and realRound take no mode: the greatest binary32 below one half,
+     ties, the whole 2^23 + 1 and the tie 2^23 - 0.5, with each mode set *)
+  val () = List.app (fn (name, mode) =>
+             List.app (fn (what, x, n, whole) =>
+                         let val y = s x
+                         in eqI ("Real32.round/" ^ name ^ "-" ^ what, n, fn () => inMode mode (fn () => Real32.round y));
+                            eq32 ("Real32.realRound/" ^ name ^ "-" ^ what, whole, fn () => inMode mode (fn () => Real32.realRound y))
+                         end)
+                      [("just-below-half", 0.5 - 1.0 / 33554432.0, 0, 0.0),
+                       ("just-below-half-negative", ~ (0.5 - 1.0 / 33554432.0), 0, ~0.0),
+                       ("tie-half", 0.5, 0, 0.0),
+                       ("tie-two-and-half", 2.5, 2, 2.0),
+                       ("tie-negative-two-and-half", ~2.5, ~2, ~2.0),
+                       ("large-odd", 8388609.0, 8388609, 8388609.0),
+                       ("large-tie-to-even", 8388607.5, 8388608, 8388608.0)])
+           [("TO_NEAREST", IEEEReal.TO_NEAREST), ("TO_NEGINF", IEEEReal.TO_NEGINF),
+            ("TO_POSINF", IEEEReal.TO_POSINF), ("TO_ZERO", IEEEReal.TO_ZERO)]
   (*>> rounding-modes *)
 end

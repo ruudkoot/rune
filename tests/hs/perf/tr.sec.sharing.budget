@@ -1,0 +1,5 @@
+# rhc's policy (D55; tests/runner/hsperf.sml): instructions under bin/runevm --count, the run on stdin a against
+# the run on stdin b; shared, the count about doubles; unshared, it quadruples.
+a: 4000
+b: 2000
+ratio: 2.6

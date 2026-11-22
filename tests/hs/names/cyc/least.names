@@ -1,0 +1,7 @@
+# E16: 5 pairs at the least fixpoint, under a Prelude of the program's own.
+pairs 5
+EXPORT	A	vA a
+EXPORT	A	vB b
+EXPORT	B	vA a
+EXPORT	B	vB b
+EXPORT	C	vC c

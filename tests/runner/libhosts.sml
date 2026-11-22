@@ -23,6 +23,7 @@ struct
        ("unicode.normalize-props", ["unicode"], "unicode/normalize_props"),
        ("unicode.identifier", ["unicode"], "unicode/identifier"),
        ("unicode.security", ["unicode"], "unicode/security"),
+       ("unicode.code-point", ["unicode"], "unicode/code_point"),
        ("json.suite", ["unicode", "json"], "json/suite"),
        ("json.roundtrip", ["unicode", "json"], "json/roundtrip"),
        ("terminal.key", ["unicode", "terminal"], "terminal/key"),

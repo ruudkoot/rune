@@ -61,7 +61,7 @@ struct
         val (status,dir)=execute ("compile/" ^ id ^ "/" ^ name) root ""
               (fromRoot (#compiler f) :: words (fromRoot ("tests/lang/" ^ name ^ ".cargs"))
                        @ ["tests/lang/" ^ name ^ ".sml","-o",output])
-    in wanted (LangChecks.compileJudge (false,name)) status (dir ^ "/stdout") (dir ^ "/stderr");
+    in wanted (LangChecks.compileJudge (false,"tests/lang/" ^ name)) status (dir ^ "/stdout") (dir ^ "/stderr");
        need (exists output,"Windows compiler produced no bytecode") end
   fun runCase familyName vm name () =
     let val f=family familyName
@@ -83,7 +83,7 @@ struct
                    dir=SOME directory,stdin="",stdout=dir ^ "/restored",stderr=dir ^ "/restored.err",timeout=900}
               val ()=write (dir ^ "/restored.code",Int.toString status ^ "\n")
           in mkdirs (dir ^ "/tests/out");MatrixLoad.copy (image,dir ^ "/tests/out/" ^ name ^ ".img") end
-    in wanted (LangChecks.runJudge (false,name)) status (dir ^ "/stdout") (dir ^ "/stderr") end
+    in wanted (LangChecks.runJudge (false,"tests/lang/" ^ name)) status (dir ^ "/stdout") (dir ^ "/stderr") end
   val layoutCases=["rt.gc_stress","rt.deeprec_stack","rt.closure_capture","rt.equality_structural"]
   fun endpoint f vm suffix scope : VMOracles.endpoint =
     {name=OS.Path.file vm ^ suffix,program=fromRoot vm,directory=directory () ^ "/oracle/" ^ #name (f : family) ^ "/" ^ scope ^ "/" ^ OS.Path.file vm ^ suffix,

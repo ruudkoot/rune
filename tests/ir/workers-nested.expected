@@ -1,6 +1,6 @@
 (* after workers *)
 (funs
-  (fn g1 ((v1 : int) (v2 : int) (v3 : int) (v4 : int)) : int * int
+  (fn g1 ((v1 : int) (v2 : int) (v3 : int) (v4 : int)) : int * int "sub"
     (let (v5 : int) v1
     (let (v6 : int) v5
     (let (v7 : int) v2
@@ -13,7 +13,7 @@
     (let (v14 : int) (prim int_sub v8 v12 : (int * int) -> int)
     (return (tuple v13 v14))))))))))))))
 (funs
-  (fn g2 ((v15 : int * int) (v16 : int * int)) : int * int
+  (fn g2 ((v15 : int * int) (v16 : int * int)) : int * int "use"
     (let (v17 : int * int) v15
     (let (v18 : int * int) v17
     (let (v19 : int * int) v16

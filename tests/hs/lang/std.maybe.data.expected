@@ -1,0 +1,7 @@
+(True,True,Just 2,"Just 'a'")
+(True,True,Right 3,"Left 'a'")
+([LT,EQ,GT],True,True,GT,"EQ")
+(LT,GT,EQ,2)
+(LT,EQ,GT)
+(Just 2,Nothing,Just 3)
+(6,0,2,-3)

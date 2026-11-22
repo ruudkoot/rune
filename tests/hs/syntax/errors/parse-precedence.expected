@@ -1,0 +1,1 @@
+parse-precedence.hs:2:8: error: the precedence `10` in a fixity declaration, where a precedence is 0 to 9

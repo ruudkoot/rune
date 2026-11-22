@@ -21,6 +21,7 @@ struct
   val en = "lib/compiler/elab/env.sml"
   val fx = "lib/compiler/frontend/fixity.sml"
   val um = "lib/compiler/driver/unitmid.sml"
+  val md = "lib/compiler/core/midcodec.sml"
   val cc = "src/driver/cachecheck.sml"
   val mn = "src/driver/main.sml"
   val st = "lib/compiler/state.sml"
@@ -239,11 +240,11 @@ struct
        ub,
        "      val named = List.foldl insert [] (List.map (fn c => (anchor (kTycon, #stamp c), c)) cs)",
        "      val named = List.map (fn c => (anchor (kTycon, #stamp c), c)) cs"),
-    m ("M1", "UnitMid: the names of functions not kept", "", false, "",
+    m ("M1", "UnitMid: the labels of functions not kept", "", false, "",
        [("S55", "warm build did not verify")],
-       um,
-       "(#w c, funNames')",
-       "(#w c, [])"),
+       md,
+       "(#stamp c name';\n         P.option (fn (_, x_1) => P.string (#w c, x_1)) (#w c, label');",
+       "(#stamp c name';\n         P.option (fn (_, x_1) => P.string (#w c, x_1)) (#w c, NONE);"),
     m ("M2", "UnitMid: the layouts a body fixed not kept", "", false, "",
        [("S101", "is not the whole compile")],
        um,

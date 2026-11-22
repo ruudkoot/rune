@@ -5,9 +5,9 @@
    * A-normal form: every operand of a call, a primitive or a constructor is
      an atom, a variable or a constant, and the datatype says so.
    * Join points: `Join (j, params, body, scope)` binds a label that `scope`
-     jumps to, in tail position only, and that no function captures. A Try
-     of Lambda is one without parameters; the rest of an expression that
-     branches, one with.
+     jumps to, in tail position only, and that no function captures. The
+     rest of a match where a rule fails is one without parameters; the rest
+     of an expression that branches, one with.
    * Functions take a list of parameters; the calling convention (M8) makes
      them n-ary, and until then each takes one.
    * The top level is a list of definitions, not one term nested once per
@@ -17,7 +17,10 @@
      position of a Handle's body is no tail call.
    * Explicitly typed, in the manner of System F: every binder says its type,
      a polymorphic one the variables it abstracts over, and every use of it
-     the types it is used at. Variables are stamps, unique in the program. *)
+     the types it is used at. Variables are stamps, unique in the program.
+   * A function may have a label: the name a person knows it by, which the
+     bytecode's function table, a disassembly and a trace show. Every copy of
+     a function a pass makes keeps it; a function without one is `fn`. *)
 structure Mid =
 struct
   type var = int
@@ -38,7 +41,7 @@ struct
   datatype atom =
       Var of var * Ty.ty list             (* a local variable, at these types for its variables *)
     | Global of var * Ty.ty list
-    | Const of Lambda.const * Ty.ty
+    | Const of Literal.const * Ty.ty
     | Con0 of int * Ty.ty                 (* a nullary constructor, by its tag, and its datatype *)
     | Unit
 
@@ -70,7 +73,12 @@ struct
     | Raise of atom
     | Return of rhs                       (* the value of the expression *)
     | Mark of pos * exp                   (* where in the source what follows came from *)
-  withtype fundef = {name : var, tyvars : int list, params : (var * Ty.ty) list, result : Ty.ty, body : exp}
+    | Case of atom * (int * exp) list * exp option
+                                          (* a test of a datatype's value: its tag's arm, each a tag and
+                                             the code where the value has it, and the code where it has
+                                             none of theirs -- NONE where the arms are every tag *)
+  withtype fundef = {name : var, label : string option, tyvars : int list, params : (var * Ty.ty) list, result : Ty.ty,
+                     body : exp}
 
   datatype def =
       Val of var * scheme * exp           (* a global, the value of the expression *)
@@ -84,6 +92,216 @@ struct
     case params of
       [(_, t)] => Ty.arrow (t, result)
     | _ => Ty.arrow (Ty.tuple (List.map #2 params), result)
+
+  (* ---- the parts of a step and of an expression ---- *)
+
+  (* What follows names every form of a step and of an expression, with no
+     catch-all, and a walker whose arms would only do what one of these
+     does asks it instead (docs/ir.md, Walking Mid): so a form added to
+     rhs or exp is a match that is not exhaustive here and in the walkers
+     that say more of it, not one that a catch-all takes for a step with no
+     atoms, or for an expression with nothing under it. *)
+
+  (* The atoms a step names, in the order it names them. *)
+  fun atomsOfRhs (r : rhs) : atom list =
+    case r of
+      Atom a => [a]
+    | App (f, xs) => f :: xs
+    | Prim (_, _, xs) => xs
+    | Tuple xs => xs
+    | Select (_, a) => [a]
+    | Con (_, _, a) => [a]
+    | Decon (_, _, a) => [a]
+    | ConTag a => [a]
+    | NewExn _ => []
+    | BuiltinExn _ => []
+    | MkExn (c, a) => [c, a]
+    | ExnCon a => [a]
+    | ExnArg (_, a) => [a]
+    | SetGlobal (_, a) => [a]
+
+  (* The atoms of a step (atomsOfRhs) given to f in order, from z, with no
+     list made of them: what the walkers that run most ask, the census of
+     every round of Simplify among them. *)
+  fun foldAtomsOfRhs (f : atom * 'a -> 'a) (z : 'a) (r : rhs) : 'a =
+    case r of
+      Atom a => f (a, z)
+    | App (g, xs) => List.foldl f (f (g, z)) xs
+    | Prim (_, _, xs) => List.foldl f z xs
+    | Tuple xs => List.foldl f z xs
+    | Select (_, a) => f (a, z)
+    | Con (_, _, a) => f (a, z)
+    | Decon (_, _, a) => f (a, z)
+    | ConTag a => f (a, z)
+    | NewExn _ => z
+    | BuiltinExn _ => z
+    | MkExn (c, a) => f (a, f (c, z))
+    | ExnCon a => f (a, z)
+    | ExnArg (_, a) => f (a, z)
+    | SetGlobal (_, a) => f (a, z)
+
+  (* Each atom of a step given to f, in order. *)
+  fun appAtomsOfRhs (f : atom -> unit) (r : rhs) : unit =
+    case r of
+      Atom a => f a
+    | App (g, xs) => (f g; List.app f xs)
+    | Prim (_, _, xs) => List.app f xs
+    | Tuple xs => List.app f xs
+    | Select (_, a) => f a
+    | Con (_, _, a) => f a
+    | Decon (_, _, a) => f a
+    | ConTag a => f a
+    | NewExn _ => ()
+    | BuiltinExn _ => ()
+    | MkExn (c, a) => (f c; f a)
+    | ExnCon a => f a
+    | ExnArg (_, a) => f a
+    | SetGlobal (_, a) => f a
+
+  (* Whether p holds of every atom of a step, and of some. *)
+  fun allAtomsOfRhs (p : atom -> bool) (r : rhs) : bool = foldAtomsOfRhs (fn (a, ok) => ok andalso p a) true r
+  fun existsAtomOfRhs (p : atom -> bool) (r : rhs) : bool = foldAtomsOfRhs (fn (a, any) => any orelse p a) false r
+
+  (* The types a step says, but for those of its atoms: none, or the one it
+     names before its atoms. *)
+  fun typesOfRhs (r : rhs) : Ty.ty list =
+    case r of
+      Atom _ => []
+    | App _ => []
+    | Prim (_, t, _) => [t]
+    | Tuple _ => []
+    | Select _ => []
+    | Con (_, t, _) => [t]
+    | Decon (_, t, _) => [t]
+    | ConTag _ => []
+    | NewExn _ => []
+    | BuiltinExn _ => []
+    | MkExn _ => []
+    | ExnCon _ => []
+    | ExnArg (t, _) => [t]
+    | SetGlobal _ => []
+
+  (* The step with each of its parts what the members make of it, in the
+     order the step names them, so each type before the atom after it: the
+     types it says (ty), its atoms (atom), and the global a SetGlobal sets
+     (global). *)
+  fun mapRhsWith ({ty, atom, global} : {ty : Ty.ty -> Ty.ty, atom : atom -> atom, global : var -> var})
+                 (r : rhs) : rhs =
+    case r of
+      Atom a => Atom (atom a)
+    | App (f, xs) => App (atom f, List.map atom xs)
+    | Prim (p, t, xs) => Prim (p, ty t, List.map atom xs)
+    | Tuple xs => Tuple (List.map atom xs)
+    | Select (i, a) => Select (i, atom a)
+    | Con (tag, t, a) => Con (tag, ty t, atom a)
+    | Decon (tag, t, a) => Decon (tag, ty t, atom a)
+    | ConTag a => ConTag (atom a)
+    | NewExn _ => r
+    | BuiltinExn _ => r
+    | MkExn (c, a) => MkExn (atom c, atom a)
+    | ExnCon a => ExnCon (atom a)
+    | ExnArg (t, a) => ExnArg (ty t, atom a)
+    | SetGlobal (g, a) => SetGlobal (global g, atom a)
+
+  (* The step with each atom what f makes of it, in the order it names
+     them, and its types and globals as they are: mapRhsWith, made for the
+     walkers that run most (Simplify's substitution), with no record. *)
+  fun mapRhs (f : atom -> atom) (r : rhs) : rhs =
+    case r of
+      Atom a => Atom (f a)
+    | App (g, xs) => App (f g, List.map f xs)
+    | Prim (p, t, xs) => Prim (p, t, List.map f xs)
+    | Tuple xs => Tuple (List.map f xs)
+    | Select (i, a) => Select (i, f a)
+    | Con (tag, t, a) => Con (tag, t, f a)
+    | Decon (tag, t, a) => Decon (tag, t, f a)
+    | ConTag a => ConTag (f a)
+    | NewExn _ => r
+    | BuiltinExn _ => r
+    | MkExn (c, a) => MkExn (f c, f a)
+    | ExnCon a => ExnCon (f a)
+    | ExnArg (t, a) => ExnArg (t, f a)
+    | SetGlobal (g, a) => SetGlobal (g, f a)
+
+  (* The expressions of a Case's arms and its default, in order. *)
+  fun caseExps (arms : (int * exp) list, d : exp option) : exp list =
+    List.foldr (fn ((_, e), es) => e :: es) (case d of SOME e => [e] | NONE => []) arms
+
+  (* A Case's arms and default, each expression what f makes of it, in
+     order. *)
+  fun mapCase (f : exp -> exp) (arms : (int * exp) list, d : exp option) : (int * exp) list * exp option =
+    let val arms = List.map (fn (t, e) => (t, f e)) arms
+    in (arms, Option.map f d) end
+
+  (* What fold gives its members of each part of an expression, with what
+     the parts before it have made. *)
+  type 'a folder =
+    {rhs : rhs * 'a -> 'a,          (* a step: a Let's, or a Return's *)
+     atom : atom * 'a -> 'a,        (* an atom outside a step: an If's test, a Jump's argument, a Raise's exception *)
+     jump : label * 'a -> 'a,       (* a jump, by its label, after its arguments *)
+     fundef : fundef * 'a -> 'a}    (* a function made in the expression: its body is the member's to walk, or not *)
+
+  (* The parts of e given to f's members in the order e names them, from z,
+     each given what the one before made: the expressions in e are walked
+     in turn -- a Let's body after its step, a join point's body before
+     its scope, an If's branches after its test, a Handle's body before its
+     handler -- but for the bodies of the functions made in e, which are
+     the member fundef's. *)
+  fun fold (f : 'a folder) (z : 'a) (e : exp) : 'a =
+    let
+      fun go (e, acc) =
+        case e of
+          Let (_, _, r, b) => go (b, #rhs f (r, acc))
+        | Fun (fs, b) => go (b, List.foldl (#fundef f) acc fs)
+        | Join (_, _, body, sc) => go (sc, go (body, acc))
+        | Jump (j, xs) => #jump f (j, List.foldl (#atom f) acc xs)
+        | If (a, t, e') => go (e', go (t, #atom f (a, acc)))
+        | Handle (a, _, h) => go (h, go (a, acc))
+        | Raise a => #atom f (a, acc)
+        | Return r => #rhs f (r, acc)
+        | Mark (_, a) => go (a, acc)
+        | Case (a, arms, d) => List.foldl go (#atom f (a, acc)) (caseExps (arms, d))
+    in go (e, z) end
+
+  (* Each step of e given to f, in the order e names them, those of the
+     functions made in e among them, each at its place: as fold walks e,
+     with a body of its own, which makes no pair of a part and what the
+     parts before made, for the walkers that run on every copy Expand
+     makes (Expand.copyExpWith). *)
+  fun appRhs (f : rhs -> unit) (e : exp) : unit =
+    let
+      fun go e =
+        case e of
+          Let (_, _, r, b) => (f r; go b)
+        | Fun (fs, b) => (List.app (fn (g : fundef) => go (#body g)) fs; go b)
+        | Join (_, _, body, sc) => (go body; go sc)
+        | Jump _ => ()
+        | If (_, t, e') => (go t; go e')
+        | Handle (a, _, h) => (go a; go h)
+        | Raise _ => ()
+        | Return r => f r
+        | Mark (_, a) => go a
+        | Case (_, arms, d) => (List.app (fn (_, a) => go a) arms; Option.app go d)
+    in go e end
+
+  (* Whether p holds of some step of e, a function's made in e among them:
+     the steps are asked in the order appRhs gives them, and none after the
+     first p holds of. *)
+  fun existsRhs (p : rhs -> bool) (e : exp) : bool =
+    let
+      fun go e =
+        case e of
+          Let (_, _, r, b) => p r orelse go b
+        | Fun (fs, b) => List.exists (fn (g : fundef) => go (#body g)) fs orelse go b
+        | Join (_, _, body, sc) => go body orelse go sc
+        | Jump _ => false
+        | If (_, t, e') => go t orelse go e'
+        | Handle (a, _, h) => go a orelse go h
+        | Raise _ => false
+        | Return r => p r
+        | Mark (_, a) => go a
+        | Case (_, arms, d) => List.exists (fn (_, a) => go a) arms orelse (case d of SOME a => go a | NONE => false)
+    in go e end
 
   (* The definition with every type it writes made what f makes of it,
      given the type variables in scope there (Mid is System F: a Let's
@@ -103,22 +321,7 @@ struct
         | Const (c, t) => Const (c, ty (s, t))
         | Con0 (tag, t) => Con0 (tag, ty (s, t))
         | Unit => Unit
-      fun rhs s r =
-        case r of
-          Atom a => Atom (atom s a)
-        | App (g, xs) => App (atom s g, List.map (atom s) xs)
-        | Prim (p, t, xs) => Prim (p, ty (s, t), List.map (atom s) xs)
-        | Tuple xs => Tuple (List.map (atom s) xs)
-        | Select (i, a) => Select (i, atom s a)
-        | Con (tag, t, a) => Con (tag, ty (s, t), atom s a)
-        | Decon (tag, t, a) => Decon (tag, ty (s, t), atom s a)
-        | ConTag a => ConTag (atom s a)
-        | MkExn (c, a) => MkExn (atom s c, atom s a)
-        | ExnCon a => ExnCon (atom s a)
-        | ExnArg (t, a) => ExnArg (ty (s, t), atom s a)
-        | SetGlobal (g, a) => SetGlobal (g, atom s a)
-        | NewExn _ => r
-        | BuiltinExn _ => r
+      fun rhs s r = mapRhsWith {ty = fn t => ty (s, t), atom = atom s, global = fn g => g} r
       fun exp s e =
         case e of
           Let (x, (tvs, t), r, b) => let val s' = bind (s, tvs) in Let (x, (tvs, ty (s', t)), rhs s' r, exp s b) end
@@ -130,10 +333,11 @@ struct
         | Raise a => Raise (atom s a)
         | Return r => Return (rhs s r)
         | Mark (pos, a) => Mark (pos, exp s a)
-      and fundef s ({name, tyvars, params, result, body} : fundef) : fundef =
+        | Case (a, arms, d) => let val a = atom s a val (arms, d) = mapCase (exp s) (arms, d) in Case (a, arms, d) end
+      and fundef s ({name, label, tyvars, params, result, body} : fundef) : fundef =
         let val s = bind (s, tyvars)
-        in {name = name, tyvars = tyvars, params = List.map (fn (x, t) => (x, ty (s, t))) params, result = ty (s, result),
-            body = exp s body}
+        in {name = name, label = label, tyvars = tyvars, params = List.map (fn (x, t) => (x, ty (s, t))) params,
+            result = ty (s, result), body = exp s body}
         end
       val d' =
         case d of
@@ -174,7 +378,8 @@ struct
         | ExnCon a => atom s a
         | ExnArg (t, a) => (ty (s, t); atom s a)
         | SetGlobal (_, a) => atom s a
-        | _ => ()
+        | NewExn _ => ()
+        | BuiltinExn _ => ()
       fun exp s e =
         case e of
           Let (_, (tvs, t), r, b) => (let val s' = bind (s, tvs) in ty (s', t); rhs s' r end; exp s b)
@@ -186,6 +391,7 @@ struct
         | Raise a => atom s a
         | Return r => rhs s r
         | Mark (_, a) => exp s a
+        | Case (a, arms, d) => (atom s a; List.app (exp s) (caseExps (arms, d)))
       and fundef s ({tyvars, params, result, body, ...} : fundef) =
         let val s = bind (s, tyvars)
         in List.app (fn (_, t) => ty (s, t)) params; ty (s, result); exp s body end
@@ -200,22 +406,49 @@ struct
       handle Found => true
     end
 
-  (* The nodes of a program, for --pass-stats. *)
-  fun size (p : program) : int =
+  (* The nodes of an expression, those of the functions made in it among
+     them; a position is none. *)
+  fun sizeOfExp (e : exp) : int =
+    case e of
+      Let (_, _, _, b) => 1 + sizeOfExp b
+    | Fun (fs, b) => List.foldl (fn (f, n) => n + sizeOfExp (#body f)) (1 + sizeOfExp b) fs
+    | Join (_, _, b, s) => 1 + sizeOfExp b + sizeOfExp s
+    | Jump _ => 1
+    | If (_, t, f) => 1 + sizeOfExp t + sizeOfExp f
+    | Handle (a, _, h) => 1 + sizeOfExp a + sizeOfExp h
+    | Raise _ => 1
+    | Return _ => 1
+    | Mark (_, a) => sizeOfExp a
+    | Case (_, arms, d) => List.foldl (fn (e, n) => n + sizeOfExp e) 1 (caseExps (arms, d))
+
+  (* What an expression weighs to the budgets of the passes that copy code
+     (Simplify's inlining, Expand's copies): its nodes, but that a Case
+     weighs as the tests it stands for, three nodes a tag -- a ConTag, an
+     equality and an If -- so that code weighs what it did before Mid had
+     one. *)
+  fun weightOfExp (e : exp) : int =
+    case e of
+      Let (_, _, _, b) => 1 + weightOfExp b
+    | Fun (fs, b) => List.foldl (fn (f, n) => n + weightOfExp (#body f)) (1 + weightOfExp b) fs
+    | Join (_, _, b, s) => 1 + weightOfExp b + weightOfExp s
+    | Jump _ => 1
+    | If (_, t, f) => 1 + weightOfExp t + weightOfExp f
+    | Handle (a, _, h) => 1 + weightOfExp a + weightOfExp h
+    | Raise _ => 1
+    | Return _ => 1
+    | Mark (_, a) => weightOfExp a
+    | Case (_, arms, d) => List.foldl (fn (e, n) => n + weightOfExp e) (3 * List.length arms) (caseExps (arms, d))
+
+  fun sizeOf (exp : exp -> int) (p : program) : int =
     let
-      fun exp e =
-        case e of
-          Let (_, _, _, b) => 1 + exp b
-        | Fun (fs, b) => List.foldl (fn (f, n) => n + exp (#body f)) (1 + exp b) fs
-        | Join (_, _, b, s) => 1 + exp b + exp s
-        | If (_, t, f) => 1 + exp t + exp f
-        | Handle (a, _, h) => 1 + exp a + exp h
-        | Mark (_, a) => exp a
-        | _ => 1
       fun def d =
         case d of
           Val (_, _, e) => exp e
         | Funs fs => List.foldl (fn (f, n) => n + exp (#body f)) 0 fs
         | Do (_, e) => exp e
     in List.foldl (fn (d, n) => n + def d) 0 p end
+  (* The nodes of a program, for --pass-stats. *)
+  val size = sizeOf sizeOfExp
+  (* What a program weighs (weightOfExp). *)
+  val weight = sizeOf weightOfExp
 end

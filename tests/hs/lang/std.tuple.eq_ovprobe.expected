@@ -1,0 +1,4 @@
+probe
+(False,LT,True,0)
+(False,LT)
+(True,True)

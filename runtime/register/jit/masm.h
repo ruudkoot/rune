@@ -41,7 +41,7 @@ enum { VMR = R_VM, BASEI = R_BASEI, BASER = R_BASER, COUNTR = R_COUNT };
 
 /* A slow path, emitted after the function's code: where it begins, where
    it goes back to, and what it is. */
-enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN, SLOW_DEOPT, SLOW_BOXREAL, SLOW_BOXNUM, SLOW_SETENV, SLOW_INTERRUPT, SLOW_CALL_TABLE };
+enum SlowKind { SLOW_FATAL, SLOW_ALLOC, SLOW_GROW, SLOW_PRIM, SLOW_GROW_RAX, SLOW_TAKEN, SLOW_DEOPT, SLOW_BOXREAL, SLOW_BOXNUM, SLOW_SETENV, SLOW_INTERRUPT, SLOW_CALL_TABLE, SLOW_THUNK, SLOW_LOOP, SLOW_APPLY, SLOW_SELECT };
 /* the words of a frame's header below its registers (vm.h, isa_frame_header) */
 #define MS_HEADER 3
 typedef struct Slow {
@@ -140,6 +140,7 @@ typedef struct Masm {
     uint32_t nslots;      /* the registers and what a primitive's arguments push: the frame's slots */
     uint32_t nfields;     /* the fields of the object ms_alloc last made, or UINT32_MAX where the object in hand is another's */
     const void *leave;    /* the leave stub: where the code hands the VM back */
+    const void *select;   /* the select stub (ms_emit_select), in the region */
     int placed;           /* where the code will run is known (the Asm's base): the region's stubs and trampolines are in reach of a direct jump or call */
     int verify;           /* --gc-verify or --gc-stress: the homes checked against their slots after a call into C (ms_reload, M7) */
     AsmLabel *(*home_fails)(struct Masm *m, uint32_t r);   /* where register r's home and slot disagree: a fatal error (compile.c) */
@@ -306,6 +307,7 @@ void ms_frame_back(Masm *m);
    address ms_room compared, for its slow path. */
 void ms_room(Masm *m, uint32_t need, AsmLabel *slow);
 void ms_room_dynamic(Masm *m, int r, uint32_t above, AsmLabel *slow);
+void ms_room_shared(Masm *m, int r, int above, AsmLabel *slow);   /* the room past the bytes in register above (-1: none): item 24 */
 void ms_room_compared(Masm *m, int r, uint32_t need);
 /* r := the frame's base, an index into the stack, plus k */
 void ms_base_index(Masm *m, int r, uint32_t k);
@@ -369,6 +371,23 @@ void ms_handback_rax(Masm *m);                                     /* with the a
    takes the bump back first (ms_alloc_undo). */
 void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow);
 void ms_alloc_undo(Masm *m, int kind, uint32_t n);
+/* the same for an object of fields whose number is in register len and
+   whose size (sizeof(Obj) and a word a field) in register size, neither
+   R_S0 nor R_S1 nor kept by it, its contag 0; to slow with the bump undone
+   (D15 C tuned: a partial application of another's held values) */
+void ms_alloc_dynamic(Masm *m, int kind, int len, int size, AsmLabel *slow);
+/* What a partial application's cases in compiled code do to one (D15 C, emit.c
+   apply_fast): field i of the new object in obj := machine register r;
+   rd := the address of field i; r, a number of fields, := the size of an
+   object of them; the new object's kind and its contag from r (r
+   clobbered); the words from [src] up to [end] to [dst] up, tmp clobbered
+   (a new object's fields, a frame's slots: no barrier) */
+void ms_store_field_reg(Masm *m, int obj, uint32_t i, int r);
+void ms_field_address(Masm *m, int rd, int obj, uint32_t i);
+void ms_store_word_at(Masm *m, int at, uint32_t i, int r);   /* [at + i values] := r (item 24) */
+void ms_object_size(Masm *m, int r);
+void ms_set_kind_contag(Masm *m, int obj, int kind, int r);
+void ms_copy_words(Masm *m, int src, int dst, int end, int tmp);
 void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s);       /* field i of the object in obj := R(s) */
 void ms_need_unmarked(Masm *m, AsmLabel *slow);                     /* to slow while the low-pause collector's cycle marks (the barrier's flag; before a store) */
 void ms_set_field(Masm *m, int obj, uint32_t i, int32_t s);         /* a store into an object that exists, through the barrier: field i of the object in obj := R(s); obj is not kept; R_S2, R_S3 and R_S6 clobbered */
@@ -412,6 +431,11 @@ void ms_string_order_short(Masm *m, AsmLabel *longer);
 /* r := the kind of the object in obj (its header's byte, without the
    collector's bits where they are set: RUNE_GC_BITS) */
 void ms_load_kind(Masm *m, int r, int obj);
+/* suspensions (value.h, K_THUNK and K_IND) */
+void ms_jump_if_immediate(Masm *m, int r, AsmLabel *to);            /* to `to` where the word in r is an immediate, no object */
+void ms_set_kind(Masm *m, int obj, int kind, int r);                 /* the object in obj of that kind, the collector's bits kept (obj_become_thunk, obj_become_ind); r clobbered */
+void ms_blackhole(Masm *m, int obj);                                 /* the suspension in obj under evaluation (obj_blackhole) */
+void ms_set_selector(Masm *m, int obj, int r);                       /* the unevaluated suspension in obj a selector: its contag := the byte in r, THUNK_SELECTOR + i (thunk_selector) */
 
 /* arrays of values outside the heap's objects: the constants, the globals,
    a frame's registers at an address */
@@ -423,6 +447,7 @@ void ms_store_nth(Masm *m, int base, uint32_t i, int32_t s);        /* the i-th 
 void ms_slot_addr(Masm *m, int r, int32_t s);                       /* r := the address of R(s) */
 void ms_fill_units(Masm *m, int base, uint32_t from, uint32_t to);  /* the values from..to-1 at base := unit */
 void ms_field_from_nth(Masm *m, int obj, uint32_t i, int base, uint32_t k);   /* field i of the object in obj := the k-th value at base */
+void ms_field_from_field(Masm *m, int obj, uint32_t i, int src, uint32_t k);  /* field i of the fresh object in obj := field k of the object in src (a fill: no barrier) */
 void ms_slot_from_nth_raw(Masm *m, int32_t d, int base, uint32_t k);
 void ms_scale_index(Masm *m, int r);                               /* r := r * the size of a value: a count of values or registers as bytes */   /* the slot of R(d) := the k-th value at base, the slot itself whatever home d has (a callee's registers) */
 
@@ -460,5 +485,15 @@ void ms_emit_call_interp(Asm *a, int win, MsHelper helper, AsmLabel *leave, int 
    where the frame's own return word goes, and on there with the value.
    Its address is odd (as_ret_align): it is a return word. */
 void ms_emit_barrier(Asm *a, int win, MsHelper helper);
+/* The select stub (D17's C; compile.c, SLOW_SELECT): called (as_call_to)
+   with a selector in R_S0 -- a suspension, its contag THUNK_SELECTOR or
+   more -- whose program does not rerun; back (as_ret) with R_S0 what
+   vm_selected gives of it: the field of its tuple where the tuple is
+   evaluated, by gc_select's step in code; the selector itself where the
+   tuple is not, at once; and through a chain of selectors, helper's
+   (jit_h_selected) answer, every home C clobbers kept around the call.
+   The scratch registers and the flags clobbered, no home: one copy for
+   every FORCE, whose own code is a call. */
+void ms_emit_select(Asm *a, int win, MsHelper helper);
 
 #endif

@@ -91,6 +91,12 @@ int sys_close_dir(int dir);
    system whose paths are not those of the library translates them here.
    NULL on failure, with the reason in errno, as fopen leaves it. */
 FILE *sys_fopen(const char *path, const char *mode);
+/* A file opened to read and to write, made where it is not there and kept
+   as it is where it is: open's O_RDWR | O_CREAT, Windows' GENERIC_READ |
+   GENERIC_WRITE with OPEN_ALWAYS (Haskell's ReadWriteMode; file_open's
+   mode 3). A stream on it, as sys_fopen gives; NULL with the reason in
+   errno. */
+FILE *sys_fopen_rw(const char *path);
 
 /* I/O descriptors. The descriptor of an open file, which is what the two
    calls below take; -1 when there is none. */

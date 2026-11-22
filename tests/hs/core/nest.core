@@ -1,0 +1,121 @@
+; run: --read-core tests/hs/core/lib/base.core
+; ways: E1
+; E1's nest, in Core: polymorphic recursion, first over a nest with strict
+; fields, so that nothing hides behind a suspension, then over a lazy one,
+; infinite, shown to a depth with a dictionary made at each level:
+;   data Nest a = Nil | Cons !a !(Nest (a,a))
+;   build :: Int -> a -> Nest a;  size :: Nest a -> Int
+;   sumN :: (a -> Int) -> Nest a -> Int;  mapN :: (a -> b) -> Nest a -> Nest b
+;   data LNest a = LNil | LCons a (LNest (a,a))
+;   class Show a where show :: a -> String
+;   instance Show Int; instance (Show a, Show b) => Show (a,b)
+;   infinite x = LCons x (infinite (x,x))
+;   showTo :: Show a => Int -> LNest a -> String     -- "..." past the depth
+
+(data Nest (a) (NNil) (NCons !a !(Nest (Pair a a))))
+(data LNest (a) (LNil) (LCons a (LNest (Pair a a))))
+(data Show (a) (MkShow (-> a Str)))
+
+(val build (forall (a) (-> !Int a (Nest a)))
+  (\ (@a (n !Int) (x a))
+    (case (prim int_eq n 0) z
+      ((True) (con NNil @a))
+      ((False)
+        (case x v
+          (_ (case (prim int_sub n 1) m
+               (_ (let (p (Pair a a) (con Pair @a @a v v))
+                    (case (build @(Pair a a) m p) r (_ (con NCons @a v r))))))))))))
+
+(val size (forall (a) (-> (Nest a) Int))
+  (\ (@a (t (Nest a)))
+    (case t u
+      ((NNil) 0)
+      ((NCons _ r) (case (size @(Pair a a) r) s (_ (case (prim int_mul 2 s) d (_ (prim int_add 1 d)))))))))
+
+(val sumN (forall (a) (-> (-> a Int) (Nest a) Int))
+  (\ (@a (f (-> a Int)) (t (Nest a)))
+    (case t u
+      ((NNil) 0)
+      ((NCons x r)
+        (let (g (-> (Pair a a) Int)
+               (\ ((p (Pair a a)))
+                 (case p q ((Pair b c) (case (f b) fb (_ (case (f c) fc (_ (prim int_add fb fc)))))))))
+          (case (f x) fx (_ (case (sumN @(Pair a a) g r) s (_ (prim int_add fx s))))))))))
+
+(val mapN (forall (a b) (-> (-> a b) (Nest a) (Nest b)))
+  (\ (@a @b (f (-> a b)) (t (Nest a)))
+    (case t u
+      ((NNil) (con NNil @b))
+      ((NCons x r)
+        (let (g (-> (Pair a a) (Pair b b))
+               (\ ((p (Pair a a)))
+                 (case p q ((Pair c d) (let (fc b (f c)) (let (fd b (f d)) (con Pair @b @b fc fd)))))))
+          (case (f x) fx (_ (case (mapN @(Pair a a) @(Pair b b) g r) m (_ (con NCons @b fx m))))))))))
+
+(val id (-> Int Int) (\ ((x Int)) x))
+(val dbl (-> Int Int) (\ ((x Int)) (case x v (_ (prim int_mul v 2)))))
+
+(val infinite (forall (a) (-> a (LNest a)))
+  (\ (@a (x a))
+    (let (p (Pair a a) (con Pair @a @a x x))
+      (let (r (LNest (Pair a a)) (infinite @(Pair a a) p))
+        (con LCons @a x r)))))
+
+(val show (forall (a) (-> (Show a) a Str))
+  (\ (@a (d (Show a)) (x a)) (case d e ((MkShow f) (f x)))))
+
+(val dShowInt (Show Int)
+  (let (f (-> Int Str) (\ ((x Int)) (case x v (_ (showInt v))))) (con MkShow @Int f)))
+
+(val dShowPair (forall (a b) (-> (Show a) (Show b) (Show (Pair a b))))
+  (\ (@a @b (da (Show a)) (db (Show b)))
+    (let (f (-> (Pair a b) Str)
+           (\ ((p (Pair a b)))
+             (case p q
+               ((Pair x y)
+                 (case (show @a da x) sx
+                   (_ (case (show @b db y) sy
+                        (_ (case (prim str_concat "(" sx) s1
+                             (_ (case (prim str_concat s1 ",") s2
+                                  (_ (case (prim str_concat s2 sy) s3 (_ (prim str_concat s3 ")")))))))))))))))
+      (con MkShow @(Pair a b) f))))
+
+(val showTo (forall (a) (-> (Show a) !Int (LNest a) Str))
+  (\ (@a (d (Show a)) (n !Int) (t (LNest a)))
+    (case (prim int_eq n 0) z
+      ((True) "...")
+      ((False)
+        (case t u
+          ((LNil) "Nil")
+          ((LCons x r)
+            (let (dp (Show (Pair a a)) (dShowPair @a @a d d))
+              (case (prim int_sub n 1) m
+                (_ (case (showTo @(Pair a a) dp m r) rest
+                     (_ (case (show @a d x) sx
+                          (_ (case (prim str_concat sx ":") s1 (_ (prim str_concat s1 rest))))))))))))))))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (t (Nest Int) (build @Int 12 1))
+    (let (s Int (size @Int t))
+    (case (printInt s w) r1
+      ((utuple w1 _)
+        (let (a Int (sumN @Int id t))
+        (case (printInt a w1) r2
+          ((utuple w2 _)
+            (let (t2 (Nest Int) (mapN @Int @Int dbl t))
+            (let (b Int (sumN @Int id t2))
+            (case (printInt b w2) r3
+              ((utuple w3 _)
+                (let (ts (Nest Str) (build @Str 3 "x"))
+                (let (c Int (size @Str ts))
+                (case (printInt c w3) r4
+                  ((utuple w4 _)
+                    (case (putStrLn "differ" w4) r5
+                      ((utuple w5 _)
+                        (let (inf (LNest Int) (infinite @Int 7))
+                        (case (showTo @Int dShowInt 3 inf) shown
+                          (_ (case (putStrLn shown w5) r6
+                               ((utuple w6 _)
+                                 (case (showTo @Int dShowInt 12 inf) shown2
+                                   (_ (let (l Int (prim str_size shown2)) (printInt l w6))))))))))))))))))))))))))))

@@ -1,0 +1,20 @@
+(* run: alone *)
+(* A Case of a constant constructor (M29; B's impl/b/defects/case-constant-o0, which rhc's Core to Mid once wrote for
+   `case Nothing of x@(Just _) -> ...`): its tag is known, so Lower lowers its arm or the default alone, at -O0 too,
+   where nothing has folded it -- not the dead arm, which takes the constant apart as a constructor it is not, and
+   which the shapes lint refuses. *)
+(datatype maybe ('a) (0 "Nothing") (1 "Just" : 'a))
+(funs
+  (fn g5 ((v9 : unit)) : string
+    (case (con0 0 : int maybe)
+      (1 (let (v2 : int) (decon 1 (con0 0 : int maybe) : int maybe) (return "just\n")))
+      (else (return "nothing\n"))))
+  (fn g6 ((v10 : unit)) : string
+    (case (con0 0 : int maybe)
+      (0 (return "nothing again\n"))
+      (1 (let (v4 : int) (decon 1 (con0 0 : int maybe) : int maybe) (return "just\n"))))))
+(val g1 : unit
+  (let (v3 : string) (app g5 ())
+  (let (vu : unit) (prim print v3 : string -> unit)
+  (let (v5 : string) (app g6 ())
+  (return (prim print v5 : string -> unit))))))

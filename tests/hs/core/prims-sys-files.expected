@@ -1,0 +1,37 @@
+mkdir: 0
+mkdir again: -1 EEXIST
+kind of a directory: 1
+kind of nothing: -1 ENOENT
+kind of a file: 0
+a file is there: 1
+nothing is there: 0
+a directory can be read: 1
+set mode 0600: 0
+mode: 384
+can be run: 0
+set mode 0700: 0
+mode: 448
+can be run: 1
+mode of nothing: -1 ENOENT
+set the mode of nothing: -1 ENOENT
+changed after 2001: True
+time of nothing: -1 ENOENT
+opened: True
+first name: [a]
+then: []
+closed: 0
+open nothing: -1 ENOENT
+rename: 0
+rename nothing: -1 ENOENT
+kind of the new name: 0
+kind of the old: -1 ENOENT
+rmdir of a full directory: -1 ENOTEMPTY
+remove: 0
+remove again: -1 ENOENT
+chdir: 0
+deeper by: 7
+chdir ..: 0
+back by: 0
+chdir to nothing: -1 ENOENT
+rmdir: 0
+rmdir again: -1 ENOENT

@@ -89,7 +89,8 @@ enum JitFatal {
     FATAL_EXPECT_TUPLE, FATAL_EXPECT_CON, FATAL_EXPECT_CON_FIELDS, FATAL_EXPECT_CLOSURE, FATAL_EXPECT_EXN,
     FATAL_GLOBAL_UNSET, FATAL_ENV_RANGE, FATAL_SELF, FATAL_TUPLE_INDEX, FATAL_DECON_TAG, FATAL_CONTAG,
     FATAL_MKEXN, FATAL_JUMPIF, FATAL_JUMPIFNOT, FATAL_JUMPIFNOTTAG, FATAL_SWITCH, FATAL_FIELD_TAG, FATAL_FIELD_INDEX,
-    FATAL_POPHANDLER, FATAL_RAISE, FATAL_CALL, FATAL_FUNCTION, FATAL_NEW_WORLD, FATAL_HOME_SLOT
+    FATAL_POPHANDLER, FATAL_RAISE, FATAL_CALL, FATAL_FUNCTION, FATAL_NEW_WORLD, FATAL_HOME_SLOT,
+    FATAL_ENTER, FATAL_LOOP, FATAL_BLACKHOLE, FATAL_UPDATE
 };
 
 /* a known call to function f, which has no code yet: its jump at off in
@@ -103,12 +104,14 @@ AsmLabel *jit_label(Jit *j, uint32_t pc);
 AsmLabel *jit_fatal(Jit *j, int what, int32_t a, int32_t b, int rcx_arg);
 /* an allocation's slow path: the object of n fields made by the helper,
    then filled and stored by fill, as the fast path did */
-enum { FILL_LIST, FILL_ONE, FILL_CLOSURE, FILL_NEWEXN, FILL_MKEXN };
+enum { FILL_LIST, FILL_ONE, FILL_CLOSURE, FILL_NEWEXN, FILL_MKEXN, FILL_SUSP };
 AsmLabel *jit_alloc_slow(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d, int32_t a, int32_t b, const uint8_t *L);
 /* fill the object in rax as fill says, then R(d) := it */
 void jit_fill(Jit *j, int kind, int fill, uint32_t n, int32_t d, int32_t a, int32_t b, const uint8_t *L);
 /* an instruction tier 1 does not compile: the function stays interpreted */
 void jit_unsupported(Jit *j);
+/* code shared by the functions' code, placed in the region's top (item 24) */
+const void *jit_place_shared(JitProgram *jit, const uint8_t *code, size_t n);
 /* where the code is entered from outside at pc (tier 2: a landing that
    loads the homes; tier 1: the instruction's label) */
 AsmLabel *jit_landing(Jit *j, uint32_t pc);
@@ -121,6 +124,9 @@ Site *jit_site(Jit *j, int kind, uint32_t pc);
 int jit_h_prim(VM *vm, int prim, int32_t d, uint32_t at);
 Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n);
 void jit_h_setenv(VM *vm, int32_t c, int32_t e, int32_t v);
+void jit_h_blackhole(VM *vm);
+void jit_h_update(VM *vm, int32_t v);
+Value jit_h_select(VM *vm, int32_t r);
 int jit_h_return(VM *vm, uint64_t value);
 const void *jit_h_barrier(VM *vm, const Value *regs);
 int jit_h_enter_interp(VM *vm);
@@ -130,6 +136,7 @@ MsHelper jit_libm_of(int32_t prim);   /* emit.c: the C library's function a prim
 void jit_h_grow(VM *vm, const Value *at);
 void jit_h_push_handler(VM *vm, int32_t pc, const void *native);
 const void *jit_h_raise(VM *vm, int32_t s);
+const void *jit_h_loop(VM *vm);
 /* what jit_h_interrupt answers beside a handler's native code or NULL:
    the code goes on, or leaves for the debug loop at the instruction */
 #define JIT_LEAVE ((const void *)1)
@@ -140,6 +147,7 @@ int jit_h_primpush(VM *vm, int prim, uint32_t at);
    moved), so that the code calls them with nothing synced or reloaded
    (M7): the VM is their first argument all the same, unused */
 int64_t jit_h_string_order(VM *vm, const Obj *a, const Obj *b);
+Value jit_h_selected(VM *vm, Value v);   /* vm_selected of a program that does not rerun (D17's C) */
 /* Needs the exact VM: comparison can end the process at its work limit. */
 int64_t jit_h_values_equal(VM *vm, const Value *x, const Value *y);
 void jit_h_box_real(VM *vm, int32_t slot, uint64_t bits);

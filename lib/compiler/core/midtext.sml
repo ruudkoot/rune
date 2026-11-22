@@ -14,11 +14,13 @@
      decl    := (type %N TYPE) | (datatype NAME (TYVAR ...) (TAG STRING [: TYPE]) ...) | (abstract NAME ARITY)
      def     := (val GLOBAL : SCHEME EXP) | (funs FUNDEF FUNDEF ...)
               | (do ((GLOBAL : SCHEME) ...) EXP)
-     fundef  := (fn VAR [TYVARS] ((VAR : TYPE) ...) : TYPE EXP)
+     fundef  := (fn VAR [TYVARS] ((VAR : TYPE) ...) : TYPE [STRING] EXP)
+                                             STRING: its label (Mid.fundef)
      exp     := (let (VAR : SCHEME) RHS EXP) | (fun FUNDEF FUNDEF ... EXP)
               | (join LABEL ((VAR : TYPE) ...) EXP EXP) | (jump LABEL ATOM ...)
               | (if ATOM EXP EXP) | (handle VAR EXP EXP) | (raise ATOM)
               | (return RHS) | (at STRING INT INT FRAME ... EXP)
+              | (case ATOM (TAG EXP) ... [(else EXP)])
      frame   := (in STRING STRING INT INT)   an inlined function's name, and
                                              where it was called from
               | (in STRING)                  one called in tail position
@@ -39,20 +41,20 @@ struct
   (* ---- printing ---- *)
 
   val builtinNames = List.map (fn (c : Types.tycon) => (#stamp c, #name c)) Types.builtinTycons
-  fun isBuiltin stamp = List.exists (fn (s, _) => s = stamp) builtinNames
+  fun isBuiltin stamp = stamp = Ty.arrowStamp orelse stamp = Ty.lazyArrowStamp orelse List.exists (fn (s, _) => s = stamp) builtinNames
   val reserved = "unit" :: "exncon" :: List.map #2 builtinNames
 
-  fun defaultTy (c : Lambda.const) : Ty.ty =
+  fun defaultTy (c : Literal.const) : Ty.ty =
     case c of
-      Lambda.CInt _ => Ty.int
-    | Lambda.CWord _ => Ty.con (#stamp Types.wordTycon, "word", [])
+      Literal.CInt _ => Ty.int
+    | Literal.CWord _ => Ty.con (#stamp Types.wordTycon, "word", [])
     (* never the default: a 64-bit constant is written with its type, which
        is what tells it from the int or word of the same digits *)
-    | Lambda.CInt64 _ => Ty.int
-    | Lambda.CWord64 _ => Ty.con (#stamp Types.wordTycon, "word", [])
-    | Lambda.CReal _ => Ty.con (#stamp Types.realTycon, "real", [])
-    | Lambda.CString _ => Ty.string
-    | Lambda.CChar _ => Ty.con (#stamp Types.charTycon, "char", [])
+    | Literal.CInt64 _ => Ty.int
+    | Literal.CWord64 _ => Ty.con (#stamp Types.wordTycon, "word", [])
+    | Literal.CReal _ => Ty.con (#stamp Types.realTycon, "real", [])
+    | Literal.CString _ => Ty.string
+    | Literal.CChar _ => Ty.con (#stamp Types.charTycon, "char", [])
 
   (* A type of more nodes than bigType as a tree is written once, at the
      head, as an abbreviation (type %N TYPE), and as %N where it is: a type
@@ -115,16 +117,27 @@ struct
            case Ty.view t of
              Ty.Con (stamp, name, args) =>
                (List.app collect args;
-                if isBuiltin stamp orelse IntMap.member (!tycons, stamp) then ()
+                if isBuiltin stamp then ()
                 else
-                  (tycons := IntMap.insert (!tycons, stamp, (nameFor (stamp, name), List.length args));
-                   order := stamp :: !order;
-                   case Ty.datatypeOf stamp of
-                     SOME {cons, ...} => List.app (fn (_, _, SOME a) => collect a | _ => ()) cons
-                   | NONE => ()))
+                  case IntMap.find (!tycons, stamp) of
+                    (* a type name may be met given fewer arguments, as a
+                       type variable applied stands for it (Ty.App): an
+                       abstract one's arity is the most it is given *)
+                    SOME (n, k) => if List.length args > k then tycons := IntMap.insert (!tycons, stamp, (n, List.length args))
+                                   else ()
+                  | NONE =>
+                      (tycons := IntMap.insert (!tycons, stamp, (nameFor (stamp, name), List.length args));
+                       order := stamp :: !order;
+                       case Ty.datatypeOf stamp of
+                         SOME {cons, ...} => List.app (fn (_, _, SOME a) => collect a | _ => ()) cons
+                       | NONE => ()))
            | Ty.Tuple ts => List.app collect ts
            | Ty.Arrow (a, b) => (collect a; collect b)
-           | _ => ();
+           | Ty.App (h, args) => (List.app collect args; collect h)
+           | Ty.Forall (_, b) => collect b
+           | Ty.Gen _ => ()
+           | Ty.Var _ => ()
+           | Ty.ExnCon => ();
            if Ty.size t > bigType then
              (IntTable.insert (abbrevs, Ty.id t, List.length (!abbrevOrder) + 1); abbrevOrder := t :: !abbrevOrder)
            else ())
@@ -135,21 +148,8 @@ struct
         | Const (_, t) => collect t
         | Con0 (_, t) => collect t
         | Unit => ()
-      fun collectRhs r =
-        case r of
-          Atom a => collectAtom a
-        | App (f, xs) => List.app collectAtom (f :: xs)
-        | Prim (_, t, xs) => (collect t; List.app collectAtom xs)
-        | Tuple xs => List.app collectAtom xs
-        | Select (_, a) => collectAtom a
-        | Con (_, t, a) => (collect t; collectAtom a)
-        | Decon (_, t, a) => (collect t; collectAtom a)
-        | ConTag a => collectAtom a
-        | MkExn (c, a) => (collectAtom c; collectAtom a)
-        | ExnCon a => collectAtom a
-        | ExnArg (t, a) => (collect t; collectAtom a)
-        | SetGlobal (_, a) => collectAtom a
-        | _ => ()
+      (* a step's own type is before its atoms *)
+      fun collectRhs r = (List.app collect (typesOfRhs r); List.app collectAtom (atomsOfRhs r))
       fun collectExp e =
         case e of
           Let (_, (_, t), r, b) => (collect t; collectRhs r; collectExp b)
@@ -159,6 +159,7 @@ struct
         | If (c, t, f) => (collectAtom c; collectExp t; collectExp f)
         | Handle (a, _, h) => (collectExp a; collectExp h)
         | Raise a => collectAtom a
+        | Case (a, arms, d) => (collectAtom a; List.app collectExp (caseExps (arms, d)))
         | Return r => collectRhs r
         | Mark (_, a) => collectExp a
       and collectFun ({params, result, body, ...} : fundef) =
@@ -180,9 +181,9 @@ struct
 
       fun constText c =
         case c of
-          Lambda.CString s => "\"" ^ String.toString s ^ "\""
-        | Lambda.CChar c => "#\"" ^ Char.toString (Char.chr c) ^ "\""
-        | _ => Lambda.constToString c
+          Literal.CString s => "\"" ^ String.toString s ^ "\""
+        | Literal.CChar c => "#\"" ^ Char.toString (Char.chr c) ^ "\""
+        | _ => Literal.toString c
       fun args [] = ""
         | args ts = "[" ^ String.concatWith ", " (List.map ty ts) ^ "]"
       fun atom a =
@@ -226,6 +227,11 @@ struct
         | Handle (a, x, h) => let val x = v x in nl n; emit ("(handle " ^ x); exp (n + 2, a); exp (n + 2, h); emit ")" end
         | Raise a => (nl n; emit ("(raise " ^ atom a ^ ")"))
         | Return r => (nl n; emit ("(return " ^ rhs r ^ ")"))
+        | Case (a, arms, d) =>
+            (nl n; emit ("(case " ^ atom a);
+             List.app (fn (t, e) => (nl (n + 2); emit ("(" ^ Int.toString t); exp (n + 4, e); emit ")")) arms;
+             Option.app (fn e => (nl (n + 2); emit "(else"; exp (n + 4, e); emit ")")) d;
+             emit ")")
         | Mark (({file, start, stop}, frames), a) =>
             if marks then
               (nl n; emit ("(at \"" ^ String.toString file ^ "\" " ^ Int.toString start ^ " " ^ Int.toString stop);
@@ -236,9 +242,13 @@ struct
                exp (n, a); emit ")")
             else exp (n, a)
       and fundef (n, f) = fundefNamed (n, v, f)
-      and fundefNamed (n, named, {name, tyvars, params = ps, result, body} : fundef) =
+      and fundefNamed (n, named, {name, label, tyvars, params = ps, result, body} : fundef) =
         let val name = named name val tvs = tyvarList tyvars val ps = params ps
-        in nl n; emit ("(fn " ^ name ^ " " ^ tvs ^ ps ^ " : " ^ ty result); exp (n + 2, body); emit ")" end
+        in
+          nl n; emit ("(fn " ^ name ^ " " ^ tvs ^ ps ^ " : " ^ ty result);
+          (case label of SOME l => emit (" \"" ^ String.toString l ^ "\"") | NONE => ());
+          exp (n + 2, body); emit ")"
+        end
 
       fun def d =
         case d of
@@ -280,13 +290,13 @@ struct
   exception Syntax of string
 
   datatype token =
-      LP | RP | LB | RB | LBRACE | RBRACE | COLON | COMMA | ARROW | STAR
+      LP | RP | LB | RB | LBRACE | RBRACE | COLON | COMMA | ARROW | LAZYARROW | STAR
     | ID of string | TYVAR of string | NUM of string | STR of string | CHR of int | ABBREV of string
 
   fun tokenText t =
     case t of
       LP => "(" | RP => ")" | LB => "[" | RB => "]" | LBRACE => "{" | RBRACE => "}"
-    | COLON => ":" | COMMA => "," | ARROW => "->" | STAR => "*"
+    | COLON => ":" | COMMA => "," | ARROW => "->" | LAZYARROW => "~>" | STAR => "*"
     | ID s => s | TYVAR s => s | NUM s => s | STR s => "\"" ^ String.toString s ^ "\"" | CHR _ => "#\"...\"" | ABBREV s => s
 
   (* The tokens of a text, each with the offset it starts at. *)
@@ -328,6 +338,8 @@ struct
           in
             if Char.isSpace c then go (i + 1, acc)
             else if c = #"(" andalso i + 1 < n andalso at (i + 1) = #"*" then go (comment (i + 2, 0), acc)
+            (* the lazy arrow's name, (~>) (ruling 65) *)
+            else if c = #"~" andalso i + 1 < n andalso at (i + 1) = #">" then go (i + 2, (LAZYARROW, i) :: acc)
             else
               case c of
                 #"(" => go (i + 1, (LP, i) :: acc)
@@ -371,9 +383,12 @@ struct
 
   (* A program from its text, as `show` or `showAll` wrote it, whose
      names and type variables are numbered by `stamp` and whose type names
-     by `tycon`. Its datatypes are made anew and registered
-     (Ty.bindDatatypeDirect). *)
-  fun parseWith ({stamp = freshStamp, tycon = freshTycon} : {stamp : unit -> int, tycon : unit -> int}) (text : string)
+     by `tycon`, but for a name `named` gives a stamp of: a global of
+     another unit, which a front end that compiles in units names by its
+     text (the haskell98 roadmap's M21). Its datatypes are made anew and
+     registered (Ty.bindDatatypeDirect). *)
+  fun parseWith ({stamp = freshStamp, tycon = freshTycon, named}
+                 : {stamp : unit -> int, tycon : unit -> int, named : string -> int option}) (text : string)
                 : program =
     let
       val toks = ref (tokens text)
@@ -398,7 +413,9 @@ struct
       fun stampOf s =
         case StringMap.find (!names, s) of
           SOME x => x
-        | NONE => let val x = freshStamp () in names := StringMap.insert (!names, s, x); x end
+        | NONE =>
+            let val x = case named s of SOME x => x | NONE => freshStamp ()
+            in names := StringMap.insert (!names, s, x); x end
       fun var prefix () =
         let val s = id ()
         in if String.isPrefix prefix s then stampOf s else fail ("a name " ^ prefix ^ "N") end
@@ -409,13 +426,15 @@ struct
         | NONE => let val x = freshStamp () in tyvarIds := StringMap.insert (!tyvarIds, s, x); x end
       fun tyvar () = case next () of TYVAR s => tyvarId s | _ => fail "a type variable"
 
-      (* type names: the built-in ones, and those the text declares *)
-      val tycons : (int * string) StringMap.map ref =
-        ref (List.foldl (fn ((stamp, n), m) => StringMap.insert (m, n, (stamp, n))) StringMap.empty builtinNames)
+      (* type names: the built-in ones, and those the text declares, each
+         with the number of arguments it takes *)
+      val tycons : (int * string * int) StringMap.map ref =
+        ref (List.foldl (fn (c : Types.tycon, m) => StringMap.insert (m, #name c, (#stamp c, #name c, #arity c)))
+                        StringMap.empty Types.builtinTycons)
       fun base n = case String.fields (fn c => c = #"/") n of b :: _ => b | [] => n
-      fun declare (n, _ : int) =
+      fun declare (n, arity : int) =
         let val c = freshTycon ()
-        in tycons := StringMap.insert (!tycons, n, (c, base n)); c end
+        in tycons := StringMap.insert (!tycons, n, (c, base n, arity)); c end
 
       (* every type the text declares, first, since a datatype may use one
          declared after it *)
@@ -435,6 +454,24 @@ struct
             | [] => ()
         in scan (!toks) end
 
+      (* A type name given fewer arguments than it takes is a type only as an
+         argument -- of a type name, of a type variable applied, or of a use
+         (Ty.App) -- and where a value's type is read (valueTy), one is
+         refused with the message it was made with. *)
+      val partials : string IntTable.table = IntTable.table 8
+      val saturatedOnes : unit IntTable.table = IntTable.table 64
+      fun saturated (t : Ty.ty) : unit =
+        if isSome (IntTable.find (saturatedOnes, Ty.id t)) then ()
+        else
+          (case IntTable.find (partials, Ty.id t) of
+             SOME msg => raise Syntax msg
+           | NONE =>
+               (case Ty.view t of
+                  Ty.Tuple ts => List.app saturated ts
+                | Ty.Arrow (a, b) => (saturated a; saturated b)
+                | Ty.Forall (_, b) => saturated b
+                | _ => ());
+           IntTable.insert (saturatedOnes, Ty.id t, ()))
       fun ty () : Ty.ty =
         let val t = tuple ()
         in if peek () = SOME ARROW then (ignore (next ()); Ty.arrow (t, ty ())) else t end
@@ -443,9 +480,18 @@ struct
           fun more acc = if peek () = SOME STAR then (ignore (next ()); more (app () :: acc)) else List.rev acc
         in case more [app ()] of [t] => t | ts => Ty.tuple ts end
       and app () = postfix (atomic ())
+      (* a type name after its arguments, or a type variable applied as one
+         (Ty.App): no type is followed by a type variable otherwise *)
       and postfix args =
         case peek () of
           SOME (ID n) => (ignore (next ()); postfix [named (n, args)])
+        (* the arrow as a type name, (->), after the types it is given *)
+        | SOME LP => if peek2 () = SOME ARROW then (ignore (next ()); ignore (next ()); eat RP; postfix [arrowNamed args])
+                     else if peek2 () = SOME LAZYARROW
+                     then (ignore (next ()); ignore (next ()); eat RP; postfix [lazyArrowNamed args])
+                     else (case args of [t] => t | _ => fail "a type name after a list of types")
+        | SOME (TYVAR s) =>
+            (ignore (next ()); postfix [Ty.app (if String.isPrefix "'_" s then Ty.var (tyvarId s) else Ty.gen (tyvarId s), args)])
         | _ => (case args of [t] => t | _ => fail "a type name after a list of types")
       and named (n, args) =
         case (n, args) of
@@ -453,8 +499,33 @@ struct
         | ("exncon", []) => Ty.exnCon
         | _ =>
             (case StringMap.find (!tycons, n) of
-               SOME (stamp, b) => Ty.con (stamp, b, args)
+               SOME (stamp, b, arity) =>
+                 let
+                   val msg = "the type " ^ n ^ " takes " ^ Int.toString arity
+                             ^ (if arity = 1 then " argument, not " else " arguments, not ")
+                             ^ Int.toString (List.length args) ^ where' ()
+                   val t = Ty.con (stamp, b, args)
+                 in
+                   if List.length args > arity then raise Syntax msg
+                   else if List.length args < arity then (IntTable.insert (partials, Ty.id t, msg); t)
+                   else t
+                 end
              | NONE => raise Syntax ("an undeclared type " ^ n ^ where' ()))
+      (* the arrow as a type name: given both, the function type; given
+         fewer, a type only as an argument, as another name given fewer *)
+      and arrowNamed args = namedArrow (Ty.arrowNameText, Ty.arrowName) args
+      (* the lazy arrow (ruling 65): given both, `a susp -> b` *)
+      and lazyArrowNamed args = namedArrow (Ty.lazyArrowNameText, Ty.lazyArrowName) args
+      and namedArrow (text, make) args =
+        let
+          val k = List.length args
+          val msg = "the type " ^ text ^ " takes 2 arguments, not " ^ Int.toString k ^ where' ()
+          val t = make args
+        in
+          if k > 2 then raise Syntax msg
+          else if k < 2 then (IntTable.insert (partials, Ty.id t, msg); t)
+          else t
+        end
       and atomic () : Ty.ty list =
         case next () of
           TYVAR s => [if String.isPrefix "'_" s then Ty.var (tyvarId s) else Ty.gen (tyvarId s)]
@@ -464,7 +535,20 @@ struct
                SOME t => [t]
              | NONE => raise Syntax ("an undefined abbreviation " ^ n ^ where' ()))
         | LBRACE => let val t = ty () in eat RBRACE; [Ty.tuple [t]] end
+        (* a field's polymorphic type (Ty.Forall), which no type name
+           followed by [ is *)
         | LP =>
+            if peek () = SOME ARROW then (ignore (next ()); eat RP; [arrowNamed []])
+            else if peek () = SOME LAZYARROW then (ignore (next ()); eat RP; [lazyArrowNamed []])
+            else if peek () = SOME (ID "forall") andalso peek2 () = SOME LB then
+              let
+                val () = ignore (next ())
+                val () = eat LB
+                fun vars acc = if peek () = SOME RB then (eat RB; List.rev acc) else vars (tyvar () :: acc)
+                val vs = vars []
+                val b = ty ()
+              in eat RP; [Ty.forall (vs, b)] end
+            else
             let
               fun more acc =
                 case next () of
@@ -474,6 +558,10 @@ struct
             in more [ty ()] end
         | _ => fail "a type"
 
+      (* a value's type: no type name in it given fewer arguments than it
+         takes, but as an argument *)
+      fun valueTy () : Ty.ty = let val t = ty () in saturated t; t end
+
       fun tyvars () =
         if peek () = SOME LB then
           let
@@ -481,7 +569,7 @@ struct
             fun more acc = if peek () = SOME RB then (eat RB; List.rev acc) else more (tyvar () :: acc)
           in more [] end
         else []
-      fun scheme () : scheme = let val tvs = tyvars () in (tvs, ty ()) end
+      fun scheme () : scheme = let val tvs = tyvars () in (tvs, valueTy ()) end
       fun tyargs () =
         if peek () = SOME LB then
           let
@@ -494,16 +582,16 @@ struct
           in more [ty ()] end
         else []
 
-      fun const (s : string) : Lambda.const * Ty.ty =
+      fun const (s : string) : Literal.const * Ty.ty =
         if String.isPrefix "0w" s then
           (case IntInf.fromString (String.extract (s, 2, NONE)) of
-             SOME w => (Lambda.CWord w, defaultTy (Lambda.CWord w))
+             SOME w => (Literal.CWord w, defaultTy (Literal.CWord w))
            | NONE => fail "a word")
         else if CharVector.exists (fn c => c = #"." orelse c = #"E" orelse c = #"e") s then
-          (Lambda.CReal s, defaultTy (Lambda.CReal s))
+          (Literal.CReal s, defaultTy (Literal.CReal s))
         else
           (case IntInf.fromString s of
-             SOME i => (Lambda.CInt i, Ty.int)
+             SOME i => (Literal.CInt i, Ty.int)
            | NONE => fail "a number")
 
       fun atom () : atom =
@@ -513,22 +601,22 @@ struct
             else if String.isPrefix "g" s then Global (stampOf s, tyargs ())
             else fail "a variable"
         | NUM s => Const (const s)
-        | STR s => Const (Lambda.CString s, Ty.string)
-        | CHR c => Const (Lambda.CChar c, defaultTy (Lambda.CChar c))
+        | STR s => Const (Literal.CString s, Ty.string)
+        | CHR c => Const (Literal.CChar c, defaultTy (Literal.CChar c))
         | LP =>
             (case next () of
                RP => Unit
-             | ID "con0" => let val tag = int () val () = eat COLON val t = ty () in eat RP; Con0 (tag, t) end
+             | ID "con0" => let val tag = int () val () = eat COLON val t = valueTy () in eat RP; Con0 (tag, t) end
              | t =>
                  let
                    val c = case t of
                              NUM s => #1 (const s)
-                           | STR s => Lambda.CString s
-                           | CHR c => Lambda.CChar c
+                           | STR s => Literal.CString s
+                           | CHR c => Literal.CChar c
                            | _ => fail "a constant"
                    val () = eat COLON
-                   val t = ty ()
-                 in eat RP; Const (Lambda.constAt (c, t), t) end)
+                   val t = valueTy ()
+                 in eat RP; Const (Ty.constAt (c, t), t) end)
         | _ => fail "an atom"
       fun atomsUntil stop =
         let fun more acc = if peek () = SOME stop then List.rev acc else more (atom () :: acc)
@@ -546,23 +634,23 @@ struct
                   case k of
                     "app" => let val f = atom () in App (f, atomsUntil RP) end
                   | "prim" =>
-                      let val p = id () val xs = atomsUntil COLON val () = eat COLON in Prim (p, ty (), xs) end
+                      let val p = id () val xs = atomsUntil COLON val () = eat COLON in Prim (p, valueTy (), xs) end
                   | "tuple" => Tuple (atomsUntil RP)
                   | "select" => let val i = int () in Select (i, atom ()) end
-                  | "con" => let val tag = int () val a = atom () val () = eat COLON in Con (tag, ty (), a) end
-                  | "decon" => let val tag = int () val a = atom () val () = eat COLON in Decon (tag, ty (), a) end
+                  | "con" => let val tag = int () val a = atom () val () = eat COLON in Con (tag, valueTy (), a) end
+                  | "decon" => let val tag = int () val a = atom () val () = eat COLON in Decon (tag, valueTy (), a) end
                   | "tag" => ConTag (atom ())
                   | "newexn" => NewExn (str ())
                   | "builtinexn" => BuiltinExn (int ())
                   | "mkexn" => let val c = atom () in MkExn (c, atom ()) end
                   | "exncon" => ExnCon (atom ())
-                  | "exnarg" => let val a = atom () val () = eat COLON in ExnArg (ty (), a) end
+                  | "exnarg" => let val a = atom () val () = eat COLON in ExnArg (valueTy (), a) end
                   | _ => let val g = var "g" () in SetGlobal (g, atom ()) end
               in eat RP; r end
             else Atom (atom ())
         | _ => Atom (atom ())
 
-      fun binder () = let val () = eat LP val x = var "v" () val () = eat COLON val t = ty () in eat RP; (x, t) end
+      fun binder () = let val () = eat LP val x = var "v" () val () = eat COLON val t = valueTy () in eat RP; (x, t) end
       fun binders () =
         let
           val () = eat LP
@@ -577,9 +665,10 @@ struct
           val tvs = tyvars ()
           val ps = binders ()
           val () = eat COLON
-          val result = ty ()
+          val result = valueTy ()
+          val label = case peek () of SOME (STR _) => SOME (str ()) | _ => NONE
           val body = exp ()
-        in eat RP; {name = name, tyvars = tvs, params = ps, result = result, body = body} end
+        in eat RP; {name = name, label = label, tyvars = tvs, params = ps, result = result, body = body} end
 
       and exp () : exp =
         let
@@ -603,6 +692,19 @@ struct
             | "join" => let val l = var "j" () val ps = binders () val b = exp () in Join (l, ps, b, exp ()) end
             | "jump" => let val l = var "j" () in Jump (l, atomsUntil RP) end
             | "if" => let val c = atom () val t = exp () in If (c, t, exp ()) end
+            | "case" =>
+                let
+                  val a = atom ()
+                  fun arms acc =
+                    case (peek (), peek2 ()) of
+                      (SOME LP, SOME (NUM _)) => let val () = eat LP val t = int () val e = exp () in eat RP; arms ((t, e) :: acc) end
+                    | _ => List.rev acc
+                  val arms = arms []
+                  val d =
+                    if peek () = SOME LP andalso peek2 () = SOME (ID "else") then
+                      let val () = (eat LP; ignore (next ())) val e = exp () in eat RP; SOME e end
+                    else NONE
+                in Case (a, arms, d) end
             | "handle" => let val x = var "v" () val a = exp () in Handle (a, x, exp ()) end
             | "raise" => Raise (atom ())
             | "return" => Return (rhs ())
@@ -634,7 +736,7 @@ struct
               val () = eat LP
               fun params acc = if peek () = SOME RP then (eat RP; List.rev acc) else params (tyvar () :: acc)
               val ps = params []
-              val stamp = case StringMap.find (!tycons, n) of SOME (stamp, _) => stamp | NONE => fail "a declared type"
+              val stamp = case StringMap.find (!tycons, n) of SOME (stamp, _, _) => stamp | NONE => fail "a declared type"
               fun cons acc =
                 if peek () = SOME RP then (eat RP; List.rev acc)
                 else
@@ -642,7 +744,7 @@ struct
                     val () = eat LP
                     val tag = int ()
                     val cname = str ()
-                    val arg = if peek () = SOME COLON then (eat COLON; SOME (ty ())) else NONE
+                    val arg = if peek () = SOME COLON then (eat COLON; SOME (valueTy ())) else NONE
                   in eat RP; cons ((tag, cname, arg) :: acc) end
             in Ty.bindDatatypeDirect (stamp, {params = ps, cons = cons []}); top acc end
         | (SOME LP, SOME (ID "abstract")) =>
@@ -686,7 +788,7 @@ struct
   (* What --read-mid reads: a program whose names are the compiler's own,
      from the elaborator's counters. *)
   fun parse (text : string) : program =
-    parseWith {stamp = Elaborate.freshStamp, tycon = fn () => #stamp (Types.freshTycon ("", 0, true))} text
+    parseWith {stamp = Stamp.fresh, tycon = fn () => #stamp (Types.freshTycon ("", 0, true)), named = fn _ => NONE} text
 
   (* Whether printing what `parse` reads of the printed program prints it
      again, positions and all: the check of the two against each other
@@ -709,7 +811,7 @@ struct
       val extras = !Ty.extras
       fun restore () = (Ty.datatypes := datatypes; Ty.extras := extras)
       val again =
-        (showAll (parseWith {stamp = counter (ref (!Elaborate.stampCounter)), tycon = counter scratchTycon} text)
+        (showAll (parseWith {stamp = counter (ref (!Stamp.counter)), tycon = counter scratchTycon, named = fn _ => NONE} text)
          handle Syntax msg => Error.bug ("MidText.parse: " ^ msg))
         handle e => (restore (); raise e)
       val () = restore ()

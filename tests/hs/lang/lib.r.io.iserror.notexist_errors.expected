@@ -1,0 +1,12 @@
+createDirectory of an existing directory: [True,False,False,False,False,False,False,False]
+openFile of a missing file: [False,True,False,False,False,False,False,False]
+(Just "missing.txt",Nothing)
+openFile for writing of a file open for writing: [False,False,True,False,False,False,False,False]
+openFile for reading of a file open for writing: [False,False,True,False,False,False,False,False]
+hGetChar at end of file: [False,False,False,False,True,False,False,False]
+(Just True,True)
+hPutStr on a closed handle: [False,False,False,False,False,True,False,False]
+fail: [False,False,False,False,False,False,False,True]
+ioError (userError s): [False,False,False,False,False,False,False,True]
+("the user's own","another",Nothing,Nothing)
+"r"

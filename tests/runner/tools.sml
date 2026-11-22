@@ -24,6 +24,49 @@ struct
   fun first ext l = case lines (read l) of x :: _ => x | [] => ""
 
   (* ---- tests/ir *)
+  (* A program of Mid's text that runs (the haskell98 roadmap's M5): read
+     alone, or after another file of tests/ir (`after FILE`), at each level
+     to each bytecode, linted at level 3, and run on its VM -- the register
+     bytecode interpreted and at tier 2 of the JIT -- each run printing and
+     exiting as NAME.expected says: what it prints, then `status N`. *)
+  fun irRun (n : string, src : string, how : string, f : string -> string) : unit =
+    let
+      val prior = case String.tokens Char.isSpace how of
+                     ["alone"] => SOME []
+                   | ["after", file] => SOME ["tests/ir/" ^ file]
+                   | _ => NONE
+      val expected = read ("tests/ir/" ^ n ^ ".expected")
+      fun one (level, target, runs) =
+        let
+          val rbc = f ("." ^ level ^ "." ^ target ^ ".rbc")
+          val code = exec {cmd = ["bin/rune", "--lint=3", "-" ^ level, "--target=" ^ target, "--read-mid", f ".full.mid", "-o", rbc],
+                           dir = NONE, stdin = "", stdout = f ".compile", stderr = f ".compile", timeout = 300}
+          fun run (vm, flags, way) =
+            let
+              val o' = f ("." ^ level ^ "." ^ target ^ "." ^ way)
+              val status = exec {cmd = [vm] @ flags @ [rbc], dir = NONE, stdin = "", stdout = o' ^ ".out", stderr = o' ^ ".err",
+                                 timeout = 120}
+            in
+              if read (o' ^ ".out") ^ "status " ^ Int.toString status ^ "\n" = expected then ()
+              else fail ("ir." ^ n ^ ": at -" ^ level ^ " on " ^ target ^ " (" ^ way ^ ") printed " ^ firstLine (o' ^ ".out")
+                         ^ ", status " ^ Int.toString status ^ ": " ^ firstLine (o' ^ ".err"))
+            end
+        in
+          if code <> 0 then fail ("ir." ^ n ^ ": -" ^ level ^ " to " ^ target ^ " did not compile: " ^ firstLine (f ".compile"))
+          else List.app run runs
+        end
+    in
+      case prior of
+        NONE => fail ("ir." ^ n ^ ": run: names neither alone nor after FILE")
+      | SOME files =>
+          (write (f ".full.mid", String.concat (List.map read (files @ [src])));
+           List.app (fn level =>
+                       (one (level, "registers", [("bin/runevm", ["--jit=off"], "interpreted"),
+                                                  ("bin/runevm", ["--jit=all", "--jit-tier=2"], "tier2")]);
+                        one (level, "stack", [("bin/runevm-stack", [], "stack")])))
+                    ["O0", "O1", "O2"])
+    end
+
   fun irOne src =
     let
       (* the name, without .sml or .mid *)
@@ -34,7 +77,9 @@ struct
       val line1 = case String.fields (fn c => c = #"\n") (read src) of l :: _ => l | [] => ""
       fun marker m = if String.isPrefix ("(* " ^ m ^ ": ") line1 andalso String.isSuffix " *)" line1
                      then SOME (String.substring (line1, size m + 5, size line1 - size m - 8)) else NONE
-      val input = if String.isSuffix ".mid" src then ["--read-mid", src] else ["--no-prelude", "-o", f ".rbc", src]
+      (* a program of Mid's text made into bytecode too, as one in SML: without
+         -o, --read-mid checks it and runs no pass after mid *)
+      val input = if String.isSuffix ".mid" src then ["--read-mid", src, "-o", f ".rbc"] else ["--no-prelude", "-o", f ".rbc", src]
       (* at level 3, every stage's Mid read back: the tier of make check
          that lints deepest (docs/ir.md, Levels) *)
       fun rune flags = exec {cmd = ["bin/rune-stack", "--lint=3"] @ flags @ input, dir = NONE, stdin = "",
@@ -51,7 +96,11 @@ struct
           else if same (f ".out", expected) then ()
           else if accepting then (write (expected, read (f ".out")); say ("ACCEPTED " ^ expected ^ "\n"))
           else fail ("ir." ^ n ^ ": the dump differs from " ^ expected ^ ": " ^ difference (expected, f ".out"))
-      | _ => fail ("ir." ^ n ^ ": its first line names no dump")
+      | _ =>
+          case marker "run" of
+            SOME how => if String.isSuffix ".mid" src then irRun (n, src, how, f)
+                        else fail ("ir." ^ n ^ ": run: only a program of Mid's text runs")
+          | NONE => fail ("ir." ^ n ^ ": its first line names no dump")
     end
 
   (* ---- tests/doc *)
@@ -833,6 +882,132 @@ struct
         end
     end
 
+  (* ---- the names --passes, --dump-before and --dump-after give: one that
+     no optional pass or stage has is refused, with the names there are
+     (the haskell98 roadmap's M4: it was accepted, and ran no optional pass
+     or printed nothing), and the others are taken, none at all among them *)
+  fun passNames () =
+    let
+      val dir = run ^ "/compiler/pass-names"
+      val () = (rmTree dir; mkdirs dir)
+      fun f x = dir ^ "/" ^ x
+      fun rune (n, flags) =
+        exec {cmd = ["bin/rune", "--no-prelude"] @ flags @ ["-o", f (n ^ ".rbc"), "tests/ir/mid.sml"], dir = NONE, stdin = "",
+              stdout = f (n ^ ".out"), stderr = f (n ^ ".err"), timeout = 300}
+      val optional = "expand, shake, lift, workers, simplify, refs, uncurry, trees, inline, specialise, equality, results"
+      val stages = "lex, select, parse, elaborate, translate, mid, midcanon, expand, shake, lift, workers, simplify, refs, "
+                   ^ "uncurry, lower, stack, registers, emit, all"
+      val refused =
+        [("passes", ["--passes=shake,nosuchpass"], "rune: --passes=P,... requires an optional pass of " ^ optional ^ ", not nosuchpass"),
+         ("passes-stage", ["--passes=lower"], "rune: --passes=P,... requires an optional pass of " ^ optional ^ ", not lower"),
+         ("dump-after", ["--dump-after=nosuchpass"], "rune: --dump-after=P requires a stage of " ^ stages ^ ", not nosuchpass"),
+         ("dump-before", ["--dump-before=nosuchpass"], "rune: --dump-before=P requires a stage of " ^ stages ^ ", not nosuchpass")]
+      val taken = [("none", ["--passes="]), ("some", ["--passes=shake,simplify,inline"]), ("dump", ["--dump-after=simplify"]),
+                   ("uncurry", ["--passes=uncurry", "--dump-after=uncurry"]),
+                   ("all", ["--dump-before=all", "--dump-after=all"])]
+    in
+      List.app (fn (n, flags, msg) =>
+                  if rune (n, flags) = 0 then fail ("compiler.pass-names: " ^ n ^ ": accepted")
+                  else if firstLine (f (n ^ ".err")) = msg then ()
+                  else fail ("compiler.pass-names: " ^ n ^ ": refused with " ^ firstLine (f (n ^ ".err")) ^ ", not " ^ msg))
+               refused;
+      List.app (fn (n, flags) =>
+                  if rune (n, flags) = 0 then ()
+                  else fail ("compiler.pass-names: " ^ n ^ ": refused: " ^ firstLine (f (n ^ ".err"))))
+               taken;
+      if contains (f "dump.out", "(* after simplify *)") then () else fail "compiler.pass-names: --dump-after=simplify printed no dump";
+      if contains (f "uncurry.out", "(* after uncurry *)") then () else fail "compiler.pass-names: --dump-after=uncurry printed no dump"
+    end
+
+  (* ---- a client of the compiler from Mid on (the haskell98 roadmap's M4):
+     built from the layer alone (lib/compiler/mid.build), where a name of
+     the elaborator does not compile; Mid's text through its list of passes,
+     each edit of it, linted at level 3, to the same bytes as through Rune's
+     list (Pipeline); and an edit that is real: without workers and refs the
+     program allocates a tuple at each of its 3,628,800 steps, 304 bytes
+     against 87,091,544 at E11 *)
+  fun midClient () =
+    let
+      val dir = run ^ "/compiler/mid-client"
+      val () = (rmTree dir; mkdirs dir)
+      fun f x = dir ^ "/" ^ x
+      fun build b =
+        exec {cmd = ["bin/rune", "--build", "tests/compiler/" ^ b ^ ".build", "-o", f (b ^ ".rbc")], dir = NONE, stdin = "",
+              stdout = f (b ^ ".cerr"), stderr = f (b ^ ".cerr"), timeout = 600}
+      val lists =
+        [("none", "shake lift workers simplify refs uncurry shake", []), ("remove", "shake lift simplify uncurry shake", []),
+         ("insert", "shake lift client workers simplify refs uncurry shake", ["client saw 2 functions"]),
+         ("replace", "shake lift workers simplify refs uncurry shake", [])]
+      fun client (b, e) =
+        exec {cmd = ["/usr/bin/env", "RUNE_LINT=3", "bin/runevm", f (b ^ ".rbc"), e, f (b ^ "-" ^ e ^ ".rbc")], dir = NONE,
+              stdin = "", stdout = f (b ^ "-" ^ e ^ ".out"), stderr = f (b ^ "-" ^ e ^ ".err"), timeout = 300}
+      fun runs (b, e) =
+        exec {cmd = ["bin/runevm", "--count", f (b ^ "-" ^ e ^ ".rbc")], dir = NONE, stdin = "",
+              stdout = f (b ^ "-" ^ e ^ ".run"), stderr = f (b ^ "-" ^ e ^ ".count"), timeout = 300} = 0
+        andalso read (f (b ^ "-" ^ e ^ ".run")) = "6584096534401"
+      (* the bytes the program allocated, from runevm --count *)
+      fun allocated (b, e) =
+        case List.find (String.isPrefix "runevm: count: ") (lines (read (f (b ^ "-" ^ e ^ ".count")))) of
+          SOME l => (case String.tokens Char.isSpace l of
+                       [_, _, _, _, bytes, _, _, _] => Int.fromString bytes
+                     | _ => NONE)
+        | NONE => NONE
+      fun one (e, list, more) =
+        if client ("mid-client", e) <> 0 then fail ("compiler.mid-client: " ^ e ^ ": " ^ firstLine (f ("mid-client-" ^ e ^ ".err")))
+        else if client ("pipeline-client", e) <> 0
+        then fail ("compiler.mid-client: " ^ e ^ " on Pipeline: " ^ firstLine (f ("pipeline-client-" ^ e ^ ".err")))
+        else
+          (if lines (read (f ("mid-client-" ^ e ^ ".out"))) = list :: more then ()
+           else fail ("compiler.mid-client: " ^ e ^ ": printed " ^ firstLine (f ("mid-client-" ^ e ^ ".out")) ^ ", not " ^ list);
+           if lines (read (f ("pipeline-client-" ^ e ^ ".out"))) = ("expand " ^ list) :: more then ()
+           else fail ("compiler.mid-client: " ^ e ^ " on Pipeline: printed " ^ firstLine (f ("pipeline-client-" ^ e ^ ".out")));
+           if same (f ("mid-client-" ^ e ^ ".rbc"), f ("pipeline-client-" ^ e ^ ".rbc")) then ()
+           else fail ("compiler.mid-client: " ^ e ^ ": other bytes than on Pipeline");
+           if runs ("mid-client", e) then () else fail ("compiler.mid-client: " ^ e ^ ": its program printed "
+                                                        ^ firstLine (f ("mid-client-" ^ e ^ ".run"))))
+    in
+      if build "mid-client" <> 0 then fail ("compiler.mid-client: does not compile: " ^ firstLine (f "mid-client.cerr"))
+      else if build "pipeline-client" <> 0
+      then fail ("compiler.mid-client: pipeline-client does not compile: " ^ firstLine (f "pipeline-client.cerr"))
+      else
+        (List.app one lists;
+         case (allocated ("mid-client", "none"), allocated ("mid-client", "remove")) of
+           (SOME a, SOME b) => if a < 1000 andalso b > 80000000 then ()
+                               else fail ("compiler.mid-client: allocated " ^ Int.toString a ^ " bytes, and without workers and refs "
+                                          ^ Int.toString b)
+         | _ => fail "compiler.mid-client: no count");
+      if build "mid-client-elab" = 0 then fail "compiler.mid-client: a name of the elaborator compiles on the layer"
+      else if contains (f "mid-client-elab.cerr", "unbound variable or constructor: Elaborate.freshStamp") then ()
+      else fail ("compiler.mid-client: the elaborator's name refused with " ^ firstLine (f "mid-client-elab.cerr"))
+    end
+
+  (* ---- a program's Mid, the Basis Library's with it, printed as text
+     (--dump-after=mid) and read back (--read-mid): at each level, linted at
+     level 2, it is made into code that prints what the program does (the
+     haskell98 roadmap's M5). A functor's function is known by its label,
+     which the text carries: without it, the read back failed a lint at -O1
+     (the roadmap's E1). *)
+  fun midReadback () =
+    let
+      val dir = run ^ "/compiler/mid-readback"
+      val () = (rmTree dir; mkdirs dir)
+      fun f x = dir ^ "/" ^ x
+      val dumped = exec {cmd = ["bin/rune", "--dump-after=mid", "-o", f "sml.rbc", "tests/compiler/mid-readback.sml"], dir = NONE,
+                         stdin = "", stdout = f "program.mid", stderr = f "dump.err", timeout = 600}
+      fun runs (rbc, out) =
+        exec {cmd = ["bin/runevm", rbc], dir = NONE, stdin = "", stdout = f out, stderr = f (out ^ ".err"), timeout = 120} = 0
+      fun one level =
+        if exec {cmd = ["bin/rune", "--lint=2", "-" ^ level, "--read-mid", f "program.mid", "-o", f (level ^ ".rbc")], dir = NONE,
+                 stdin = "", stdout = f (level ^ ".err"), stderr = f (level ^ ".err"), timeout = 600} <> 0
+        then fail ("compiler.mid-readback: -" ^ level ^ ": " ^ firstLine (f (level ^ ".err")))
+        else if runs (f (level ^ ".rbc"), level ^ ".out") andalso same (f (level ^ ".out"), f "sml.out") then ()
+        else fail ("compiler.mid-readback: -" ^ level ^ " printed " ^ firstLine (f (level ^ ".out")))
+    in
+      if dumped <> 0 then fail ("compiler.mid-readback: the program's Mid: " ^ firstLine (f "dump.err"))
+      else if not (runs (f "sml.rbc", "sml.out")) then fail ("compiler.mid-readback: the program: " ^ firstLine (f "sml.out.err"))
+      else List.app one ["O0", "O1", "O2"]
+    end
+
   (* ---- the lints' negative tests (docs/testing.md; the linting roadmap,
      M4): a fault made in a program after a stage (RUNE_FAULT,
      lib/compiler/backend/fault.sml), which the check of that stage refuses
@@ -863,7 +1038,7 @@ struct
          ("select", "of a tuple of"), ("const-type", "a constant 1 of type string"), ("const-kind", "a constant 0w"),
          ("const-range", range), ("mkexn", payload), ("prim-name", word),
          ("functor-cast", "a functor_cast from string to int, neither unit"), ("open-cast", "neither unit nor flat"),
-         ("inst", "a use at exn of what has type"), ("fail", "a Fail is not in tail position of a Try"),
+         ("inst", "a use at exn of what has type"),
          ("letrec", "binds what is no function"), ("global", "has no type")]
       @ at ("translate", "dynamic") [("dynamic-cast", "a dynamic_cast from string to int, neither unit")]
       @ at ("mid", "faults")
@@ -876,7 +1051,7 @@ struct
       @ at ("mid", "dynamic") [("dynamic-cast", "a dynamic_cast from string to int, neither unit")]
       @ at ("midcanon", "faults")
           [("scope", "renamed to"), ("twice", "is the new name of"), ("jump", "a list of another length"),
-           ("type", "the built-in type name"), ("select", "a field changed"), ("con", "a tag changed"),
+           ("type", "renamed two ways"), ("select", "a field changed"), ("con", "a tag changed"),
            ("mkexn", "an atom of another kind"), ("prim-name", "a primitive changed"), ("const-kind", "a constant changed"),
            ("do-unset", "a right-hand side of another kind"), ("functor-cast", "renamed two ways")]
       @ at ("expand", "faults")
@@ -976,6 +1151,52 @@ struct
                                    andalso read (f "out") = "limited:100\n");
          check ("heap limit restored", vmRun ["--restore", img] = 0 andalso read (f "out") = "limited:100\n");
          check ("heap limit stricter", vmRun ["--heap-limit", "4096", "--restore", img] = 2 andalso contains (f "err", "heap limit exceeded")))
+    end
+
+  (* ---- tests/runtime: --heap-stack, what of the stack the heap's sizing
+     counts as live data (docs/runtime.md, The heap): taken, refused where
+     it names no way, and on a recursion 100,000 deep that makes lists live a
+     while, fewer full collections counting the stack's roots than nothing,
+     and fewer still counting all of it, the output the same *)
+  fun heapStack (rune, vm) =
+    let
+      val dir = run ^ "/heap-stack/" ^ String.translate (fn #"/" => "_" | c => str c) vm
+      val () = (rmTree dir; mkdirs dir)
+      fun f x = dir ^ "/" ^ x
+      fun vmRun (args, n) = exec {cmd = [vm] @ args, dir = SOME dir, stdin = "", stdout = f (n ^ ".out"), stderr = f (n ^ ".err"), timeout = 120}
+      fun fulls n =
+        case List.find (String.isSubstring " full collections") (lines (read (f (n ^ ".err")))) of
+          SOME l => (case String.tokens (fn c => c = #" ") (Substring.string (#1 (Substring.position " full collections" (Substring.full l)))) of
+                       [] => NONE | ws => Int.fromString (List.last ws))
+        | NONE => NONE
+      val src = String.concatWith "\n"
+        ["fun upto (i, n) = let fun go (k, acc) = if k < i then acc else go (k - 1, k :: acc) in go (n, []) end",
+         "fun churn (0, kept, acc) = acc",
+         "  | churn (k, kept, acc) =",
+         "      let val l = upto (k, k + 50000)",
+         "          val kept' = l :: (case kept of a :: _ => [a] | [] => [])",
+         "      in churn (k - 1, kept', (acc + List.length l) mod 1000003) end",
+         "fun deep 0 = churn (40, [], 0)",
+         "  | deep n = n mod 7 + deep (n - 1)",
+         "val () = print (Int.toString (deep 100000) ^ \"\\n\")", ""]
+      val () = write (f "deep.sml", src)
+      fun check (what, ok) = if ok then () else fail ("heap-stack " ^ vm ^ ": " ^ what)
+    in
+      if exec {cmd = [fromRoot rune, "-o", f "deep.rbc", f "deep.sml"], dir = SOME dir, stdin = "",
+               stdout = f "cerr", stderr = f "cerr", timeout = 120} <> 0
+      then fail ("heap-stack: does not compile: " ^ firstLine (f "cerr"))
+      else
+        let val runs = List.map (fn m => (m, vmRun (["--heap-stack", m, "--stats", f "deep.rbc"], m))) ["off", "roots", "all"]
+            val bad = vmRun (["--heap-stack", "some", f "deep.rbc"], "bad")
+        in
+          List.app (fn (m, code) => check (m ^ " runs", code = 0 andalso read (f (m ^ ".out")) = "300034\n")) runs;
+          check ("a way that is none refused", bad = 2 andalso contains (f "bad.err", "--heap-stack takes off, roots or all"));
+          case (fulls "off", fulls "roots", fulls "all") of
+            (SOME off, SOME roots, SOME all) =>
+              (check ("roots no more full collections than off: " ^ Int.toString roots ^ " against " ^ Int.toString off, roots <= off);
+               check ("all fewer full collections than off: " ^ Int.toString all ^ " against " ^ Int.toString off, all < off))
+          | _ => check ("--stats gives the full collections", false)
+        end
     end
 
   (* ---- tests/runtime: the collector's log, a line for each collection *)
@@ -1216,10 +1437,14 @@ struct
     | ["overloading-cache"] => SOME overloadingCache
     | ["compiler", rune] => SOME (fn () => compilerProtection rune)
     | ["compiler-lint-rules"] => SOME lintRules
+    | ["compiler-pass-names"] => SOME passNames
+    | ["compiler-mid-client"] => SOME midClient
+    | ["compiler-mid-readback"] => SOME midReadback
     | ["fault-one", spec] => SOME (fn () => faultOne spec)
     | ["compiler-astlint-faults"] => SOME astlintFaultTests
     | ["limits", rune, vm] => SOME (fn () => limits (rune, vm))
     | ["gc-log", rune, vm] => SOME (fn () => gcLog (rune, vm))
+    | ["heap-stack", rune, vm] => SOME (fn () => heapStack (rune, vm))
     | ["colour-contrast"] => SOME (fn () => contrast false)
     | ["colour-contrast-fault"] => SOME (fn () => contrast true)
     | ["build-generators"] => SOME (fn () => generators "scripts/gen-build-files.sh")
@@ -1233,7 +1458,7 @@ struct
      library's header) *)
   fun exampleLibraries lib =
     case lib of "terminal" => ["unicode"] | "jsonrpc" => ["json"] | "dap" => ["json"] | "lsp" => ["json"] | _ => []
-  val replLibs = ["unicode", "json", "terminal", "digest", "jsonrpc", "dap", "pretty", "markdown", "zmtp", "jupyter", "lsp", "language/c", "ffi/model", "ffi/marshal", "ffi/runtime", "ffi/win32/common"]
+  val replLibs = ["unicode", "json", "terminal", "digest", "jsonrpc", "dap", "pretty", "markdown", "zmtp", "jupyter", "lsp", "language/c", "language/haskell", "ffi/model", "ffi/marshal", "ffi/runtime", "ffi/win32/common"]
   val native = case OS.Process.getEnv "NATIVE_HOST" of SOME v => v = "yes" | NONE => exists "bin/runevm-native"
 
   val tree =
@@ -1313,6 +1538,9 @@ struct
          (Test.describe "compiler"
             (tagged ["test"] (job ("stack", ["compiler", "bin/rune-stack"], [], 300, 600))
              :: tagged ["test"] (job ("lint-rules", ["compiler-lint-rules"], [], 800, 900))
+             :: tagged ["test"] (job ("pass-names", ["compiler-pass-names"], [], 500, 600))
+             :: tagged ["test"] (job ("mid-client", ["compiler-mid-client"], [], 800, 900))
+             :: tagged ["test"] (job ("mid-readback", ["compiler-mid-readback"], [], 1500, 900))
              :: tagged ["test"] (job ("astlint-faults", ["compiler-astlint-faults"], [], 500, 600))
              :: List.map (fn h => Test.requires [h] (tagged ["test-all"] (job (h, ["compiler", "bin/rune-" ^ h], [], 500, 600))))
                          ["mlton", "smlnj-legacy", "smlnj32", "smlnj-dev", "polyml", "mlkit"])),
@@ -1321,6 +1549,12 @@ struct
             ([tagged ["test"] (job ("stack", ["limits", "bin/rune-stack", "bin/runevm-stack"], [], 300, 600)),
               tagged ["test-register"] (job ("register", ["limits", "bin/rune", "bin/runevm"], [], 300, 600))]
              @ (if native then [tagged ["test-native"] (job ("native", ["limits", "bin/rune-stack", "bin/runevm-native"], [], 500, 600))]
+                else []))),
+       tagged ["check", "covers:tests/runtime/*"]
+         (Test.describe "heap-stack"
+            ([tagged ["test"] (job ("stack", ["heap-stack", "bin/rune-stack", "bin/runevm-stack"], [], 300, 600)),
+              tagged ["test-register"] (job ("register", ["heap-stack", "bin/rune", "bin/runevm"], [], 300, 600))]
+             @ (if native then [tagged ["test-native"] (job ("native", ["heap-stack", "bin/rune-stack", "bin/runevm-native"], [], 500, 600))]
                 else []))),
        tagged ["check", "covers:tests/runtime/*"]
          (Test.describe "gc-log"

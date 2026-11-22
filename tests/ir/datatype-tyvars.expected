@@ -2,7 +2,7 @@
 (datatype t ('a 'b) (0 "T" : 'b * 'a))
 (datatype u ('b) (0 "U" : (int, 'b) t))
 (funs
-  (fn g1 ['b] ((v1 : 'b * int)) : 'b * int
+  (fn g1 ['b] ((v1 : 'b * int)) : 'b * int "f"
     (let (v2 : 'b) (select 0 v1)
     (let (v3 : 'b) v2
     (let (v4 : int) (select 1 v1)

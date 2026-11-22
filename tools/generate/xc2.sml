@@ -68,7 +68,10 @@ struct
         val ()=writeFile out "stubs.sml" (mltonStubs ambiguous rows)
         val ()=copy (xc2 ^ "/xc2.sml") (out ^ "/xc2.sml") val ()=copies out here ["prologue.sml","shim.sml"]
         val prefix=List.map (fn name => out ^ "/" ^ name) ["xc2.sml","prologue.sml","consts.sml","shim.sml","prims.sml","stubs.sml"]
-        val ()=listFile out "prefix" (prefix @ files) val ()=writeFile out "flags" "--default-type=int64 --default-type=word64\n"
+        (* compiled as MLton compiles: int and word constants default to 64 bits,
+           and overloading is settled over a top-level declaration (topdec) *)
+        val ()=listFile out "prefix" (prefix @ files)
+        val ()=writeFile out "flags" "--default-type=int64 --default-type=word64 --overloading=topdec\n"
     in trim out prefix;0 end
   fun mlkit args =
     let val (out,lib)=case args of [out,lib] => (output out,fromRoot lib) | _ => raise Usage "xc2-mlkit OUTDIR MLKIT_LIB"

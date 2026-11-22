@@ -1,0 +1,5 @@
+(* run: alone *)
+(* the smallest program *)
+(val gmain : unit
+  (let (vu : unit) (prim print "hello from Mid\n" : string -> unit)
+  (return ())))

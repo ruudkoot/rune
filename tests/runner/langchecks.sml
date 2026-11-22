@@ -1,4 +1,8 @@
-(* Shared compiler/runtime fixture verdicts, separated from inventory creation. *)
+(* Shared compiler/runtime fixture verdicts, separated from inventory creation.
+   A judge is given the path a program's siblings are named from, its base:
+   `tests/lang/NAME` for a program of tests/lang, `tests/hs/lang/NAME` for
+   one of rhc's, whether the program is the file `NAME.hs` or the directory
+   `NAME/` (Lang.programsOf). *)
 structure LangChecks =
 struct
   fun env (name, default) = case OS.Process.getEnv name of SOME v => if v = "" then default else v | NONE => default
@@ -28,13 +32,14 @@ struct
       | NONE => ""
     end
 
-  (* the programs of a directory, by name *)
-  fun compileJudge (writes, name) (r : Supervisor.result, files as {stderr, ...}) =
+  (* a program compiled: with nothing said, or with the warnings of its
+     `.cwarn` *)
+  fun compileJudge (writes, base) (r : Supervisor.result, files as {stderr, ...}) =
     case #outcome r of
       Supervisor.Exited 0 =>
         let
           val cerr = read stderr
-          val cwarn = "tests/lang/" ^ name ^ ".cwarn"
+          val cwarn = base ^ ".cwarn"
         in
           if exists cwarn then
             if cerr = read cwarn then NONE
@@ -47,12 +52,14 @@ struct
     | Supervisor.Exited _ => SOME ("FAIL", "compile error: " ^ firstLine (read stderr))
     | _ => Run.exitZero (r, files)
 
-  fun errorJudge (writes, name) (r : Supervisor.result, files as {stderr, ...}) =
+  (* a program refused, with the text of its `.expected` in the first line
+     of what the compiler says *)
+  fun errorJudge (writes, base) (r : Supervisor.result, files as {stderr, ...}) =
     case #outcome r of
       Supervisor.Exited 0 => SOME ("FAIL", "expected a compile error but compilation succeeded")
     | Supervisor.Exited _ =>
         let
-          val expected = "tests/errors/" ^ name ^ ".expected"
+          val expected = base ^ ".expected"
           (* as $(cat FILE) gives it: without the newlines at its end *)
           val text = let fun drop (#"\n" :: cs) = drop cs | drop cs = cs
                      in String.implode (rev (drop (rev (String.explode (read expected))))) end
@@ -81,10 +88,11 @@ struct
      compile does not yet (docs/language.md, the deviation Functors): a
      program of tests/lang that it refuses, with the text of its
      `.typecheck-error` in the first line, or one of tests/errors that it
-     accepts, saying what its `.typecheck-ok` holds (nothing, mostly) *)
-  fun typecheckJudge (dir, name) (r : Supervisor.result, files as {stderr, ...}) =
+     accepts, saying what its `.typecheck-ok` holds (nothing, mostly).
+     `accepts` says which: a program the compile accepts (of tests/lang), or
+     one it refuses (of tests/errors) *)
+  fun typecheckJudge (accepts, base) (r : Supervisor.result, files as {stderr, ...}) =
     let
-      val base = "tests/" ^ dir ^ "/" ^ name
       (* as $(cat FILE) gives it: without the newlines at its end *)
       fun text f = let fun drop (#"\n" :: cs) = drop cs | drop cs = cs
                    in String.implode (rev (drop (rev (String.explode (read f))))) end
@@ -110,20 +118,22 @@ struct
             end
         | _ => Run.exitZero (r, files)
     in
-      if dir = "lang" then
+      if accepts then
         if exists (base ^ ".typecheck-error") then refused (base ^ ".typecheck-error", ", where its .typecheck-error says it refuses it")
         else accepted (base ^ ".cwarn", ", which the compile accepts")
       else if exists (base ^ ".typecheck-ok") then accepted (base ^ ".typecheck-ok", ", where its .typecheck-ok says it accepts it")
       else refused (base ^ ".expected", ", which the compile refuses")
     end
 
-  fun expectedCode name =
-    let val f = "tests/lang/" ^ name ^ ".exitcode"
+  (* the exit status a program's `.exitcode` gives, or 0 *)
+  fun expectedCode base =
+    let val f = base ^ ".exitcode"
     in if exists f then getOpt (Int.fromString (read f), ~1) else 0 end
 
-  fun runJudge (writes, name) (r : Supervisor.result, files as {stdout, stderr}) =
+  (* a program run, by its siblings (Lang's header) *)
+  fun runJudge (writes, base) (r : Supervisor.result, files as {stdout, stderr}) =
     let
-      val base = "tests/lang/" ^ name
+      val name = OS.Path.file base
       val dir = OS.Path.dir stdout
       (* the first of the checks that fails, in run-tests.sh's order *)
       fun first [] = NONE
@@ -143,8 +153,8 @@ struct
               fun rcode () = getOpt (Int.fromString (read (dir ^ "/restored.code")), ~1)
             in
               first
-                [(fn () => code <> expectedCode name,
-                  fn () => "exit code " ^ Int.toString code ^ ", expected " ^ Int.toString (expectedCode name) ^ ": "
+                [(fn () => code <> expectedCode base,
+                  fn () => "exit code " ^ Int.toString code ^ ", expected " ^ Int.toString (expectedCode base) ^ ": "
                            ^ firstLine err),
                  (fn () => not (exists (base ^ ".expected")), fn () => "missing " ^ base ^ ".expected"),
                  (fn () => out <> expected andalso not (isSome (accept (writes, base ^ ".expected", out))),

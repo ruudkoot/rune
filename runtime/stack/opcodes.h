@@ -24,7 +24,7 @@ enum Opcode {
   OP_CONTAG = 16,  /* Pop a constructor value and push its tag as an int. */
   OP_CLOSURE = 17,  /* Pop n values (first pushed is env slot 0) into a new closure of function f. */
   OP_SETENV = 18,  /* Pop value v, pop closure c, and set c.env[e] := v. */
-  OP_CALL = 19,  /* Pop argument, pop closure, and call it. */
+  OP_CALL = 19,  /* Pop argument, pop closure, and call it; a closure of more parameters, or a partial application, is the general path's (D15 C). */
   OP_TAILCALL = 20,  /* Like CALL but the current frame is replaced. */
   OP_RET = 21,  /* Return the top of stack to the caller. */
   OP_JUMP = 22,  /* Jump to absolute code offset o. */
@@ -46,6 +46,13 @@ enum Opcode {
   OP_TAILCALLK = 38,  /* Like CALLK, but the current frame is replaced. */
   OP_CONN = 39,  /* Pop n values (first pushed is field 0) and push constructor t made of them: one object of n fields, for a constructor whose argument is a tuple of n (middle-end M11). */
   OP_FIELD = 40,  /* Pop a constructor value that CONN made, of tag t, and push its field i; runevm-stack --checked stops where the tag is another. */
+  OP_FORCE = 41,  /* Where the top of stack is no unevaluated suspension, replace it by its value -- what an indirection holds, else itself -- and jump to o; else leave it for the ENTER after. */
+  OP_ENTER = 42,  /* Pop argument, pop a suspension, and enter it as CALL enters a closure; one under evaluation is a loop: the exception Loop is raised. */
+  OP_BLACKHOLE = 43,  /* The suspension running goes under evaluation: its code has read what it captured, which the collector no longer follows. */
+  OP_UPDATE = 44,  /* Pop a value; the suspension running becomes an indirection to it; one that is an indirection already, lazy ML's that a force from inside it updated first, holds it now. */
+  OP_ARITY = 45,  /* The closure on top, just made by CLOSURE, takes k parameters, k from 2: k in its contag, which a call of more than one argument tests, and in field 0 not its function f but -2 - f (CLOSURE_NARY), which a call of one finds negative. */
+  OP_CALLN = 46,  /* Call the closure m - 1 below the top with the m - 1 values above it, m from 3, which become its locals 0 to m - 2; a closure of another number of parameters, or a partial application, is the general path's. */
+  OP_TAILCALLN = 47,  /* Like CALLN but the current frame is replaced. */
   OP__COUNT
 };
 
@@ -91,6 +98,13 @@ static const char *const op_names[] = {
   "TAILCALLK",
   "CONN",
   "FIELD",
+  "FORCE",
+  "ENTER",
+  "BLACKHOLE",
+  "UPDATE",
+  "ARITY",
+  "CALLN",
+  "TAILCALLN",
 };
 
 static const unsigned char op_nargs[] = {
@@ -135,6 +149,13 @@ static const unsigned char op_nargs[] = {
   2,
   2,
   2,
+  1,
+  0,
+  0,
+  0,
+  1,
+  1,
+  1,
 };
 
 /* What each opcode pops: a number (op_pops_fixed), the value of an
@@ -184,6 +205,13 @@ static const signed char op_pops_fixed[] = {
   -1,
   -1,
   1,
+  1,
+  2,
+  0,
+  1,
+  1,
+  -1,
+  -1,
 };
 static const signed char op_pops_operand[] = {
   -1,
@@ -227,6 +255,13 @@ static const signed char op_pops_operand[] = {
   1,
   1,
   -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  0,
+  0,
 };
 static const signed char op_pops_arity[] = {
   -1,
@@ -263,6 +298,13 @@ static const signed char op_pops_arity[] = {
   -1,
   -1,
   0,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
   -1,
   -1,
   -1,
@@ -313,6 +355,13 @@ static const unsigned char op_pushes[] = {
   0,
   1,
   1,
+  1,
+  1,
+  0,
+  0,
+  1,
+  1,
+  0,
 };
 
 /* Where control goes after each (src/isa/isa.sml, flow; the enum is
@@ -359,6 +408,13 @@ static const unsigned char op_flow[] = {
   FLOW_TAILCALL,
   FLOW_NEXT,
   FLOW_NEXT,
+  FLOW_BRANCH,
+  FLOW_CALL,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_NEXT,
+  FLOW_CALL,
+  FLOW_TAILCALL,
 };
 
 /* What each operand is, which says what the loader accepts for it
@@ -423,6 +479,13 @@ static const unsigned char op_kinds[][2] = {
   {7, 11},  /* TAILCALLK */
   {3, 11},  /* CONN */
   {3, 12},  /* FIELD */
+  {8, 0},  /* FORCE */
+  {0, 0},  /* ENTER */
+  {0, 0},  /* BLACKHOLE */
+  {0, 0},  /* UPDATE */
+  {11, 0},  /* ARITY */
+  {11, 0},  /* CALLN */
+  {11, 0},  /* TAILCALLN */
 };
 
 #endif

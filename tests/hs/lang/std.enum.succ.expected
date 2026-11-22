@@ -1,0 +1,5 @@
+(Green,Green,Green,[Red,Green,Blue])
+([True],[False,True],[True,False],True)
+([()],[False,True],[LT,EQ,GT],"abc")
+(2,2.5,9,2,-2)
+(3.0,'A')

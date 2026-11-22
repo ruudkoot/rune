@@ -1,0 +1,5 @@
+; fail: imported and defined by no unit: nowhere
+; Core in units: a program run or compiled whole has a definition of every
+; import (CoreUnits.unresolved).
+(import nowhere (-> World (utuple World Int)))
+(val main (-> World (utuple World Int)) (\ ((w World)) (nowhere w)))

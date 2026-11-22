@@ -35,9 +35,17 @@ struct
   val int32Max : IntInf.int = IntInf.fromInt 1073741823
   val int32Min : IntInf.int = IntInf.fromInt ~1073741824
 
-  fun remat (oper : L.operation) : bool =
+  (* each function's number of parameters, by its id: a closure of one of
+     2 or more is made with them in it (ARITY, D15 C) *)
+  val funcArity : int IntMap.map ref = ref IntMap.empty
+  val () = CompilerState.cellRoot ("Stack.funcArity", funcArity)
+
+  (* Whether an operation is made again where its value is used, rather
+     than kept: but a captured value in a suspension's code, which reads
+     them at its entry, before it goes under evaluation (Low.hoistEnv) *)
+  fun remat (suspension : bool) (oper : L.operation) : bool =
     case oper of
-      L.Const _ => true | L.Unit => true | L.Con0 _ => true | L.Global _ => true | L.Env _ => true | L.Self => true
+      L.Const _ => true | L.Unit => true | L.Con0 _ => true | L.Global _ => true | L.Env _ => not suspension | L.Self => true
     | _ => false
 
   (* Whether an operation leaves a value on the stack. *)
@@ -45,10 +53,13 @@ struct
     case oper of
       L.SetGlobal _ => false
     | L.SetEnv _ => false
+    | L.Prim ("thunk_blackhole", _) => false
+    | L.Prim ("thunk_self_update", _) => false
     | _ => true
 
   fun func (f : L.func) : C.func =
     let
+      val remat = remat (L.suspensionCode f)
       val blocks = Vector.fromList (#blocks f)
       val nblocks = Vector.length blocks
       val nv = Int.max (#nvars f, 1)
@@ -234,9 +245,9 @@ struct
           fun op' (opc, args) = (restore p; emit (C.Op (opc, args)))
         in
         case oper of
-          L.Const (Lambda.CInt i) =>
+          L.Const (Literal.CInt i) =>
             if IntInf.>= (i, int32Min) andalso IntInf.<= (i, int32Max) then op' (Opcodes.INT, [IntInf.toInt i])
-            else op' (Opcodes.CONST, [C.constIdx (Lambda.CInt i)])
+            else op' (Opcodes.CONST, [C.constIdx (Literal.CInt i)])
         | L.Const c => op' (Opcodes.CONST, [C.constIdx c])
         | L.Unit => op' (Opcodes.UNIT, [])
         | L.Con0 t => op' (Opcodes.CON0, [t])
@@ -246,7 +257,19 @@ struct
         | L.Env i => op' (Opcodes.ENV, [i])
         | L.Self => op' (Opcodes.SELF, [])
         | L.Call (f, a) => (load f; load a; op' (Opcodes.CALL, []))
+        | L.CallN (f, xs) => (load f; List.app load xs; op' (Opcodes.CALLN, [1 + List.length xs]))
         | L.CallK (fid, vs) => (List.app load vs; op' (Opcodes.CALLK, [fid, List.length vs]))
+        (* a suspension's (docs/ir.md, Suspensions): a force is FORCE, and
+           where the value is an unevaluated suspension UNIT and ENTER; the
+           code of one says BLACKHOLE, of no operand (Lower), and UPDATE *)
+        | L.Prim ("thunk_force", [v]) =>
+            let val l = C.newLabel ()
+            in
+              load v; restore p; emit (C.OpLab (Opcodes.FORCE, l)); op' (Opcodes.UNIT, []); op' (Opcodes.ENTER, []);
+              emit (C.Lab l)
+            end
+        | L.Prim ("thunk_blackhole", _) => op' (Opcodes.BLACKHOLE, [])
+        | L.Prim ("thunk_self_update", [v]) => (load v; op' (Opcodes.UPDATE, []))
         | L.Prim (p, vs) => (List.app load vs; op' (Opcodes.PRIM, [C.primIdx p]))
         | L.Tuple vs => (List.app load vs; op' (Opcodes.TUPLE, [List.length vs]))
         | L.Select (i, v) => (load v; op' (Opcodes.SELECT, [i]))
@@ -255,14 +278,17 @@ struct
         | L.Decon (t, v) => (load v; op' (Opcodes.DECON, [t]))
         | L.Field (t, i, v) => (load v; op' (Opcodes.FIELD, [t, i]))
         | L.ConTag v => (load v; op' (Opcodes.CONTAG, []))
-        | L.NewExn n => op' (Opcodes.NEWEXN, [C.constIdx (Lambda.CString n)])
+        | L.NewExn n => op' (Opcodes.NEWEXN, [C.constIdx (Literal.CString n)])
         | L.BuiltinExn k => op' (Opcodes.BUILTINEXN, [k])
         | L.MkExn (c, p) => (load c; load p; op' (Opcodes.MKEXN, []))
         | L.ExnCon v => (load v; op' (Opcodes.EXNCON, []))
         | L.ExnArg v => (load v; op' (Opcodes.EXNARG, []))
         | L.Closure (fid, vs) =>
             (List.app (fn SOME v => load v | NONE => op' (Opcodes.UNIT, [])) vs;
-             op' (Opcodes.CLOSURE, [fid, List.length vs]))
+             op' (Opcodes.CLOSURE, [fid, List.length vs]);
+             case IntMap.find (!funcArity, fid) of
+               SOME k => if k >= 2 then op' (Opcodes.ARITY, [k]) else ()
+             | NONE => ())
         | L.SetEnv (c, i, v) => (load c; load v; op' (Opcodes.SETENV, [i]))
         end
 
@@ -365,6 +391,7 @@ struct
               end
           | L.Return v => (load v; op' (Opcodes.RET, []))
           | L.TailCall (fv, a) => (load fv; load a; op' (Opcodes.TAILCALL, []))
+          | L.TailCallN (fv, xs) => (load fv; List.app load xs; op' (Opcodes.TAILCALLN, [1 + List.length xs]))
           | L.TailCallK (fid, vs) => (List.app load vs; op' (Opcodes.TAILCALLK, [fid, List.length vs]))
           | L.Raise v => (load v; op' (Opcodes.RAISE, []))
         end
@@ -377,6 +404,7 @@ struct
   fun program (p : L.program) : C.program =
     let
       val () = C.reset ()
+      val () = funcArity := List.foldl (fn (f : L.func, m) => IntMap.insert (m, #id f, List.length (#params f))) IntMap.empty p
       val funcs = List.map func p
       val sorted = IntMap.listItems (List.foldl (fn (f : C.func, m) => IntMap.insert (m, #id f, f)) IntMap.empty funcs)
     in

@@ -15,7 +15,12 @@ that this count missed; the others are gaps in how such a miss would be
 found, or what looking for them turned up. They are numbered in the order
 they were found. Issues 16 to 24 were found by the functors-units roadmap
 (`functors-units.md`, 2026-10-21 to 2026-10-25), which also found the bugs
-outside the cache that the last section lists.
+outside the cache that the last section lists. Issues 25 on were found
+under rhc, the Haskell 98 compiler that keeps its units in the same store
+(`docs/units.md`, *rhc's units*; the haskell98 roadmap, 2026-11-16): by
+mapping each issue above onto rhc's units and probing where one could have
+an analogue, and by a tester of mechanical edits held to a build without
+the store, as issue 5's is.
 
 ## Wrong results
 
@@ -205,6 +210,179 @@ outside the cache that the last section lists.
   refused a correct entry. What the program computed was right. Status:
   fixed; every printer's source is `<echo>` (S76).
 
+* **25. A class's defaults: what an instance in another module is made
+  of.** Found under rhc (the haskell98 roadmap, 2026-11-16), mapping issue
+  1: a functor's body resolved where it was declared has, in Haskell, an
+  analogue in what a class's declaration gives an instance elsewhere. An
+  instance that leaves a method out is made of the class's default where
+  the class has one (4.3.2), `%dm:` in Core, and of a call of `error`
+  where it has none; the instance's module reads that from the class's
+  unit's desugaring, which no usage records, and the class's fingerprint
+  held its methods and their types, not which have a default. Two probes,
+  each built through the store, edited, built again and compared with
+  `--no-store`:
+
+  ```haskell
+  -- C.hs
+  module C where
+  class Describe a where
+    describe :: a -> String
+    describe _ = "default"          -- the edit takes this line away
+    name :: a -> String
+  -- I.hs
+  module I where
+  import C
+  data T = T
+  instance Describe T where name _ = "T"
+  -- Main.hs
+  import C
+  import I
+  main = putStrLn (name T) >> putStrLn (describe T)
+  ```
+
+  * the default taken away: I is taken, its dictionary naming `%dm:` that C
+    no longer makes, and the link fails ("the variable %dm:C.describe is
+    not bound"), at every build after it until the store is removed;
+  * the default given (the edit the other way): I is taken, and the
+    program ends in "no method describe in the instance Describe T"; it
+    should print `default`.
+
+  Status: fixed. A class says which of its methods have a default
+  (`HsClasses.class`'s `defaults`, in its interface, HsIface 4), and its
+  fingerprint holds them, so that an instance of another unit is made
+  again where one comes or goes. The probes are `hs/units/holes/class-default`
+  and `hs/iface/fingerprints/default`, which the rhc before the fix fails;
+  the mutant `HU12` takes the defaults out of the fingerprint.
+
+* **26. An instance in scope along a chain of imports.** Found under rhc
+  (the haskell98 roadmap, 2026-11-16), mapping issue 2: what an overloaded
+  name resolves to is read away from its type, and in Haskell an instance
+  is in scope in a module only where a chain of imports leads from it to
+  the module that declares the instance (5.4). The checker found the
+  instance (a usage, `instance C T`, E13's H2) and then asked whether the
+  module's imports reach the instance's, which is a read of other modules'
+  import lists, and no usage. So an import taken from, or given to, a
+  module on the way moved what a module that imports neither means. Three
+  probes:
+
+  ```haskell
+  -- N.hs: newtype N = N Integer, with Eq and Show
+  -- Orphan.hs: import N; instance Num N where fromInteger k = N (k * 10) ...
+  -- Mid.hs
+  module Mid where
+  import Orphan ()                  -- the edit takes this line away
+  -- A.hs
+  module A where
+  import N
+  import Mid
+  default (N, Integer)
+  a = show (1 + 2)
+  -- Main.hs
+  import Orphan
+  import A
+  main = putStrLn a
+  ```
+
+  * the import taken away: in A, `Num N` is out of scope and the default
+    is Integer; A is taken, and the program prints `N30`, where `3` is
+    right, with no error (since the fix of the default's check, found on
+    the way below, A's `default (N, Integer)` is itself refused where `Num
+    N` is out of scope; `hs/units/holes/instance-chain` moves `Read N`
+    instead, which `read "5" + 1` asks, and prints `N15` or `6`);
+  * the import given (the other way): the program prints `3`, where `N30`
+    is right;
+  * an instance of `Show` reached only through Mid, and A's `show T`: the
+    import taken away, the build through the store takes A and succeeds,
+    where a build without it refuses the program ("the instance Orphan
+    declares is not in scope in A").
+
+  Status: fixed. Whether a chain of imports reaches the module that
+  declares an instance the checker finds is a usage of its own,
+  `HsUsage.Reaches`, answered from the program's graph (`RhcGraph.reaches`)
+  as every usage is (H3). The probes are `hs/units/holes/instance-chain`
+  and `instance-chain-refused`, which the rhc before the fix fails; the
+  mutant `HU13` drops the read.
+
+* **27. A literate file read as a plain one.** Found under rhc (the
+  haskell98 roadmap, 2026-11-16), reading what a key holds against the
+  tester's edit that makes a module literate, and probing a module renamed
+  to `.lhs`. A unit's key was its name and its members' texts, and
+  a module's header was kept by its text's hash; neither said how the text
+  is read, and the same bytes read literate are another program (or
+  none). Probe:
+
+  ```haskell
+  -- A.hs, renamed to A.lhs and nothing else
+  module A where
+  a :: String
+  a = "plain"
+  {-
+  \begin{code}
+  module A where
+  a :: String
+  a = "literate"
+  \end{code}
+  -}
+  ```
+
+  Read plain, `a` is `"plain"`; read literate, the code is what
+  `\begin{code}` encloses, and `a` is `"literate"`. After the rename, A
+  was taken and the program printed `plain`, where `literate` is right; a
+  text with nothing literate in it, renamed, was taken where it is no
+  module A at all and the build without the store refuses the program.
+  Status: fixed. A unit's key says of each member whether it is literate,
+  and so does the way a header is kept (`docs/units.md`, *rhc's units*);
+  `--dotted-names`, by which a text is read otherwise too, is in the
+  units' configuration. The probe is `hs/units/holes/literate` (the
+  runner's holes now take `.lhs` files and a step's `rm`), which the rhc
+  before the fix fails; the mutants `HU14` and `HU15` drop the key's and
+  the header's. `HU15` was not caught until the case's last steps
+  (2026-11-17): a text whose two readings have one header passes with the
+  header of either, and the last steps' literate reading imports a module
+  the plain reading does not.
+
+* **29. The link's memo across levels and instruction sets.** Found under
+  rhc (the haskell98 roadmap, 2026-11-16), probing the link memo, whose
+  entries must not be shared across levels and instruction sets as a
+  unit's are. The memo's configuration names the level and the
+  instruction set, but it was made when the compile began, before the
+  options that set them were read, so every compile had the default's.
+  Probe: a program of two modules through one store at `-O2`, then `-O0`,
+  `-O1`, `-O2 --target=stack`: `-O1` took `-O0`'s program, and
+  `--target=stack` took the register machine's bytecode, which the stack
+  machine cannot run; `-O2 --strictness=off` took `-O2`'s, an option the
+  memo's configuration does not hold, which the memo left out for
+  `--eta=` and `--fuel=` and not for it. The tester's first run, on the
+  rhc before the fix, found it at every change of level or machine: 61 of
+  732 builds took a link of another configuration. Status: fixed; the
+  link's configuration is made where the link is looked up, and
+  `--strictness=` leaves the memo out (`hs/units/memo`).
+
+* **41. An instance read without the module that declares it.** Found under
+  rhc (the haskell98 roadmap, 2026-11-22), by the tester at seed 900 (issue
+  40's round): in both of nofib's `gg`, an instance moved, the same, from
+  `GRIP` to `Pool`, `Activity`, which uses it and whose imports reach
+  `GRIP` and not `Pool`, was taken and the program built, where the build
+  without a store refuses it (5.4, R26: no chain of imports leads from
+  `Activity` to the instance); a build of each, at -O1 and -O2 with the
+  lint at level 2, on either machine, and the two programs walked again
+  alone by the rhc before issue 40's round (9bbf03633), 82 builds, disagree
+  at the same two steps. A unit's read of an instance was answered by the
+  instance's identity, its class and type, and its fingerprint, and whether
+  the reading module's imports reach it was read of the module that
+  declared it then (HsInfer's `Reaches`): an instance moved to another
+  module, the same, gives the read the same answer, and the reach is asked
+  of the module it left, which the imports still reach. A twin store whose
+  hits ask every usage takes the unit too. Status: fixed. An instance's
+  read is answered with the module that declares it (`RhcIface.answer`), so
+  that one moved is another answer and the unit is made again, as the build
+  without a store makes it. The probe is `hs/units/holes/instance-moved`
+  (an instance moved from the module on the client's chain of imports to
+  one of the program off it), which the rhc before fails; the mutant `HU29`
+  drops the module. The tester at seed 900 again with the fix: both builds
+  of the two steps refuse, as the build without a store does, and none of
+  the walk's 3,321 builds disagrees (issue 40, below).
+
 ## A hit that cannot link
 
 * **4. An entry whose code names a unit no longer there.** An entry is
@@ -216,6 +394,29 @@ outside the cache that the last section lists.
   until the cache is removed. Status: fixed. An entry whose code names an
   identity the session does not have is a miss (S51 was this case before
   issue 1's fix).
+
+* **28. A damaged part of an entry, read after the entry is taken.** Found
+  under rhc (the haskell98 roadmap, 2026-11-16), flipping bytes of a
+  store's entries. The store holds an entry's head to its hash before the
+  entry is taken, and each section to its own only as its client reads it
+  (`UnitStore`); Rune's client reads every section it needs inside the
+  lookup, so a damaged one is a miss. rhc reads a unit's parts long after
+  it takes the unit -- its fingerprints at once, its desugaring's where a
+  unit after it is made, its Core's declarations where the link reaches
+  them -- and a damaged one raised the store's `Damaged` out of the
+  compile: `runevm: uncaught exception Damaged`, at every build after it
+  until the entry was removed by hand. Probe: `tests/hs/units/drive`
+  through a store, one byte flipped at a quarter, a half and three
+  quarters of the link's entry or of Main's, and a warm build. Status:
+  fixed. An entry of the program's store is held whole before it is
+  taken, every part read once (a part a compile reads anyway is not read
+  again), and one that does not hold is no entry, and is removed; the
+  parts of a layer's entry, which rhc never writes, are read as they are
+  asked for, and one that does not hold stops the compile with an error
+  naming the layer, or is not taken where it is read at once (a unit's
+  fingerprints, the link's bytecode). `hs/units/damaged` flips a byte in
+  the head, the middle and the end of each entry, of the store and of a
+  layer.
 
 ## How little is tested
 
@@ -290,6 +491,42 @@ outside the cache that the last section lists.
   `bin/rune`, whose paths are those the frozen Basis was made with. Status:
   fixed: `make test-incremental` builds `lib/cache` first, and its runner
   calls the compiler by its full path.
+
+* **32. No way to check rhc's warm build.** Found under rhc (the haskell98
+  roadmap, 2026-11-16), mapping issue 6: rhc had `--no-store` and `cmp`.
+  Status: done. `--verify-store` takes nothing from the store: it makes
+  every unit and the link, and holds each entry that stands for one of
+  them to what making it gave -- its usages, its interface and every part,
+  HsLint's where both have one -- and the link's bytecode to the memo's,
+  failing where one is not. `hs/units/verify` plants an entry whose usages
+  hold and whose content is another compile's: a compile takes it and
+  prints the old program, and `--verify-store` refuses it, naming the
+  unit. Run on the stores the tester left, it found issues 30 and 31.
+
+* **33. rhc's units tested by hand-written cases.** Found under rhc (the
+  haskell98 roadmap, 2026-11-16), mapping issue 5. The store was tested by
+  E13's holes, a case each (`tests/hs/units/holes`), and by random walks
+  over those cases' states: written with the code, they shared its blind
+  spots, and issues 25 to 30 were in none of them. Status: done for now.
+  The probes are cases (`class-default`, `instance-chain`,
+  `instance-chain-refused`, `literate`, `fresh-names`) and jobs
+  (`hs/units/memo`, `damaged`, `verify`, `trim`), with mutants `HU12` to
+  `HU16`. Beside them,
+  a tester of mechanical edits, as Rune's `mutate.py` and kept with the
+  roadmap's drafts (`impl/bc/tools/mutate.py`; no `.py` lands): a program
+  copied and edited a step at a time -- a fixity, a numeral, a string, a
+  constructor added, removed, swapped or renamed, a deriving clause, a
+  type synonym, a `default`, an export list (`module M` among them), an
+  import list (`hiding`, `qualified`, `as`), an import of a module's
+  instances alone (`import M ()`, which moves what is in scope along a
+  chain, 5.4), a signature removed, a class's default or superclass, an
+  instance removed, moved to another module or given up a method, a module
+  renamed, a module made literate, an import that makes a cycle, comments
+  and blank lines, a step back to an earlier state -- each step built
+  through a kept store at one of the levels `-O0`, `-O1`, `-O2`, lint
+  levels 0 and 2 and both machines, and held to a build without the store,
+  the same bytes or the same refusal, and now and then to `--whole`. Its
+  runs are in *Found under rhc: what was run*, below.
 
 ## Smaller
 
@@ -439,6 +676,304 @@ outside the cache that the last section lists.
   fixed (functors-units M2, F2): the identity is kept with the entry and
   given to the load.
 
+* **30. A unit's fresh names numbered after what the session made
+  before it.** Found under rhc (the haskell98 roadmap, 2026-11-16) by the
+  tester, at `-O2`, and read with `--verify-store`. The checker numbers a
+  program's fresh type variables and dictionaries from 10^8, and each of
+  the program's groups goes on from where the one before it ended, so that
+  no two of a program have one name (`RhcNames.unitCounters`). A unit
+  taken from the store was numbered in the session that made it, after
+  whatever that session made before it; one made now goes on from what
+  this session made. So a unit made after a unit taken is numbered
+  otherwise than in a build without the store, and its Core is other
+  text: a derived `Show` of `tests/hs/units/holes/h5-context`'s `D` binds
+  `a1_100000001` where a build without the store binds `a1_100000003`. The
+  program does the same, but it is not the same bytes at `-O2`, whose Core
+  simplifier names what it makes after what it is given (the tester: an
+  instance in 1 of 732 builds before this issue was found; the walk of
+  `h5-context`, seed 100, step 52), and a link keyed by its Core (issue
+  35) misses where only the names moved: a comment in a unit made after
+  one taken compiled the link again. Status: fixed. Each of the program's
+  groups is numbered from a range of its own, a million wide, by a hash of
+  its modules' identities (`RhcNames.programSlot`), as the library's units
+  are by their place (`RhcNames.librarySlot`): its names are its own, and
+  two groups' meet only where their hashes do (one in 2^28). Numbering
+  every group from 10^8 makes the names a unit's own too, but a whole
+  compile's HsLint (`--whole --lint=2`) then refused programs ("the
+  parameter d100000002 is a dictionary of Show a_100000001, and Show
+  a1_100000001 is wanted"): its replay takes a program's numbers to be its
+  own, as the groups' ranges keep them. The probe is
+  `hs/units/holes/fresh-names` (a comment in a unit made after one taken
+  takes the link), which the rhc before the fix fails, and the mutant
+  `HU16`; the walk of `h5-context` that found it agrees at every step.
+
+* **31. Paths in a unit's entry.** Found under rhc (the haskell98 roadmap,
+  2026-11-16), with `--verify-store`, mapping issue 9. An entry's interface
+  holds each definition's place, with the path its module was read from,
+  and so does HsLint's part: the snapshot `make` writes holds the build
+  tree's paths of the library (`bin/../share/rhc/haskell98/Array.hs`), and
+  a program's entries the paths their modules were given by. Nothing a
+  program prints or does reads them [inferred: another unit's places are
+  read only to tell whether a diagnostic is the library's, by its file],
+  so no build differs; but an entry is not the bytes a compile from
+  another place gives, and `--verify-store` refuses the library's entry
+  of a bin/rhc run anywhere but where make built it, as issue 24 refused a
+  correct entry. Status: fixed (2026-11-17), as issue 9 was: an
+  interface's places are written with no file and a unit taken has each
+  put back where its module is now (`RhcDriver.placed`), and HsLint's part
+  writes a place by its module, which the part's map of files to modules
+  then gives as itself (`HsLintCodec`). `hs/units/elsewhere` runs a bin/rhc
+  whose library is a copy at another path on a store: it takes every unit
+  and the link, and `--verify-store` holds every entry, the snapshot's
+  library among them, which the rhc before the fix refuses.
+
+* **34. The store trimmed between the units and the link.** Found under
+  rhc (the haskell98 roadmap, 2026-11-16), probing `StorePolicy.trimAfter`.
+  rhc trimmed its store once its units were kept, before it looked up the
+  link's memo, where Rune's store is trimmed after a build: a program
+  untouched for a week had its units taken, which keeps them, and its link
+  removed by the trim just before it was looked up, and compiled again.
+  Not a wrong result, a link compiled for nothing (95M instructions for
+  `tests/hs/units/drive`'s). Status: fixed; the store is trimmed when the
+  compile is done (`hs/units/trim`).
+
+* **35. A link keyed by its units' entries.** Found under rhc (the
+  haskell98 roadmap, 2026-11-16), measuring what a warm build costs. The
+  link's memo was keyed by the sums of the units' entries, so that a link
+  taken reads no Core; but an entry holds its definitions' places with
+  its Core, so a comment or a blank line before a definition is an entry
+  of other bytes with the same Core, and the link -- the whole back end
+  over what `main` reaches, most of a build -- was compiled again: a
+  comment in `Types.hs` of a seven-module program cost a warm build 399M
+  instructions, against 394M without a store. Status: fixed. A unit's
+  entry keeps the hash of its Core, its index's text and each
+  declaration's, as a part of its own, and the link's memo is keyed by
+  those, which with the runtime's are all the back end reads (`RhcStore`
+  4), and with issue 30 fixed, a comment in a unit made after one taken
+  takes the link too; the same comment's warm build costs 51M, 0.13 of
+  the build without a store.
+
+* **36. Every unit given the interfaces of all the units before it, each
+  time.** Found under rhc (the haskell98 roadmap, 2026-11-16), measuring
+  chains and trees of 10, 100 and 500 modules. To name and check a unit,
+  and to judge whether its entry stands, rhc installed the interfaces of
+  every unit before it into a fresh state (`RhcNames.install`), whose list
+  of entities is appended to: unit k paid for k units, and a warm build
+  with nothing edited cost per unit 2.7M instructions at 10 modules, 3.4M
+  at 100 and 8.2M at 500 (4.1G for a chain of 500, more than half of its
+  7.6G without a store). Status: fixed; the state is made once, a unit's
+  interfaces installed into it as the unit is done, which is the state
+  installing them all at once gives (a fold): a unit taken costs 1.9M at
+  10 modules, 2.0M at 100 and 2.1M at 500, a chain of 500 with nothing
+  edited 1.1G, and the build without a store 4.6G.
+
+* **37. A unit taken costs the naming of its modules.** Found under rhc
+  (the haskell98 roadmap, 2026-11-16), measuring warm builds. A usage of
+  a name is answered in the scope of the module that read it, as a compile
+  of the unit finds it (H3), so every unit whose entry is judged has its
+  modules parsed and named again: about 2M instructions a unit, more than
+  half of a warm build with nothing edited (15M of 26M for a seven-module
+  program, 61M of 78M for `fluid`'s eighteen). Not wrong, and cheaper than
+  checking, but what a hit costs grows with the program, not with what
+  changed. Status: fixed (2026-11-21), by both of the ways the owner
+  chose of those `impl/bc/issue37.md` set out (the roadmap's drafts), each
+  standing exactly where asking every usage stands. B: an entry's head
+  keeps a digest of the units before it in its compile, each one's name,
+  key and entry's sum, each on the digest before it, after the fixpoint of
+  a cycle's exports (`RhcStore.priorOf`; RhcStore's version 5); where the
+  units before are those entries now, every usage gives what it gave, and
+  the entry stands asking none, after the lint's level. A: an entry keeps a
+  usage `scope M` for each module its unit imports, a digest of what M
+  exports, each entity with its parent and its sort; where the modules
+  imported are those and each digest is what it was, a module's scope is
+  what it was (its text is in the key; 5.3, 5.5), so a name's usage stands
+  for the entities it stood for, and only their fingerprints are asked, of
+  the units before, as is every read of theirs (an item, an instance, a
+  chain of imports), with nothing of the unit read or named; where one
+  moved, or under `--names=greatest`, the unit is named and every usage
+  asked, as before, and a digest that moved refuses nothing. `--show-units`
+  says how a unit taken stood (`its units before as they were`, `its
+  scopes as they were`). `RHC_HIT=asked` asks every usage, keeping the same
+  entries, and every step of the holes' cases, of `hs/units/configs` and of
+  the tester is held to a twin store compiled so: each unit and the link
+  taken or made alike. Cases for each way an import's exports move
+  (`a-exports`, `a-reexport`, `a-module`, `a-hiding`, `a-qualified`,
+  `a-instance`, `a-fixity`, `a-methods`, `a-shadow`), B's `b-before` (an
+  edit before and after, steps back), `hs/units/configs` (one store at
+  levels 0 and 2, -O2 and both fixpoints) and the store's own test of the
+  digest. Mutants `HU17` to `HU25`: those of wrong hits caught (`HU18` to
+  `HU20`, `HU22`, `HU24`), the rest argued equivalent. What is left: an
+  entry that stands by its usages after its imports' exports moved keeps
+  the digests it was made with, and one that stands after a unit before it
+  was made again keeps its digest of the units before, the store keeping
+  no newer head of an entry taken, so that every later compile asks it
+  by the second way, or every usage, until it is made again. In rhc's VM
+  instructions at `-O1` (`impl/bc/perf/table-37.md` and
+  `table-runset-37.md` of the drafts, haskell98's 646f5bbbd without and
+  with A and B): a unit taken costs 0.30M where the units before it are as
+  they were (B), 0.39M to 0.48M after an edit before it (A), against 1.9M
+  to 2.0M; a warm build with nothing edited of a chain of 500 modules
+  1,007M to 190M (0.15 of a build without a store), of 100 204M to 42M,
+  `fluid`'s 78M to 42M; a line above every definition of a chain's first
+  module, at 500, 1,027M to 267M. Over the nine programs and both levels of
+  the lint, nothing edited costs 0.22 of what it cost, a line above every
+  definition 0.34 to 0.37, an edited body or interface 0.55 to 0.69 (what
+  is left is the link, issue 38); over the tester's 81 programs at level 0,
+  nothing edited 0.57 (2,232M to 1,263M in all, 0.06 of their builds
+  without a store), a comment or a line above every definition 0.78, a
+  body 0.96.
+
+* **38. A warm build after an edit of a body costs a build without a
+  store.** Found under rhc (the haskell98 roadmap, 2026-11-16), measuring
+  warm builds. The link of the roadmap's C compiles whole what `main`
+  reaches, Shake and all, and that is most of a build: 301M of a
+  seven-module program's 389M, 608M of `fluid`'s 776M at `-O1`. So an edit that changes
+  any Core main reaches -- a numeral in a body -- makes a warm build cost
+  1.01 to 1.03 of a build without the store, the front end of the units
+  that miss being a few million instructions; only an edit that changes
+  no Core (issue 35) is cheap. Not an issue of the store's
+  correctness, but of what it saves, which is the front end alone.
+  Status: open; it is the roadmap's choice (M21, the link of C, over a link
+  of each unit's code, which made hello 932,791 bytes), and a back end
+  that kept its work by declaration would be another milestone.
+
+* **39. A unit's desugaring and HsLint read all the units before it.**
+  Found under rhc (the haskell98 roadmap, 2026-11-16), measuring the same
+  chains. A unit is desugared after the desugaring interfaces of every unit
+  before it, given again for each (`HsDesugar.unit`'s `interfaces`), and at
+  lint level 2 checked by HsLint after every unit's part joined again
+  (`HsLint.join`): a build that makes every unit -- the first, or one
+  without a store -- grows faster than the units: desugaring and keeping
+  4.6M a unit at 100 modules and 8.0M at 500; HsLint 2.1M a unit at 10,
+  3.8M at 100 and 16.5M at 500, 8.3G of a chain of 500's 13G at level 2. A warm build makes few units and
+  pays it once each (85M of a chain of 500's warm build with one edited, at
+  level 2). Status: fixed (2026-11-17). The driver keeps what the units
+  before a unit leave its desugaring, each unit's interface learned once as
+  the units are made in order (`HsDesugar.learnMore`, `unitFrom`), and the
+  parts of HsLint's joined once each onto what was joined before
+  (`HsLint.join`, whose maps now start from the first part's). That left
+  the folds over everything known that a unit made for its own share, each
+  small and each the size of the units before, which a profile of the chain
+  of 500 found one by one: HsLint's replay read the whole compile's
+  evidence table for a unit's records (each unit now checked with a table
+  of its own); its part, its report and its target's data folded every map
+  and every instance (now each module's keys, `HsStringMap.foldPrefix`, and
+  the instances added since the units before were restored,
+  `HsLintClasses.addedBy`); an instance was found by trying each of its
+  class's (now by class and type constructor, `HsLintClasses.heads`); 5.4's
+  chain of imports was followed to every module a module reaches, HsLint's
+  and the checker's (now searched until it reaches the one asked for); the
+  desugaring listed every imported type for the ones a unit names, and
+  every known constructor, field and default for what it added (now looked
+  up, and the keys given since the unit began); and the interface of a
+  module listed every module's definitions and entities (`RhcIface`,
+  `HsInfer.part`, now by its keys). The programs, the store's entries (the
+  usages, the interface, every part) and HsLint's verdicts are the bytes
+  they were: the tester's 81 programs at `-O1` into a store and at `-O2`
+  without one, the same programs and the same 871 entries before and after;
+  `hs/hslint` 39 of 39, its library's dump among them; HsLint's and the
+  checker's mutants caught. What one more unit costs a build without a
+  store, from 10 modules to 100 and from 100 to 500 (rhc's VM instructions
+  at `-O1`, `impl/bc/perf/` of the roadmap's drafts): a chain at level 0,
+  4.6M then 10.0M before, 2.3M then 2.3M after; at level 2, 8.9M then
+  30.0M before, 2.9M then 3.1M after; a tree the same (2.7M and 2.7M, 3.7M
+  and 3.7M after). A chain of 500 without a store, 4,552M to 1,263M at
+  level 0 and 13,022M to 1,703M at level 2; its first build into a store
+  14,357M to 3,029M at level 2; a unit's front end, named and checked,
+  3.2M at 500 modules before and 1.7M after, as at 10 and 100. The
+  tester's 81 programs, of 1 to 18 units: 0.978 of their cost without a store at
+  level 0 and 0.974 at level 2 (nofib's `infer`, 15 units, 0.93), and their
+  first builds 0.980 and 0.975. A warm build with nothing edited costs
+  what it did (issue 37's).
+
+* **40. An entry is not what a compile in another order makes.** Found
+  under rhc (the haskell98 roadmap, 2026-11-21), holding the tester's
+  stores to `--verify-store` after their walks (issue 37's round). Two
+  things an entry holds are numbered by what came before it in its
+  compile, not by the unit alone: HsLint's part keeps the counter its
+  inference ended at, which started where the units before it ended
+  theirs (`HsLint.join`, the largest of their counters), and a unit's Core
+  imports the types of another's values with the type variables that
+  unit's check numbered, which differ between that unit's entries made in
+  other orders. So where a unit was made after units taken, made in
+  another order or another walk, `--verify-store`, which makes every unit
+  in one compile, refuses the entry: of the tester's 81 programs walked 41
+  steps each (seed 600), the 65 whose last state compiles, 29 refused for
+  HsLint's part (level 2) or the hash of a Core (`nofib`'s `sched`: an
+  import's type variables `m_5946116000016` where the compile gives
+  `..19`), the same with the rhc before issue 37's A and B (four of them
+  walked again with it); and 6 for a digest of A's, its scope's usages,
+  which an entry that stands by its usages keeps as they were made, and
+  which `--verify-store` no longer holds it to (issue 37). Nothing the
+  program is made of moves (the tester's every warm build is the bytes of
+  the build without a store), and a usage reads neither. Status: fixed.
+  HsLint's half (2026-11-21): each unit's inference numbers its variables
+  from where the first unit's ended (`HsLint.counterFrom`, `counterOf`),
+  not from where the units before it ended theirs, a part holding no
+  variable free; `hs/units/verify-scopes` (an import grows by what its
+  client does not name, and `--verify-store` holds the store at level 2),
+  which the rhc before refuses. Of 81 programs walked again 21 steps each
+  (seed 800), the 64 whose last state compiles, 2 refused, both for a
+  Core. (A first fix gave each unit a range of its own, as its check has,
+  past what HsLint's part writes of a number, 2^35: the tester refused it
+  at once, a unit's entry that could not be read back.) The Core's half
+  (2026-11-22, branch `hs-bc4`): what a unit gives the units after it has
+  its type variables named by the place each is first met, `tK`
+  (`HsDsCore.canonicalTy`, `canonicalDecl`): each value's type in its
+  interface, which a unit that imports the value writes in its `(import
+  ...)`, and each of the source's data types and newtypes, which a unit
+  that uses one copies; the unit's own values keep the checker's names,
+  numbered from the unit's own range, a function of its source. The check
+  numbers a value's type variables by what its unit took before it, and
+  keeps the name its source wrote (`QSort.sort`'s `a_1` against the `t_1`
+  of an inferred type, `nofib`'s `awards`), text of that unit the importing
+  unit does not read; and, found on the way, a data type's parameter is as
+  its source wrote it, so that one renamed (`data Box a` to `data Box b`)
+  leaves the unit that copies the type taken, which `--verify-store`
+  refuses, with the rhc before as well. Naming the bodies too, tried first,
+  moved the simplifier's fresh names at -O2 (`x~N`, numbered on through the
+  program, which binders now alike took more of): the programs at -O2 other
+  bytes, the same code; and naming the desugarer's own types, the list's,
+  IO's, the tuples' and the classes' dictionaries', moved them too, and set
+  the list apart from the runtime's declaration of it
+  (`hs/snapshot/lang/sample`); neither reads text a unit does not read.
+  `hs/units/verify-order`: Lib grows a value before the polymorphic one
+  Main imports, then renames the parameter of a type Main copies, Main
+  taken and `--verify-store` holding the store after each, and Main, its
+  comment edited, is compiled to the Core it was and the link taken; the
+  rhc before refuses each step, each tried alone. No expected file holds a
+  Core the desugarer writes (`tests/hs/core`'s are written by hand): none
+  changes. The programs are the bytes the rhc before makes, the tester's 81
+  and `tests/hs/lang`'s 591 at -O0, -O1 and -O2 (2,016 compiles). The
+  library's snapshot, 75 files, 41,239,895 bytes before and 41,202,879
+  after (41,206,527 with issue 41's fix, its reads of instances longer): of
+  its 2,271 declarations 552 moved, 546 imports and 6 data types, each only
+  renamed, and no value (as the tester's `rich`, its 7 units in a store: 77
+  of 198, 74 imports and 3 data types). The walk of seed 800 (81 programs,
+  21 steps, 1,701 builds, every configuration, the twin on) again, the same
+  walk by the rhc before and by this round's (with issue 41's fix; the
+  tester's choice of a cycle no longer by the hashing of strings), none
+  disagreeing: its stores, 144, 4 refused before and none after (126
+  verified, 18 whose last state is refused); the link's memo, kept by its
+  units' Core, taken at 635 of the 1,383 builds accepted before and 642
+  after (45.9% to 46.4%; 59.6% to 60.4% of those after an accepted build of
+  the same configuration), 7 steps from compiled to taken and none the
+  other way, each a unit made again to the Core it was: a comment, a
+  chain's edit, a fixity, an import. The 29 programs whose stores round 3's
+  walk refused, walked again the same way (seed 600, 41 steps, 1,189
+  builds) by the rhc before and after: their 58 stores, 6 refused before
+  (`sched`, `grep` and `expert`, each a Core's hash) and none after. Each
+  of the 29's last states compiled into a store alone and into one after
+  the program's first state, at -O1 and at -O2 with the lint at 2: every
+  entry's sections alike in the two, by either rhc, the heads apart (the
+  digests of the units before), so that those two orders do not move what
+  this half is about, a unit taken while a unit it reads was made again,
+  which a walk does. The tester at seed 900 (81 programs, 41 steps), which
+  found issue 41 with this half's rhc, with this round's: 3,321 builds,
+  none disagreeing and none taking or making a unit otherwise than the
+  twin; its 155 stores, 148 verified and none refused (7 whose last state
+  is refused).
+
 ## Found on the way, outside the cache
 
 The functors-units roadmap (2026-10-21 to 2026-10-25) found these while it
@@ -569,3 +1104,163 @@ writing this roadmap*, has each):
   `val r = ref []`, applied after a `;`;
 * SML/NJ 110.99.9 accepts equality through a functor's opaquely ascribed
   result.
+
+**Under rhc** (the haskell98 roadmap, 2026-11-16), found while probing its
+store:
+
+* **A diagnostic of a module read for an import named the root's file.**
+  A literate file that holds no code is a module without a header, `module
+  Main (main) where` (5.1), whose export of an absent `main` was said at
+  `Main.hs`, the file rhc was given, not at `A.lhs` (issue 27's second
+  probe: "Main.hs: error: an export list names `main`, which is not in
+  scope"). A diagnostic with no file of its own is placed at the root
+  (`RhcSyntax.message`). Status: fixed (2026-11-17): the assumed header's
+  export is placed at the start of the module's own file
+  (`RhcGraph.withHeader`); `hs/errors/mod.header.abbrev.nomain_imported`,
+  whose first line is now `./A.hs:1:1`.
+* **A `default` type checked against every instance, in scope or not.**
+  A `default (N, Integer)` where `Num N` is out of scope (5.4) is accepted
+  (`HsInfer.defaultDecl` asks at no module), and its N is never chosen,
+  since defaulting asks at the module (issue 26's probes). 4.3.4 asks that
+  `Num ti` hold, and 5.4 puts an instance in scope only where a chain of
+  imports leads to its module, so it holds by an instance in scope or not
+  at all. Status: fixed (2026-11-17): the check asks at the module, and
+  says why where the instance is out of scope, and HsLint's check of a
+  default declaration does the same (`hs/hslint/errors` holds both judges
+  to refuse it); `hs/errors/def.decl.num_scope`, under 4.3.4's row
+  `def.decl.num`.
+
+* **A superclass named twice in a class's context.** `class (Eq a, Show
+  a, Eq a) => C a` desugars to two superclass selectors of one name,
+  `%super:Main.C>haskell98:Prelude.Eq`: a whole compile's CoreLint refuses
+  the program ("the value ... is declared twice", an internal error),
+  where a compile in units takes it and runs it. Found by the tester's
+  edit "superclass added" on `nofib/spectral/circsim`, held to `--whole`.
+  4.1.3 makes a context a list of assertions and forbids no repetition,
+  and 4.3.1 makes the context the class's superclasses: one class named
+  twice is one superclass. Status: fixed (2026-11-17): a class's
+  superclasses are the classes its context names, each once, in the
+  checker and in HsLint, so that a dictionary has one field for it; the
+  `hs/lang/cls.class.super_repeat`, under 4.3.1's row `cls.class.super`,
+  the same program whole and in units.
+
+* **A compile with `--no-cache` makes the Basis Library's index again,
+  wherever no store holds this compiler's.** Seen by the haskell98
+  roadmap's agent CS measuring benchmarks (a `lib/cache` of another
+  compiler build "doubled a compile's work"), and read under rhc's
+  verification: the compile of `examples/benchmarks`' tak with `--whole
+  --no-cache`, `RUNE_CACHE` empty, runs 98.7M instructions where the
+  `lib/cache` beside its Basis is its own compiler's, and 175.0M where
+  there is none or one of another compiler build (175.0M either way: a
+  record refused costs nothing to speak of; CS's lower figure, with a lib
+  copy without `lib/cache`, was a compile that found the record elsewhere,
+  in its workspace's `.rune` [inferred]). The difference is the index
+  pass (`--pass-stats`: 0.04 s against 0.33 s): the index is kept as a
+  record named by the compiler's identity (`LibraryIndex`, its
+  `library-index` key), read from the store and the frozen layer, and a
+  compile with `--no-cache` reads such records and writes none, so each
+  one makes the index again from the Basis's sources. The programs are
+  the same bytes and run the same (149.6M instructions for tak, every
+  way). Not a wrong result, but a trap for measuring: a `--no-cache`
+  compile costs 1.8 times as much in a tree whose `lib/cache` is stale or
+  absent. Status: open; writing the record under `--no-cache`, or naming
+  it by what the index is made of rather than by the compiler, would
+  change what `--no-cache` means or how the store keys it, which is the
+  cache's design.
+
+## Found under rhc: what was run
+
+The haskell98 roadmap's agent BC, 2026-11-16; the tools, their logs and
+seeds are with the roadmap's drafts (`impl/bc/`).
+
+* **Each issue above mapped onto rhc.** 1 (a functor's body) and 2
+  (overloading registered elsewhere) have analogues, issues 25 and 26; 4
+  (a hit that cannot link) is 25's first probe, and 28; 5 and 6 are 33
+  and 32; 9 (paths) is 31; 13 (two sessions) is 30; 14 and 19 (sizes that
+  grow) were measured, and found 36 and 39; 7 is the same hash; 3 and 21
+  to 24 are the REPL's, which rhc has none of; 8, 11, 12, 15 to 18 and 20
+  were probed or read and have none [inferred where read].
+* **The tester** (`tools/mutate.py`), over 81 programs: the
+  multi-module programs of the run set (69 of nofib's, nhc's nofib's and
+  the conformance suites', the corpus under `/home/ruud/haskell`, copied),
+  the cases of `tests/hs/units` and a program of classes, instances,
+  operators and defaults of its own. Before the fixes, 732 builds of 12
+  programs: 62 disagreed with the build without a store, 61 of them issue
+  29's and one issue 30's. After issues 25 to 29, 2,511 builds at `-O0`
+  and `-O1`, lint levels 0 and 2 and both machines (seed 200, 30 steps a
+  program), none disagreeing, and 3 where `--whole` refused what both
+  compiles in units took (the superclass named twice, above); after issues
+  30, 35 and 36, 1,701 builds at `-O2` and `-O1`, lint levels 0 and 2 and
+  both machines (seed 300, 20 steps a program), none disagreeing. After a
+  comment, blank lines or trailing spaces, no unit but the edited one was
+  made, in 350 builds; after a comment the link was taken in 87 of 97
+  builds, where it had been in 39 of 161 before issues 30 and 35 were
+  fixed, and the warm build cost a median 0.18 of the build without a
+  store, where it had cost 1.00.
+* **The store**: two and six compiles at once on one store, of two
+  programs at three settings each (36 compiles, 4 disagreeing, issue 30's
+  at `-O2`; after its fix 30 more, none disagreeing); 110 compiles killed at a random moment, 55 of them while
+  they ran, each followed by a compile through the store, none
+  disagreeing and no file half written; every entry of a store with a byte
+  flipped or cut short (issue 28); a store written by another rhc, which
+  shares no entry and which `--prune-store` drops; a snapshot of another
+  rhc, whose library is then compiled at each compile (315M instructions
+  for hello, against 44M) and is the same program; a store read only, a
+  directory where `.rhc` cannot be made, `--layer` before the snapshot and
+  after the store, a program moved, copied and compiled from outside its
+  directory, each the program a build without the store gives; a store a
+  week old (issue 34); the link's memo across levels and machines (issue
+  29).
+* **What a warm build costs** (rhc's own VM instructions, at `-O1` and lint
+  level 0, after the fixes), against a build of the same state without a
+  store: nothing edited, 0.07 (a program of seven modules) to 0.24 (a chain
+  of 500); a comment above every definition of a module, 0.13; a numeral
+  in a body, 0.99 to 1.03 where `main` reaches it (issue 38), 0.30 in a
+  chain of 500 whose link is small; a first build into an empty store,
+  1.04 to 1.47. Over the tester's 2,511 builds, before issues 30, 35 and
+  36 were fixed, the warm builds cost 0.85 of the builds without a store
+  in all, the median 1.00: the link (issue 38). A unit taken costs 1.9M
+  instructions at 10 modules and 2.1M at 500 (issue 36); a chain of 500
+  with nothing edited 1.1G, against 4.6G without a store. Since issue 39's
+  fix a build without a store costs some 2.3M a unit made, so a warm build
+  with nothing edited is 0.62 of one at 100 modules and 0.80 at 500
+  (1.0G against 1.26G): what is left of it is issue 37's.
+* **After 31, 39 and rhc's three of its own** (2026-11-17, branch
+  `hs-bc2`): `hs/units/elsewhere` (31); the three cases of the defects
+  above; the tester's 81 programs compiled by the rhc
+  before and after 39's whole fix, the same programs at `-O1` and `-O2` and
+  the same 871 entries; `hs/hslint` 39 of 39; rhc's mutants of the files
+  changed (HK01 to HK05, HD01 to HD03, HM01 to HM03, HU01 to HU16) all
+  caught but HU10, equivalent, once `hs/units/holes/literate` caught HU15
+  (27, above); `hs/*` at the check tier, 5,039 tests, 5,032 passing and
+  7 failing, two of a table with two rows more than E9's (the two new
+  cases now come under their clauses' rows) and five of a case renamed
+  while they ran, all of which, renamed, pass.
+* **Issue 37's A and B** (2026-11-17 to 21, branch `hs-bc3`, merged with
+  haskell98's 646f5bbbd): the holes' cases, `hs/units/configs` and the
+  store's test, each step held to a twin store whose hits ask every usage;
+  rhc's mutants of the units, `HU01` to `HU25`, 20 caught and 5 argued
+  equivalent; `hs/*` at the check tier, 5,050 of 5,050, and 5,051 of 5,051
+  after issue 40's half; the tester with a twin store whose hits ask every
+  usage, at every configuration (both levels of the lint, -O0 to -O2, both
+  machines), over the 81 programs: 3,321 builds before the merge (seed
+  400), and 8,343 after (seeds 600 and 700, 41 steps a program, and 800,
+  21), none disagreeing with the build without a store or `--whole`, and
+  none taking or making a unit otherwise than the twin; `--verify-store`
+  over the stores the walk of seed 800 left (issue 40, above); ten rounds
+  of nine compiles at once on one store (90, none disagreeing); 110
+  compiles killed at a random moment, 53 of them while they ran, each
+  followed by a compile through the store, none disagreeing.
+* **Issue 40's Core half, and 41** (2026-11-22, branch `hs-bc4` from
+  9bbf03633): `hs/units/verify-order` and `hs/units/holes/instance-moved`,
+  which the rhc before fails; rhc's mutants of the files changed, `HU26`
+  to `HU29`, all caught; `hs/*` at the check tier, 5,053 of 5,053; the
+  programs the bytes the rhc before makes, 672 (the tester's 81 and
+  `tests/hs/lang`'s 591) at -O0, -O1 and -O2; the tester with a twin
+  store whose hits ask every usage, at every configuration: seed 800 (81
+  programs, 21 steps, 1,701 builds) by the rhc before and after on the same
+  walk, seed 600 over the 29 programs issue 40 found (1,189 builds) by
+  both, and seed 900 (3,321 builds) after, each walk's stores held to
+  `--verify-store` (issue 40, above), none of the rhc after's disagreeing
+  with the build without a store or `--whole`, nor taking or making a
+  unit otherwise than the twin.

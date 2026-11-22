@@ -1,0 +1,9 @@
+; fail: rhc: bottom: IOError: openFile: /nonexistent/rhc-end: No such file or directory
+; A program whose IOError no handler takes ends with the text the library's
+; Show IOError gives it: of an IOError of the system's, its text, "what: the
+; system's text", as the library's own; here readFile of a file not there.
+(val main (-> World (utuple World `()`))
+  (\ ((w World))
+    (let (p ([] Char) (primUnpackString "/nonexistent/rhc-end"))
+      (case (primReadFile p w) r
+        ((utuple w1 s) (case s t (_ (let (u `()` (con `()`)) (utuple w1 u)))))))))

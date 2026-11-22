@@ -1,0 +1,39 @@
+; run: --read-core tests/hs/core/lib/base.core
+; Call by need: a let-bound suspension runs once however often it is
+; forced, a CAF once, and an argument forced twice once; an application
+; made twice runs twice. The count after each:
+;   let y = f 1 in print (y + y)          4, count 1
+;   let g z = f z in print (g 1 + g 1)    4, count 3
+;   print c; print c, c = f 10            11, 11, count 4
+;   h x = x + x; print (h (f 5))          12, count 5
+(val runs (Ref Int) (case (con Unit) u (_ (newCounter u))))
+(val f (-> Int Int) (\ ((x Int)) (case (tick runs) _ (_ (case x v (_ (prim int_add v 1)))))))
+(val c Int (f 10))
+(val h (-> Int Int) (\ ((x Int)) (case x a (_ (case x b (_ (prim int_add a b)))))))
+(val plus (-> Int Int Int) (\ ((x Int) (y Int)) (case x a (_ (case y b (_ (prim int_add a b)))))))
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (y Int (f 1))
+    (let (yy Int (plus y y))
+    (case (printInt yy w) o1
+      ((utuple w1 _)
+        (case (printCount runs w1) o2
+          ((utuple w2 _)
+            (let (g (-> Int Int) (\ ((z Int)) (f z)))
+            (let (g1 Int (g 1))
+            (let (g2 Int (g 1))
+            (let (gg Int (plus g1 g2))
+            (case (printInt gg w2) o3
+              ((utuple w3 _)
+                (case (printCount runs w3) o4
+                  ((utuple w4 _)
+                    (case (printInt c w4) o5
+                      ((utuple w5 _)
+                        (case (printInt c w5) o6
+                          ((utuple w6 _)
+                            (case (printCount runs w6) o7
+                              ((utuple w7 _)
+                                (let (a Int (f 5))
+                                (let (b Int (h a))
+                                (case (printInt b w7) o8
+                                  ((utuple w8 _) (printCount runs w8)))))))))))))))))))))))))))

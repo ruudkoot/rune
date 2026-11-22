@@ -1,6 +1,6 @@
 (* after simplify *)
 (funs
-  (fn g1 ((v1 : int * int * int * int)) : int
+  (fn g1 ((v1 : int * int * int * int)) : int "step"
     (let (v2 : int) (select 0 v1)
     (let (v3 : int) (select 1 v1)
     (let (v4 : int) (select 2 v1)

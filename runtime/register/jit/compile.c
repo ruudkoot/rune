@@ -26,7 +26,9 @@ static const char *const fatal_text[] = {
     "SWITCH on non-constructor", "FIELD of a constructor of tag %d where %d is wanted", "constructor field %d out of range",
     "POPHANDLER with no handler", "RAISE of non-exception", "expected closure in call", "bad function index",
     "a primitive that changes the world in PRIM",
-    "--gc-verify/--gc-stress: the home of register %d is not what its slot holds"
+    "--gc-verify/--gc-stress: the home of register %d is not what its slot holds",
+    "expected suspension", "<<loop>>: a suspension forced while it is evaluated", "BLACKHOLE outside a suspension",
+    "UPDATE outside a suspension"
 };
 
 void jit_h_fatal(VM *vm, int what, int32_t a, int32_t b) {
@@ -176,6 +178,24 @@ void jit_pending(Jit *j, size_t off, uint32_t f, int call) {
     j->pending[j->npending].call = call;
     j->npending++;
 }
+/* code shared by the functions' code (item 24: jit/emit.c, apply_shared),
+   n bytes that refer to nothing outside themselves by address: placed
+   from the region's top down, below what was placed before, its pages
+   alone made writable; NULL where the region has no room past its
+   functions and a megabyte for more */
+const void *jit_place_shared(JitProgram *jit, const uint8_t *code, size_t n) {
+    size_t size = (n + 15) & ~(size_t)15;
+    if (!jit->code_mem || jit->code_top < jit->code_used + size + ((size_t)1 << 20)) return NULL;
+    size_t at = jit->code_top - size;
+    size_t page = sys_code_page();
+    size_t lo = at & ~(page - 1), hi = (jit->code_top + page - 1) & ~(page - 1);
+    if (!sys_code_protect(jit->code_mem + lo, hi - lo, 0)) return NULL;
+    memcpy(jit->code_mem + at, code, n);
+    sys_code_protect(jit->code_mem + lo, hi - lo, 1);
+    sys_code_flush(jit->code_mem + at, n);
+    jit->code_top = at;
+    return jit->code_mem + at;
+}
 #if JIT_TARGET
 /* function f has code: the known calls compiled while it had none made
    jumps into it -- or calls, under --jit-returns=call, into the entry of
@@ -212,6 +232,54 @@ Site *jit_site(Jit *j, int kind, uint32_t pc) {
     return s;
 }
 
+/* D15 C (SLOW_APPLY): a call through a closure, at vm->pc, that the code
+   does not make in line -- of a closure of another arity, or a partial
+   application -- made by the interpreter's general path (reg_apply,
+   isa_regs.c): the frame it makes, or the value the RESULT after it takes
+   from the stack, given to the interpreter. The closure and the arguments
+   are read by their registers' places, since a push may move the stack. */
+static int jit_h_apply(VM *vm) {
+    const uint8_t *at = vm->prog.code + vm->pc;
+    uint8_t op = at[0];
+    int tail = op == ROP_TAILCALL || op == ROP_TAILCALLN;
+    size_t fp = vm->fp;
+    uint32_t n = op == ROP_CALL || op == ROP_TAILCALL ? 1 : (uint32_t)read_i32(at + 5);
+    vm_push(vm, vm->stack[fp + (size_t)read_i32(at + 1)]);
+    if (n == 1 && (op == ROP_CALL || op == ROP_TAILCALL)) vm_push(vm, vm->stack[fp + (size_t)read_i32(at + 5)]);
+    else for (uint32_t i = 0; i < n; i++) vm_push(vm, vm->stack[fp + (size_t)read_i32(at + 9 + 4 * i)]);
+    uint32_t ret_pc = vm->pc + rop_length(at);
+    JitProgram *jit = jit_program(vm);
+    int r = reg_apply(vm, n, tail, ret_pc);
+    /* a frame made, or one replaced at its base by a tail call, or the slot of
+       the RESULT's register written (below): --gc-verify's comparison of
+       the homes C kept with their slots, after this, is not to be made */
+    vm->verify_gc = (size_t)-1;
+    if (r == REG_APPLY_ENTERED) {
+        /* the function entered: into its code where it has some, else the interpreter */
+        const CodeObject *co = &jit->codes[vm->func];
+        if (co->entry) { jit->at = co->entry; return RUN_NATIVE; }
+        return RUN_INTERP;
+    }
+    /* a value, a partial application, for the RESULT after the call: put in
+       its register here, and on in this function's code after it, where a
+       run begins (the RESULT after a call is passed over, compile.c's
+       phantom), else in the interpreter at the RESULT, which takes it */
+    const uint8_t *code = vm->prog.code;
+    if (code[ret_pc] == ROP_RESULT) {
+        const void *on = jit_osr(&jit->codes[vm->func], ret_pc + 5);
+        if (on) {
+            Value v = vm->stack[--vm->sp];
+            vm->stack[vm->fp + (size_t)read_i32(code + ret_pc + 1)] = v;
+            vm->pc = ret_pc + 5;
+            vm->instructions++;   /* the RESULT, passed over here, which the interpreter runs */
+            jit->at = on;
+            return RUN_NATIVE;
+        }
+    }
+    vm->pc = ret_pc;
+    return RUN_INTERP;
+}
+
 int jit_h_prim(VM *vm, int prim, int32_t d, uint32_t at) {
     const uint8_t *L = vm->prog.code + at;
     JitProgram *jit = jit_program(vm);
@@ -238,6 +306,29 @@ void jit_h_setenv(VM *vm, int32_t c, int32_t e, int32_t v) {
     Value *base = vm->stack + vm->fp;
     obj_set_field(vm, val_ptr(base[c]), (uint32_t)e + 1, base[v]);
 }
+
+/* BLACKHOLE and UPDATE v while the low-pause collector's cycle marks: the
+   suspension running, the frame's closure, under evaluation or an
+   indirection to register v, in C, which shades what it lets go (emit.c,
+   emit_BLACKHOLE) */
+static Obj *running_suspension(VM *vm) {
+    FrameRef f;
+    if (!vm_frame_top(vm, &f)) vm_fatal(vm, "a suspension's code with no frame");
+    return val_ptr(*f.closure_slot);
+}
+void jit_h_blackhole(VM *vm) { vm_blackhole(vm, running_suspension(vm)); }
+void jit_h_update(VM *vm, int32_t v) { obj_become_ind(vm, running_suspension(vm), vm->stack[vm->fp + (size_t)v]); }
+
+/* FORCE of a selector (emit.c, emit_FORCE; D17's count): what register r,
+   synced, is to be given -- the field the collector would give it where
+   its tuple is evaluated (vm_selected) -- which the code writes to the
+   register's home itself, a home C keeps being left as it was by the
+   reload (ms_reload) */
+Value jit_h_select(VM *vm, int32_t r) { return vm_selected(vm, vm->stack[vm->fp + (size_t)r]); }
+/* the same of the word v, where the program does not rerun: vm_selected
+   then reads the heap alone, allocating nothing, raising nothing and
+   moving nothing, so that the code calls it with nothing synced */
+Value jit_h_selected(VM *vm, Value v) { return vm_selected(vm, v); }
 
 Obj *jit_h_alloc(VM *vm, int kind, int contag, uint32_t n) {
     return vm_alloc_fields(vm, (uint8_t)kind, (uint16_t)contag, n);
@@ -336,6 +427,14 @@ const void *jit_h_raise(VM *vm, int32_t s) {
     Value v = vm->stack[vm->fp + (size_t)s];
     const void *native = handler_native(vm);
     vm_raise(vm, v);
+    return native;
+}
+/* ENTER of a suspension under evaluation (SLOW_LOOP): the handler's native
+   code to go on at, or NULL for the interpreter, as jit_h_raise; Loop
+   raised (vm_raise_loop) */
+const void *jit_h_loop(VM *vm) {
+    const void *native = handler_native(vm);
+    vm_raise_loop(vm);
     return native;
 }
 /* what a poll found in the interrupt's flag (SLOW_INTERRUPT): JIT_LEAVE
@@ -629,6 +728,16 @@ void jit_fill(Jit *j, int kind, int fill, uint32_t n, int32_t d, int32_t a, int3
         as_ld64(&m->a, R_S1, VMR, (int32_t)offsetof(VM, prog.consts));
         ms_field_from_nth(m, R_S0, 0, R_S1, (uint32_t)a);
         break;
+    case FILL_SUSP: {
+        /* field 0 is that of the closure in a, its function: a suspension of
+           a closure that captures nothing (prims.c, p_thunk_make), the
+           closure read after the allocation, which may have moved it */
+        uint32_t nfields = m->nfields;
+        ms_load_bits(m, R_S1, a);
+        m->nfields = nfields;   /* the fresh object in rax is still the one being filled */
+        ms_field_from_field(m, R_S0, 0, R_S1, 0);
+        break;
+    }
     case FILL_MKEXN: {
         /* the constructor in a, which must be one, and the payload in b: the
            test after the allocation, as the interpreter's */
@@ -752,6 +861,55 @@ static void emit_slow(Masm *m, Slow *sp) {
         ms_call(m, (MsHelper)jit_h_setenv);
         ms_reload(m);
         as_jmp(&m->a, &s.back);
+    } else if (s.kind == SLOW_THUNK) {
+        /* BLACKHOLE (a = -1) or UPDATE a while a cycle marks, in C; then on */
+        ms_sync(m, s.pc, 0);
+        if (s.a >= 0) { as_mov_ri(&m->a, ms_arg(m, 1), s.a); ms_call(m, (MsHelper)jit_h_update); }
+        else ms_call(m, (MsHelper)jit_h_blackhole);
+        ms_reload(m);
+        as_jmp(&m->a, &s.back);
+    } else if (s.kind == SLOW_SELECT) {
+        /* FORCE of a selector: its field where its tuple is evaluated,
+           given to register a, and back to test it, in rax: where the
+           program does not rerun (s.b), by the select stub (masm.h,
+           ms_emit_select), which takes the step in code and calls C only
+           for a chain, keeping the homes itself, so that the code here is
+           a call; else in C (jit_h_select), synced */
+        if (s.b) {
+            as_call_to(&m->a, m->select);
+            ms_set_bits(m, s.a, R_S0);
+            as_jmp(&m->a, &s.back);
+        } else {
+            ms_sync(m, s.pc, 0);
+            as_mov_ri(&m->a, ms_arg(m, 1), s.a);
+            ms_call(m, (MsHelper)jit_h_select);
+            ms_reload(m);
+            ms_set_bits(m, s.a, R_S0);
+            as_jmp(&m->a, &s.back);
+        }
+    } else if (s.kind == SLOW_LOOP) {
+        /* ENTER of a suspension under evaluation: Loop raised from the
+           instruction, the VM exact, as RAISE raises (jit_h_loop), and on
+           in the handler's code where it has some, else in the interpreter */
+        ms_sync(m, s.pc, 0);
+        ms_call(m, (MsHelper)jit_h_loop);
+        ms_reload(m);
+        AsmLabel hand;
+        as_label_init(&hand);
+        as_test_rr(&m->a, R_S0, R_S0);
+        as_jcc(&m->a, CC_E, &hand);
+        as_ld64(&m->a, COUNTR, VMR, (int32_t)offsetof(VM, instructions));   /* the count the sync gave (D9 B) */
+        as_jmp_r(&m->a, R_S0);
+        as_bind(&m->a, &hand);
+        ms_handback(m, RUN_INTERP);
+        as_label_free(&hand);
+    } else if (s.kind == SLOW_APPLY) {
+        /* D15 C: the call from its start in C (jit_h_apply), and on in the
+           interpreter, at the callee or at the RESULT */
+        ms_sync(m, (uint32_t)s.a, 0);
+        ms_call(m, (MsHelper)jit_h_apply);
+        ms_reload(m);
+        ms_handback_rax(m);
     } else if (s.kind == SLOW_CALL_TABLE) {
         /* a known call to function s.a, which had no code when this was
            compiled, through the table of calls (M6) -- until it has some,
@@ -820,14 +978,14 @@ static int scan(Jit *j, Scan *sc) {
            raise): a sync in its middle tells the VM the count less the
            rest of the run (Masm.ahead; performance M6, D9 B) */
         if (rop_flow[op] != FLOW_NEXT) sc->ends[pc - j->from] = 1;
-        if ((op == ROP_CALL || op == ROP_CALLK) && pc + l < j->to && code[pc + l] == ROP_RESULT) {
+        if ((op == ROP_CALL || op == ROP_CALLK || op == ROP_ENTER || op == ROP_CALLN) && pc + l < j->to && code[pc + l] == ROP_RESULT) {
             sc->phantom[pc + l - j->from] = 1;
             if (pc + l + 5 < j->to) sc->target[pc + l + 5 - j->from] = 1;
         }
         /* the RESULT after a PRIMPUSH: where an image resumes (M6) */
         if (op == ROP_PRIMPUSH && pc + l < j->to && code[pc + l] == ROP_RESULT) sc->target[pc + l - j->from] = 1;
         /* the sites of the profile (M8) */
-        if (op == ROP_CALL || op == ROP_TAILCALL || op == ROP_JUMPIF || op == ROP_JUMPIFNOT
+        if (op == ROP_CALL || op == ROP_ENTER || op == ROP_TAILCALL || op == ROP_CALLN || op == ROP_TAILCALLN || op == ROP_JUMPIF || op == ROP_JUMPIFNOT
             || (op == ROP_JUMP && (uint32_t)read_i32(code + pc + 1) <= pc)) j->sites_cap++;
         for (int k = 0; k < rop_nfixed[op]; k++)
             if (rop_kinds[op][k] == RK_LABEL || rop_kinds[op][k] == RK_HANDLER_LABEL)
@@ -982,8 +1140,9 @@ static int emit_function(Jit *j, Scan *sc) {
    way (ms_call). */
 static const MsHelper helpers[] = {
     (MsHelper)jit_h_prim, (MsHelper)jit_h_alloc, (MsHelper)jit_h_return, (MsHelper)jit_h_grow,
-    (MsHelper)jit_h_push_handler, (MsHelper)jit_h_raise, (MsHelper)jit_h_string_order, (MsHelper)jit_h_values_equal,
-    (MsHelper)jit_h_box_real, (MsHelper)jit_h_box_num, (MsHelper)jit_h_primpush, (MsHelper)jit_h_called, (MsHelper)jit_h_enter_interp
+    (MsHelper)jit_h_push_handler, (MsHelper)jit_h_raise, (MsHelper)jit_h_loop, (MsHelper)jit_h_string_order, (MsHelper)jit_h_values_equal,
+    (MsHelper)jit_h_box_real, (MsHelper)jit_h_box_num, (MsHelper)jit_h_primpush, (MsHelper)jit_h_called, (MsHelper)jit_h_enter_interp,
+    (MsHelper)jit_h_selected
 };
 /* The region: the stubs that enter and leave compiled code, the stub of
    its fatal errors, and a trampoline for every call into C it makes
@@ -1013,6 +1172,8 @@ int jit_region_init(VM *vm, JitProgram *jit) {
     as_ret_align(&a);   /* a return word too (native-frames.md, M5) */
     size_t barrier_at = a.n;
     ms_emit_barrier(&a, JIT_WIN, (MsHelper)jit_h_barrier);
+    size_t select_at = a.n;
+    ms_emit_select(&a, JIT_WIN, (MsHelper)jit_h_selected);
     /* every primitive's C, the helpers, and the C library's functions
        that primitives on reals are (jit_libm_of) */
     uint32_t nhelpers = (uint32_t)(sizeof helpers / sizeof helpers[0]), n = 2 * PRIM__COUNT + nhelpers, size = 16;
@@ -1037,6 +1198,7 @@ int jit_region_init(VM *vm, JitProgram *jit) {
     memcpy(mem, a.buf, a.n);
     jit->code_mem = mem;
     jit->code_cap = cap;
+    jit->code_top = cap;
     jit->code_used = (a.n + 15) & ~(size_t)15;
     jit->enter_at = mem + enter_at;
     jit->leave_at = mem + leave_at;
@@ -1049,6 +1211,7 @@ int jit_region_init(VM *vm, JitProgram *jit) {
     if (vm->frames_active) reg_frames_ret_word(vm);
     /* and the stack's watermark is kept by the barrier from here on (M5) */
     jit->barrier = mem + barrier_at;
+    jit->select = mem + select_at;
     vm->barrier_stub = (Value)(uintptr_t)jit->barrier + JIT_RET_BIAS;
     reg_barrier_arm(vm);
     /* and a call to a function with no code goes here (M6) */
@@ -1088,6 +1251,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     j.m.conv_prim_op = ROP_PRIM;
 #endif
     j.m.box_num = (MsHelper)jit_h_box_num;   /* at either tier: a result past 63 bits on its way to a slot */
+    j.m.select = jit->select;
     j.vm = vm; j.jit = jit; j.f = f;
     j.flags_for = j.flags_prev = -1;
     j.cc_for = j.cc_prev = -1;
@@ -1207,7 +1371,7 @@ int jit_compile_tier(VM *vm, JitProgram *jit, uint32_t f, int tier) {
     }
     if (ok) {
         size_t size = (j.m.a.n + 15) & ~(size_t)15;
-        if (jit->code_used + size > jit->code_cap) ok = 0;
+        if (jit->code_used + size > jit->code_top) ok = 0;
         else {
             uint8_t *at = jit->code_mem + jit->code_used;
             /* the pages the code lands in alone are made writable and

@@ -289,7 +289,9 @@ keep these invariants:
   in `runedoc.build`, those of the native code generator `runeopt` in
   `runeopt.build` and those of `runeisa` in `runeisa.build`; the MLton,
   SML/NJ and Poly/ML build files are generated from the plans committed
-  beside them (`rune.plan`, ...) — never edit `build/`, nor a plan by hand. After an
+  beside them (`rune.plan`, ...) — never edit `build/`, nor a plan by hand.
+  Those of rhc, the haskell98 roadmap's compiler, are in `rhc.build`, whose
+  plan `rhc.plan` no host reads (below). After an
   edit of one of these build files, or of a build file they use, run `make
   plans` and commit what it prints (docs/building.md, How a host gets its
   list).
@@ -433,6 +435,11 @@ keep these invariants:
   library** (the owner's rule, 2026-09-27): write it plainly, and mark the
   failure as `HOST-BUG` in `tests/lib/deviations.txt`, with a report in
   `docs/bugreport/HOST`.
+  `lib/language/haskell` and rhc (`rhc.build`, `src/rhc`) are the exception
+  (docs/plans/language/haskell98.md, D42): Rune alone is required to build
+  them, and their tests run on Rune; the other hosts are informational, so
+  `make test-lib-hosts`, the host builds and `make check-cross` leave them
+  out.
   The compiler library retains the compiler's existing documented host
   compatibility adaptations when its sources move under `lib/compiler`;
   this extraction exception does not authorize workarounds in other

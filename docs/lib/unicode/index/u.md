@@ -2,8 +2,10 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) **u** [v](v.md) [w](w.md) [y](y.md)
 
+- `Unassigned` (con): [CODE_POINT](../sig/CODE_POINT.md#con-unassigned)
 - `UncommonUse` (con): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#con-uncommonuse)
 - `Unrestricted` (con): [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#con-unrestricted)
+- `UppercaseLetter` (con): [CODE_POINT](../sig/CODE_POINT.md#con-uppercaseletter)
 
 ---
 

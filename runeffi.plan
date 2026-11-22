@@ -19,6 +19,9 @@ library unicode lib/unicode
   unit unicode:security_data.sml lib/unicode/security_data.sml ascii demand
   unit unicode:security_sig.sml lib/unicode/security_sig.sml ascii demand
   unit unicode:security.sml lib/unicode/security.sml ascii demand
+  unit unicode:code_point_data.sml lib/unicode/code_point_data.sml ascii demand
+  unit unicode:code_point_sig.sml lib/unicode/code_point_sig.sml ascii demand
+  unit unicode:code_point.sml lib/unicode/code_point.sml ascii demand
 end
 library json lib/json
   form header
@@ -137,7 +140,7 @@ program
 end
 provenance
   input runeffi.build 96ca850997a2c4f004592045a9869124d99f1158a0a71e61b271728a946f1329
-  input lib/unicode/library.build 18c62bc8047180ebbce66622b16acab697f4ffca2509d432710d25273253b855
+  input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
   input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
   input lib/digest/library.build b9c71d923fa95bdce9a1edc822bc08f4e754c5357d82db81832be08c99a80e80
   input lib/language/c/library.build 6b927a80ff4aada901205fdfc956451c94a808e602ef286566038b7ea09040d8

@@ -1,6 +1,6 @@
 (* after shake *)
 (funs
-  (fn g1 ((v1 : int)) : int
+  (fn g1 ((v1 : int)) : int "keepMe"
     (let (v2 : int) v1
     (return (prim int_add v2 1 : (int * int) -> int)))))
 (val g2 : int

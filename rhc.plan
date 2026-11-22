@@ -1,0 +1,329 @@
+rune-plan 1
+basis demand
+library unicode lib/unicode
+  form open
+  unit unicode:utf8_sig.sml lib/unicode/utf8_sig.sml ascii demand
+  unit unicode:utf8.sml lib/unicode/utf8.sml ascii demand
+  unit unicode:width_data.sml lib/unicode/width_data.sml ascii demand
+  unit unicode:display_width_sig.sml lib/unicode/display_width_sig.sml ascii demand
+  unit unicode:display_width.sml lib/unicode/display_width.sml ascii demand
+  unit unicode:grapheme_data.sml lib/unicode/grapheme_data.sml ascii demand
+  unit unicode:grapheme_sig.sml lib/unicode/grapheme_sig.sml ascii demand
+  unit unicode:grapheme.sml lib/unicode/grapheme.sml ascii demand
+  unit unicode:normalize_data.sml lib/unicode/normalize_data.sml ascii demand
+  unit unicode:normalize_sig.sml lib/unicode/normalize_sig.sml ascii demand
+  unit unicode:normalize.sml lib/unicode/normalize.sml ascii demand
+  unit unicode:identifier_data.sml lib/unicode/identifier_data.sml ascii demand
+  unit unicode:identifier_sig.sml lib/unicode/identifier_sig.sml ascii demand
+  unit unicode:identifier.sml lib/unicode/identifier.sml ascii demand
+  unit unicode:security_data.sml lib/unicode/security_data.sml ascii demand
+  unit unicode:security_sig.sml lib/unicode/security_sig.sml ascii demand
+  unit unicode:security.sml lib/unicode/security.sml ascii demand
+  unit unicode:code_point_data.sml lib/unicode/code_point_data.sml ascii demand
+  unit unicode:code_point_sig.sml lib/unicode/code_point_sig.sml ascii demand
+  unit unicode:code_point.sml lib/unicode/code_point.sml ascii demand
+end
+library language/haskell lib/language/haskell
+  form header
+  requires unicode
+  export signature CORE
+  export signature CORE_GEN
+  export signature CORE_INTERP
+  export signature CORE_LINT
+  export signature CORE_PRIM
+  export signature CORE_PRIM_FAMILY
+  export signature CORE_RUNTIME
+  export signature CORE_SIMPLIFY
+  export signature CORE_STRICT
+  export signature CORE_TEXT
+  export signature CORE_TO_MID
+  export signature CORE_UNITS
+  export signature HS_AST
+  export signature HS_CHAR
+  export signature HS_CLASSES
+  export signature HS_DERIVE
+  export signature HS_DESUGAR
+  export signature HS_DS_CORE
+  export signature HS_DS_ENV
+  export signature HS_DUMP
+  export signature HS_EVIDENCE
+  export signature HS_FIXITY
+  export signature HS_IFACE
+  export signature HS_INFER
+  export signature HS_KINDS
+  export signature HS_LAYOUT
+  export signature HS_LEXER
+  export signature HS_LINT
+  export signature HS_LITERATE
+  export signature HS_MATCH
+  export signature HS_MODULES
+  export signature HS_MOD_IFACE
+  export signature HS_PARSER
+  export signature HS_PRINT
+  export signature HS_RENAME
+  export signature HS_SCC
+  export signature HS_SOURCE
+  export signature HS_STRING_MAP
+  export signature HS_TOKEN
+  export signature HS_TYPES
+  export signature HS_USAGE
+  export structure Core
+  export structure CoreGen
+  export structure CoreInterp
+  export structure CoreLint
+  export structure CorePrim
+  export structure CorePrimFamily
+  export structure CoreRuntime
+  export structure CoreSimplify
+  export structure CoreStrict
+  export structure CoreText
+  export structure CoreToMid
+  export structure CoreUnits
+  export structure HsAst
+  export structure HsChar
+  export structure HsClasses
+  export structure HsDerive
+  export structure HsDesugar
+  export structure HsDsCore
+  export structure HsDsEnv
+  export structure HsDump
+  export structure HsEvidence
+  export structure HsFixity
+  export structure HsIface
+  export structure HsInfer
+  export structure HsKinds
+  export structure HsLayout
+  export structure HsLexer
+  export structure HsLint
+  export structure HsLiterate
+  export structure HsMatch
+  export structure HsModIface
+  export structure HsModules
+  export structure HsParser
+  export structure HsPrint
+  export structure HsRename
+  export structure HsScc
+  export structure HsSource
+  export structure HsStringMap
+  export structure HsToken
+  export structure HsTypes
+  export structure HsUsage
+  friend ../../../rhc.build
+  use lib/language/haskell/syntax.build
+    unit language/haskell:source_sig.sml lib/language/haskell/source_sig.sml ascii demand
+    unit language/haskell:source.sml lib/language/haskell/source.sml ascii demand
+    unit language/haskell:char_sig.sml lib/language/haskell/char_sig.sml ascii demand
+    unit language/haskell:char.sml lib/language/haskell/char.sml ascii demand
+    unit language/haskell:token_sig.sml lib/language/haskell/token_sig.sml ascii demand
+    unit language/haskell:token.sml lib/language/haskell/token.sml ascii demand
+    unit language/haskell:literate_sig.sml lib/language/haskell/literate_sig.sml ascii demand
+    unit language/haskell:literate.sml lib/language/haskell/literate.sml ascii demand
+    unit language/haskell:lexer_sig.sml lib/language/haskell/lexer_sig.sml ascii demand
+    unit language/haskell:lexer.sml lib/language/haskell/lexer.sml ascii demand
+    unit language/haskell:layout_sig.sml lib/language/haskell/layout_sig.sml ascii demand
+    unit language/haskell:layout.sml lib/language/haskell/layout.sml ascii demand
+    unit language/haskell:ast_sig.sml lib/language/haskell/ast_sig.sml ascii demand
+    unit language/haskell:ast.sml lib/language/haskell/ast.sml ascii demand
+    unit language/haskell:parser_sig.sml lib/language/haskell/parser_sig.sml ascii demand
+    unit language/haskell:parser.sml lib/language/haskell/parser.sml ascii demand
+    unit language/haskell:print_sig.sml lib/language/haskell/print_sig.sml ascii demand
+    unit language/haskell:print.sml lib/language/haskell/print.sml ascii demand
+    unit language/haskell:dump_sig.sml lib/language/haskell/dump_sig.sml ascii demand
+    unit language/haskell:dump.sml lib/language/haskell/dump.sml ascii demand
+  end
+  use lib/language/haskell/names.build
+    unit language/haskell:usage_sig.sml lib/language/haskell/usage_sig.sml ascii demand
+    unit language/haskell:usage.sml lib/language/haskell/usage.sml ascii demand
+    unit language/haskell:strmap_sig.sml lib/language/haskell/strmap_sig.sml ascii demand
+    unit language/haskell:strmap.sml lib/language/haskell/strmap.sml ascii demand
+    unit language/haskell:modules_sig.sml lib/language/haskell/modules_sig.sml ascii demand
+    unit language/haskell:modules.sml lib/language/haskell/modules.sml ascii demand
+    unit language/haskell:fixity_sig.sml lib/language/haskell/fixity_sig.sml ascii demand
+    unit language/haskell:fixity.sml lib/language/haskell/fixity.sml ascii demand
+    unit language/haskell:rename_sig.sml lib/language/haskell/rename_sig.sml ascii demand
+    unit language/haskell:rename.sml lib/language/haskell/rename.sml ascii demand
+  end
+  use lib/language/haskell/types.build
+    unit language/haskell:scc_sig.sml lib/language/haskell/scc_sig.sml ascii demand
+    unit language/haskell:scc.sml lib/language/haskell/scc.sml ascii demand
+    unit language/haskell:types_sig.sml lib/language/haskell/types_sig.sml ascii demand
+    unit language/haskell:types.sml lib/language/haskell/types.sml ascii demand
+    unit language/haskell:classes_sig.sml lib/language/haskell/classes_sig.sml ascii demand
+    unit language/haskell:classes.sml lib/language/haskell/classes.sml ascii demand
+    unit language/haskell:evidence_sig.sml lib/language/haskell/evidence_sig.sml ascii demand
+    unit language/haskell:evidence.sml lib/language/haskell/evidence.sml ascii demand
+    unit language/haskell:kinds_sig.sml lib/language/haskell/kinds_sig.sml ascii demand
+    unit language/haskell:kinds.sml lib/language/haskell/kinds.sml ascii demand
+    unit language/haskell:derive_sig.sml lib/language/haskell/derive_sig.sml ascii demand
+    unit language/haskell:derive.sml lib/language/haskell/derive.sml ascii demand
+    unit language/haskell:infer_sig.sml lib/language/haskell/infer_sig.sml ascii demand
+    unit language/haskell:infer.sml lib/language/haskell/infer.sml ascii demand
+    unit language/haskell:modiface_sig.sml lib/language/haskell/modiface_sig.sml ascii demand
+    unit language/haskell:modiface.sml lib/language/haskell/modiface.sml ascii demand
+    unit language/haskell:hsiface_sig.sml lib/language/haskell/hsiface_sig.sml ascii demand
+    unit language/haskell:hsiface.sml lib/language/haskell/hsiface.sml ascii demand
+  end
+  use lib/language/haskell/core.build
+    unit language/haskell:core_sig.sml lib/language/haskell/core_sig.sml ascii demand
+    unit language/haskell:core.sml lib/language/haskell/core.sml ascii demand
+    unit language/haskell:coremap.sml lib/language/haskell/coremap.sml ascii demand
+    unit language/haskell:coretext_sig.sml lib/language/haskell/coretext_sig.sml ascii demand
+    unit language/haskell:coretext.sml lib/language/haskell/coretext.sml ascii demand
+    unit language/haskell:coreunits_sig.sml lib/language/haskell/coreunits_sig.sml ascii demand
+    unit language/haskell:coreunits.sml lib/language/haskell/coreunits.sml ascii demand
+    unit language/haskell:corefiles.sml lib/language/haskell/corefiles.sml ascii demand
+    unit language/haskell:coreprimfamily_sig.sml lib/language/haskell/coreprimfamily_sig.sml ascii demand
+    unit language/haskell:coreprimfamily.sml lib/language/haskell/coreprimfamily.sml ascii demand
+    unit language/haskell:coreprimio.sml lib/language/haskell/coreprimio.sml ascii demand
+    unit language/haskell:coreprimsys_sig.sml lib/language/haskell/coreprimsys_sig.sml ascii demand
+    unit language/haskell:coreprimsys.sml lib/language/haskell/coreprimsys.sml ascii demand
+    unit language/haskell:coreprim_sig.sml lib/language/haskell/coreprim_sig.sml ascii demand
+    unit language/haskell:coreprim.sml lib/language/haskell/coreprim.sml ascii demand
+    unit language/haskell:coreruntime_sig.sml lib/language/haskell/coreruntime_sig.sml ascii demand
+    unit language/haskell:coreruntime.sml lib/language/haskell/coreruntime.sml ascii demand
+    unit language/haskell:corelint_sig.sml lib/language/haskell/corelint_sig.sml ascii demand
+    unit language/haskell:corelint.sml lib/language/haskell/corelint.sml ascii demand
+    unit language/haskell:coreinterp_sig.sml lib/language/haskell/coreinterp_sig.sml ascii demand
+    unit language/haskell:coreinterp.sml lib/language/haskell/coreinterp.sml ascii demand
+    unit language/haskell:coregen_sig.sml lib/language/haskell/coregen_sig.sml ascii demand
+    unit language/haskell:coregen.sml lib/language/haskell/coregen.sml ascii demand
+    unit language/haskell:coretomid_sig.sml lib/language/haskell/coretomid_sig.sml ascii demand
+    unit language/haskell:coretomid.sml lib/language/haskell/coretomid.sml ascii demand
+  end
+  use lib/language/haskell/simplify.build
+    unit language/haskell:coresimplify_base.sml lib/language/haskell/coresimplify_base.sml ascii demand
+    unit language/haskell:coresimplify_fold.sml lib/language/haskell/coresimplify_fold.sml ascii demand
+    unit language/haskell:coresimplify_simp.sml lib/language/haskell/coresimplify_simp.sml ascii demand
+    unit language/haskell:coresimplify_spec.sml lib/language/haskell/coresimplify_spec.sml ascii demand
+    unit language/haskell:coresimplify_eta.sml lib/language/haskell/coresimplify_eta.sml ascii demand
+    unit language/haskell:corestrict_sig.sml lib/language/haskell/corestrict_sig.sml ascii demand
+    unit language/haskell:corestrict.sml lib/language/haskell/corestrict.sml ascii demand
+    unit language/haskell:coresimplify_cheap.sml lib/language/haskell/coresimplify_cheap.sml ascii demand
+    unit language/haskell:coresimplify_sig.sml lib/language/haskell/coresimplify_sig.sml ascii demand
+    unit language/haskell:coresimplify.sml lib/language/haskell/coresimplify.sml ascii demand
+  end
+  use lib/language/haskell/hslint.build
+    unit language/haskell:hslint_types.sml lib/language/haskell/hslint_types.sml ascii demand
+    unit language/haskell:hslint_scc.sml lib/language/haskell/hslint_scc.sml ascii demand
+    unit language/haskell:hslint_classes.sml lib/language/haskell/hslint_classes.sml ascii demand
+    unit language/haskell:hslint_kinds.sml lib/language/haskell/hslint_kinds.sml ascii demand
+    unit language/haskell:hslint_env.sml lib/language/haskell/hslint_env.sml ascii demand
+    unit language/haskell:hslint_infer.sml lib/language/haskell/hslint_infer.sml ascii demand
+    unit language/haskell:hslint_claims.sml lib/language/haskell/hslint_claims.sml ascii demand
+    unit language/haskell:hslint_replay.sml lib/language/haskell/hslint_replay.sml ascii demand
+    unit language/haskell:hslint_target.sml lib/language/haskell/hslint_target.sml ascii demand
+    unit language/haskell:hslint_codec.sml lib/language/haskell/hslint_codec.sml ascii demand
+    unit language/haskell:hslint_sig.sml lib/language/haskell/hslint_sig.sml ascii demand
+    unit language/haskell:hslint.sml lib/language/haskell/hslint.sml ascii demand
+  end
+  use lib/language/haskell/desugar.build
+    unit language/haskell:desugar_core_sig.sml lib/language/haskell/desugar_core_sig.sml ascii demand
+    unit language/haskell:desugar_core.sml lib/language/haskell/desugar_core.sml ascii demand
+    unit language/haskell:desugar_env_sig.sml lib/language/haskell/desugar_env_sig.sml ascii demand
+    unit language/haskell:desugar_env.sml lib/language/haskell/desugar_env.sml ascii demand
+    unit language/haskell:match_sig.sml lib/language/haskell/match_sig.sml ascii demand
+    unit language/haskell:match.sml lib/language/haskell/match.sml ascii demand
+    unit language/haskell:desugar_sig.sml lib/language/haskell/desugar_sig.sml ascii demand
+    unit language/haskell:desugar.sml lib/language/haskell/desugar.sml ascii demand
+  end
+end
+library json lib/json
+  form header
+  requires unicode
+  export signature JSON
+  export structure Json
+  unit json:json_sig.sml lib/json/json_sig.sml ascii demand
+  unit json:json.sml lib/json/json.sml ascii demand
+end
+program
+  requires language/haskell
+  requires unicode
+  requires json
+  unit src/rhc/config.sml src/rhc/config.sml ascii
+  use lib/compiler/mid.build
+    use lib/compiler/util.build
+      unit compiler:util/scon.sml lib/compiler/util/scon.sml ascii
+      unit compiler:util/ordmap.sml lib/compiler/util/ordmap.sml ascii
+      unit compiler:util/inttable.sml lib/compiler/util/inttable.sml ascii
+      unit compiler:state_sig.sml lib/compiler/state_sig.sml ascii
+      unit compiler:state.sml lib/compiler/state.sml ascii
+      unit compiler:util/stamp.sml lib/compiler/util/stamp.sml ascii
+      unit compiler:util/literal.sml lib/compiler/util/literal.sml ascii
+      unit compiler:util/ident.sml lib/compiler/util/ident.sml ascii
+      unit compiler:util/source.sml lib/compiler/util/source.sml ascii
+      unit compiler:util/error.sml lib/compiler/util/error.sml ascii
+      unit compiler:util/color.sml lib/compiler/util/color.sml ascii
+      unit compiler:util/diagnostic.sml lib/compiler/util/diagnostic.sml ascii
+      unit compiler:util/pass.sml lib/compiler/util/pass.sml ascii
+      unit compiler:util/usage.sml lib/compiler/util/usage.sml ascii
+      unit compiler:util/pickle.sml lib/compiler/util/pickle.sml ascii
+    end
+    unit compiler:elab/types.sml lib/compiler/elab/types.sml ascii
+    unit compiler:core/ty.sml lib/compiler/core/ty.sml ascii
+    unit compiler:backend/opcodes.sml lib/compiler/backend/opcodes.sml ascii
+    unit compiler:backend/prims.sml lib/compiler/backend/prims.sml ascii
+    unit compiler:settings.sml lib/compiler/settings.sml ascii
+    unit compiler:driver/unitstore.sml lib/compiler/driver/unitstore.sml ascii
+    unit compiler:driver/storepolicy.sml lib/compiler/driver/storepolicy.sml ascii
+    unit compiler:core/lambda.sml lib/compiler/core/lambda.sml ascii
+    unit compiler:core/irrules.sml lib/compiler/core/irrules.sml ascii
+    unit compiler:core/mid.sml lib/compiler/core/mid.sml ascii
+    unit compiler:core/midlint.sml lib/compiler/core/midlint.sml ascii
+    unit compiler:core/midtext.sml lib/compiler/core/midtext.sml ascii
+    unit compiler:core/midcodec.sml lib/compiler/core/midcodec.sml ascii
+    unit compiler:core/midcanon.sml lib/compiler/core/midcanon.sml ascii
+    unit compiler:core/target.sml lib/compiler/core/target.sml ascii
+    unit compiler:core/shake.sml lib/compiler/core/shake.sml ascii
+    unit compiler:core/lift.sml lib/compiler/core/lift.sml ascii
+    unit compiler:core/simplify.sml lib/compiler/core/simplify.sml ascii
+    unit compiler:core/workers.sml lib/compiler/core/workers.sml ascii
+    unit compiler:core/refs.sml lib/compiler/core/refs.sml ascii
+    unit compiler:backend/code.sml lib/compiler/backend/code.sml ascii
+    unit compiler:backend/low.sml lib/compiler/backend/low.sml ascii
+    unit compiler:backend/target.sml lib/compiler/backend/target.sml ascii
+    unit compiler:backend/lowlint.sml lib/compiler/backend/lowlint.sml ascii
+    unit compiler:backend/rep.sml lib/compiler/backend/rep.sml ascii
+    unit compiler:backend/results.sml lib/compiler/backend/results.sml ascii
+    unit compiler:backend/lower.sml lib/compiler/backend/lower.sml ascii
+    unit compiler:backend/lowshapes.sml lib/compiler/backend/lowshapes.sml ascii
+    unit compiler:backend/fault.sml lib/compiler/backend/fault.sml ascii
+    unit compiler:backend/stack.sml lib/compiler/backend/stack.sml ascii
+    unit compiler:backend/regcodes.sml lib/compiler/backend/regcodes.sml ascii
+    unit compiler:backend/regs.sml lib/compiler/backend/regs.sml ascii
+    unit compiler:backend/regverify.sml lib/compiler/backend/regverify.sml ascii
+    unit compiler:backend/emit.sml lib/compiler/backend/emit.sml ascii
+    unit compiler:backend/link.sml lib/compiler/backend/link.sml ascii
+    unit compiler:backend/unitfile.sml lib/compiler/backend/unitfile.sml ascii
+    unit compiler:driver/midpipeline.sml lib/compiler/driver/midpipeline.sml ascii
+  end
+  unit src/rhc/options.sml src/rhc/options.sml ascii
+  unit src/rhc/library.sml src/rhc/library.sml ascii
+  unit src/rhc/graph.sml src/rhc/graph.sml ascii
+  unit src/rhc/names.sml src/rhc/names.sml ascii
+  unit src/rhc/iface.sml src/rhc/iface.sml ascii
+  unit src/rhc/lint.sml src/rhc/lint.sml ascii
+  unit src/rhc/simplify.sml src/rhc/simplify.sml ascii
+  unit src/rhc/desugar.sml src/rhc/desugar.sml ascii
+  unit src/rhc/store.sml src/rhc/store.sml ascii
+  unit src/rhc/storeconfig.sml src/rhc/storeconfig.sml ascii
+  unit src/rhc/driver.sml src/rhc/driver.sml ascii
+  unit src/rhc/syntax.sml src/rhc/syntax.sml ascii
+  unit src/rhc/units.sml src/rhc/units.sml ascii
+  unit src/rhc/main.sml src/rhc/main.sml ascii
+  unit src/main/rhc-main.sml src/main/rhc-main.sml ascii
+end
+provenance
+  input rhc.build 6054e9cd867b10d0d8c594888fb7cf00c5826199097fe4551326842965445858
+  input lib/compiler/mid.build 3457b8d2776d3c493c09d63ea2ee5df01b4dfe1a92dc0195f2922a10ea3587cf
+  input lib/compiler/util.build e98081b0ee19aba660c6f0fd98f0465c97b7d67a63a33f40830425f02e3b83d3
+  input lib/unicode/library.build 339b3ce2dbb3bff56f65814d0445946d858df37560b70c03d028015893b75b8f
+  input lib/language/haskell/library.build 1f17587958ad901893a6f0ccdc4292b5d986f73d348bf87d8ca6e122da591368
+  input lib/language/haskell/syntax.build ae53aa318e52bbb664485875f438073846ed42768f79bb86ce94ac5e969c7021
+  input lib/language/haskell/names.build 865f359abc0c0d488bf56afea3d97d8ed86edc3c53b7c39997433996a9119960
+  input lib/language/haskell/types.build 13df92c0a6b5c865dcaa065fb1b66bfaa90fb492b51b563dc4b7648d0bdd5826
+  input lib/language/haskell/core.build af9419b8663fcd975e48babc55f1620ab8ba15d2766b50c395429795d7d03eaf
+  input lib/language/haskell/simplify.build 86f9d41579e68d44f15969a062153141a73fa272a22c422c5bb949b63953e36e
+  input lib/language/haskell/hslint.build 7e8f3acbc749b534e692c60e721770baf553a7663faee36f84a769f4af119198
+  input lib/language/haskell/desugar.build 2f2d4325b72d7b38c53d61974f92d02243122fcd36b98f4a6923b2353266481a
+  input lib/json/library.build 535eacfae52659f77ab2fc08720620f8810bced49f70b23e2e124b4d692d10ac
+end

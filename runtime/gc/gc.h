@@ -159,11 +159,81 @@ void gc_queue(VM *vm, Obj *o);              /* an old object whose fields a coll
    a full one marks it -- the field that pointed to it given what it holds
    -- along a chain of at most IND_HOPS of them (D18); the copier of
    --nursery 0 copies it as it is, and the low-pause collector's cycle marks
-   it as it is */
+   it as it is. Where a function of the program says UPDATE and not
+   BLACKHOLE (Program's reruns: lazy ML's suspensions), not one a frame
+   runs, nor one whose value is a suspension or an indirection
+   (ind_may_shortcut, runtime/value.h; D57, M26). */
 #define IND_HOPS 16
+/* the indirections the frames from low up run as their closures pinned
+   (IND_RUNNING), before a collection that shortcuts: where the program
+   reruns, a lazy ML suspension's code may outlive its own update (copy.c) */
+void gc_pin_running(VM *vm, size_t low);
 void gc_born(VM *vm, Obj *o);               /* a large object with fields, made: scanned whole by the next minor */
 static inline int gc_in_nursery(const VM *vm, const void *p) {
     return vm->gc.nursery && (uintptr_t)((const char *)p - vm->alloc.from) < (uintptr_t)vm->alloc.size;
+}
+/* Wadler's rule (the haskell98 roadmap's D17, C): a selector o (K_THUNK,
+   contag THUNK_SELECTOR + i, runtime/value.h) whose first capture, the
+   tuple, is evaluated -- a constructor of tag 0, or an indirection to one
+   -- gives that tuple's field i, into *to. A tuple not yet a constructor (a
+   suspension, or one a moving collection has copied already) gives
+   nothing, and the selector is copied or marked as it is. */
+static inline int gc_select(Obj *o, Value *to) {
+    if (obj_len(o) < 2) return 0;
+    Value p = obj_fields(o)[1];
+    if (!val_is_ptr(p)) return 0;
+    Obj *t = val_ptr(p);
+    if (obj_kind(t) == K_IND) {
+        p = obj_fields(t)[0];
+        if (!val_is_ptr(p)) return 0;
+        t = val_ptr(p);
+    }
+    uint32_t i = (uint32_t)(o->contag - THUNK_SELECTOR);
+    if (obj_kind(t) != K_CON || t->contag != 0 || i >= obj_len(t)) return 0;
+    *to = obj_fields(t)[i];
+    return 1;
+}
+/* The shortcut of the field *v, which points to a suspension or an
+   indirection (the last two kinds: each collector tests that first, one
+   comparison, which is all a field of SML's, never one of them, pays):
+   through at most IND_HOPS indirections (D18; where inds: --nursery 0's
+   copier copies one as it is) and through selectors whose tuple is
+   evaluated (D17's C) as far as their chain goes, as GHC's collector does
+   (selector_chain), a cycle of them stopped by Brent's method; where young,
+   through the nursery's objects alone (a minor collection). Where guard
+   (Program's reruns: lazy ML's suspensions), an indirection only where it
+   may be (ind_may_shortcut), and a selector only to a field that is no
+   suspension or indirection, looked at through its forwarding pointer: a
+   field that held the outer of an 'a susp susp must not come to hold the
+   inner (M26). Out of line, out of the way of the scan. */
+#if defined(__GNUC__)
+__attribute__((noinline, unused))
+#endif
+static void gc_shortcut_walk(const VM *vm, Value *v, int inds, int young, int guard) {
+    int hops = 0;
+    uint64_t power = 1, lam = 0;
+    Value tortoise = *v;
+    while (val_is_ptr(*v)) {
+        Obj *o = val_ptr(*v);
+        if (young && !gc_in_nursery(vm, o)) return;
+        int k = obj_kind(o);
+        Value to;
+        if (k == K_IND) {
+            if (!inds || hops >= IND_HOPS || (guard && !ind_may_shortcut(*v))) return;
+            to = obj_fields(o)[0];
+            hops++;
+        } else if (k == K_THUNK && o->contag >= THUNK_SELECTOR) {
+            if (!gc_select(o, &to)) return;
+            if (guard && val_is_ptr(to)) {
+                const Obj *t = val_ptr(to);
+                if (obj_forwarded(t)) t = obj_forwarding(t);
+                if (obj_kind(t) == K_THUNK || obj_kind(t) == K_IND) return;
+            }
+        } else return;
+        *v = to;
+        if (*v == tortoise) return;
+        if (++lam == power) { tortoise = *v; power <<= 1; lam = 0; }
+    }
 }
 /* the card of field f of the old object o, and its block's dirty byte (D6) */
 static inline void gc_remember(Obj *o, Value *f) {
@@ -206,6 +276,48 @@ void collect_pass(VM *vm, size_t new_size);
    frame's registers as far as they are live, a dead one that holds a
    pointer made unit (copy.c) */
 void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *));
+/* The stack's summary (vm.h, GcState.stack_roots; copy.c). The frames a
+   walk of the whole stack decodes, in vm_frames_from's buffer: those from
+   the lowest that has run since the summary was made, where it describes
+   the slots below them, at most bound of them (*from: where their slots
+   begin, the slots below being the summary's); else every frame (*from
+   0). */
+size_t gc_stack_frames(VM *vm, FrameRef **out, size_t *from, size_t bound);
+/* room in the summary's bits for slots [0, n): 0 where there is no memory */
+int gc_stack_room(VM *vm, size_t n);
+/* The summary made again by a walk that decodes the frames fr[0, nf),
+   whose slots begin at from, the summary's being below (gc_stack_roots,
+   minor.c's minor_stack): the slots it is to describe, [0, rec), below the
+   frame that runs, their bits from from cleared (0: none, no memory);
+   each slot the walk visits given its bit (gc_stack_bit); and, once the
+   walk is done, the summary's from then on (gc_stack_recorded), the
+   frames that have run since none. caf_record makes the CAF tables' part
+   (caf.c). */
+size_t gc_stack_record(VM *vm, const FrameRef *fr, size_t nf, size_t from);
+static inline void gc_stack_bit(VM *vm, const Value *v, size_t rec) {
+    size_t i = (size_t)(v - vm->stack);
+    if (i < rec) vm->gc.stack_roots[i >> 6] |= (uint64_t)1 << (i & 63);
+}
+static inline void gc_stack_recorded(VM *vm, size_t rec) {
+    vm->gc.stack_valid = rec;
+    vm->gc.stack_low = vm_frame_id(vm);
+}
+void caf_record(VM *vm, const FrameRef *f, size_t n, size_t from, size_t rec);
+size_t caf_aside_made(VM *vm);
+/* --gc-verify (check.c): what is wrong with the summary, the frames below
+   the lowest that has run decoded again, or NULL */
+const char *gc_stack_check(VM *vm);
+/* the bits [lo, hi) of b cleared */
+static inline void gc_bits_clear(uint64_t *b, size_t lo, size_t hi) {
+    if (lo >= hi) return;
+    for (; lo < hi && (lo & 63); lo++) b[lo >> 6] &= ~((uint64_t)1 << (lo & 63));
+    if (hi - lo >= 64) {
+        size_t w = (hi - lo) >> 6;
+        memset(b + (lo >> 6), 0, w * sizeof *b);
+        lo += w << 6;
+    }
+    for (; lo < hi; lo++) b[lo >> 6] &= ~((uint64_t)1 << (lo & 63));
+}
 
 /* The old space (vm->gc.old_kind; docs/plans/garbage-collector-v2.md, M4):
    OLD_COPY, chunks that a full collection copies (copy.c), or OLD_MARK,
@@ -316,6 +428,63 @@ void log_pass_end(VM *vm, const PassMark *m, const char *kind, int64_t pause);
    those below it have not changed since the last. */
 #define OTHER_ROOTS(vm, V, O) OTHER_ROOTS_FROM(vm, V, O, 0)
 
+/* caf.c: CAF tables (the haskell98 roadmap's D19, B): in a program with
+   suspensions a full collection keeps a global only where code that may
+   still run reads it, as GHC's static reference tables have it. Each
+   collector: caf_begin (0: every global a root, as OTHER_ROOTS has them);
+   caf_frames, with the stack's roots after it; caf_back, and caf_roots for
+   OTHER_ROOTS; caf_code for each object marked whose code may run
+   (caf_runs, caf_code_due); then the frames' closures (caf_aside, and
+   caf_aside_bits those of the frames the stack's summary has), each
+   marked the frames' alone (caf_only_add), taking its function's table
+   where a later reference reaches it (caf_only_take); caf_end. */
+typedef struct CafTables CafTables;
+typedef struct CafAside { Value *slot; Obj **root; Value was; } CafAside;
+int caf_begin(VM *vm);
+void caf_frames(VM *vm, void (*visit)(VM *, Value *), int defer);
+void caf_frames_forget(void);
+int caf_frames_reuse(FrameRef **out, size_t *n, size_t *from, size_t *below);
+void caf_aside_bits(VM *vm, void (*visit)(VM *, Value *));
+const char *caf_stack_check(VM *vm, const FrameRef *f, size_t n, size_t from);
+void caf_back(VM *vm);
+size_t caf_aside(CafAside **out);
+void caf_roots(VM *vm, void (*visit)(VM *, Value *), void (*visit_obj)(VM *, Obj **));
+void caf_code(VM *vm, Obj *o, void (*visit)(VM *, Value *));
+void caf_end(VM *vm);
+int caf_cycle_begin(VM *vm, void (*shade)(VM *, Value *));
+void caf_note(VM *vm, uint32_t g);
+void caf_note_written(VM *vm);
+void caf_stats(VM *vm, FILE *out);
+/* what may run: a closure, or a suspension not yet evaluated */
+static inline int caf_runs(const Obj *o) {
+    return obj_kind(o) == K_CLOSURE || (obj_kind(o) == K_THUNK && thunk_unevaluated(o->contag));
+}
+/* a closure the frames alone hold so far in a collection: a bit of the
+   header's free byte (Obj.pad), set and cleared within the collection
+   (caf_end clears what is left) */
+#define CAF_ONLY 1
+static inline void caf_only_add(Obj *o) { o->pad |= CAF_ONLY; }
+static inline int caf_only_has(const Obj *o) { return o->pad & CAF_ONLY; }
+static inline int caf_only_take(Obj *o) { if (!(o->pad & CAF_ONLY)) return 0; o->pad &= (uint8_t)~CAF_ONLY; return 1; }
+/* what caf_code reads first, in the collector's loop: whether an object's
+   function's table is still to be taken in this collection (a group that
+   reaches no global never is) */
+typedef struct CafFast { uint32_t nfuncs; const uint32_t *scc; const uint64_t *sccepoch; uint64_t epoch; } CafFast;
+extern CafFast caf_fast;
+static inline int caf_code_due(const Obj *o) {
+    Value fv = OBJ_FIELDS(o)[0];
+    if (!val_is_imm(fv)) return 0;
+    int64_t fid = val_int(fv);
+    if (fid <= CLOSURE_NARY(0)) fid = CLOSURE_NARY(fid);   /* a closure of more than one parameter (value.h), as caf_code */
+    if (fid < 0 || (uint64_t)fid >= caf_fast.nfuncs) return 0;
+    return caf_fast.sccepoch[caf_fast.scc[fid]] < caf_fast.epoch;
+}
+/* each instruction set's walk of a function's code from pc, and from every
+   handler it installs: each global it reads, each function it calls by
+   name or makes a closure of; -1 where it cannot */
+int isa_caf_walk(const Program *p, uint32_t fi, uint32_t pc, void (*global)(void *, uint32_t),
+                 void (*callee)(void *, uint32_t), void *ctx);
+
 /* The stack below a frame's registers, from at up to where they begin
    (gc_stack_roots, minor.c's minor_stack): the slots below its header,
    visited; and of a header (runtime/register's: FrameRef.closure_slot,
@@ -372,11 +541,18 @@ static inline void minor_globals(VM *vm, void (*take)(VM *, Value *)) {
         for (int i_ = 0; i_ < REAL_BOXES; i_++) \
             if ((vm)->real_boxes[i_]) O(&(vm)->real_boxes[i_]); \
         if ((vm)->interrupt_exn) O(&(vm)->interrupt_exn); \
+        if ((vm)->loop_exn) O(&(vm)->loop_exn); \
         for (size_t i_ = 0; i_ < (vm)->nhandles; i_++) V(&(vm)->handles[i_]); \
     } while (0)
 #define OTHER_ROOTS_FROM(vm, V, O, frame0) \
     do { \
-        for (uint32_t i_ = 0; i_ < (vm)->prog.nglobals; i_++) V(&(vm)->globals[i_]); \
+        for (uint32_t g_ = 0; g_ < (vm)->prog.nglobals; g_++) V(&(vm)->globals[g_]); \
+        OTHER_ROOTS_BUT_GLOBALS(vm, V, O, frame0); \
+    } while (0)
+/* the roots but the globals: a full collection that keeps a global only
+   where live code reaches it (caf.c, caf_roots) */
+#define OTHER_ROOTS_BUT_GLOBALS(vm, V, O, frame0) \
+    do { \
         for (uint32_t i_ = 0; i_ < (vm)->prog.nconsts; i_++) V(&(vm)->prog.consts[i_]); \
         if (!isa_frame_header) { /* (runtime/register's closures are in the stack: native-frames.md, M4) */ \
           FrameRef *f_; size_t n_ = vm_frames_from((vm), (frame0), &f_); \
@@ -387,6 +563,7 @@ static inline void minor_globals(VM *vm, void (*take)(VM *, Value *)) {
         for (int i_ = 0; i_ < REAL_BOXES; i_++) \
             if ((vm)->real_boxes[i_]) O(&(vm)->real_boxes[i_]); \
         if ((vm)->interrupt_exn) O(&(vm)->interrupt_exn); \
+        if ((vm)->loop_exn) O(&(vm)->loop_exn); \
         for (size_t i_ = 0; i_ < (vm)->nhandles; i_++) V(&(vm)->handles[i_]); \
     } while (0)
 

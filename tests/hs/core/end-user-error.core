@@ -1,0 +1,8 @@
+; fail: rhc: bottom: IOError: user error (an escaping userError)
+; A program whose IOError no handler takes ends with the text the library's
+; Show IOError gives it (the Report's 7.3, 23): a user's IOError as "user
+; error (TEXT)", as GHC and Hugs print it; and with status 1.
+(val main (-> World (utuple World `()`))
+  (\ ((w World))
+    (let (m ([] Char) (primUnpackString "an escaping userError"))
+      (case (primUserError m) e (_ (primIOError @`()` e w))))))

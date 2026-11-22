@@ -1,0 +1,64 @@
+; run: --read-core tests/hs/core/lib/base.core
+; rhc's runtime (CoreRuntime) on standard input, runtime-stdin.stdin:
+; getChar twice, the second a character of two bytes; getContents, the
+; rest, read a chunk of 4096 bytes at a time as the list is read, through
+; interleave (D25), with a character of three bytes across the edge of
+; the second chunk and a byte of no sequence of UTF-8 after it, read as the
+; character of its number; then getChar at the end, an IOError that catch
+; takes. getChar and getContents share standard input's buffer.
+(val putS (-> ([] Char) World (utuple World `()`))
+  (\ ((s ([] Char)) (w World))
+    (case s cs
+      (([]) (let (u `()` (con `()`)) (utuple w u)))
+      ((: c rest) (case (primPutChar c w) o ((utuple w1 _) (putS rest w1)))))))
+
+; how many of the list are the code point k, and how long it is
+(val count (-> ([] Char) !Int !Int !Int (utuple !Int !Int))
+  (\ ((s ([] Char)) (k !Int) (n !Int) (len !Int))
+    (case s cs
+      (([]) (utuple n len))
+      ((: c rest)
+        (case (primCharToInt c) i
+          (_ (case (prim int_add len 1) len1
+               (_ (case (prim int_eq i k) same
+                    ((True) (case (prim int_add n 1) n1 (_ (count rest k n1 len1))))
+                    ((False) (count rest k n len1)))))))))))
+
+; the list from its first character past 'a'
+(val skipA (-> ([] Char) ([] Char))
+  (\ ((s ([] Char)))
+    (case s cs
+      (([]) cs)
+      ((: c rest) (case c d ('a' (skipA rest)) (_ cs))))))
+
+(val said (-> Exn World (utuple World `()`))
+  (\ ((e Exn) (w World))
+    (case e ev (_ (case (prim exn_message ev) m (_ (case (putStrLn m w) o ((utuple w1 _) (let (u `()` (con `()`)) (utuple w1 u))))))))))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (primGetChar w) g1
+      ((utuple w1 c1)
+        (case (primGetChar w1) g2
+          ((utuple w2 c2)
+            (let (i1 Int (primCharToInt c1))
+            (case (printInt i1 w2) o1
+              ((utuple w3 _)
+                (let (i2 Int (primCharToInt c2))
+                (case (printInt i2 w3) o2
+                  ((utuple w4 _)
+                    (case (primGetContents w4) g3
+                      ((utuple w5 rest)
+                        (case (count rest 8364 0 0) k
+                          ((utuple euros len)
+                            (case (printInt len w5) o3
+                              ((utuple w6 _)
+                                (case (printInt euros w6) o4
+                                  ((utuple w7 _)
+                                    (let (tail ([] Char) (skipA rest))
+                                    (case (putS tail w7) o5
+                                      ((utuple w8 _)
+                                        (let (more (-> World (utuple World `()`))
+                                               (\ ((v World)) (case (primGetChar v) g ((utuple v1 c) (primPutChar c v1)))))
+                                        (case (primCatch @`()` more said w8) o6
+                                          ((utuple w9 _) (let (u Unit (con Unit)) (utuple w9 u))))))))))))))))))))))))))))

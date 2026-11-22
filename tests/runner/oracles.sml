@@ -329,7 +329,13 @@ struct
     end
 
   (* tier 2 tests CALL's function index, trusted register or not: a call of
-     what is no closure stops there and goes nowhere *)
+     what is no closure stops there and goes nowhere. Since D15's C (the
+     haskell98 roadmap, item 24) a call of one argument sends an index the
+     test refuses to the general path, reg_apply, which tests the kind as the
+     interpreter does, so a tuple stops with "expected closure in call"; a
+     closure whose index is out of range, there or in a call of more, with
+     "bad function index". A jump through the index unchecked would leave the
+     table of calls, with neither message *)
   fun callIndex () =
     let
       val out = run ^ "/regverify"
@@ -345,7 +351,9 @@ struct
         let val status = execEnv (fn e => e)
                                  {cmd = ["bin/runevm", "--jit=all", "--jit-tier=2", rbc], dir = NONE,
                                   stdin = "", stdout = log, stderr = log, timeout = 60}
-        in if status <> 0 andalso String.isSubstring "bad function index" (read log) then ()
+            val text = read log
+        in if status <> 0 andalso (String.isSubstring "expected closure in call" text
+                                    orelse String.isSubstring "bad function index" text) then ()
            else say ("FAIL call-index: status " ^ Int.toString status ^ ": " ^ firstLine log ^ "\n")
         end
     end
@@ -401,14 +409,20 @@ struct
 
   fun jitName src = String.translate (fn #"/" => "_" | c => str c) (base src)
 
-  fun jitOne src =
+  (* a program compiled by a compiler, its siblings named from b: Rune's
+     by bin/rune, and another language's by its own (rhc's, whose program
+     may be a directory: tests/runner/hslang.sml) *)
+  (* counts: whether the modes' instruction counts are held to each other
+     too, which a program whose path depends on its run (the clock) cannot
+     be: its output alone is compared then *)
+  fun jitOneOf counts (compiler, b, src) =
     let
-      val b = base src and n = jitName src
+      val n = String.translate (fn #"/" => "_" | c => str c) b
       val dir = jitDir () ^ "/" ^ n
       val () = mkdirs dir
       fun f x = dir ^ "/" ^ x
     in
-      if exec {cmd = ["bin/rune"] @ sib (b, ".cargs") @ [src, "-o", f "prog.rbc"], dir = NONE, stdin = "", stdout = "",
+      if exec {cmd = [compiler] @ sib (b, ".cargs") @ [src, "-o", f "prog.rbc"], dir = NONE, stdin = "", stdout = "",
                stderr = f "cerr", timeout = 0} <> 0
       then say ("FAIL jit." ^ n ^ ": " ^ firstNonEmpty (f "cerr") ^ "\n")
       else
@@ -432,6 +446,14 @@ struct
              .restore; a program that writes files where it runs here stops,
              the same in every mode) *)
           fun exited (mode, k) = List.exists (fn l => l = "exit " ^ k) (lines (read (f ("stderr." ^ mode))))
+          (* a mode's standard error, but for --count's line where counts
+             are not compared *)
+          fun errs mode =
+            if counts then f ("stderr." ^ mode)
+            else (write (f ("errs." ^ mode),
+                         String.concat (List.map (fn l => l ^ "\n")
+                                          (List.filter (not o String.isPrefix "runevm: count:") (lines (read (f ("stderr." ^ mode)))))));
+                  f ("errs." ^ mode))
           val unstarted = List.find (fn (mode, _, _) => exited (mode, "126") orelse exited (mode, "127")) jitModes
           val silent = size (read (b ^ ".expected")) > 0 andalso not (exists (b ^ ".restore"))
                        andalso size (read (f "stdout.off")) = 0 andalso exited ("off", "0")
@@ -446,16 +468,18 @@ struct
                             if mode = "off" then ()
                             else if not (same (f "stdout.off", f ("stdout." ^ mode))) then
                               say ("FAIL jit." ^ n ^ ": prints differently with " ^ what ^ ": " ^ difference (f "stdout.off", f ("stdout." ^ mode)) ^ "\n")
-                            else if not (same (f "count.off", f ("count." ^ mode))) then
+                            else if counts andalso not (same (f "count.off", f ("count." ^ mode))) then
                               say ("FAIL jit." ^ n ^ ": counts " ^ read (f "count.off") ^ " interpreted, " ^ read (f ("count." ^ mode))
                                    ^ " with " ^ what ^ "\n")
-                            else if not (same (f "stderr.off", f ("stderr." ^ mode))) then
+                            else if not (same (errs "off", errs mode)) then
                               say ("FAIL jit." ^ n ^ ": standard error differs with " ^ what ^ ": "
-                                   ^ difference (f "stderr.off", f ("stderr." ^ mode)) ^ "\n")
+                                   ^ difference (errs "off", errs mode) ^ "\n")
                             else ())
                          jitModes
         end
     end
+  val jitOneWith = jitOneOf true
+  fun jitOne src = jitOneWith ("bin/rune", base src, src)
 
   (* the probe: one program, run as each of the others is, interpreted and
      at tier 2, prints what it is expected to, and the VM is one that can be
@@ -1181,7 +1205,8 @@ struct
       val _ = exec {cmd = ["bin/rune", "--build-list", "rune.build"], dir = NONE, stdin = "", stdout = list, stderr = "", timeout = 0}
     in
       List.app (fn p => (mkdirs (OS.Path.dir (copy ^ "/" ^ p)); write (copy ^ "/" ^ p, read p)))
-        (["rune.build", "rune.workspace", "lib/compiler/internal.build", "lib/compiler/frontend.build", "lib/compiler/util.build"] @ lines (read list))
+        (["rune.build", "rune.workspace", "lib/compiler/internal.build", "lib/compiler/frontend.build", "lib/compiler/mid.build",
+          "lib/compiler/util.build"] @ lines (read list))
     end
 
   fun reproBuild nm =
@@ -1337,6 +1362,8 @@ struct
     | ["call-index"] => SOME callIndex
     | ["rbccheck-one", kind] => SOME (fn () => rbccheckOne kind)
     | ["jit-one", src] => SOME (fn () => jitOne src)
+    | ["jit-one-with", compiler, b, src] => SOME (fn () => jitOneWith (compiler, b, src))
+    | ["jit-one-output", compiler, b, src] => SOME (fn () => jitOneOf false (compiler, b, src))
     | ["jit-probe"] => SOME jitProbe
     | ["jit-every-opcode"] => SOME jitEveryOpcode
     | ["jit-fatal", which] => SOME (fn () => jitFatal which)

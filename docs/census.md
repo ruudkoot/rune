@@ -89,7 +89,9 @@ exit; `meta.txt` says how many there are (`pretrace_objects`).
 ### alloc.bin -- 16 bytes per object, record N = id N (record 0 zeros)
     u8  kind        value.h ObjKind: TUPLE 1, CON 2, CLOSURE 3, STRING 4, REF 5, ARRAY 6, EXN 7,
                     EXNCON 8, REAL 10 (a boxed double), BOX 11 (an Int64 or Word64 beyond 63 bits),
-                    BYTES 12 (Word8Array, CharArray), REALS 13 (RealArray, RealVector); never FORWARD 9
+                    BYTES 12 (Word8Array, CharArray), REALS 13 (RealArray, RealVector), THUNK 14 (a
+                    suspension thunk_make made of a closure that captures nothing; one that captures
+                    is the CLOSURE it was made as, retagged in place); never FORWARD 9 or IND 15
     u8  site_kind   0 = an instruction of runtime/register (site = its pc), 1 = a primitive under
                     PRIM/PRIMPUSH (site = that pc), 2 = the runtime (the loader's constants, vm_start's
                     exception constructors, vm_raise_builtin), 3 = made before the trace (VM start-up);

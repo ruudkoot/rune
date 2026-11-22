@@ -61,7 +61,7 @@ real_ge          2  real * real -> bool      Greater or equal.
 real_eq          2  real * real -> bool      IEEE equality.
 real_floor       1  real -> int              Raises Overflow/Domain.
 real_ceil        1  real -> int              Raises Overflow/Domain.
-real_round       1  real -> int              Round to nearest even; raises Overflow/Domain.
+real_round       1  real -> int              Nearest int, ties to even, in every rounding mode; raises Overflow/Domain.
 real_trunc       1  real -> int              Raises Overflow/Domain.
 real_to_string   1  real -> string           SML formatting (~ for negative, E exponent).
 real_from_string 1  string -> real option    Parse a real literal.
@@ -122,13 +122,13 @@ command_args     1  unit -> string list      Command line arguments after the by
 command_name     1  unit -> string           The bytecode file name.
 
 # --- files (handles: 0 stdin, 1 stdout, 2 stderr, others from file_open) ---
-file_open        2  string * int -> int option   Open a file (mode 0 read, 1 write/truncate, 2 append); NONE on failure.
-file_close       1  int -> unit              Close a handle (no-op for 0-2 and already closed handles).
+file_open        2  string * int -> int option   Open a file (mode 0 read, 1 write/truncate, 2 append, 3 read and write: made where it is not there, kept where it is); NONE on failure.
+file_close       1  int -> bool              Close a handle (no-op for 0-2 and already closed handles); false where the system's close fails, file_errno saying why.
 file_write       2  int * string -> bool     Write bytes; false if the handle is invalid or the write fails.
-file_flush       1  int -> unit              Flush a handle.
+file_flush       1  int -> bool              Flush a handle; false where the system's flush fails (a full device), file_errno saying why.
 file_read_line   1  int -> string option     Read a line including its newline (a last line without one gets it); NONE at end of file, and from then on.
 file_read_all    1  int -> string            Read the rest of a handle, including what the file has gained since an end of file.
-file_error       1  unit -> string           strerror text of the last failed file_open or file_write.
+file_error       1  unit -> string           strerror text of the last failed file_open, file_write, file_flush or file_close.
 
 # --- added after the first release of the table (numbers are positions: append only) ---
 word_neg         1  word -> word             Two's complement negation: 0 - w.
@@ -170,7 +170,7 @@ date_offset      1  int -> int               Seconds by which local time is ahea
 date_format      3  string * int list * int -> string   strftime of the parts.
 os_system        1  string -> int            Run a command with the shell and wait; what it exited with, or 256 plus the signal that ended it, or ~1.
 os_getenv        1  string -> string option   The value of an environment variable; NONE with sys_errno cleared when absent, or with an error on failure.
-file_errno       1  unit -> int              The errno of the last file_open or file_write that failed.
+file_errno       1  unit -> int              The errno of the last file_open, file_write, file_flush or file_close that failed.
 os_mkdir         1  string -> int            Make a directory; 0, or ~1 with the reason in sys_errno.
 os_rmdir         1  string -> int            Remove an empty directory.
 os_chdir         1  string -> int            Change the working directory.
@@ -338,7 +338,7 @@ rt_debug_local   2  int * int -> 'a          Register r of frame k of the stop, 
 rt_debug_env     2  int * int -> 'a          Slot e of the environment of the closure of frame k of the stop, at any type, as rt_debug_local; unit where there is none.
 rt_debug_exn     1  unit -> exn              The exception a stop at a raise stopped for.
 rt_debug_return  1  'a -> unit               <debug>'s own, after the hook: its frame taken off, and the program on from the instruction it stopped at, or with the exception it stopped for (its argument).
-rt_debug_program 1  unit -> int              How many functions the program has: after a unit is linked, its own are the last.
+rt_debug_program 1  unit -> int              How many functions the program has: a unit linked next has its own from there on.
 rt_random_bytes  1  int -> string            n bytes of the system's randomness (/dev/urandom, RtlGenRandom), as a string; "" where there is none.
 win_event_new    1  unit -> int              An event of Windows that a child inherits, by its handle's number, to watch as its interrupt (RUNE_INTERRUPT_EVENT); ~1 elsewhere.
 win_event_set    1  int -> bool              The event of that number set: the interrupt of the child that watches it; false where it cannot be.
@@ -472,3 +472,31 @@ foreign_callback 3  string * string * (string -> string) -> bool * Word64.word *
 
 # --- linked unit inventory (compiler library sessions) ---
 rt_linked_units  1  unit -> string list      Identities of successfully linked units in first-link order, each once; the reserved top-level export is the marker. Does not imply execution of initializers.
+
+# --- IntInf.int (an immediate where the number fits 63 bits, else a sign and a canonical magnitude; haskell98 M31) ---
+intinf_add       2  IntInf.int * IntInf.int -> IntInf.int   Addition. Two immediates whose sum fits are added in line; the rest is the primitive's, which makes a large result as large as the magnitude budget allows.
+intinf_sub       2  IntInf.int * IntInf.int -> IntInf.int   Subtraction, as intinf_add.
+intinf_mul       2  IntInf.int * IntInf.int -> IntInf.int   Multiplication, as intinf_add; GMP's when this VM selects it and an operand is large.
+intinf_div       2  IntInf.int * IntInf.int -> IntInf.int   Floor division; raises Div on zero.
+intinf_mod       2  IntInf.int * IntInf.int -> IntInf.int   Floor modulus, of the divisor's sign; raises Div on zero.
+intinf_quot      2  IntInf.int * IntInf.int -> IntInf.int   Truncating division; raises Div on zero.
+intinf_rem       2  IntInf.int * IntInf.int -> IntInf.int   Truncating remainder, of the dividend's sign; raises Div on zero.
+intinf_neg       1  IntInf.int -> IntInf.int   Negation.
+intinf_lt        2  IntInf.int * IntInf.int -> bool   Less than.
+intinf_le        2  IntInf.int * IntInf.int -> bool   Less or equal.
+intinf_gt        2  IntInf.int * IntInf.int -> bool   Greater than.
+intinf_ge        2  IntInf.int * IntInf.int -> bool   Greater or equal.
+intinf_order     2  IntInf.int * IntInf.int -> order   LESS, EQUAL or GREATER.
+intinf_from_int  1  int -> IntInf.int        An int as an IntInf.int: the immediate itself, or a large value for an int past 63 bits under RUNE_INT64.
+intinf_to_int    1  IntInf.int -> int        An IntInf.int as an int; raises Overflow for one an int does not hold.
+intinf_is_small  1  IntInf.int -> bool       Whether the number is an immediate, which intinf_to_int gives without Overflow.
+intinf_parts     1  IntInf.int -> bool * string   Whether the number is negative, and its canonical little-endian magnitude: a large value's own pair, a new one for an immediate. The magnitude budget applies.
+intinf_make      2  bool * string -> IntInf.int   The number of a sign and a canonical magnitude, an immediate where it fits; the empty magnitude is 0. The magnitude budget applies; a magnitude with a high zero byte is a bytecode error.
+
+# --- suspensions of a lazy front end (docs/plans/language/haskell98.md, D3, D11, D13; docs/ir.md, Suspensions) ---
+thunk_make       1  (unit -> 'a) -> 'a susp   A suspension of the closure, unevaluated: the closure itself made a K_THUNK in place, which must be fresh and named by nothing else; a copy where it captures nothing. The closure's code says thunk_blackhole first and thunk_self_update last.
+thunk_force      1  'a susp -> 'a            The value of a suspension: what an indirection holds, the suspension's code run where it is unevaluated, a value that is no suspension itself. Each target makes it FORCE, ENTER and RESULT; no primitive runs.
+thunk_blackhole  1  unit -> unit             In a suspension's code, after what it captured has been read: the suspension under evaluation, a second force of it a loop. Each target makes it BLACKHOLE; no primitive runs.
+thunk_self_update 1  'a -> unit               In a suspension's code: the suspension running becomes an indirection to the value. Each target makes it UPDATE; no primitive runs.
+any_check        1  'a -> 'a                 Its argument, which a fatal error stops where it is a suspension or an indirection: what a compile with --check-casts puts after each cast whose result is no suspension, which says that the value is evaluated (docs/ir.md, Suspensions).
+thunk_selector   3  'a susp * 'b susp * int -> unit   Wadler's rule (the haskell98 roadmap's D17, C): the first, the suspension of a selector a pattern binding of a lazy front end made, of field i, the third, of the tuple the second holds, marked a selector (THUNK_SELECTOR + i, runtime/value.h), which a collection gives that field of the tuple once the tuple is evaluated; nothing where the suspension is not unevaluated or its first capture is not the tuple. SML makes none; last, so that no other primitive's number moves.

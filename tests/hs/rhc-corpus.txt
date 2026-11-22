@@ -1,0 +1,53 @@
+# rhc on E8's corpus (tests/runner/hsrhccorpus.sml; docs/testing.md, rhc's oracles and corpus): a program of
+# tests/hs/corpus/accept.tsv that both judges (GHC, Hugs) accept and rhc refuses, each line with its cause, the outcome
+# first in its reason. A line that explains no refusal of a job that ran is stale.
+#
+# WAY | SET/ID::check | CATEGORY | OUTCOME: why
+
+# R3: a do at its enclosing block's column opens no block by 9.3 (n > m), so its block is empty and refused; GHC's
+# -XHaskell98 turns NondecreasingIndentation on, and Hugs relaxes do; rhc follows 9.3, strict by default
+rhc | ghc/module/mod103::check | HOST-BUG | reject: R3: a nested do at the column of the enclosing one (NondecreasingIndentation, which GHC's Haskell98 mode turns on); 9.3 gives it an empty block; out of M13's list (ruling 43)
+rhc | hse/NonDecreasing.hs::check | HOST-BUG | reject: R3: a do at the column of the enclosing do (NondecreasingIndentation, on in GHC's Haskell98 mode); 9.3 gives it an empty block; out of M13's list (ruling 43)
+rhc | jhc/1_typecheck/2_pass/fixed_bugs/flat_do_where.hs::check | HOST-BUG | reject: R3: nested dos at the enclosing do's column (NondecreasingIndentation, on in GHC's Haskell98 mode); 9.3 gives them empty blocks; out of M13's list (ruling 43)
+rhc | hse/RelaxedDo.hs::check | HOST-BUG | reject: R3: a do at the column of the enclosing do (its LANGUAGE NondecreasingIndentation, blanked by the preparation, and on in GHC's Haskell98 mode); 9.3 gives it an empty block
+
+# mod.exp.synonym.dotdot: 5.2 names a type synonym in an export list by the form T alone, though the grammar allows
+# T(..); GHC takes T(..) with a warning (-Wdodgy-exports) and Hugs takes it; rhc follows 5.2 (the conformance row, R34)
+rhc | nhcnofib/spectral/compreals::check | HOST-BUG | reject: mod.exp.synonym.dotdot: ContinuedFractions.lhs exports the synonym ContinuedFraction as ContinuedFraction(..), which 5.2 does not give a synonym
+
+# rhc's runs of D56's 188 (tests/runner/hscorpusrun.sml, `hs-corpus-run/ID`): a program both judges ran right
+# (E8's run.tsv) that rhc does not run right in D56's three ways, by its cause, the outcome first: compile (rhc
+# refuses it, in E8's variant, rewritten and under --dotted-names), exit (a status not 0) or diff (another output)
+
+# modules outside the Report's libraries, which the judges' own libraries have: rhc takes a dotted name only under
+# --dotted-names (D35), and its library holds the Report's modules alone
+rhc | jhc/3_io/Array.hs::run | HOST-BUG | compile: Data.Array, the hierarchical name of the Report's Array (D35); E8's import rewrite makes it Array, which is then the program's own file, Array.hs
+rhc | jhc/3_io/IORef.hs::run | HOST-BUG | compile: Data.IORef, outside the Report's libraries (D35)
+rhc | jhc/3_io/enum.hs::run | HOST-BUG | compile: Data.Word, outside the Report's libraries (D35)
+rhc | jhc/7_large/fastest_fib.hs::run | HOST-BUG | compile: Data.List, Data.Word and Data.Int; the last two are outside the Report's libraries (D35)
+rhc | nofib/smp/threads001::run | HOST-BUG | compile: Control.Concurrent, outside the Report's libraries (D35)
+rhc | ghc/typecheck/should_run/tcrun040::run | HOST-BUG | compile: Foreign, of the FFI addendum, not a library of the Report
+
+# R73: a method's context may not constrain the class variable (4.3.1); GHC and Hugs accept it
+rhc | ghc/typecheck/should_run/tcrun037::run | HOST-BUG | compile: R73: a method's context constrains its class's variable (4.3.1)
+rhc | ghc/typecheck/should_fail/tcfail149::run | HOST-BUG | compile: R73: a method's context constrains its class's variable (4.3.1)
+
+# the -lazy ports (tests/runner/hslazyports.sml, `hs-lazy-ports/PORT`, nightly): the Haskell beside a port that rhc
+# does not run to nofib's output
+rhc | lazy/eliza-lazy::run | HOST-BUG | reject: Main.hs's `import Prelude hiding (Word)` hides what the Prelude does not export, an error by 5.3.1 (mod.imp.hiding.notexported); GHC 9.4.7 takes it with a warning
+rhc | lazy/scs-lazy::run | HOST-BUG | reject: Parse.hs's `import Data.List hiding (List)`, which the harness's import rewrite makes `import List hiding (List)`, hides what List does not export, an error by 5.3.1 (mod.imp.hiding.notexported); GHC 9.4.7 takes it with a warning
+
+# R21: one declaration group by 4.5.1 (H's M16d: a signature cuts no group), whose signatures' contexts differ,
+# which 4.5.2 refuses; GHC 9.4.7 -XHaskell98 and Hugs +98 split the group by its dependencies (THIH's refinement,
+# Haskell 2010's rule) and accept it (E8, and both again on 2026-11-11); nhc98 refuses tc196 and tcfail144
+rhc | ghc/typecheck/should_compile/tc196::check | HOST-BUG | reject: R21: f1 and g1 are one declaration group, f1 :: Eq a and g1 :: Ord a, contexts 4.5.2 requires identical
+rhc | jhc/1_typecheck/2_pass/ghc/uncat/tc196.hs::check | HOST-BUG | reject: R21: as ghc/typecheck/should_compile/tc196, jhc's copy
+rhc | ghc/typecheck/should_fail/tcfail071::check | HOST-BUG | reject: R21: f and g are one declaration group (g's where uses f), f :: Ord d and g :: e -> e, contexts 4.5.2 requires identical
+rhc | jhc/1_typecheck/4_fail/ghc/tcfail071.hs::check | HOST-BUG | reject: R21: as ghc/typecheck/should_fail/tcfail071, jhc's copy
+rhc | ghc/typecheck/should_fail/tcfail144::check | HOST-BUG | reject: R21: f1 and g1 are one declaration group, f1 :: Eq a and g1 :: Ord a, contexts 4.5.2 requires identical
+rhc | jhc/1_typecheck/4_fail/ghc/tcfail144.hs::check | HOST-BUG | reject: R21: as ghc/typecheck/should_fail/tcfail144, jhc's copy
+
+# G2's runs of the nofib run set GHC ran right, at rhc's -O0 and -O2 (hs-corpus-run/levels/ID, nightly; label `levels`)
+rhc | nofib/smp/threads001::levels | HOST-BUG | compile: Control.Concurrent, outside the Report's libraries (D35)
+rhc | nofib/spectral/eliza::levels | HOST-BUG | compile: `import Prelude hiding (Word)` hides what the Prelude does not export, an error by 5.3.1 (mod.imp.hiding.notexported); GHC 9.4.7 takes it with a warning
+rhc | nofib/spectral/last-piece::levels | HOST-BUG | compile: Data.Maybe, Text.PrettyPrint and Data.Map; the last two are outside the Report's libraries (D35)

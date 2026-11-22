@@ -133,15 +133,15 @@ struct
   (* SML's text of a real, which Emit wrote with C's minus signs *)
   fun realOf t = String.map (fn #"-" => #"~" | c => c) t
 
-  fun const r : Lambda.const =
+  fun const r : Literal.const =
     case u8 r of
-      0 => Lambda.CInt (s64 r)
-    | 1 => Lambda.CWord (u64 r)
-    | 2 => Lambda.CReal (realOf (str r))
-    | 3 => Lambda.CString (str r)
-    | 4 => Lambda.CChar (u8 r)
-    | 5 => Lambda.CInt64 (s64 r)
-    | 6 => Lambda.CWord64 (u64 r)
+      0 => Literal.CInt (s64 r)
+    | 1 => Literal.CWord (u64 r)
+    | 2 => Literal.CReal (realOf (str r))
+    | 3 => Literal.CString (str r)
+    | 4 => Literal.CChar (u8 r)
+    | 5 => Literal.CInt64 (s64 r)
+    | 6 => Literal.CWord64 (u64 r)
     | _ => raise Bad "a constant of no kind"
 
   (* The layout of the instructions of the set a fingerprint names: each

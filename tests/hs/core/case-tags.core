@@ -1,0 +1,62 @@
+; run: --read-core tests/hs/core/lib/base.core
+; A case on constructors, which Core to Mid writes as Mid's case on the tag
+; (M29), whose switch Lower makes: every constructor an arm (no default),
+; some arms and a default, and arms out of the tags' order, one with a field
+; among arms without, and a default.
+(data Shape () (Dot) (Line Int) (Box Int Int) (Ring Int) (Blob))
+
+(val shapes (List Shape)
+  (case (con Dot) a
+    (_ (case (con Line 3) b
+         (_ (case (con Box 2 5) c
+              (_ (case (con Ring 4) d
+                   (_ (case (con Blob) e
+                        (_ (let (n0 (List Shape) (con Nil @Shape))
+                           (let (n1 (List Shape) (con Cons @Shape e n0))
+                           (let (n2 (List Shape) (con Cons @Shape d n1))
+                           (let (n3 (List Shape) (con Cons @Shape c n2))
+                           (let (n4 (List Shape) (con Cons @Shape b n3))
+                           (con Cons @Shape a n4)))))))))))))))))
+
+; every constructor an arm
+(val size (-> Shape Int)
+  (\ ((s Shape))
+    (case s t
+      ((Dot) 0)
+      ((Line n) n)
+      ((Box w h) (case w v (_ (case h g (_ (prim int_mul v g))))))
+      ((Ring r) (case r q (_ (prim int_mul 3 q))))
+      ((Blob) 100))))
+
+; two arms and a default
+(val corners (-> Shape Int)
+  (\ ((s Shape))
+    (case s t
+      ((Box _ _) 4)
+      ((Line _) 2)
+      (_ 0))))
+
+; an arm with a field among arms without, the tags apart, and a default
+(val rounded (-> Shape Int)
+  (\ ((s Shape))
+    (case s t
+      ((Blob) 7)
+      ((Ring r) r)
+      ((Dot) 1)
+      (_ 0))))
+
+(val each (-> (-> Shape Int) (List Shape) World (utuple World Unit))
+  (\ ((f (-> Shape Int)) (xs (List Shape)) (w World))
+    (case xs ys
+      ((Nil) (let (u Unit (con Unit)) (utuple w u)))
+      ((Cons y rest)
+        (let (n Int (f y))
+        (case (printInt n w) r
+          ((utuple w1 _) (each f rest w1))))))))
+
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (each size shapes w) r1
+      ((utuple w1 _)
+        (case (each corners shapes w1) r2
+          ((utuple w2 _) (each rounded shapes w2)))))))

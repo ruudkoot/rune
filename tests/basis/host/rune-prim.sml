@@ -136,23 +136,6 @@ struct
   val real_eq = Real.==
   val real_floor = Real.floor
   val real_ceil = Real.ceil
-  (* Not the host's Real.round: Poly/ML 5.7.1 rounds 0.49999999999999994 up.
-     r - floor r is exact, so the three cases are decided exactly. On a
-     31-bit int, floor overflows for r in [minInt - 0.5, minInt), which rounds
-     to minInt (not trunc: SML/NJ 110.99.9 truncates minInt to maxInt). *)
-  fun real_round r =
-    let
-      val below = Real.floor r
-      val d = Real.- (r, Real.fromInt below)
-    in
-      if Real.< (d, 0.5) then below
-      else if Real.> (d, 0.5) orelse Int.rem (below, 2) <> 0 then Int.+ (below, 1)
-      else below
-    end
-    handle Overflow =>
-      case Int.minInt of
-        SOME m => if Real.< (r, 0.0) andalso Real.>= (r, Real.- (Real.fromInt m, 0.5)) then m else raise Overflow
-      | NONE => raise Overflow
   val real_trunc = Real.trunc
   val real_to_string = Real.toString
   (* Poly/ML raises Overflow for an exponent that does not fit an int; the
@@ -205,6 +188,21 @@ struct
         else if Real.== (Real.rem (below, 2.0), 0.0) then below
         else below + 1.0
       end)
+  (* real_round_r's whole real as an int, Overflow outside [minInt, ~minInt)
+     as in runtime/prims.c (minInt is a power of two, a real in every
+     rounding mode). Not the host's Real.round, which adds 0.5 and rounds the
+     sum in the rounding mode that is set (Poly/ML 5.7.1 rounds
+     0.49999999999999994 up, SML/NJ and MLKit round 2^52 + 1 to 2^52 + 2),
+     nor the host's floor for the range (MLKit's floor of 2^62 under TO_POSINF
+     is minInt); floor, not trunc, for the rest: SML/NJ 110.99.9 truncates
+     minInt to maxInt. *)
+  fun real_round r =
+    let val n = real_round_r r
+    in case Int.minInt of
+         SOME m => if Real.>= (n, Real.~ (Real.fromInt m)) orelse Real.< (n, Real.fromInt m) then raise Overflow
+                   else Real.floor n
+       | NONE => Real.floor n
+    end
   val real_sign_bit = Real.signBit
   (* The bits of IEEE 754 binary64, worked out with the host's IntInf, which
      every host has (SML/NJ has no PackReal). A host whose word has fewer
@@ -538,6 +536,54 @@ struct
   fun intinf_power _ : bool * string = raise Fail "GMP unavailable on this host"
   fun intinf_decimal _ : string = raise Fail "GMP unavailable on this host"
 
+  (* ---- IntInf.int: the host's, which `_prim "intinf"` in a type is here
+     (gen-host-basis.sh). A number is small, as an immediate is on Rune,
+     where the host's int holds it; its parts are its sign and its
+     magnitude as little-endian bytes with no high zero byte, worked out
+     with the host's arithmetic. The budget is intinf_max_bits's. ---- *)
+  type intinf = IntInf.int
+  val intinf_add = IntInf.+
+  val intinf_sub = IntInf.-
+  val intinf_mul = IntInf.*
+  val intinf_div = IntInf.div
+  val intinf_mod = IntInf.mod
+  val intinf_quot = IntInf.quot
+  val intinf_rem = IntInf.rem
+  val intinf_neg = IntInf.~
+  val intinf_lt = IntInf.<
+  val intinf_le = IntInf.<=
+  val intinf_gt = IntInf.>
+  val intinf_ge = IntInf.>=
+  val intinf_order = IntInf.compare
+  val intinf_from_int = IntInf.fromInt
+  val intinf_to_int = IntInf.toInt
+  local
+    val lo = IntInf.fromInt (valOf Int.minInt)
+    val hi = IntInf.fromInt (valOf Int.maxInt)
+    val byteBase = IntInf.fromInt 256
+    fun bitsOf (s : string) =
+      let val n = String.size s
+          fun top (c, k) = if c = 0 then k else top (c div 2, k + 1)
+      in if n = 0 then 0 else (n - 1) * 8 + top (Char.ord (String.sub (s, n - 1)), 0) end
+  in
+    fun intinf_is_small i = IntInf.>= (i, lo) andalso IntInf.<= (i, hi)
+    fun intinf_parts i =
+      let fun bytes (m, acc) =
+            if m = IntInf.fromInt 0 then String.implode (List.rev acc)
+            else bytes (IntInf.div (m, byteBase), Char.chr (IntInf.toInt (IntInf.mod (m, byteBase))) :: acc)
+          val s = bytes (IntInf.abs i, [])
+      in intinf_check_bits (bitsOf s); (IntInf.< (i, IntInf.fromInt 0), s) end
+    fun intinf_make (neg, s) =
+      let val n = String.size s
+          val () = if n > 0 andalso String.sub (s, n - 1) = #"\000" then raise Fail "noncanonical magnitude" else ()
+          val () = intinf_check_bits (bitsOf s)
+          fun loop (i, acc) =
+            if i < 0 then acc
+            else loop (i - 1, IntInf.+ (IntInf.* (acc, byteBase), IntInf.fromInt (Char.ord (String.sub (s, i)))))
+          val m = loop (n - 1, IntInf.fromInt 0)
+      in if neg then IntInf.~ m else m end
+  end
+
   (* Packed storage, independently of the runtime's C implementation. A
      narrow host's IntInf kernel requests 15-bit digits, a wide one 30. *)
   fun intinf_width bits = if bits = 15 orelse bits = 30 then () else raise Fail "invalid limb width"
@@ -680,12 +726,19 @@ struct
     in next := h + 1; files := (h, f) :: !files; SOME h end
     handle OS.SysErr (msg, e) => (lastError := msg; noteError e; NONE)
 
+  (* false where the system's close fails, its error kept; the handle is
+     gone either way *)
   fun file_close h =
-    (case lookup h of
-       SOME (Reader {fd, ...}) => Posix.IO.close fd
-     | SOME (Writer fd) => Posix.IO.close fd
-     | NONE => ();
-     files := List.filter (fn (h', _) => h' <> h) (!files))
+    let
+      fun forget () = files := List.filter (fn (h', _) => h' <> h) (!files)
+    in
+      ((case lookup h of
+          SOME (Reader {fd, ...}) => Posix.IO.close fd
+        | SOME (Writer fd) => Posix.IO.close fd
+        | NONE => ());
+       forget (); true)
+      handle OS.SysErr (msg, e) => (forget (); lastError := msg; noteError e; false)
+    end
 
   fun writeAll (fd, s) =
     let
@@ -703,9 +756,14 @@ struct
        | _ => (lastError := OS.errorMsg Posix.Error.badf; false))
       handle OS.SysErr (msg, e) => (lastError := msg; noteError e; false)
 
-  fun file_flush 1 = TextIO.flushOut TextIO.stdOut
-    | file_flush 2 = TextIO.flushOut TextIO.stdErr
-    | file_flush _ = ()
+  (* false where the system's flush fails (a full device), its error kept;
+     a file's writer writes at once, so it has nothing to flush *)
+  fun flushed s =
+    (TextIO.flushOut s; true)
+    handle IO.Io {cause = OS.SysErr (msg, e), ...} => (lastError := msg; noteError e; false)
+  fun file_flush 1 = flushed TextIO.stdOut
+    | file_flush 2 = flushed TextIO.stdErr
+    | file_flush _ = true
 
   (* fill: append what the file has to the buffer; false when it has nothing
      more for now. A file may grow after it has been read to its end, so this
@@ -1524,6 +1582,15 @@ struct
   fun rt_share () = unsupported ~1
   fun repl_printer_add (_ : int -> 'a -> 'b -> 'c) = ()
   fun unsafe_cast (_ : 'a) : 'b = raise Fail "unsafe_cast: Rune's alone"
+  (* a lazy front end's suspensions (docs/ir.md, Suspensions), which no
+     file of the Basis Library makes: Rune's alone *)
+  type 'a susp = 'a option ref
+  fun thunk_make (_ : unit -> 'a) : 'a susp = raise Fail "thunk_make: Rune's alone"
+  fun thunk_force (_ : 'a susp) : 'a = raise Fail "thunk_force: Rune's alone"
+  fun thunk_blackhole () : unit = raise Fail "thunk_blackhole: Rune's alone"
+  fun thunk_self_update (_ : 'a) : unit = raise Fail "thunk_self_update: Rune's alone"
+  fun thunk_selector (_ : 'a susp, _ : 'b susp, _ : int) : unit = raise Fail "thunk_selector: Rune's alone"
+  fun any_check (x : 'a) : 'a = x
   fun rt_version () = unsupported ""
   fun rt_trace (_ : int) : (string * string * int * int) list = unsupported []
   fun rt_raise_mark (_ : int) : int = 0

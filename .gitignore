@@ -10,5 +10,8 @@ MLB/
 __pycache__/
 # the store of compiled units, and its frozen layer (docs/units.md, The store)
 .rune/
+# rhc's store of a program's units (docs/rhc.md, The snapshot, --whole and units)
+.rhc/
 /lib/cache/
 /lib/compiler/config.sml
+/src/rhc/config.sml

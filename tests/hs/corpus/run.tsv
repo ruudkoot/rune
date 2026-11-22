@@ -1,0 +1,284 @@
+id	set	lines	variant	args	stdin	expected	ghc_build	ghc_rc	ghc_out	ghc_cpu_ms	ghc_insn	nhc98_build	nhc98_rc	nhc98_out	hugs_build	hugs_rc	hugs_out
+conformance98/Array/timeLargeArray	conformance98	10	h98			nhc98/tests/conformance98/Array/timeLargeArray/largeArray.stdout	fail					ok	0	same	fail		
+conformance98/Directory/getDirContents	conformance98	19	h98			nhc98/tests/conformance98/Directory/getDirContents/getDir.stdout	strict	0	diff	6.92	690647	ok	0	diff	ok	0	diff
+conformance98/Emptydecls	conformance98	9	h98			nhc98/tests/conformance98/Emptydecls/empty.stdout	strict	0	same	3.96	589736	ok	0	same	ok	0	same
+conformance98/Enum/succ	conformance98	1	h98			nhc98/tests/conformance98/Enum/succ/succ.stdout	strict	0	same	4.04	648596	ok	0	same	ok	0	close
+conformance98/FFI/evalorder	conformance98	11	h98			nhc98/tests/conformance98/FFI/evalorder/evalorder.stdout	fail					ok	0	same	fail		
+conformance98/FFI/foreignobj	conformance98	49	h98			nhc98/tests/conformance98/FFI/foreignobj/foreignobj.stdout	fail					ok	0	same	fail		
+conformance98/FFI/foreignptr	conformance98	54	h98			nhc98/tests/conformance98/FFI/foreignptr/foreignptr.stdout	fail					ok	0	same	fail		
+conformance98/FFI/newtype	conformance98	20	h98			nhc98/tests/conformance98/FFI/newtype/newtype.stdout	fail					ok	0	same	fail		
+conformance98/FFI/sizedtypes/Int	conformance98	18	h98			nhc98/tests/conformance98/FFI/sizedtypes/Int/int.stdout	fail					ok	0	same	fail		
+conformance98/FFI/sizedtypes/Word	conformance98	18	h98			nhc98/tests/conformance98/FFI/sizedtypes/Word/word.stdout	fail					ok	0	same	fail		
+conformance98/IOExtras/IOArray	conformance98	14	h98			nhc98/tests/conformance98/IOExtras/IOArray/ioarray.stdout	fail					ok	0	same	fail		
+conformance98/IOExtras/IORef	conformance98	7	h98			nhc98/tests/conformance98/IOExtras/IORef/ioref.stdout	fail					ok	0	same	fail		
+conformance98/IO/overwrite	conformance98	8	h98			nhc98/tests/conformance98/IO/overwrite/overwrite.stdout	strict	0	same	3.82	660188	ok	0	same	ok	0	same
+conformance98/Misc/wolfram	conformance98	5	h98			nhc98/tests/conformance98/Misc/wolfram/wolfram.stdout	strict	0	same	3.58	673628	ok	0	same	ok	0	same
+conformance98/N+K	conformance98	15	h98			nhc98/tests/conformance98/N+K/fib.stdout	strict	0	same	3.59	660569	ok	0	same	ok	0	same
+conformance98/NewType	conformance98	12	h98			nhc98/tests/conformance98/NewType/newtype.stdout	strict	0	same	3.07	589258	ok	0	same	ok	0	same
+conformance98/Queens	conformance98	50	h98			nhc98/tests/conformance98/Queens/queens.stdout	strict	0	same	20.25	25788105	ok	0	same	ok	0	same
+conformance98/chr	conformance98	10	h98			nhc98/tests/conformance98/chr/chr.stdout	strict	0	same	3.2	640564	ok	0	same	ok	0	same
+conformance98/fields/empty	conformance98	9	h98			nhc98/tests/conformance98/fields/empty/empty.stdout	strict	0	same	2.68	588844	ok	0	same	ok	0	same
+conformance98/fields/operator	conformance98	11	h98			nhc98/tests/conformance98/fields/operator/operator.stdout	strict	0	diff	3.2	638693	ok	0	same	ok	0	diff
+conformance98/fields/showread	conformance98	18	h98			nhc98/tests/conformance98/fields/showread/showread.stdout	strict	0	diff	4.19	806836	ok	0	same	ok	0	diff
+conformance98/fields/type	conformance98	15	h98			nhc98/tests/conformance98/fields/type/type.stdout	strict	0	diff	2.71	608500	ok	0	same	ok	0	diff
+conformance98/foreign/exportio	conformance98	18	h98			nhc98/tests/conformance98/foreign/exportio/exportio.stdout	fail					ok	0	same	fail		
+conformance98/foreign/testunsafe	conformance98	17	h98			nhc98/tests/conformance98/foreign/testunsafe/unsafe.stdout	fail					ok	0	same	fail		
+conformance98/infix/infix	conformance98	17	h98			nhc98/tests/conformance98/infix/infix/infix.stdout	strict	0	same	4.36	588980	ok	0	same	ok	0	same
+conformance98/infix/local	conformance98	6	h98			nhc98/tests/conformance98/infix/local/local.stdout	strict	0	same	3.45	589612	ok	0	same	ok	0	same
+conformance98/infix/minus	conformance98	4	h98			nhc98/tests/conformance98/infix/minus/minus.stdout	fail					ok	0	same	ok	0	same
+conformance98/infix/operator	conformance98	7	h98			nhc98/tests/conformance98/infix/operator/operator.stdout	strict	0	same	3.09	588669	ok	0	same	ok	0	same
+conformance98/layout/brace	conformance98	7	h98			nhc98/tests/conformance98/layout/brace/brace.stdout	strict	0	same	3.33	589420	ok	0	same	ok	0	same
+conformance98/layout/case	conformance98	5	h98			nhc98/tests/conformance98/layout/case/case.stdout	strict	0	same	2.98	589688	ok	0	same	ok	0	same
+conformance98/layout/do	conformance98	4	h98			nhc98/tests/conformance98/layout/do/do.stdout	strict	0	same	3.31	589866	ok	0	same	fail		
+conformance98/layout/tullsen1	conformance98	5	h98			nhc98/tests/conformance98/layout/tullsen1/tullsen1.stdout	strict	0	same	2.95	589556	ok	0	same	ok	0	same
+conformance98/layout/tullsen2	conformance98	8	h98			nhc98/tests/conformance98/layout/tullsen2/tullsen2.stdout	strict	0	same	2.79	588565	ok	0	same	ok	0	same
+conformance98/layout/tullsen3	conformance98	11	h98			nhc98/tests/conformance98/layout/tullsen3/tullsen3.stdout	strict	0	diff	8.53	1595321	ok	0	same	ok	0	diff
+conformance98/layout/whitespace	conformance98	5	h98			nhc98/tests/conformance98/layout/whitespace/whitespace.stdout	strict	0	same	4.1	586913	ok	0	same	ok	0	same
+conformance98/lex	conformance98	1	h98			nhc98/tests/conformance98/lex/lex.stdout	strict	0	same	11.58	598801	ok	0	same	ok	0	same
+conformance98/numbers/floatdouble	conformance98	2	h98			nhc98/tests/conformance98/numbers/floatdouble/floatdouble.stdout	strict	0	same	4.21	668851	ok	0	same	ok	0	diff
+conformance98/numbers/integerdouble	conformance98	1	h98			nhc98/tests/conformance98/numbers/integerdouble/integerdouble.stdout	strict	0	same	3.12	651471	ok	0	same	ok	0	close
+conformance98/numbers/negliteral	conformance98	14	h98			nhc98/tests/conformance98/numbers/negliteral/negliteral.stdout	strict	0	same	3.21	594079	ok	0	same	ok	0	diff
+conformance98/numbers/subtract	conformance98	3	h98			nhc98/tests/conformance98/numbers/subtract/subtract.stdout	strict	0	same	4.37	656814	ok	0	same	ok	0	diff
+conformance98/random	conformance98	16	h98			nhc98/tests/conformance98/random/random.stdout	strict	0	diff	3.88	616261	ok	0	same	ok	0	diff
+conformance98/read/1x23	conformance98	3	h98			nhc98/tests/conformance98/read/1x23/1x23.stdout	fail					ok	0	same	fail		
+conformance98/read/readex	conformance98	9	h98			nhc98/tests/conformance98/read/readex/readex.stdout	strict	0	same	3.6	652835	ok	0	same	ok	0	same
+conformance98/read/singleconstr	conformance98	8	h98			nhc98/tests/conformance98/read/singleconstr/singleconstr.stdout	strict	0	same	3.73	600049	ok	0	same	ok	0	same
+conformance98/self-print	conformance98	3	h98			nhc98/tests/conformance98/self-print/self.stdout	strict	0	same	3.89	605313	ok	0	same	ok	0	same
+conformance98/semicolon	conformance98	8	h98			nhc98/tests/conformance98/semicolon/semi.stdout	strict	0	same	3.81	589412	ok	0	same	ok	0	same
+ghc/deriving/should_run/drvrun001	ghc-legacy	13	h98			ghc/testsuite/tests/deriving/should_run/drvrun001.stdout	strict	0	same	4.01	590831	fail			ok	0	same
+ghc/deriving/should_run/drvrun002	ghc-legacy	17	h98			ghc/testsuite/tests/deriving/should_run/drvrun002.stdout	strict	0	same	4.46	677499	fail			ok	0	same
+ghc/deriving/should_run/drvrun003	ghc-legacy	30	h98			ghc/testsuite/tests/deriving/should_run/drvrun003.stdout	strict	0	same	3.08	647925	fail			ok	0	same
+ghc/deriving/should_run/drvrun004	ghc-legacy	10	h98			ghc/testsuite/tests/deriving/should_run/drvrun004.stdout	strict	0	same	4.77	641086	fail			ok	0	same
+ghc/deriving/should_run/drvrun005	ghc-legacy	27	h98			ghc/testsuite/tests/deriving/should_run/drvrun005.stdout	strict	0	same	3.1	622921	fail			ok	0	same
+ghc/deriving/should_run/drvrun006	ghc-legacy	49	h98			ghc/testsuite/tests/deriving/should_run/drvrun006.stdout	strict	0	same	3.02	816772	fail			ok	0	same
+ghc/deriving/should_run/drvrun007	ghc-legacy	6	h98			ghc/testsuite/tests/deriving/should_run/drvrun007.stdout	strict	0	same	3.45	590410	fail			ok	0	same
+ghc/deriving/should_run/drvrun008	ghc-legacy	8	h98			ghc/testsuite/tests/deriving/should_run/drvrun008.stdout	strict	0	same	3.45	590003	fail			ok	0	same
+ghc/deriving/should_run/drvrun009	ghc-legacy	20	rewrite			ghc/testsuite/tests/deriving/should_run/drvrun009.stdout	strict	0	same	3.98	829376	fail			ok	0	same
+ghc/deriving/should_run/drvrun010	ghc-legacy	12	h98			ghc/testsuite/tests/deriving/should_run/drvrun010.stdout	strict	0	same	4.22	631400	fail			ok	0	same
+ghc/deriving/should_run/drvrun011	ghc-legacy	16	h98			ghc/testsuite/tests/deriving/should_run/drvrun011.stdout	strict	0	same	3.66	903799	fail			ok	0	same
+ghc/deriving/should_run/drvrun012	ghc-legacy	11	h98			ghc/testsuite/tests/deriving/should_run/drvrun012.stdout	strict	0	same	3.0	674532	fail			ok	0	same
+ghc/deriving/should_run/drvrun013	ghc-legacy	19	h98			ghc/testsuite/tests/deriving/should_run/drvrun013.stdout	strict	0	same	3.19	589797	fail			ok	0	same
+ghc/deriving/should_run/drvrun014	ghc-legacy	19	h98			ghc/testsuite/tests/deriving/should_run/drvrun014.stdout	strict	0	same	3.6	586721	fail			ok	0	same
+ghc/deriving/should_run/drvrun015	ghc-legacy	8	h98			ghc/testsuite/tests/deriving/should_run/drvrun015.stdout	strict	0	same	3.27	672294	fail			ok	0	same
+ghc/deriving/should_run/drvrun016	ghc-legacy	18	h98			ghc/testsuite/tests/deriving/should_run/drvrun016.stdout	strict	0	same	7.1	590047	fail			ok	0	same
+ghc/deriving/should_run/drvrun018	ghc-legacy	9	h98			ghc/testsuite/tests/deriving/should_run/drvrun018.stdout	strict	0	same	3.48	625691	fail			ok	1	diff
+ghc/deriving/should_run/drvrun020	ghc-legacy	46	h98			ghc/testsuite/tests/deriving/should_run/drvrun020.stdout	strict	0	same	2.9	668068	fail			ok	0	diff
+ghc/deriving/should_run/drvrun021	ghc-legacy	20	h98			ghc/testsuite/tests/deriving/should_run/drvrun021.stdout	strict	0	same	2.75	599196	fail			ok	0	same
+ghc/module/mod179	ghc-legacy	10	h98			ghc/testsuite/tests/module/mod179.stdout	strict	0	same	3.55	589545	fail			fail		
+ghc/parser/should_fail/readFail016	ghc-legacy	7	h98			ghc/testsuite/tests/parser/should_fail/readFail016.stdout	fail					fail			ok	1	diff
+ghc/rename/should_compile/rn039	ghc-legacy	9	h98			ghc/testsuite/tests/rename/should_compile/rn039.stdout	strict	0	same	7.02	589706	fail			ok	0	same
+ghc/typecheck/should_compile/tc159	ghc-legacy	21	h98			ghc/testsuite/tests/typecheck/should_compile/tc159.stdout	strict	0	same	2.94	589727	fail			ok	0	same
+ghc/typecheck/should_fail/tcfail149	ghc-legacy	16	h98			ghc/testsuite/tests/typecheck/should_fail/tcfail149.stdout	compat	0	same	3.12	589091	fail			ok	0	same
+ghc/typecheck/should_run/tcrun001	ghc-legacy	16	h98			ghc/testsuite/tests/typecheck/should_run/tcrun001.stdout	strict	0	same	2.92	588348	fail			ok	0	same
+ghc/typecheck/should_run/tcrun002	ghc-legacy	16	h98			ghc/testsuite/tests/typecheck/should_run/tcrun002.stdout	compat	0	diff	18.27	38792528	fail			fail		
+ghc/typecheck/should_run/tcrun004	ghc-legacy	72	h98			ghc/testsuite/tests/typecheck/should_run/tcrun004.stdout	compat	0	same	2.84	590194	fail			fail		
+ghc/typecheck/should_run/tcrun005	ghc-legacy	25	h98			ghc/testsuite/tests/typecheck/should_run/tcrun005.stdout	strict	0	same	3.98	588961	fail			ok	0	same
+ghc/typecheck/should_run/tcrun006	ghc-legacy	16	h98			ghc/testsuite/tests/typecheck/should_run/tcrun006.stdout	strict	0	same	4.89	591862	fail			ok	0	same
+ghc/typecheck/should_run/tcrun014	ghc-legacy	22	h98			ghc/testsuite/tests/typecheck/should_run/tcrun014.stdout	strict	0	same	3.36	587990	fail			ok	0	same
+ghc/typecheck/should_run/tcrun015	ghc-legacy	21	h98			ghc/testsuite/tests/typecheck/should_run/tcrun015.stdout	strict	0	same	2.86	597060	fail			ok	0	same
+ghc/typecheck/should_run/tcrun022	ghc-legacy	23	h98			ghc/testsuite/tests/typecheck/should_run/tcrun022.stdout	strict	0	diff	8.86	591444	fail			ok	0	diff
+ghc/typecheck/should_run/tcrun029	ghc-legacy	29	h98			ghc/testsuite/tests/typecheck/should_run/tcrun029.stdout	strict	0	same	6.1	605831	fail			ok	0	same
+ghc/typecheck/should_run/tcrun037	ghc-legacy	13	h98			ghc/testsuite/tests/typecheck/should_run/tcrun037.stdout	compat	0	same	3.81	593705	fail			ok	0	same
+ghc/typecheck/should_run/tcrun040	ghc-legacy	27	h98			ghc/testsuite/tests/typecheck/should_run/tcrun040.stdout	compat	0	same	4.33	599991	fail			ok	0	same
+jhc/2_language/Bounds.hs	jhc	13	h98			jhc/regress/tests/2_language/Bounds.expected.stdout	compat	0	same	3.27	610256	fail			ok	0	diff
+jhc/2_language/CPP.hs	jhc	7	h98			jhc/regress/tests/2_language/CPP.expected.stdout	strict	0	diff	5.33	589295	fail			ok	0	diff
+jhc/2_language/IrrefutableLambda.hs	jhc	1	h98			jhc/regress/tests/2_language/IrrefutableLambda.expected.stdout	strict	0	same	3.21	589431	fail			ok	0	same
+jhc/3_io/Args.hs	jhc	9	h98			jhc/regress/tests/3_io/Args.expected.stdout	strict	0	diff	12.19	584904	fail			ok	0	diff
+jhc/3_io/Array.hs	jhc	16	h98			jhc/regress/tests/3_io/Array.expected.stdout	compat	0	same	3.11	634249	fail			ok	0	same
+jhc/3_io/HelloWorld.hs	jhc	4	h98			jhc/regress/tests/3_io/HelloWorld.expected.stdout	strict	0	same	2.81	590480	fail			ok	0	same
+jhc/3_io/IORef.hs	jhc	18	h98			jhc/regress/tests/3_io/IORef.expected.stdout	compat	0	same	4.78	604315	fail			ok	0	same
+jhc/3_io/enum.hs	jhc	24	h98			jhc/regress/tests/3_io/enum.expected.stdout	compat	0	same	3.25	706151	fail			ok	0	same
+jhc/4_rts/HelloWorld.hs	jhc	4	h98			jhc/regress/tests/4_rts/HelloWorld.expected.stdout	strict	0	same	3.23	590538	fail			ok	0	same
+jhc/5_known_bugs/Defaulting.hs	jhc	6	h98			jhc/regress/tests/5_known_bugs/Defaulting.expected.stdout	strict	0	same	3.08	664444	fail			ok	0	close
+jhc/5_known_bugs/ImportZeal.hs	jhc	437	h98			jhc/regress/tests/5_known_bugs/ImportZeal.expected.stdout	fail					fail			ok	0	same
+jhc/5_known_bugs/NoMonomorphism.hs	jhc	10	h98			jhc/regress/tests/5_known_bugs/NoMonomorphism.expected.stdout	fail					fail			fail		
+jhc/5_known_bugs/Segfault1.hs	jhc	5	h98			jhc/regress/tests/5_known_bugs/Segfault1.expected.stdout	strict	0	same	219.83	555410530	fail			ok	0	same
+jhc/6_fixed_bugs/Rand.hs	jhc	54	h98			jhc/regress/tests/6_fixed_bugs/Rand.expected.stdout	compat	0	same	5952.77	16472867991	fail			ok	timeout	diff
+jhc/6_fixed_bugs/StrictNewtype.hs	jhc	11	h98			jhc/regress/tests/6_fixed_bugs/StrictNewtype.expected.stdout	strict	0	same	3.99	593719	fail			ok	0	same
+jhc/6_fixed_bugs/Tree.hs	jhc	14	h98			jhc/regress/tests/6_fixed_bugs/Tree.expected.stdout	strict	0	same	3.11	587483	fail			ok	0	same
+jhc/6_fixed_bugs/UnpackedPoly.hs	jhc	7	h98			jhc/regress/tests/6_fixed_bugs/UnpackedPoly.expected.stdout	strict	0	same	7.36	591841	fail			ok	0	same
+jhc/7_large/RayT.hs	jhc	95	h98			jhc/regress/tests/7_large/RayT.expected.stdout	strict	1	diff	3.5	601270	fail			fail		
+jhc/7_large/fastest_fib.hs	jhc	30	h98			jhc/regress/tests/7_large/fastest_fib.expected.stdout	compat	0	same	3.26	870673	fail			ok	0	same
+jhc/8_shootout/BinaryTrees.hs	jhc	35	h98			jhc/regress/tests/8_shootout/BinaryTrees.expected.stdout	compat	1	diff	5.68	696665	fail			ok	1	diff
+jhc/8_shootout/PartialSums.hs	jhc	31	h98			jhc/regress/tests/8_shootout/PartialSums.expected.stdout	fail					fail			ok	1	diff
+jhc/8_shootout/SumFile.hs	jhc	22	rewrite		jhc/regress/tests/8_shootout/SumFile.stdin	jhc/regress/tests/8_shootout/SumFile.expected.stdout	strict	0	same	3.18	606004	fail			ok	0	same
+jhc/8_shootout/nbody.hs	jhc	192	h98			jhc/regress/tests/8_shootout/nbody.expected.stdout	fail					fail			ok	1	diff
+jhc/9_nofib/bernouilli.hs	jhc	36	h98			jhc/regress/tests/9_nofib/bernouilli.expected.stdout	strict	1	diff	3.54	603356	fail			ok	1	diff
+jhc/9_nofib/digits-of-e1.hs	jhc	51	h98			jhc/regress/tests/9_nofib/digits-of-e1.expected.stdout	strict	1	diff	4.65	601806	fail			ok	1	diff
+jhc/9_nofib/spectral/Calendar.hs	jhc	136	h98			jhc/regress/tests/9_nofib/spectral/Calendar.expected.stdout	strict	1	diff	3.65	594383	fail			ok	1	diff
+jhc/9_nofib/spectral/Primes.hs	jhc	24	h98			jhc/regress/tests/9_nofib/spectral/Primes.expected.stdout	strict	0	same	249.0	676743658	fail			ok	0	same
+jhc/9_nofib/spectral/constraints.hs	jhc	271	rewrite			jhc/regress/tests/9_nofib/spectral/constraints.expected.stdout	strict	1	diff	3.21	601699	fail			ok	1	diff
+nhcnofib/UNUSED/nfib	nhc98-nofib	8	h98			nhc98/tests/nofib/UNUSED/nfib/nfib.stdout	strict	0	same	194.64	688216068	ok	0	same	ok	0	same
+nhcnofib/UNUSED/nfib_overloaded	nhc98-nofib	9	h98			nhc98/tests/nofib/UNUSED/nfib_overloaded/nfib_overloaded.stdout	strict	0	same	583.94	1734667193	ok	0	same	ok	0	same
+nhcnofib/imaginary/exp3_8	nhc98-nofib	89	h98			nhc98/tests/nofib/imaginary/exp3_8/exp3_8.stdout	strict	0	same	257.54	770905825	ok	0	same	ok	0	same
+nhcnofib/imaginary/gen_regexps	nhc98-nofib	32	h98		nhc98/tests/nofib/imaginary/gen_regexps/gen_regexps.stdin	nhc98/tests/nofib/imaginary/gen_regexps/gen_regexps.stdout	strict	0	same	9.41	9869612	ok	0	same	ok	0	same
+nhcnofib/imaginary/paraffins	nhc98-nofib	88	h98		nhc98/tests/nofib/imaginary/paraffins/paraffins.stdin	nhc98/tests/nofib/imaginary/paraffins/paraffins.stdout	strict	0	same	198.96	423852244	ok	0	same	ok	0	same
+nhcnofib/imaginary/primes	nhc98-nofib	13	h98			nhc98/tests/nofib/imaginary/primes/primes.stdout	strict	0	same	188.39	382448948	ok	0	same	ok	0	same
+nhcnofib/imaginary/queens	nhc98-nofib	14	h98			nhc98/tests/nofib/imaginary/queens/queens.stdout	strict	0	same	210.85	743768671	ok	0	same	ok	0	same
+nhcnofib/imaginary/rfib	nhc98-nofib	9	h98			nhc98/tests/nofib/imaginary/rfib/rfib.stdout	strict	0	same	202.42	744597476	ok	0	same	ok	0	same
+nhcnofib/imaginary/tak	nhc98-nofib	10	h98			nhc98/tests/nofib/imaginary/tak/tak.stdout	strict	0	same	183.08	603111620	ok	0	same	ok	0	same
+nhcnofib/imaginary/wheel-sieve1	nhc98-nofib	35	h98			nhc98/tests/nofib/imaginary/wheel-sieve1/wheel-sieve1.stdout	strict	0	same	3490.98	9686827476	ok	0	same	ok	0	same
+nhcnofib/imaginary/wheel-sieve2	nhc98-nofib	43	h98			nhc98/tests/nofib/imaginary/wheel-sieve2/wheel-sieve2.stdout	strict	0	same	662.75	935852303	ok	0	same	ok	0	same
+nhcnofib/imaginary/x2n1	nhc98-nofib	32	h98			nhc98/tests/nofib/imaginary/x2n1/x2n1.stdout	strict	0	same	68.45	161337799	ok	0	same	ok	0	same
+nhcnofib/real/anna	nhc98-nofib	9524	h98			nhc98/tests/nofib/real/anna/anna.stdout	fail					ok	255	diff	ok	1	diff
+nhcnofib/real/bspt	nhc98-nofib	2141	h98		nhc98/tests/nofib/real/bspt/bspt.stdin	nhc98/tests/nofib/real/bspt/bspt.stdout	strict	0	same	29.13	39906613	ok	0	same	ok	0	same
+nhcnofib/real/compress	nhc98-nofib	232	h98		nhc98/tests/nofib/real/compress/compress.stdin	nhc98/tests/nofib/real/compress/compress.stdout	strict	0	diff	85.38	161541465	ok	0	same-ws	fail		
+nhcnofib/real/fem	nhc98-nofib	1286	h98		nhc98/tests/nofib/real/fem/fem.stdin	nhc98/tests/nofib/real/fem/fem.stdout	strict	0	close	62.96	125715486	ok	0	close	ok	0	close
+nhcnofib/real/fluid	nhc98-nofib	2403	h98		nhc98/tests/nofib/real/fluid/fluid.stdin	nhc98/tests/nofib/real/fluid/fluid.stdout	strict	0	same	24.28	25034307	ok	0	same	fail		
+nhcnofib/real/gamteb	nhc98-nofib	709	h98		nhc98/tests/nofib/real/gamteb/gamteb.stdin	nhc98/tests/nofib/real/gamteb/gamteb.stdout	strict	0	close	140.34	284055264	ok	0	same	ok	0	diff
+nhcnofib/real/gg	nhc98-nofib	812	h98		nhc98/tests/nofib/real/gg/gg.stdin	nhc98/tests/nofib/real/gg/gg.stdout	strict	0	same	22.97	48579873	fail			fail		
+nhcnofib/real/grep	nhc98-nofib	267	h98			nhc98/tests/nofib/real/grep/grep.stdout	strict	0	same	3.17	624250	ok	0	same	ok	0	same
+nhcnofib/real/hidden	nhc98-nofib	525	h98		nhc98/tests/nofib/real/hidden/hidden.stdin	nhc98/tests/nofib/real/hidden/hidden.stdout	fail					ok	0	same	ok	timeout	diff
+nhcnofib/real/hpg	nhc98-nofib	2067	h98			nhc98/tests/nofib/real/hpg/hpg.stdout	strict	0	diff	16.04	10654628	ok	0	diff	ok	0	diff
+nhcnofib/real/infer	nhc98-nofib	567	h98		nhc98/tests/nofib/real/infer/infer.stdin	nhc98/tests/nofib/real/infer/infer.stdout	strict	0	same	129.65	293581095	ok	0	same	ok	0	same
+nhcnofib/real/lift	nhc98-nofib	2031	h98			nhc98/tests/nofib/real/lift/lift.stdout	fail					ok	0	same	ok	0	same
+nhcnofib/real/maillist	nhc98-nofib	176	h98		nhc98/tests/nofib/real/maillist/maillist.stdin	nhc98/tests/nofib/real/maillist/maillist.stdout	strict	0	same	115.18	58329819	ok	0	same	ok	timeout	diff
+nhcnofib/real/mkhprog	nhc98-nofib	803	h98			nhc98/tests/nofib/real/mkhprog/mkhprog.stdout	strict	0	diff	4.48	827228	ok	0	diff	ok	0	diff
+nhcnofib/real/parser	nhc98-nofib	1381	h98		nhc98/tests/nofib/real/parser/parser.stdin	nhc98/tests/nofib/real/parser/parser.stdout	strict	0	same	68.68	129576479	ok	0	same	ok	0	same
+nhcnofib/real/pic	nhc98-nofib	528	h98		nhc98/tests/nofib/real/pic/pic.stdin	nhc98/tests/nofib/real/pic/pic.stdout	strict	0	close	41.41	65467487	ok	0	same	ok	0	close
+nhcnofib/real/prolog	nhc98-nofib	539	h98		nhc98/tests/nofib/real/prolog/prolog.stdin	nhc98/tests/nofib/real/prolog/prolog.stdout	strict	0	same	9.39	7758715	ok	0	same	ok	0	same
+nhcnofib/real/reptile	nhc98-nofib	1522	h98		nhc98/tests/nofib/real/reptile/reptile.stdin	nhc98/tests/nofib/real/reptile/reptile.stdout	strict	0	same	24.88	36883953	ok	0	same	ok	0	same
+nhcnofib/real/rsa	nhc98-nofib	74	h98		nhc98/tests/nofib/real/rsa/rsa.stdin	nhc98/tests/nofib/real/rsa/rsa.stdout	strict	0	same	57.75	130178030	ok	0	same	ok	0	same
+nhcnofib/real/symalg	nhc98-nofib	1146	h98		nhc98/tests/nofib/real/symalg/symalg.stdin	nhc98/tests/nofib/real/symalg/symalg.stdout	strict	0	same	21.44	33670081	ok	0	same	ok	0	same
+nhcnofib/real/veritas	nhc98-nofib	11124	h98		nhc98/tests/nofib/real/veritas/veritas.stdin	nhc98/tests/nofib/real/veritas/veritas.stdout	fail					fail			ok	1	diff
+nhcnofib/spectral/ansi	nhc98-nofib	125	h98			nhc98/tests/nofib/spectral/ansi/ansi.stdout	strict	0	same	3.38	684198	ok	0	same	ok	0	same
+nhcnofib/spectral/atom	nhc98-nofib	183	h98			nhc98/tests/nofib/spectral/atom/atom.stdout	strict	0	same	505.73	1079268094	ok	0	same	ok	0	close
+nhcnofib/spectral/awards	nhc98-nofib	112	h98			nhc98/tests/nofib/spectral/awards/awards.stdout	strict	0	same	4.21	1307401	ok	0	same	ok	0	same
+nhcnofib/spectral/banner	nhc98-nofib	108	h98		nhc98/tests/nofib/spectral/banner/banner.stdin	nhc98/tests/nofib/spectral/banner/banner.stdout	strict	0	same	3.54	935911	ok	0	same	ok	0	same
+nhcnofib/spectral/boyer	nhc98-nofib	1014	h98			nhc98/tests/nofib/spectral/boyer/boyer.stdout	strict	0	same	78.84	160263976	ok	0	same	ok	0	same
+nhcnofib/spectral/boyer2	nhc98-nofib	723	h98			nhc98/tests/nofib/spectral/boyer2/boyer2.stdout	strict	0	same	48.82	43554713	ok	0	same	ok	0	same
+nhcnofib/spectral/calendar	nhc98-nofib	140	h98			nhc98/tests/nofib/spectral/calendar/calendar.stdout	strict	0	same	4.54	2041534	ok	0	same	ok	0	same
+nhcnofib/spectral/cichelli	nhc98-nofib	237	h98			nhc98/tests/nofib/spectral/cichelli/cichelli.stdout	strict	0	same	264.44	833753370	ok	0	same	ok	0	same
+nhcnofib/spectral/circsim	nhc98-nofib	668	h98			nhc98/tests/nofib/spectral/circsim/circsim.stdout	fail					ok	255	diff	ok	1	diff
+nhcnofib/spectral/clausify	nhc98-nofib	179	h98			nhc98/tests/nofib/spectral/clausify/clausify.stdout	strict	0	same	105.75	270610828	ok	0	same	ok	0	same
+nhcnofib/spectral/constraints	nhc98-nofib	267	h98			nhc98/tests/nofib/spectral/constraints/constraints.stdout	strict	0	same	6021.99	11035869589	ok	0	same	ok	timeout	diff
+nhcnofib/spectral/cryptarithm1	nhc98-nofib	164	h98			nhc98/tests/nofib/spectral/cryptarithm1/cryptarithm1.stdout	strict	0	same	4497.58	13102112596	ok	0	same	ok	timeout	diff
+nhcnofib/spectral/cse	nhc98-nofib	464	h98			nhc98/tests/nofib/spectral/cse/cse.stdout	strict	0	same	6.75	2700007	ok	0	same	ok	0	same
+nhcnofib/spectral/eliza	nhc98-nofib	266	h98		nhc98/tests/nofib/spectral/eliza/eliza.stdin	nhc98/tests/nofib/spectral/eliza/eliza.stdout	strict	0	same	5.79	3170106	ok	0	same	ok	0	same
+nhcnofib/spectral/expert	nhc98-nofib	525	h98		nhc98/tests/nofib/spectral/expert/expert.stdin	nhc98/tests/nofib/spectral/expert/expert.stdout	strict	0	same	4.03	1585720	ok	0	same	ok	0	same
+nhcnofib/spectral/fft2	nhc98-nofib	216	h98			nhc98/tests/nofib/spectral/fft2/fft2.stdout	strict	0	close	220.21	513650722	ok	0	close	fail		
+nhcnofib/spectral/fish	nhc98-nofib	125	h98			nhc98/tests/nofib/spectral/fish/fish.stdout	strict	0	same	45.4	66771340	ok	0	same	ok	0	same
+nhcnofib/spectral/gcd	nhc98-nofib	56	h98			nhc98/tests/nofib/spectral/gcd/gcd.stdout	strict	0	same	105.44	303006128	ok	0	same	ok	0	same
+nhcnofib/spectral/hartel/nucleic2	nhc98-nofib	3389	h98			nhc98/tests/nofib/spectral/hartel/nucleic2/nucleic2.stdout	strict	0	close	439.49	715376923	ok	0	same	ok	0	same
+nhcnofib/spectral/knights	nhc98-nofib	739	h98			nhc98/tests/nofib/spectral/knights/knights.stdout	strict	1	diff	7.13	598957	ok	255	diff	ok	1	diff
+nhcnofib/spectral/life	nhc98-nofib	53	h98			nhc98/tests/nofib/spectral/life/life.stdout	strict	0	same	683.64	1466650099	ok	0	same	ok	0	same
+nhcnofib/spectral/mandel	nhc98-nofib	348	h98		nhc98/tests/nofib/spectral/mandel/mandel.stdin	nhc98/tests/nofib/spectral/mandel/mandel.stdout	strict	0	same-ws	348.45	687640793	ok	0	same-ws	ok	0	same-ws
+nhcnofib/spectral/mandel2	nhc98-nofib	222	h98			nhc98/tests/nofib/spectral/mandel2/mandel2.stdout	strict	0	same	111.15	321693480	ok	0	same	ok	0	same
+nhcnofib/spectral/minimax	nhc98-nofib	238	h98			nhc98/tests/nofib/spectral/minimax/minimax.stdout	strict	0	same	18.5	16319426	ok	0	same	ok	0	same
+nhcnofib/spectral/multiplier	nhc98-nofib	498	h98			nhc98/tests/nofib/spectral/multiplier/multiplier.stdout	strict	0	same	270.94	653412193	ok	0	same	ok	0	same
+nhcnofib/spectral/para	nhc98-nofib	1781	h98			nhc98/tests/nofib/spectral/para/para.stdout	strict	0	diff	6.77	591442	ok	0	diff	ok	0	diff
+nhcnofib/spectral/power	nhc98-nofib	138	h98			nhc98/tests/nofib/spectral/power/power.stdout	fail					ok	0	diff	ok	0	diff
+nhcnofib/spectral/pretty	nhc98-nofib	265	h98			nhc98/tests/nofib/spectral/pretty/pretty.stdout	strict	0	same	3.84	728599	ok	0	same	ok	0	same
+nhcnofib/spectral/primetest	nhc98-nofib	320	h98		nhc98/tests/nofib/spectral/primetest/primetest.stdin	nhc98/tests/nofib/spectral/primetest/primetest.stdout	strict	0	same	219.29	582506715	ok	0	same	ok	0	same
+nhcnofib/spectral/puzzle	nhc98-nofib	170	h98			nhc98/tests/nofib/spectral/puzzle/puzzle.stdout	strict	0	same	596.61	1672756289	ok	0	same	ok	0	same
+nhcnofib/spectral/rewrite	nhc98-nofib	631	h98			nhc98/tests/nofib/spectral/rewrite/rewrite.stdout	strict	0	same	103.18	267083912	ok	0	same	ok	0	same
+nhcnofib/spectral/scc	nhc98-nofib	100	h98			nhc98/tests/nofib/spectral/scc/scc.stdout	strict	0	same	4.04	627648	ok	0	same	ok	0	same
+nhcnofib/spectral/simple	nhc98-nofib	1130	h98		nhc98/tests/nofib/spectral/simple/simple.stdin	nhc98/tests/nofib/spectral/simple/simple.stdout	strict	0	diff	2454.69	5275181021	fail			fail		
+nhcnofib/spectral/sorting	nhc98-nofib	162	h98		nhc98/tests/nofib/spectral/sorting/sorting.stdin	nhc98/tests/nofib/spectral/sorting/sorting.stdout	strict	0	same	7.03	3466406	ok	0	same	ok	0	same
+nhcnofib/spectral/treejoin	nhc98-nofib	123	h98			nhc98/tests/nofib/spectral/treejoin/treejoin.stdout	strict	0	same	742.21	1483947020	ok	0	same	ok	1	diff
+nofib/gc/cacheprof	nofib-2019	2152	rewrite		nofib/gc/cacheprof/cacheprof.stdin	nofib/gc/cacheprof/cacheprof.stdout	strict	0	same	1242.6	2678072439	ok	0	same	ok	0	same
+nofib/gc/circsim	nofib-2019	668	rewrite	8 100		nofib/gc/circsim/circsim.faststdout	strict	0	same	266.3	421634286	ok	0	same	fail		
+nofib/gc/constraints	nofib-2019	271	rewrite	7		nofib/gc/constraints/constraints.faststdout	strict	0	same	40.64	77864864	ok	0	same	ok	0	same
+nofib/gc/fulsom	nofib-2019	1341	harness	7		nofib/gc/fulsom/fulsom.stdout	strict	0	diff	1213.37	1724869365	ok	timeout	diff	fail		
+nofib/gc/lcss	nofib-2019	60	rewrite	1 2 2000 1000 1001 2000		nofib/gc/lcss/lcss.faststdout	strict	0	same	1633.14	3798132600	ok	0	same	ok	0	same
+nofib/gc/linear	nofib-2019	2139	rewrite	14		nofib/gc/linear/linear.stdout	strict	0	same	4412.73	10372278639	fail			fail		
+nofib/gc/power	nofib-2019	141	rewrite	50		nofib/gc/power/power.faststdout	strict	0	same	1355.23	2865469493	ok	0	diff	ok	0	same
+nofib/gc/spellcheck	nofib-2019	16	harness	words input		nofib/gc/spellcheck/spellcheck.stdout	fail					fail			ok	1	diff
+nofib/gc/treejoin	nofib-2019	121	rewrite	27000.1 27000.2		nofib/gc/treejoin/treejoin.stdout	strict	0	same	1088.59	1483755328	ok	0	same	ok	1	diff
+nofib/imaginary/bernouilli	nofib-2019	71	harness	60		nofib/imaginary/bernouilli/bernouilli.faststdout	strict	0	same	393.17	944734625	ok	0	diff	ok	0	diff
+nofib/imaginary/digits-of-e1	nofib-2019	77	harness	50		nofib/imaginary/digits-of-e1/digits-of-e1.faststdout	strict	0	same	456.05	1264078236	ok	0	diff	ok	0	diff
+nofib/imaginary/digits-of-e2	nofib-2019	92	harness	90		nofib/imaginary/digits-of-e2/digits-of-e2.faststdout	strict	0	same	374.79	1037367457	ok	0	diff	ok	0	diff
+nofib/imaginary/exp3_8	nofib-2019	93	rewrite	8		nofib/imaginary/exp3_8/exp3_8.faststdout	strict	0	same	274.27	770935892	ok	0	same	ok	0	same
+nofib/imaginary/gen_regexps	nofib-2019	74	harness	[a-j][a-j][a-j][0-9]		nofib/imaginary/gen_regexps/gen_regexps.faststdout	strict	0	same	2606.04	8845335867	ok	0	diff	ok	0	diff
+nofib/imaginary/integrate	nofib-2019	43	rewrite	100000		nofib/imaginary/integrate/integrate.faststdout	strict	0	same	1380.28	3908609251	ok	0	same	ok	0	same
+nofib/imaginary/paraffins	nofib-2019	92	harness	11		nofib/imaginary/paraffins/paraffins.faststdout	strict	0	same	430.25	990250804	ok	0	same	ok	0	same
+nofib/imaginary/primes	nofib-2019	16	harness	400		nofib/imaginary/primes/primes.faststdout	strict	0	same	774.97	2185379784	ok	0	same	ok	0	same
+nofib/imaginary/queens	nofib-2019	19	rewrite	12		nofib/imaginary/queens/queens.faststdout	strict	0	same	8620.86	25984243628	ok	0	same	ok	timeout	diff
+nofib/imaginary/rfib	nofib-2019	12	rewrite	35		nofib/imaginary/rfib/rfib.faststdout	strict	0	same	2994.46	8250145907	ok	0	same	ok	timeout	close
+nofib/imaginary/tak	nofib-2019	16	rewrite	31 16 8		nofib/imaginary/tak/tak.faststdout	strict	0	same	2278.84	8909643871	ok	0	same	ok	0	same
+nofib/imaginary/wheel-sieve1	nofib-2019	49	harness	3000		nofib/imaginary/wheel-sieve1/wheel-sieve1.faststdout	strict	0	same	1903.89	5480378801	ok	0	same	ok	0	same
+nofib/imaginary/wheel-sieve2	nofib-2019	53	harness	700		nofib/imaginary/wheel-sieve2/wheel-sieve2.faststdout	strict	0	same	735.48	1797241692	ok	255	diff	ok	1	diff
+nofib/imaginary/x2n1	nofib-2019	35	rewrite	1000000		nofib/imaginary/x2n1/x2n1.faststdout	strict	0	same	8537.51	24013268777	ok	timeout	diff	ok	timeout	diff
+nofib/parallel/OLD/par001	nofib-2019	35	h98			nofib/parallel/OLD/par001/par001.stdout	fail					fail			ok	1	diff
+nofib/parallel/OLD/parfact	nofib-2019	34	h98			nofib/parallel/OLD/parfact/parfact.stdout	fail					fail			ok	1	diff
+nofib/parallel/OLD/soda	nofib-2019	112	h98			nofib/parallel/OLD/soda/soda.stdout	fail					fail			ok	0	same
+nofib/parallel/partak	nofib-2019	24	h98	34 15 8		nofib/parallel/partak/partak.stdout	fail					fail			ok	0	diff
+nofib/real/anna	nofib-2019	9551	harness		nofib/real/anna/anna.faststdin	nofib/real/anna/anna.faststdout	fail					ok	0	diff	ok	0	diff
+nofib/real/bspt	nofib-2019	2174	harness	2500	nofib/real/bspt/bspt.stdin	nofib/real/bspt/bspt.faststdout	strict	0	same	11624.05	26669449138	ok	0	diff	ok	timeout	diff
+nofib/real/compress	nofib-2019	270	harness		nofib/real/compress/compress.faststdin	nofib/real/compress/compress.faststdout	strict	0	same	851.14	2426218442	ok	0	diff	fail		
+nofib/real/fulsom	nofib-2019	1368	harness	4		nofib/real/fulsom/fulsom.faststdout	strict	0	same	13951.51	23465513121	ok	timeout	diff	fail		
+nofib/real/gamteb	nofib-2019	732	harness	100		nofib/real/gamteb/gamteb.faststdout	strict	0	same	1726.4	3104853567	fail			ok	0	diff
+nofib/real/gg	nofib-2019	845	harness	150	nofib/real/gg/gg.faststdin	nofib/real/gg/gg.faststdout	strict	0	same	695.21	1621548713	fail			fail		
+nofib/real/grep	nofib-2019	297	harness	100 ".*:..*"	nofib/real/grep/grep.faststdin	nofib/real/grep/grep.faststdout	strict	0	diff	277.03	963093311	ok	0	diff	ok	0	diff
+nofib/real/hpg	nofib-2019	2103	harness	-nt 8 -dt 4 -nv 10 -dv 6 -de 6		nofib/real/hpg/hpg.faststdout	strict	0	same	848.1	1563203497	ok	0	diff	ok	0	diff
+nofib/real/infer	nofib-2019	597	harness		nofib/real/infer/infer.faststdin	nofib/real/infer/infer.faststdout	strict	0	same	547.35	1213977782	ok	0	diff	ok	0	diff
+nofib/real/lift	nofib-2019	2061	harness	400		nofib/real/lift/lift.faststdout	strict	0	same	534.62	1265639175	fail			ok	0	diff
+nofib/real/linear	nofib-2019	2169	harness	2		nofib/real/linear/linear.faststdout	strict	0	same	926.62	1720779794	ok	0	diff	fail		
+nofib/real/maillist	nofib-2019	176	harness	runtime_files/fast		nofib/real/maillist/maillist.faststdout	strict	0	same	953.13	522465793	ok	0	same	ok	timeout	diff
+nofib/real/parser	nofib-2019	1413	harness		nofib/real/parser/parser.faststdin	nofib/real/parser/parser.faststdout	strict	0	same	451.12	860015243	ok	0	diff	ok	0	diff
+nofib/real/prolog	nofib-2019	577	harness		nofib/real/prolog/prolog.faststdin	nofib/real/prolog/prolog.faststdout	strict	0	same	572.05	1302930579	ok	0	diff	ok	0	diff
+nofib/real/reptile	nofib-2019	1558	harness		nofib/real/reptile/reptile.faststdin	nofib/real/reptile/reptile.faststdout	strict	0	same	1145.59	3539286509	ok	0	diff	ok	0	diff
+nofib/real/rsa	nofib-2019	111	harness		nofib/real/rsa/rsa.faststdin	nofib/real/rsa/rsa.faststdout	strict	0	same	477.92	1262027142	ok	0	diff	ok	0	diff
+nofib/real/scs	nofib-2019	586	rewrite	runtime_files/inverter 345 10n 2u 1		nofib/real/scs/scs.stdout	strict	0	same	1603.33	2544985984	ok	255	diff	ok	0	same
+nofib/real/symalg	nofib-2019	1179	harness		nofib/real/symalg/symalg.faststdin	nofib/real/symalg/symalg.faststdout	strict	0	same	396.49	918442062	ok	-11	diff	ok	0	diff
+nofib/real/veritas	nofib-2019	11165	harness	400	nofib/real/veritas/veritas.stdin	nofib/real/veritas/veritas.faststdout	fail					fail			ok	1	diff
+nofib/shootout/pidigits	nofib-2019	23	rewrite	3500		nofib/shootout/pidigits/pidigits.faststdout	strict	0	same	390.47	781577259	ok	-11	diff	ok	0	same
+nofib/smp/threads001	nofib-2019	26	h98	1000000		nofib/smp/threads001/threads001.stdout	compat	0	same	649.31	1253962560	fail			ok	0	same
+nofib/spectral/ansi	nofib-2019	128	rewrite	150		nofib/spectral/ansi/ansi.faststdout	strict	0	same	248.43	822415016	ok	0	same	ok	0	same
+nofib/spectral/atom	nofib-2019	188	rewrite	1000		nofib/spectral/atom/atom.faststdout	strict	0	same	435.42	1080624457	ok	0	same	ok	0	close
+nofib/spectral/awards	nofib-2019	116	harness	2000		nofib/spectral/awards/awards.faststdout	strict	0	same	600.26	1623883000	ok	0	same	ok	0	same
+nofib/spectral/boyer	nofib-2019	1021	harness	2		nofib/spectral/boyer/boyer.faststdout	strict	0	same	783.13	1633216600	ok	0	same	ok	0	same
+nofib/spectral/boyer2	nofib-2019	731	harness	60		nofib/spectral/boyer2/boyer2.faststdout	strict	0	same	807.54	2130898972	ok	0	same	ok	0	same
+nofib/spectral/calendar	nofib-2019	142	harness	1993 1000		nofib/spectral/calendar/calendar.faststdout	strict	0	same	649.53	1319400543	ok	0	same	ok	0	same
+nofib/spectral/cichelli	nofib-2019	233	rewrite	6		nofib/spectral/cichelli/cichelli.faststdout	strict	0	same	1034.62	2509032113	ok	0	same	ok	0	same
+nofib/spectral/circsim	nofib-2019	670	harness	8 4		nofib/spectral/circsim/circsim.faststdout	strict	0	same	682.1	1288523471	ok	0	same	fail		
+nofib/spectral/clausify	nofib-2019	185	harness	1		nofib/spectral/clausify/clausify.faststdout	strict	0	same	1054.56	2602077487	ok	0	same	ok	0	same
+nofib/spectral/constraints	nofib-2019	272	harness	6		nofib/spectral/constraints/constraints.faststdout	strict	0	same	1897.26	4522501964	ok	0	same	ok	0	same
+nofib/spectral/cryptarithm1	nofib-2019	168	harness	1		nofib/spectral/cryptarithm1/cryptarithm1.faststdout	strict	0	same	4673.06	13101938901	ok	0	same	ok	timeout	diff
+nofib/spectral/cse	nofib-2019	472	harness	30000		nofib/spectral/cse/cse.faststdout	strict	0	same	619.14	1611446210	ok	0	same	ok	0	same
+nofib/spectral/eliza	nofib-2019	273	harness	1300	nofib/spectral/eliza/eliza.stdin	nofib/spectral/eliza/eliza.faststdout	strict	0	same	838.33	2122210621	ok	0	same	fail		
+nofib/spectral/exact-reals	nofib-2019	225	rewrite	60		nofib/spectral/exact-reals/exact-reals.stdout	strict	0	same	1718.12	3632998803	fail			ok	0	same
+nofib/spectral/expert	nofib-2019	525	harness	1000	nofib/spectral/expert/expert.stdin	nofib/spectral/expert/expert.faststdout	strict	0	same	420.43	929012378	ok	0	same	ok	0	same
+nofib/spectral/fft2	nofib-2019	221	harness	70		nofib/spectral/fft2/fft2.stdout	strict	0	same	1061.91	2485290474	ok	0	same	fail		
+nofib/spectral/gcd	nofib-2019	60	rewrite	400		nofib/spectral/gcd/gcd.faststdout	strict	0	same	439.49	1288897121	ok	0	same	ok	0	same
+nofib/spectral/hartel/comp_lab_zift	nofib-2019	887	harness	2		nofib/spectral/hartel/comp_lab_zift/comp_lab_zift.faststdout	strict	0	same	647.26	1516365354	ok	0	same	ok	0	same
+nofib/spectral/hartel/event	nofib-2019	454	harness	10000		nofib/spectral/hartel/event/event.faststdout	strict	0	same	487.76	1309590205	ok	0	same	ok	0	same
+nofib/spectral/hartel/fft	nofib-2019	415	harness	1		nofib/spectral/hartel/fft/fft.faststdout	strict	0	same	30952.63	71860615060	ok	timeout	diff	ok	timeout	diff
+nofib/spectral/hartel/genfft	nofib-2019	505	harness	3		nofib/spectral/hartel/genfft/genfft.faststdout	strict	0	same	2430.19	6137075092	ok	0	same	ok	0	same
+nofib/spectral/hartel/ida	nofib-2019	495	harness	1500 2		nofib/spectral/hartel/ida/ida.faststdout	strict	0	same	863.76	2266747780	ok	0	same	ok	0	same
+nofib/spectral/hartel/listcompr	nofib-2019	524	harness	2000		nofib/spectral/hartel/listcompr/listcompr.faststdout	strict	0	same	297.89	769049054	ok	0	same	ok	0	same
+nofib/spectral/hartel/listcopy	nofib-2019	529	harness	2000		nofib/spectral/hartel/listcopy/listcopy.faststdout	strict	0	same	330.27	833161224	ok	0	same	ok	0	same
+nofib/spectral/hartel/parstof	nofib-2019	1285	harness	1		nofib/spectral/hartel/parstof/parstof.faststdout	strict	0	same	1970.4	3448373819	ok	0	same	ok	0	same
+nofib/spectral/hartel/sched	nofib-2019	560	harness	200 10		nofib/spectral/hartel/sched/sched.faststdout	strict	0	same	617.4	1553442679	ok	0	same	ok	0	same
+nofib/spectral/hartel/solid	nofib-2019	1247	harness	5		nofib/spectral/hartel/solid/solid.faststdout	strict	0	same	10479.81	21976731462	ok	0	same	ok	timeout	diff
+nofib/spectral/hartel/transform	nofib-2019	1142	harness	300		nofib/spectral/hartel/transform/transform.faststdout	strict	0	same	613.44	1284698727	ok	0	same	ok	0	same
+nofib/spectral/hartel/typecheck	nofib-2019	658	harness	500		nofib/spectral/hartel/typecheck/typecheck.faststdout	strict	0	same	482.25	1142760059	ok	0	same	ok	-11	diff
+nofib/spectral/hartel/wang	nofib-2019	360	harness	25		nofib/spectral/hartel/wang/wang.faststdout	strict	0	same	648.93	1590669946	ok	0	same	ok	0	same
+nofib/spectral/hartel/wave4main	nofib-2019	602	harness	8		nofib/spectral/hartel/wave4main/wave4main.faststdout	strict	0	same	2953.76	4462568896	ok	0	same	ok	0	same
+nofib/spectral/knights	nofib-2019	724	harness	8 1		nofib/spectral/knights/knights.faststdout	strict	0	same	588.17	1655117828	ok	0	same	ok	0	same
+nofib/spectral/last-piece	nofib-2019	235	h98			nofib/spectral/last-piece/last-piece.stdout	compat	0	same	2061.81	5100856326	fail			ok	0	same
+nofib/spectral/lcss	nofib-2019	61	harness	1 2 60 30 31 90		nofib/spectral/lcss/lcss.faststdout	strict	0	same	442.39	1173423454	ok	0	same	ok	0	same
+nofib/spectral/life	nofib-2019	55	harness	15		nofib/spectral/life/life.faststdout	strict	0	same	363.6	760828794	ok	0	same	ok	0	same
+nofib/spectral/mate	nofib-2019	425	rewrite	runtime_files/heathcote3.prob		nofib/spectral/mate/mate.faststdout	strict	0	same	348.33	656571864	ok	0	same	ok	0	same
+nofib/spectral/multiplier	nofib-2019	501	rewrite	32		nofib/spectral/multiplier/multiplier.faststdout	strict	0	same	448.42	1276632101	ok	0	same	ok	0	same
+nofib/spectral/pretty	nofib-2019	265	h98			nofib/spectral/pretty/pretty.stdout	strict	0	same	3.42	728566	ok	0	same	ok	0	same
+nofib/spectral/primetest	nofib-2019	305	rewrite		nofib/spectral/primetest/primetest.faststdin	nofib/spectral/primetest/primetest.faststdout	strict	0	same	311.13	832267235	ok	0	same	ok	0	same
+nofib/spectral/rewrite	nofib-2019	636	rewrite	20000		nofib/spectral/rewrite/rewrite.stdout	strict	0	same	993.39	2546541430	ok	0	same	ok	0	same
+nofib/spectral/scc	nofib-2019	100	h98			nofib/spectral/scc/scc.stdout	strict	0	same	3.57	627703	ok	0	same	ok	0	same
+nofib/spectral/secretary	nofib-2019	75	rewrite			nofib/spectral/secretary/secretary.stdout	strict	0	diff	16805.62	54413958603	ok	0	diff	ok	timeout	diff
+nofib/spectral/sorting	nofib-2019	201	harness	600 Main.hs		nofib/spectral/sorting/sorting.faststdout	strict	0	diff	317.05	1015951748	ok	0	diff	ok	timeout	diff
+nofib/spectral/sphere	nofib-2019	453	harness	30		nofib/spectral/sphere/sphere.faststdout	strict	0	same	2868.95	5751162492	ok	0	diff	ok	0	diff
+nofib/spectral/treejoin	nofib-2019	122	harness	runtime_files/1500.1 runtime_files/1500.2		nofib/spectral/treejoin/treejoin.stdout	strict	0	same	2138.54	3798494277	ok	0	same	ok	0	same
+yhc-conformance/BinArray/test1	yhc-conformance	23	h98			yhc/tests/conformance98/BinArray/test1/expected.stdout	fail					fail			fail		
+yhc-conformance/BinArray/test2	yhc-conformance	26	h98			yhc/tests/conformance98/BinArray/test2/expected.stdout	fail					fail			fail		
+yhc-conformance/Enum/list	yhc-conformance	2	h98			yhc/tests/conformance98/Enum/list/expected.stdout	strict	0	same	3.34	610061	ok	0	same	ok	0	same
+yhc-conformance/Enum/succ	yhc-conformance	1	h98			yhc/tests/conformance98/Enum/succ/expected.stdout	strict	0	same	3.62	648014	ok	0	same	ok	0	close
+yhc-conformance/FFI/sizedtypes/Int	yhc-conformance	35	h98			yhc/tests/conformance98/FFI/sizedtypes/Int/expected.stdout	fail					ok	0	diff	fail		
+yhc-conformance/IO/overwrite	yhc-conformance	9	h98			yhc/tests/conformance98/IO/overwrite/expected.stdout	strict	0	same	3.65	663454	ok	0	same	ok	0	same
+yhc-conformance/WheelSieve	yhc-conformance	43	h98			yhc/tests/conformance98/WheelSieve/expected.stdout	strict	0	same	99.78	123518446	ok	0	same	ok	0	same
+yhc-conformance/bugs/CaseApp	yhc-conformance	10	h98			yhc/tests/conformance98/bugs/CaseApp/expected.stdout	strict	0	same	3.41	589923	ok	0	same	ok	0	same
+yhc-conformance/getargs	yhc-conformance	7	rewrite			yhc/tests/conformance98/getargs/expected.stdout	strict	0	same	3.41	587646	ok	0	same	ok	0	same
+yhc-conformance/infix/derived	yhc-conformance	12	h98			yhc/tests/conformance98/infix/derived/expected.stdout	strict	0	same	3.22	607510	ok	255	diff	ok	0	same
+yhc-conformance/iomonad	yhc-conformance	2	h98			yhc/tests/conformance98/iomonad/expected.stdout	strict	0	same	3.06	589936	ok	0	same	ok	0	same
+yhc-conformance/layout/tullsen3	yhc-conformance	11	h98			yhc/tests/conformance98/layout/tullsen3/expected.stdout	strict	0	same	9.1	1596040	ok	0	same	ok	0	same
+yhc-conformance/parsing/rational_lits	yhc-conformance	1	h98			yhc/tests/conformance98/parsing/rational_lits/expected.stdout	strict	0	same	3.07	643176	ok	0	same	ok	0	close

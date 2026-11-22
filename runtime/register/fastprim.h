@@ -159,6 +159,39 @@ static inline int prim_fast(VM *vm, int prim, uint32_t n, const Value *base, con
     case PRIM_int_order: INT2; r = fast_order(val_imm(*x) < val_imm(*y), val_imm(*x) > val_imm(*y)); break;
     case PRIM_int_to_char: if (!val_is(*x, T_INT) || val_imm(*x) < 0 || val_imm(*x) > 255) return 0; r = mk_char(val_imm(*x)); break;
 
+    /* IntInf.int (haskell98 M31): two immediates, as an int's are; a large
+       operand, a result past 63 bits, or a divisor of 0 or ~1 the
+       primitive's (p_intinf_add and the rest), which makes a large value.
+       An immediate is tested as such, never as T_INT, which under
+       RUNE_INT64 takes a box: no box is an IntInf.int. */
+#define IMM2 if (!val_is_imm(*x) || !val_is_imm(*y)) return 0
+    case PRIM_intinf_add: { IMM2; int64_t v; if (!fast_add(val_imm(*x), val_imm(*y), &v) || !int_fits(v)) return 0; r = mk_imm(v); break; }
+    case PRIM_intinf_sub: { IMM2; int64_t v; if (!fast_sub(val_imm(*x), val_imm(*y), &v) || !int_fits(v)) return 0; r = mk_imm(v); break; }
+    case PRIM_intinf_mul: { IMM2; int64_t v; if (!fast_mul(val_imm(*x), val_imm(*y), &v) || !int_fits(v)) return 0; r = mk_imm(v); break; }
+    case PRIM_intinf_div: {
+        IMM2; if (val_imm(*y) == 0 || val_imm(*y) == -1) return 0;
+        int64_t q = val_imm(*x) / val_imm(*y);
+        if ((val_imm(*x) % val_imm(*y) != 0) && ((val_imm(*x) < 0) != (val_imm(*y) < 0))) q--;
+        r = mk_imm(q); break;
+    }
+    case PRIM_intinf_mod: {
+        IMM2; if (val_imm(*y) == 0 || val_imm(*y) == -1) return 0;
+        int64_t m = val_imm(*x) % val_imm(*y);
+        if (m != 0 && ((m < 0) != (val_imm(*y) < 0))) m += val_imm(*y);
+        r = mk_imm(m); break;
+    }
+    case PRIM_intinf_quot: IMM2; if (val_imm(*y) == 0 || val_imm(*y) == -1) return 0; r = mk_imm(val_imm(*x) / val_imm(*y)); break;
+    case PRIM_intinf_rem: IMM2; if (val_imm(*y) == 0 || val_imm(*y) == -1) return 0; r = mk_imm(val_imm(*x) % val_imm(*y)); break;
+    case PRIM_intinf_neg: if (!val_is_imm(*x) || val_imm(*x) == IMM_MIN) return 0; r = mk_imm(-val_imm(*x)); break;
+    case PRIM_intinf_lt: IMM2; r = mk_bool(val_imm(*x) < val_imm(*y)); break;
+    case PRIM_intinf_le: IMM2; r = mk_bool(val_imm(*x) <= val_imm(*y)); break;
+    case PRIM_intinf_gt: IMM2; r = mk_bool(val_imm(*x) > val_imm(*y)); break;
+    case PRIM_intinf_ge: IMM2; r = mk_bool(val_imm(*x) >= val_imm(*y)); break;
+    case PRIM_intinf_order: IMM2; r = fast_order(val_imm(*x) < val_imm(*y), val_imm(*x) > val_imm(*y)); break;
+    /* an immediate is the same word as an int and as an IntInf.int */
+    case PRIM_intinf_from_int: case PRIM_intinf_to_int: if (!val_is_imm(*x)) return 0; r = *x; break;
+#undef IMM2
+
     case PRIM_word_add: WORD2; FAST_WORD(val_word(*x) + val_word(*y)); break;
     case PRIM_word_sub: WORD2; FAST_WORD(val_word(*x) - val_word(*y)); break;
     case PRIM_word_mul: WORD2; FAST_WORD(val_word(*x) * val_word(*y)); break;
@@ -281,6 +314,21 @@ static inline int prim_fast(VM *vm, int prim, uint32_t n, const Value *base, con
     case PRIM_string_sub:
         OBJ(x, K_STRING); if (!val_is(*y, T_INT) || val_imm(*y) < 0 || (uint64_t)val_imm(*y) >= obj_len(val_ptr(*x))) return 0;
         r = mk_char((unsigned char)obj_bytes(val_ptr(*x))[val_imm(*y)]); break;
+    /* a suspension of a fresh closure that captures, made in place
+       (runtime/prims.c, p_thunk_make); the copy of one that does not is the
+       primitive's */
+    case PRIM_thunk_make: OBJ(x, K_CLOSURE); if (obj_len(val_ptr(*x)) < 2) return 0; obj_become_thunk(val_ptr(*x)); r = *x; break;
+    /* a selector's suspension marked (runtime/prims.c, p_thunk_selector; the
+       haskell98 roadmap's D17, C): s, unevaluated, whose first capture is t,
+       of field i of t, which the contag can name; else nothing. i, the
+       compiler's constant, is an int or the primitive's to judge */
+    case PRIM_thunk_selector:
+        if (!val_is(*z, T_INT)) return 0;
+        if (val_is_ptr(*x) && obj_kind(val_ptr(*x)) == K_THUNK && obj_contag(val_ptr(*x)) == THUNK_UNEVALUATED
+            && obj_len(val_ptr(*x)) >= 2 && obj_field(val_ptr(*x), 1) == *y && val_imm(*z) >= 0
+            && THUNK_SELECTOR + val_imm(*z) < 256)
+            obj_set_contag(val_ptr(*x), (uint16_t)(THUNK_SELECTOR + val_imm(*z)));
+        r = mk_unit(); break;
     case PRIM_ref_get: OBJ(x, K_REF); r = obj_field(val_ptr(*x), 0); break;
     case PRIM_ref_set: OBJ(x, K_REF); HEAP_STORE(val_ptr(*x), 0, *y); r = mk_unit(); break;
     case PRIM_array_length: OBJ(x, K_ARRAY); FAST_INT(obj_len(val_ptr(*x))); break;

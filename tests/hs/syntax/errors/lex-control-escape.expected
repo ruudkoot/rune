@@ -1,0 +1,1 @@
+lex-control-escape.hs:2:6: error: a control escape `\^` not followed by `@`, `A` to `Z`, `[`, `\`, `]`, `^` or `_` in a character literal

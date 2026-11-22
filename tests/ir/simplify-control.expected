@@ -2,7 +2,7 @@
 (val g1 : exncon
   (return (newexn "E")))
 (funs
-  (fn g2 ((v1 : bool * bool * bool)) : int
+  (fn g2 ((v1 : bool * bool * bool)) : int "f"
     (let (v2 : bool) (select 0 v1)
     (let (v3 : bool) (select 1 v1)
     (let (v4 : bool) (select 2 v1)
@@ -18,7 +18,7 @@
           (jump j2)))
       (jump j2)))))))))
 (funs
-  (fn g3 ((v5 : int)) : int
+  (fn g3 ((v5 : int)) : int "g"
     (join j3 ((v6 : exn))
       (let (v7 : exncon) (exncon v6)
       (let (v8 : bool) (prim ptr_eq v7 g1 : (exncon * exncon) -> bool)

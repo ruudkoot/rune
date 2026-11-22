@@ -6,9 +6,9 @@ struct
   val zeroByte = Word8.fromInt 0
 
   val fileOpen = _prim "file_open" : string * int -> int option
-  val fileClose = _prim "file_close" : int -> unit
+  val fileClose = _prim "file_close" : int -> bool
   val fileWrite = _prim "file_write" : int * string -> bool
-  val fileFlush = _prim "file_flush" : int -> unit
+  val fileFlush = _prim "file_flush" : int -> bool
   val fileReadVec = _prim "file_read_vec" : int * int -> string
   val fileAvail = _prim "file_avail" : int -> int
   val fileError = _prim "file_error" : unit -> string
@@ -66,7 +66,9 @@ struct
   (* write (fd, s): s to the file, and NONE; or what writeString would
      raise, as SOME: a stream's write that needs no handler (streamio_fn.sml) *)
   fun write (fd, s) = if fileWrite (fd, s) then NONE else SOME (sysError ())
-  fun close (fd : int) () = fileClose fd
+  (* a close or a flush that fails (the last of a buffer not written: a
+     full device) raises, as a write does; the stream's layer makes it Io *)
+  fun close (fd : int) () = if fileClose fd then () else raise sysError ()
   fun closeNothing () = ()
-  fun flush (fd : int) () = fileFlush fd
+  fun flush (fd : int) () = if fileFlush fd then () else raise sysError ()
 end

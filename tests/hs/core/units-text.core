@@ -1,0 +1,7 @@
+; dump: --typecheck-only --dump-after=read
+; Core in units: an import printed as rhc prints it, and read back; a unit
+; checked alone, which may import what it does not define.
+(import   elsewhere
+   (forall (a) (-> a   (List a))))
+(data List (a) (Nil) (Cons a (List a)))
+(val one (List Int) (elsewhere @Int 1))

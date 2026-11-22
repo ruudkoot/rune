@@ -459,7 +459,11 @@ struct
                    to the callee's local 0, where the closure was, and a jump
                    to the callee's fast entry; anything else, and a full
                    array of frames, is the glue's (native_call and
-                   native_tailcall), as before M10. *)
+                   native_tailcall), as before M10 -- a closure of more
+                   parameters than one and a partial application too, whose
+                   field 0 is negative, which the check of the index finds
+                   with no test of the parameters (D15 C: the general path,
+                   stack_apply; item 24: CLOSURE_NARY, runtime/value.h). *)
                 let
                   val slow = lab pc ^ "_slow"
                   val tail = opc = Opcodes.TAILCALL
@@ -678,6 +682,19 @@ struct
                    (flushSp (); setPc (); callC ("native_setenv", ["mov $" ^ num a ^ ", %esi"]))
                  | Opcode.CALL => callTemplate ()
                  | Opcode.TAILCALL => callTemplate ()
+                 (* D15 C: a closure's parameters into its contag, and the calls
+                    of m - 1 arguments, which test them, by the glue
+                    (native_arity, native_calln, native_tailcalln), which
+                    enters the function or takes the general path *)
+                 | Opcode.ARITY =>
+                   (unforward (); flushSp (); setPc (); callC ("native_arity", ["mov $" ^ num a ^ ", %esi"]))
+                 | Opcode.CALLN =>
+                   (unforward (); flushSp (); setPc ();
+                    callC ("native_calln", ["mov $" ^ num a ^ ", %esi", "lea " ^ lab next ^ "(%rip), %rdx"]);
+                    line "jmp *%rax")
+                 | Opcode.TAILCALLN =>
+                   (unforward (); flushSp (); setPc (); callC ("native_tailcalln", ["mov $" ^ num a ^ ", %esi"]);
+                    line "jmp *%rax")
                  | Opcode.SWITCH =>
                    (* the tag, as CONTAG finds it, and a jump through a table
                       of the targets of the JUMPs after it, which are never
@@ -762,6 +779,41 @@ struct
                    (expectObj (h - 1, "K_EXN", fatalExn); L.loadField line (sd (h - 1), L.RAX, 0))
                  | Opcode.EXNARG =>
                    (expectObj (h - 1, "K_EXN", fatalExn); L.loadField line (sd (h - 1), L.RAX, 1))
+                 (* suspensions (docs/ir.md, Suspensions): FORCE in line --
+                    the value of what is no unevaluated suspension in its
+                    place, what an indirection holds or itself, and a jump to
+                    a; one unevaluated left for the ENTER after it, but a
+                    selector (D17's C, its contag THUNK_SELECTOR or more),
+                    given the field the collector would give it where its
+                    tuple is evaluated, in the glue (native_select), and
+                    tested again where that changed it, as the interpreter's
+                    FORCE (D17's count) -- and the rest the glue's, as CALL's
+                    slow path is *)
+                 | Opcode.FORCE =>
+                   let
+                     val again = lab pc ^ "_again"
+                     val value = lab pc ^ "_value"
+                     val enter = lab pc ^ "_enter"
+                   in
+                     put (again ^ ":\n");
+                     L.loadObj line (L.RAX, sd (h - 1), "K_IND", value);
+                     L.loadField line (sd (h - 1), L.RAX, 0);
+                     line ("jmp " ^ lab a);
+                     put (value ^ ":\n");
+                     L.loadObj line (L.RAX, sd (h - 1), "K_THUNK", lab a);
+                     line "cmpw $THUNK_SELECTOR, OBJ_CONTAG(%rax)";
+                     line ("jb " ^ enter);
+                     flushSp ();
+                     callC ("native_select", []);
+                     line "test %eax, %eax";
+                     line ("jne " ^ again);
+                     put (enter ^ ":\n")
+                   end
+                 | Opcode.ENTER =>
+                   (* the count too: a loop raises Loop from here, as RAISE raises *)
+                   (flushCount (); flushSp (); setPc (); callC ("native_enter", ["lea " ^ lab next ^ "(%rip), %rsi"]); line "jmp *%rax")
+                 | Opcode.BLACKHOLE => (flushSp (); setPc (); callC ("native_blackhole", []))
+                 | Opcode.UPDATE => (flushSp (); setPc (); callC ("native_update", []))
                  | Opcode.PRIM =>
                    let
                      fun callPrim () =

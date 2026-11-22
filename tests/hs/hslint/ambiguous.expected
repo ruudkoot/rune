@@ -1,0 +1,1 @@
+REFUSED tests/hs/hslint/ambiguous.hs:6:1: an ambiguous type variable, constrained by Show t1, Read t1, which no default resolves (def.ambig, def.cond, def.pick.none)

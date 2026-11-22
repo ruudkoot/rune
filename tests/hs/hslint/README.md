@@ -1,0 +1,54 @@
+# HsLint's tests
+
+The tests of HsLint, the independent check of rhc's types (the haskell98 roadmap's M16, D54; `lib/language/haskell`'s
+`hslint.build`), beside the expectations of `tests/hs/accept`, `tests/hs/lang` and `tests/hs/errors`, which it is held
+to as well. Their jobs are `hs/hslint/...` (`tests/runner/hslint.sml`; docs/testing.md, *HsLint*).
+
+## Fixtures
+
+Each program here, a file `NAME.hs` or a directory `NAME` whose `Main.hs` imports the rest, has the expected output of
+`bin/rhc --dump-hslint` in `NAME.expected`, of `--dump-hslint --cycle-default=scc` in `NAME.scc.expected`, and of
+`--dump-hslint=library` in `NAME.library.expected`, where those are. The dump's lines are those `src/rhc/lint.sml`
+describes: `KIND`, `DERIVED`, `TYPE`, `SIGNED`, `DEFAULT`, or `REFUSED` and why. Each file was reviewed line by line.
+The lines of each kind are sorted by module, then name, instance or place, and a default of the library's is at no
+place (`*`), so that an edit of the library that moves a definition and changes no type moves no line.
+Its job then compiles it at level 2 as far as Core (`bin/rhc --desugar-only --lint=2`), where HsLint replays the
+checker's evidence records and holds them, and the Core desugaring makes (its target check), to its own inference: the
+compile accepts what the dump infers and refuses what the dump refuses, so that a bug seeded in the checker (rhc's
+mutants HK01 to HK05) fails a fixture's job.
+
+| Fixture | What it pins |
+|---|---|
+| `restricted` | A restricted group whose members' types differ keeps its constrained variable open until the module is inferred, where Typing Haskell in Haskell's `split` would default it at once (D32, R20) |
+| `rule2` | Rule 2 at the end of the module: 4.5.5's `len1` at `Rational`, E7's `n = 60` used at `Int` (R20) |
+| `split` | A signature does not cut a group, and a signed variable's uses have its type: Typing Haskell in Haskell 11.6.3's `f` and `g` (R21(c)) |
+| `onecontext` | One context for the variables of a group: `Num` on a variable that one member's type mentions is ambiguous and defaulted (R21(a)) |
+| `defaults` | A module's `default` declaration, and 4.3.4's conditions (R22) |
+| `simple` | 4.5.5's simple pattern binding: guards allowed, `(y)` and `~z` not simple (R18) |
+| `classes` | Kinds inferred and defaulted (4.6), derived contexts by the fixpoint (4.3.3, 10.1), a synonym, a constructor class |
+| `dicts` | Superclasses through chains of two steps and more, the Prelude's and the program's own, and a class of three methods used through its dictionary, with a default method and two instances: replay's [dict super] and [slot] read them (HK04, HK05) |
+| `derivedorder` | A derived instance's context in another order than HsLint's least (GHC's drv003): replay pairs the instance's dictionaries with the checker's context, held to HsLint's as the same predicates |
+| `ambiguous` | An ambiguous type variable whose classes include no numeric one is not defaulted (4.3.4, R22): refused, by the checker too (HK03) |
+| `cycle` | A declaration group across a cycle of modules, each module's restricted binding fixed by itself (D30) |
+| `cyclefix` | A module of a cycle fixing another's monomorphic type: refused under `--cycle-default=module`, the default, and taken under `scc` (D30) |
+| `faults` | A program in which every rule of HsLint's comparison and of its replay has a claim or a record to check: its records replayed, held to its own expected dump by `--hslint-claims`, and refused by each rule with its fault (`hs/hslint/faults`) |
+| `report` | The Report's library, every module a program may import with the Prelude's 11-module cycle, as one unit: its unsigned values (E16's 7, and the overlay's own, `PreludeRuntime`'s `Handle` accessors among them) and the defaults its code chooses, among them `floatToDigits`'s (E16) |
+
+`hs/hslint/levels` builds each fixture the dump infers (`bin/rhc -o`) at level 2, with HsLint's checks, and at level 0:
+the two builds have the same status and the same bytes, since no check changes what rhc makes.
+
+`RUNE_TEST_ACCEPT=1 bin/rune-test run 'hs/hslint/dump/*'` writes the expected files again from what rhc prints; read
+them line by line before committing.
+
+## Disagreements
+
+`disagreements.tsv` lists the programs of `tests/hs` on which HsLint and the program's expectation part, and why: a
+reading, a bug of HsLint's, or a program that does not mean what it says. Each is held to still disagreeing, so that a
+fix on either side shows; its line is removed then.
+
+## The two judges
+
+The same jobs run the checker alone (`bin/rhc --typecheck-only --lint=off`) and HsLint's second inference alone
+(`bin/rhc --dump-hslint`) on every program of `tests/hs/accept`, `tests/hs/lang` and the type rows of `tests/hs/errors`,
+and want one verdict, refused or not. `judges.tsv` lists the programs on which they part, each with why: a gap or a bug
+of one of them, or a reading; each is held to still parting, so that a fix shows.

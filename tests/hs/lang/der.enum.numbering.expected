@@ -1,0 +1,5 @@
+([0,1,2,3],Orange,Red,Yellow)
+([Orange,Yellow,Green],[Red,Yellow],[Green,Yellow,Orange,Red],[Red,Red,Red])
+([Orange,Yellow,Green],[],[Red,Yellow],[Green,Orange])
+(True,[Only],Red,Green)
+(S False '\NUL',Pair True True,N False,N True)

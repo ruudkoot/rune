@@ -1,0 +1,119 @@
+PROVENANCE
+
+The files in this directory and below it are nhc98's own regression tests: the programs of
+tests/conformance98 in the repository of nhc98, the Haskell 98 compiler of York University. The CVS
+log kept in ../nofib/real/grep/StringMatch.hs, lines 11 to 17, records the arrival of nhc98's tests,
+as revision 1.1 of 2004/08/05 by malcolm: "Add a regression testsuite for the nhc98 compiler.  It
+isn't very good, but it is better than nothing. [...] It includes a slightly altered version of the
+nofib suite."
+
+They are vendored here without a licence, under the rule of this repository's owner, quoted:
+
+    "If you want to vendor code without a license add a PROVENANCE alongside it instead."
+
+rhc, the Haskell 98 compiler of this repository, compiles and runs them in its tests
+(tests/hs/corpus: the programs of D56 of the haskell98 roadmap, which tests/hs/corpus/licences.tsv
+lists with this file as their notice).
+
+Upstream
+    repository  https://github.com/8l/nhc98.git
+    commit      b4d41520ae51f1db61ff6fb899775200e4cae731, as tests/hs/corpus/trees.tsv pins it
+    path        tests/conformance98/ in that repository: a file at P below this directory
+                is tests/conformance98/P upstream
+    fetched     2026-10-27, by git clone; the pinned commit was the head it fetched
+    copied      2026-11-10, byte for byte, by `bin/rune-test hs-corpus-vendor`; the nightly test
+                hs-corpus/vendored compares every file here with the pinned tree
+
+Licence
+    No licence is stated for these files, and no file of them carries a notice. nhc98's COPYRIGHT
+    (at the root of its tree, not vendored) names what its licence covers: "the nhc98 Haskell
+    compiler, libraries, and runtime system", and the tools hmake, hmake interactive, hmake-config
+    and hp2graph; it does not name the tests.
+
+Programs
+    Each program by its id in tests/hs/corpus/candidates.tsv: its files, as paths below this
+    directory; then what the files' own headers name of its authors and origin, and any notice,
+    quoted as FILE:LINE and the line (tabs expanded, trailing blanks dropped). A program with no
+    "named" names no author or origin in its files; one with no "notice" carries none.
+
+conformance98/Emptydecls
+    files   Emptydecls/Main.hs Emptydecls/empty.stdout
+
+conformance98/Enum/succ
+    files   Enum/succ/Main.hs Enum/succ/succ.stdout
+
+conformance98/IO/overwrite
+    files   IO/overwrite/Main.hs IO/overwrite/overwrite.stdout
+
+conformance98/Misc/wolfram
+    files   Misc/wolfram/Main.hs Misc/wolfram/wolfram.stdout
+
+conformance98/N+K
+    files   N+K/Main.hs N+K/fib.stdout
+
+conformance98/NewType
+    files   NewType/Main.hs NewType/Renamebug.hs NewType/newtype.stdout
+
+conformance98/Queens
+    files   Queens/Main.hs Queens/queens.stdout
+    named   Queens/Main.hs:2: -- This version Colin Runciman, March 2000.
+
+conformance98/chr
+    files   chr/Main.hs chr/chr.stdout
+
+conformance98/fields/empty
+    files   fields/empty/Main.hs fields/empty/empty.stdout
+
+conformance98/infix/infix
+    files   infix/infix/Main.hs infix/infix/infix.stdout
+
+conformance98/infix/local
+    files   infix/local/Main.hs infix/local/local.stdout
+
+conformance98/infix/operator
+    files   infix/operator/Main.hs infix/operator/operator.stdout
+
+conformance98/layout/brace
+    files   layout/brace/Main.hs layout/brace/brace.stdout
+
+conformance98/layout/case
+    files   layout/case/Main.hs layout/case/case.stdout
+
+conformance98/layout/do
+    files   layout/do/Main.hs layout/do/do.stdout
+
+conformance98/layout/tullsen1
+    files   layout/tullsen1/Main.hs layout/tullsen1/tullsen1.stdout
+
+conformance98/layout/tullsen2
+    files   layout/tullsen2/Main.hs layout/tullsen2/tullsen2.stdout
+
+conformance98/layout/whitespace
+    files   layout/whitespace/Main.hs layout/whitespace/whitespace.stdout
+
+conformance98/lex
+    files   lex/Main.hs lex/lex.stdout
+
+conformance98/numbers/floatdouble
+    files   numbers/floatdouble/Main.hs numbers/floatdouble/floatdouble.stdout
+
+conformance98/numbers/integerdouble
+    files   numbers/integerdouble/Main.hs numbers/integerdouble/integerdouble.stdout
+
+conformance98/numbers/negliteral
+    files   numbers/negliteral/Main.hs numbers/negliteral/negliteral.stdout
+
+conformance98/numbers/subtract
+    files   numbers/subtract/Main.hs numbers/subtract/subtract.stdout
+
+conformance98/read/readex
+    files   read/readex/Main.hs read/readex/readex.stdout
+
+conformance98/read/singleconstr
+    files   read/singleconstr/Main.hs read/singleconstr/singleconstr.stdout
+
+conformance98/self-print
+    files   self-print/Main.hs self-print/self.stdout
+
+conformance98/semicolon
+    files   semicolon/Main.hs semicolon/semi.stdout

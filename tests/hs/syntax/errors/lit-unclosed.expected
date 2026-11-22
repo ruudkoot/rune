@@ -1,0 +1,1 @@
+lit-unclosed.lhs:1:1: error: literate source: a \begin{code} that no \end{code} closes

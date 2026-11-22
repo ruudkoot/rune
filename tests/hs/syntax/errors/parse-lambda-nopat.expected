@@ -1,0 +1,1 @@
+parse-lambda-nopat.hs:2:7: error: expected a pattern after the `\` of a lambda, found `->`

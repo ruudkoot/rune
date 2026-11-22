@@ -1,0 +1,3 @@
+; run: --strings=whole --read-core tests/hs/core/lib/base.core --read-core tests/hs/core/lib/strings.core
+; runtime-strings.core with every cell of a literal made at its first force
+; (D24's B, built for the owner's measurement): what it prints is the same.

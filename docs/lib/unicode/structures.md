@@ -14,10 +14,12 @@ the signature names and no others.
 
 | Structure |  | Signature | Realisations |  | Source |
 | --- | --- | --- | --- | --- | --- |
+| [`CodePoint`](str/CodePoint.md) | :> | [`CODE_POINT`](sig/CODE_POINT.md) |  |  | [lib/unicode/code\_point.sml](../../../lib/unicode/code_point.sml) |
 | [`DisplayWidth`](str/DisplayWidth.md) | :> | [`DISPLAY_WIDTH`](sig/DISPLAY_WIDTH.md) |  |  | [lib/unicode/display\_width.sml](../../../lib/unicode/display_width.sml) |
 | [`Grapheme`](str/Grapheme.md) | :> | [`GRAPHEME`](sig/GRAPHEME.md) |  |  | [lib/unicode/grapheme.sml](../../../lib/unicode/grapheme.sml) |
 | [`Identifier`](str/Identifier.md) | :> | [`IDENTIFIER`](sig/IDENTIFIER.md) |  |  | [lib/unicode/identifier.sml](../../../lib/unicode/identifier.sml) |
 | [`Normalize`](str/Normalize.md) | :> | [`NORMALIZE`](sig/NORMALIZE.md) |  |  | [lib/unicode/normalize.sml](../../../lib/unicode/normalize.sml) |
+| [`UnicodeCodePointData`](str/UnicodeCodePointData.md) |  | *none* |  |  | [lib/unicode/code\_point\_data.sml](../../../lib/unicode/code_point_data.sml) |
 | [`UnicodeGraphemeData`](str/UnicodeGraphemeData.md) |  | *none* |  |  | [lib/unicode/grapheme\_data.sml](../../../lib/unicode/grapheme_data.sml) |
 | [`UnicodeIdentifierData`](str/UnicodeIdentifierData.md) |  | *none* |  |  | [lib/unicode/identifier\_data.sml](../../../lib/unicode/identifier_data.sml) |
 | [`UnicodeNormalizeData`](str/UnicodeNormalizeData.md) |  | *none* |  |  | [lib/unicode/normalize\_data.sml](../../../lib/unicode/normalize_data.sml) |

@@ -1,0 +1,10 @@
+[True,True,True]
+([True,False,False,True],True)
+(BlockBuffering (Just 64),LineBuffering,NoBuffering,True)
+([False,True],True)
+"hello\nworld"
+[True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True]
+([True,False,True,False],True,11,'h')
+([True,False,False,True],"hello\nworld!")
+([True,False,True,True],True,'h')
+("z",1)

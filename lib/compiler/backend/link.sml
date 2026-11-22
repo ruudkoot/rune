@@ -176,7 +176,7 @@ struct
         | NONE => let val i = !nfiles in files := name :: !files; nfiles := i + 1; fileIndex := StringMap.insert (!fileIndex, name, i); i end
       val inlines : (string * int * int * int * int) list ref = ref []
       val ninlines = ref 0
-      val consts : Lambda.const list ref = ref []
+      val consts : Literal.const list ref = ref []
       val nconsts = ref 0
       val nglobals = ref 0
       val globalOf : int IntMap.map ref = ref IntMap.empty

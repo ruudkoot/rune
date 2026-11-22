@@ -1,0 +1,6 @@
+; run: --read-core tests/hs/core/lib/base.core
+; A bottom: an error no handler takes, after what was printed.
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (case (putStrLn "before" w) r
+      ((utuple w1 _) (let (n Int (error @Int "the end")) (printInt n w1))))))

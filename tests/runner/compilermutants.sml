@@ -270,6 +270,10 @@ struct
       val srcs = String.tokens Char.isSpace (read (dirOf "files.txt"))
       val () = write (dirOf "bootsrcs.txt", String.concat (List.map (fn s => s ^ "\n") srcs))
       val () = need (exists good, "no bin/rune.rbc")
+      (* ID's directory is the mutant's alone: no id is a compiler mutant's
+         and a cache mutant's, or twice in one list *)
+      val ids = List.map #id (CompilerMutantList.mutants @ List.map #mutant CacheMutantList.mutants)
+      val () = List.app (fn i => need (length (List.filter (fn j => j = i) ids) = 1, i ^ " is the id of two mutants")) ids
       (* each mutant applies to today's sources: its old text once *)
       val () = List.app (fn (m : mutant) =>
                  List.app (fn {file, old, ...} =>
@@ -311,35 +315,44 @@ struct
     end
 
   (* ---- a mutant *)
-  fun build (m : mutant) : string option * string =
+  (* a compiler with a mutant's edits, compiled by the good Rune from srcs,
+     in order, into dir/out, with a copy in dir/src of each file the mutant
+     edits: Rune itself from its bootstrap's sources (build), and rhc from
+     rhc.plan's (HsMutants) *)
+  fun buildFrom {id, edits : CompilerMutantList.edit list, srcs, dir = d, out} : string option * string =
     let
-      val d = dirOf (#id m)
       val () = (rmTree d; mkdirs (d ^ "/src"))
-      val srcs = bootSources ()
       (* one edit of a file's text: its old text there once *)
       fun edit file ({old, new, ...} : CompilerMutantList.edit, text) =
         case places (text, old) of
           [i] => String.substring (text, 0, i) ^ new ^ String.extract (text, i + size old, NONE)
-        | _ => raise Failed (#id m ^ ": its old text is not in " ^ file ^ " once")
+        | _ => raise Failed (id ^ ": its old text is not in " ^ file ^ " once")
       (* each file the mutant edits, with every edit of it, in a copy *)
       val files = List.foldl (fn ({file, ...} : CompilerMutantList.edit, fs) =>
-                                if List.exists (fn f => f = file) fs then fs else fs @ [file]) [] (#edits m)
+                                if List.exists (fn f => f = file) fs then fs else fs @ [file]) [] edits
       fun apply (file, srcs) =
         let
-          val text = List.foldl (edit file) (read (fromRoot file)) (List.filter (fn e => #file e = file) (#edits m))
+          val text = List.foldl (edit file) (read (fromRoot file)) (List.filter (fn e => #file e = file) edits)
           val dst = d ^ "/src/" ^ file
           val () = mkdirs (OS.Path.dir dst)
           val () = write (dst, text)
         in
-          need (List.exists (fn s => s = file) srcs, #id m ^ ": " ^ file ^ " is no source of the compiler");
+          need (List.exists (fn s => s = file) srcs, id ^ ": " ^ file ^ " is no source of the compiler");
           List.map (fn s => if s = file then dst else s) srcs
         end
       val srcs = List.foldl apply srcs files
       val err = d ^ "/build.err"
-      val code = execute (900, compiler good @ ["-o", d ^ "/rune.rbc"] @ List.map fromRoot srcs, root, "", err, err)
+      val code = execute (900, compiler good @ ["-o", d ^ "/" ^ out] @ List.map fromRoot srcs, root, "", err, err)
     in
-      if code = 0 then (SOME (d ^ "/rune.rbc"), "built") else (NONE, "stillborn: " ^ errLine (read err))
+      if code = 0 then (SOME (d ^ "/" ^ out), "built") else (NONE, "stillborn: " ^ errLine (read err))
     end
+  (* a mutant built in a directory of its own, dirOf dir, which the build
+     empties first: ID's job and cache-ID's build in ID, built-ID's in
+     built-ID, since a run of both tiers may run built-ID and ID at once, and
+     in one directory the built job removed the other's files
+     (docs/bugreport/rune/hs-mutants-built-race) *)
+  fun build (m : mutant, dir) : string option * string =
+    buildFrom {id = #id m, edits = #edits m, srcs = bootSources (), dir = dirOf dir, out = "rune.rbc"}
 
   (* what a refused compile says: the stage a lint names, or the first
      words of what stopped it *)
@@ -373,9 +386,9 @@ struct
 
   (* make check's: the mutant applies and builds *)
   fun builtJob id () =
-    let val (rbc, status) = build (named id)
+    let val (rbc, status) = build (named id, "built-" ^ id)
     in
-      rmTree (dirOf id);
+      rmTree (dirOf ("built-" ^ id));
       need (isSome rbc, id ^ " no longer compiles: " ^ status);
       say ("PASS compiler-mutants: " ^ id ^ " builds\n")
     end
@@ -385,7 +398,7 @@ struct
       val m = named id
       val d = dirOf id
       val (gcomp, glint, gruns) = goodTables ()
-      val (rbc, status) = build m
+      val (rbc, status) = build (m, id)
       fun verdict text = (mkdirs (dirOf "verdicts"); write (dirOf "verdicts/" ^ id, text ^ "\n"); say (text ^ "\n"))
     in
       case rbc of
@@ -600,7 +613,7 @@ struct
       case #catches c of
         [] => cacheVerdict (id, "ARGUED " ^ id ^ " (" ^ #class m ^ "): " ^ #note m)
       | catches =>
-          case build m of
+          case build (m, id) of
             (NONE, status) => (cacheVerdict (id, "STILLBORN " ^ id ^ ": " ^ status); raise Failed (id ^ " no longer compiles: " ^ status))
           | (SOME rbc, _) =>
               let

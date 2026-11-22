@@ -1,5 +1,81 @@
 {
  "signatures": {
+  "CODE_POINT": {
+   "doc": "Code points: the general category of each, and its simple case\nmappings, by the Unicode Character Database.\n\nThe general category sorts every code point into one of 30 categories,\neach in one of seven classes: letters, marks, numbers, punctuation,\nsymbols, separators, and the rest (controls, formats, surrogates,\nprivate use, and the code points unassigned). A letter is uppercase,\nlowercase or titlecase where it has case, and a modifier or other\nletter where it has none, as those of CJK, Hebrew and Arabic.\n\nA simple case mapping maps a code point to one code point, its\nuppercase, lowercase or titlecase, or to itself where it has none. The\nfull mappings of SpecialCasing.txt, which map one code point to\nseveral, as ß to SS, and depend on the language or the letters around,\nare not here; nor is case folding. The simple mappings are not\ninverses of each other: `toLower 0x130` is `0x69`, i, whose uppercase\nis I and not İ.\n\nThe data is that of the version `version`, and changes with it: a code\npoint unassigned today may be a letter in a later version.\n\n",
+   "page": "sig/CODE_POINT.md",
+   "members": [
+    {
+     "kind": "val",
+     "name": "version",
+     "spec": "val version : string",
+     "doc": "The version of Unicode whose data is followed.\n\n**Example** `version = \"18.0.0\"`\n\n",
+     "page": "sig/CODE_POINT.md#val-version"
+    },
+    {
+     "kind": "datatype",
+     "name": "category",
+     "spec": "datatype category =\n    UppercaseLetter\n  | LowercaseLetter\n  | TitlecaseLetter\n  | ModifierLetter\n  | OtherLetter\n  | NonspacingMark\n  | SpacingMark\n  | EnclosingMark\n  | DecimalNumber\n  | LetterNumber\n  | OtherNumber\n  | ConnectorPunctuation\n  | DashPunctuation\n  | OpenPunctuation\n  | ClosePunctuation\n  | InitialPunctuation\n  | FinalPunctuation\n  | OtherPunctuation\n  | MathSymbol\n  | CurrencySymbol\n  | ModifierSymbol\n  | OtherSymbol\n  | SpaceSeparator\n  | LineSeparator\n  | ParagraphSeparator\n  | Control\n  | Format\n  | Surrogate\n  | PrivateUse\n  | Unassigned",
+     "doc": "The values of the property General\\_Category (UAX \\#44, 5.7.1), each\nwith its abbreviation, which `abbreviation` gives.\n\n",
+     "page": "sig/CODE_POINT.md#type-category"
+    },
+    {
+     "kind": "val",
+     "name": "category",
+     "spec": "val category : int -> category",
+     "doc": "`category c` is the general category of the code point `c`, and\n`Unassigned` for an integer that is no code point, below 0 or above\n0x10FFFF.\n\nBelow 0x100 it costs a character of a string; above, a binary search\nover ranges, built at the first use.\n\n**Example** `category 0x41 = UppercaseLetter andalso category 0x3BB = LowercaseLetter`\n\n**Example** `category 0x4E2D = OtherLetter andalso category 0x1C5 = TitlecaseLetter`, 中 and ǅ\n\n**Example** `category 0x2B = MathSymbol andalso category 0x5F = ConnectorPunctuation`\n\n**Example** `category 0xD800 = Surrogate andalso category 0x378 = Unassigned andalso category ~1 = Unassigned`\n\n",
+     "page": "sig/CODE_POINT.md#val-category"
+    },
+    {
+     "kind": "datatype",
+     "name": "major",
+     "spec": "datatype major =\n    Letter\n  | Mark\n  | Number\n  | Punctuation\n  | Symbol\n  | Separator\n  | Other",
+     "doc": "The class of a category, the first letter of its abbreviation.\n\n",
+     "page": "sig/CODE_POINT.md#type-major"
+    },
+    {
+     "kind": "val",
+     "name": "major",
+     "spec": "val major : category -> major",
+     "doc": "`major g` is the class of the category `g`.\n\n**Example** `major OtherLetter = Letter andalso major (category 0x2B) = Symbol andalso major (category 0x20) = Separator`\n\n",
+     "page": "sig/CODE_POINT.md#val-major"
+    },
+    {
+     "kind": "val",
+     "name": "abbreviation",
+     "spec": "val abbreviation : category -> string",
+     "doc": "`abbreviation g` is the two letters that stand for the category `g`\nin the Unicode Character Database.\n\n**Example** `abbreviation UppercaseLetter = \"Lu\" andalso abbreviation Unassigned = \"Cn\"`\n\n",
+     "page": "sig/CODE_POINT.md#val-abbreviation"
+    },
+    {
+     "kind": "val",
+     "name": "fromAbbreviation",
+     "spec": "val fromAbbreviation : string -> category option",
+     "doc": "`fromAbbreviation s` is the category whose abbreviation is `s`, and\n`NONE` where there is none: the inverse of `abbreviation`.\n\n**Example** `fromAbbreviation \"Nd\" = SOME DecimalNumber andalso fromAbbreviation \"L\" = NONE`\n\n",
+     "page": "sig/CODE_POINT.md#val-fromabbreviation"
+    },
+    {
+     "kind": "val",
+     "name": "toUpper",
+     "spec": "val toUpper : int -> int",
+     "doc": "`toUpper c` is the property Simple\\_Uppercase\\_Mapping of the code point\n`c`: its uppercase, or `c` where it has none, as for an integer that\nis no code point.\n\nASCII costs no table; the rest, a binary search over runs of\nmappings, built at the first use.\n\n**Law** `toUpper (toUpper c) = toUpper c`\n\n**Example** `toUpper 0x61 = 0x41 andalso toUpper 0xFF = 0x178 andalso toUpper 0x41 = 0x41`\n\n**Example** `toUpper 0xDF = 0xDF`, ß, whose full uppercase is SS\n\n**Example** `toUpper 0x1C6 = 0x1C4 andalso toUpper 0x10D0 = 0x1C90`, ǆ and Georgian ა\n\n**Counterexample** `toUpper (toLower 0x130) = 0x130`, İ, whose lowercase is i\n\n",
+     "page": "sig/CODE_POINT.md#val-toupper"
+    },
+    {
+     "kind": "val",
+     "name": "toLower",
+     "spec": "val toLower : int -> int",
+     "doc": "`toLower c` is the property Simple\\_Lowercase\\_Mapping of the code point\n`c`: its lowercase, or `c` where it has none.\n\n**Law** `toLower (toLower c) = toLower c`\n\n**Example** `toLower 0x41 = 0x61 andalso toLower 0x130 = 0x69 andalso toLower 0x1C5 = 0x1C6`\n\n",
+     "page": "sig/CODE_POINT.md#val-tolower"
+    },
+    {
+     "kind": "val",
+     "name": "toTitle",
+     "spec": "val toTitle : int -> int",
+     "doc": "`toTitle c` is the property Simple\\_Titlecase\\_Mapping of the code point\n`c`: its titlecase, or `c` where it has none.\n\nIt is `toUpper c` but for the digraphs, whose titlecase is a letter\nof its own, and the Georgian letters, which are their own titlecase.\n\n**Law** `toUpper (toTitle c) = toUpper c`\n\n**Example** `toTitle 0x1C6 = 0x1C5 andalso toTitle 0x61 = 0x41 andalso toTitle 0x10D0 = 0x10D0`\n\n",
+     "page": "sig/CODE_POINT.md#val-totitle"
+    }
+   ]
+  },
   "DISPLAY_WIDTH": {
    "doc": "Display widths: how many columns of a terminal a code point takes.\n\nA terminal gives a character one column, or two for the wide characters\nof East Asian scripts and for emoji, or none for a mark that combines\nwith the character before it. The widths come from the Unicode Character\nDatabase (East Asian Width, the general categories, emoji presentation)\nof the version `version`, by tables that scripts/gen-unicode-tables.py\nmakes. Characters of ambiguous East Asian width are one column, as\nterminals outside East Asian locales show them. What is shown of a\ngrapheme cluster as a whole -- an emoji joined to another, a flag -- is\n`Grapheme.width`'s.\n\n",
    "page": "sig/DISPLAY_WIDTH.md",
@@ -402,6 +478,7 @@
   }
  },
  "structures": {
+  "CodePoint": "CODE_POINT",
   "DisplayWidth": "DISPLAY_WIDTH",
   "Grapheme": "GRAPHEME",
   "Identifier": "IDENTIFIER",

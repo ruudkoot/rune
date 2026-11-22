@@ -369,15 +369,25 @@ static int real_to_int(VM *vm, double r) {
     if (r >= -(double)INT_MIN_VALUE || r < (double)INT_MIN_VALUE) return raise_with(vm, 1, EXN_OVERFLOW);
     return ret(vm, 1, mk_int((int64_t)r));
 }
+/* The whole real nearest x, a tie going to the even one, whatever the
+   rounding mode (real_round, real_round_r); the sign is x's. Not floor
+   (x + 0.5): the sum is rounded, so 2^52 + 1 gives 2^52 + 2 (the sum is a
+   tie, which goes to even), and upward the greatest real below 1/2 gives 1.
+   floor x is exact, and so is d = x - floor x but where -1/2 < x < 0: d is
+   above 1/2 there and rounds to no less, which gives the 0 that is right
+   all the same. A real with a fraction is below 2^52, so below + 1.0 is
+   exact. */
+static double round_to_even(double x) {
+    if (isnan(x) || isinf(x)) return x;
+    double below = floor(x), d = x - below, r;
+    if (d < 0.5) r = below;
+    else if (d > 0.5) r = below + 1.0;
+    else r = fmod(below, 2.0) == 0.0 ? below : below + 1.0;
+    return copysign(r, x);
+}
 static int p_real_floor(VM *vm) { REAL1("real_floor"); return real_to_int(vm, floor(x)); }
 static int p_real_ceil(VM *vm) { REAL1("real_ceil"); return real_to_int(vm, ceil(x)); }
-static int p_real_round(VM *vm) {
-    REAL1("real_round");
-    double r = floor(x + 0.5);
-    /* round half to even */
-    if (r - x == 0.5 && fmod(r, 2.0) != 0.0) r -= 1.0;
-    return real_to_int(vm, r);
-}
+static int p_real_round(VM *vm) { REAL1("real_round"); return real_to_int(vm, round_to_even(x)); }
 static int p_real_trunc(VM *vm) { REAL1("real_trunc"); return real_to_int(vm, trunc(x)); }
 
 /* SML rendering: ~ for minus, E for exponent, always a fractional part or exponent. */
@@ -545,16 +555,7 @@ static int p_real_is_nan(VM *vm) { REAL1("real_is_nan"); return ret(vm, 1, mk_bo
 static int p_real_floor_r(VM *vm) { REAL1("real_floor_r"); return ret(vm, 1, mk_real(floor(x))); }
 static int p_real_ceil_r(VM *vm) { REAL1("real_ceil_r"); return ret(vm, 1, mk_real(ceil(x))); }
 static int p_real_trunc_r(VM *vm) { REAL1("real_trunc_r"); return ret(vm, 1, mk_real(trunc(x))); }
-/* Ties to even whatever the rounding mode is; x - floor x is exact. */
-static int p_real_round_r(VM *vm) {
-    REAL1("real_round_r");
-    if (isnan(x) || isinf(x)) return ret(vm, 1, mk_real(x));
-    double below = floor(x), d = x - below, r;
-    if (d < 0.5) r = below;
-    else if (d > 0.5) r = below + 1.0;
-    else r = fmod(below, 2.0) == 0.0 ? below : below + 1.0;
-    return ret(vm, 1, mk_real(copysign(r, x)));
-}
+static int p_real_round_r(VM *vm) { REAL1("real_round_r"); return ret(vm, 1, mk_real(round_to_even(x))); }
 static int p_real_sign_bit(VM *vm) { REAL1("real_sign_bit"); return ret(vm, 1, mk_bool(signbit(x) != 0)); }
 static int p_real_copy_sign(VM *vm) { REAL2("real_copy_sign"); return ret(vm, 2, mk_real(copysign(x, y))); }
 static int p_real_frexp_man(VM *vm) { REAL1("real_frexp_man"); int e; return ret(vm, 1, mk_real(frexp(x, &e))); }
@@ -1956,11 +1957,24 @@ static FILE *file_of(VM *vm, Value h, const char *prim) {
     if (i < 0 || (uint64_t)i >= vm->nfiles) return NULL;
     return vm->files[i];
 }
+/* A file opened to read and to write (mode 3) goes from writing to
+   reading, or back, through a seek to where it is, as a C stream wants
+   between the two (C17 7.21.5.3): its mode's FILE_READ and FILE_WROTE say
+   which it did last. A seek (file_seek) says neither. */
+enum { FILE_MODE = 0x0f, FILE_READ = 0x10, FILE_WROTE = 0x20 };
+static void file_turn(VM *vm, Value h, int to) {
+    int64_t i = val_imm(h);
+    if (i < 0 || (uint64_t)i >= vm->nfiles || !vm->files[i] || (vm->file_modes[i] & FILE_MODE) != 3) return;
+    uint8_t m = vm->file_modes[i];
+    if (to && (m & (FILE_READ | FILE_WROTE)) && !(m & to)) sys_fseek(vm->files[i], 0, SEEK_CUR);
+    vm->file_modes[i] = (uint8_t)((m & FILE_MODE) | to);
+}
 static int p_file_open(VM *vm) {
     Obj *s = check_obj(vm, ARG(1), K_STRING, "file_open");
     check_tag(vm, ARG(0), T_INT, "file_open");
     int64_t mode = val_imm(ARG(0));
-    const char *m = mode == 0 ? "rb" : mode == 1 ? "wb" : mode == 2 ? "ab" : NULL;
+    /* 3: to read and to write, the file kept (sys_fopen_rw) */
+    const char *m = mode == 0 ? "rb" : mode == 1 ? "wb" : mode == 2 ? "ab" : mode == 3 ? "r+b" : NULL;
     if (!m) vm_fatal(vm, "primitive file_open: bad mode");
     char *path = malloc((size_t)obj_len(s) + 1);
     if (!path) vm_fatal(vm, "out of memory");
@@ -1968,7 +1982,7 @@ static int p_file_open(VM *vm) {
     path[obj_len(s)] = 0;
     FILE *f = NULL;
     if (strlen(path) != obj_len(s)) vm->io_errno = EINVAL;   /* embedded NUL */
-    else { f = sys_fopen(path, m); if (!f) vm->io_errno = errno; }
+    else { f = mode == 3 ? sys_fopen_rw(path) : sys_fopen(path, m); if (!f) vm->io_errno = errno; }
     if (!f) { free(path); return ret(vm, 2, mk_con0(0)); }
     char *kept = path;
     if (vm->nfiles == vm->files_cap) {
@@ -1987,38 +2001,46 @@ static int p_file_open(VM *vm) {
     Value r = mk_some(vm, mk_int(h));   /* may collect; the path string is no longer needed */
     return ret(vm, 2, r);
 }
+/* false where fclose fails (the last of the buffer not written: a full
+   device), io_errno saying why; the handle is closed either way */
 static int p_file_close(VM *vm) {
     check_tag(vm, ARG(0), T_INT, "file_close");
     int64_t i = val_imm(ARG(0));
+    int ok = 1;
     if (i >= 3 && (uint64_t)i < vm->nfiles && vm->files[i]) {
-        fclose(vm->files[i]);
+        if (fclose(vm->files[i]) != 0) { vm->io_errno = errno; ok = 0; }
         vm->files[i] = NULL;
         free(vm->file_paths[i]);
         vm->file_paths[i] = NULL;
     }
-    return ret(vm, 1, mk_unit());
+    return ret(vm, 1, mk_bool(ok));
 }
 static int p_file_write(VM *vm) {
     FILE *f = file_of(vm, ARG(1), "file_write");
     Obj *s = check_obj(vm, ARG(0), K_STRING, "file_write");
     if (!f) { vm->io_errno = EBADF; return ret(vm, 2, mk_bool(0)); }
+    file_turn(vm, ARG(1), FILE_WROTE);
     if (f == stderr) fflush(stdout);
     if (fwrite(obj_bytes(s), 1, obj_len(s), f) != obj_len(s)) { vm->io_errno = errno; return ret(vm, 2, mk_bool(0)); }
     return ret(vm, 2, mk_bool(1));
 }
+/* false where fflush fails (a full device), io_errno saying why; true for
+   a handle that is closed or none, which holds nothing */
 static int p_file_flush(VM *vm) {
     FILE *f = file_of(vm, ARG(0), "file_flush");
-    if (f) fflush(f);
-    return ret(vm, 1, mk_unit());
+    if (f && fflush(f) != 0) { vm->io_errno = errno; return ret(vm, 1, mk_bool(0)); }
+    return ret(vm, 1, mk_bool(1));
 }
 static int p_file_read_line(VM *vm) {
     FILE *f = file_of(vm, ARG(0), "file_read_line");
     if (!f) return ret(vm, 1, mk_con0(0));
+    file_turn(vm, ARG(0), FILE_READ);
     return read_line(vm, f, 1);
 }
 static int p_file_read_all(VM *vm) {
     FILE *f = file_of(vm, ARG(0), "file_read_all");
     if (!f) return ret(vm, 1, mk_ptr(vm_string_from(vm, "", 0)));
+    file_turn(vm, ARG(0), FILE_READ);
     return read_all(vm, f, 1);
 }
 /* Read at most n bytes; the empty string at end of file. */
@@ -2028,6 +2050,7 @@ static int p_file_read_vec(VM *vm) {
     int64_t n = val_imm(ARG(0));
     if (n < 0 || n > MAX_STRING) return raise_with(vm, 2, EXN_SIZE);
     if (!f) return ret(vm, 2, mk_ptr(vm_string_from(vm, "", 0)));
+    file_turn(vm, ARG(1), FILE_READ);
     char *buf = malloc((size_t)n ? (size_t)n : 1);
     if (!buf) vm_fatal(vm, "out of memory");
     /* at most n bytes, waiting for one (PrimIO's readVec): a file's from
@@ -2079,7 +2102,10 @@ static int p_file_seek(VM *vm) {
     FILE *f = file_of(vm, ARG(1), "file_seek");
     check_tag(vm, ARG(0), T_INT, "file_seek");
     int ok = f && val_imm(ARG(0)) >= 0 && sys_fseek(f, val_imm(ARG(0)), SEEK_SET) == 0;
-    if (!ok) vm->io_errno = f ? errno : EBADF;
+    if (ok) file_turn(vm, ARG(1), 0);
+    /* below 0 no seek is tried: EINVAL, which h_errno promises, not what
+       the call before left in errno */
+    if (!ok) vm->io_errno = !f ? EBADF : val_imm(ARG(0)) < 0 ? EINVAL : errno;
     return ret(vm, 2, mk_int(ok ? 0 : -1));
 }
 
@@ -2363,6 +2389,48 @@ static int p_rt_share(VM *vm) { return ret(vm, 1, mk_int((int64_t)vm_share(vm)))
 static int p_repl_printer_add(VM *vm) { return ret(vm, 1, mk_unit()); }
 /* the library's own cast: the value, whatever its type (RuneShow) */
 static int p_unsafe_cast(VM *vm) { return ret(vm, 1, ARG(0)); }
+
+/* ---- suspensions (docs/ir.md, Suspensions; docs/plans/language/haskell98.md, D11) ----
+   thunk_make: the fresh closure made a suspension in place; one that
+   captures nothing may be a constant the program shares, so a suspension of
+   its function is made instead. runtime/register/fastprim.h and the JIT
+   (emit.c) do the first in line. */
+static int p_thunk_make(VM *vm) {
+    Obj *c = check_obj(vm, ARG(0), K_CLOSURE, "thunk_make");
+    if (obj_len(c) >= 2) { obj_become_thunk(c); return ret(vm, 1, ARG(0)); }
+    Obj *t = vm_alloc_fields(vm, K_THUNK, THUNK_UNEVALUATED, 1);
+    obj_fill_field(t, 0, obj_field(val_ptr(ARG(0)), 0));   /* the closure read again: the allocation may have moved it */
+    return ret(vm, 1, mk_ptr(t));
+}
+/* what each target makes instructions of (FORCE, BLACKHOLE, UPDATE): a
+   program that calls one has code no compiler made */
+static int p_thunk_force(VM *vm) { vm_fatal(vm, "primitive thunk_force: the compiler makes it FORCE"); return 0; }
+static int p_thunk_blackhole(VM *vm) { vm_fatal(vm, "primitive thunk_blackhole: the compiler makes it BLACKHOLE"); return 0; }
+static int p_thunk_self_update(VM *vm) { vm_fatal(vm, "primitive thunk_self_update: the compiler makes it UPDATE"); return 0; }
+/* any_check (rune --check-casts): a value a cast says is evaluated, which
+   a suspension or an indirection is not */
+static int p_any_check(VM *vm) {
+    Value v = ARG(0);
+    if (val_is_ptr(v) && (obj_kind(val_ptr(v)) == K_THUNK || obj_kind(val_ptr(v)) == K_IND))
+        vm_fatal(vm, "a suspension where a cast says the value is evaluated (any_check)");
+    return ret(vm, 1, v);
+}
+/* thunk_selector (the haskell98 roadmap's D17, C: Wadler's rule): s, the
+   suspension of a selector of field i of the tuple t that a pattern binding
+   made, marked a selector (THUNK_SELECTOR + i, value.h), which a collection
+   gives that field of the tuple once the tuple is evaluated (gc.h,
+   gc_select). Only a suspension unevaluated whose first capture is t itself
+   -- its code the selector's -- and a field the contag can name (below
+   256, which the JIT's BLACKHOLE needs); else nothing, and the selector is
+   a suspension as any other. ARG(2) is s, ARG(1) t, ARG(0) i. */
+static int p_thunk_selector(VM *vm) {
+    Value s = ARG(2), t = ARG(1);
+    int64_t i = val_imm(ARG(0));
+    if (val_is_ptr(s) && obj_kind(val_ptr(s)) == K_THUNK && obj_contag(val_ptr(s)) == THUNK_UNEVALUATED
+        && obj_len(val_ptr(s)) >= 2 && obj_field(val_ptr(s), 1) == t && i >= 0 && THUNK_SELECTOR + i < 256)
+        val_ptr(s)->contag = (uint16_t)(THUNK_SELECTOR + i);
+    return ret(vm, 3, mk_unit());
+}
 
 /* One frame as (name, file, line, column), built on the VM stack: every
    allocation here can collect, and the strings must survive the next one. */
@@ -3214,6 +3282,78 @@ static int p_intinf_power(VM *vm) {
 static int p_intinf_decimal(VM *vm) {
     Value v = vm_intinf_decimal(vm, ARG(0));
     return ret(vm, 1, v);
+}
+
+/* IntInf.int (haskell98 M31, D20 D): an immediate where the number fits
+   63 bits, else a pair of its sign and magnitude (runtime/intinf.h). Two
+   immediates are worked on here, as runtime/register/fastprim.h and the
+   JIT do in line; the rest is runtime/intinf.c's. */
+static int intinf_arith(VM *vm, unsigned op, const char *name) {
+    Value x = ARG(1), y = ARG(0);
+    if (val_is_imm(x) && val_is_imm(y)) {
+        int64_t a = val_imm(x), b = val_imm(y), r;
+        switch (op) {
+        case INTINF_ADD: if (!add_ov64(a, b, &r) && int_fits(r)) return ret(vm, 2, mk_imm(r)); break;
+        case INTINF_SUB: if (!sub_ov64(a, b, &r) && int_fits(r)) return ret(vm, 2, mk_imm(r)); break;
+        case INTINF_MUL: if (!mul_ov64(a, b, &r) && int_fits(r)) return ret(vm, 2, mk_imm(r)); break;
+        default:
+            if (b == 0) return raise_with(vm, 2, EXN_DIV);
+            if (b != -1) {
+                int64_t q = a / b, m = a % b;
+                if ((op == INTINF_DIV || op == INTINF_MOD) && m != 0 && ((m < 0) != (b < 0))) { q -= 1; m += b; }
+                return ret(vm, 2, mk_imm(op == INTINF_QUOT || op == INTINF_DIV ? q : m));
+            }
+        }
+    } else if (op != INTINF_ADD && op != INTINF_SUB && op != INTINF_MUL && vm_intinf_is_zero(vm, y, name)) {
+        vm_intinf_check_value(vm, x, name);
+        return raise_with(vm, 2, EXN_DIV);
+    }
+    return ret(vm, 2, vm_intinf_arith(vm, op, x, y, name));
+}
+static int p_intinf_add(VM *vm) { return intinf_arith(vm, INTINF_ADD, "intinf_add"); }
+static int p_intinf_sub(VM *vm) { return intinf_arith(vm, INTINF_SUB, "intinf_sub"); }
+static int p_intinf_mul(VM *vm) { return intinf_arith(vm, INTINF_MUL, "intinf_mul"); }
+static int p_intinf_div(VM *vm) { return intinf_arith(vm, INTINF_DIV, "intinf_div"); }
+static int p_intinf_mod(VM *vm) { return intinf_arith(vm, INTINF_MOD, "intinf_mod"); }
+static int p_intinf_quot(VM *vm) { return intinf_arith(vm, INTINF_QUOT, "intinf_quot"); }
+static int p_intinf_rem(VM *vm) { return intinf_arith(vm, INTINF_REM, "intinf_rem"); }
+static int p_intinf_neg(VM *vm) { return ret(vm, 1, vm_intinf_negate(vm, ARG(0), "intinf_neg")); }
+static int p_intinf_lt(VM *vm) { return ret(vm, 2, mk_bool(vm_intinf_compare(vm, ARG(1), ARG(0), "intinf_lt") < 0)); }
+static int p_intinf_le(VM *vm) { return ret(vm, 2, mk_bool(vm_intinf_compare(vm, ARG(1), ARG(0), "intinf_le") <= 0)); }
+static int p_intinf_gt(VM *vm) { return ret(vm, 2, mk_bool(vm_intinf_compare(vm, ARG(1), ARG(0), "intinf_gt") > 0)); }
+static int p_intinf_ge(VM *vm) { return ret(vm, 2, mk_bool(vm_intinf_compare(vm, ARG(1), ARG(0), "intinf_ge") >= 0)); }
+static int p_intinf_order(VM *vm) { return ret(vm, 2, mk_con0(1 + vm_intinf_compare(vm, ARG(1), ARG(0), "intinf_order"))); }
+/* an int as itself where it is an immediate; under RUNE_INT64 one past 63
+   bits is a box, whose number is a large IntInf.int */
+static int p_intinf_from_int(VM *vm) {
+    check_tag(vm, ARG(0), T_INT, "intinf_from_int");
+    if (val_is_imm(ARG(0))) return ret(vm, 1, ARG(0));
+    return ret(vm, 1, vm_intinf_of_int64(vm, val_int(ARG(0))));
+}
+static int p_intinf_to_int(VM *vm) {
+    int64_t i;
+    if (!vm_intinf_to_int64(vm, ARG(0), &i, "intinf_to_int") || !int_fits_lang(i)) return raise_with(vm, 1, EXN_OVERFLOW);
+    return ret(vm, 1, mk_int(i));
+}
+static int p_intinf_is_small(VM *vm) { return ret(vm, 1, mk_bool(vm_intinf_check_value(vm, ARG(0), "intinf_is_small"))); }
+/* (negative, magnitude): a large value's own pair, or one made of an immediate */
+static int p_intinf_parts(VM *vm) {
+    if (!vm_intinf_check_value(vm, ARG(0), "intinf_parts")) return ret(vm, 1, ARG(0));
+    int64_t i = val_imm(ARG(0));
+    vm_push(vm, vm_intinf_magnitude_of_small(vm, i));
+    Obj *pair = vm_alloc_fields(vm, K_TUPLE, 0, 2);
+    obj_fill_field(pair, 0, mk_bool(i < 0));
+    obj_fill_field(pair, 1, vm_pop(vm));
+    return ret(vm, 1, mk_ptr(pair));
+}
+static int p_intinf_make(VM *vm) {
+    int neg = intinf_boolean(vm, ARG(1));
+    int64_t small;
+    if (vm_intinf_fits(vm, neg, ARG(0), &small, "intinf_make")) return ret(vm, 2, mk_imm(small));
+    Obj *pair = vm_alloc_fields(vm, K_TUPLE, 0, 2);
+    obj_fill_field(pair, 0, mk_bool(neg));
+    obj_fill_field(pair, 1, ARG(0));   /* the magnitude, rooted as an argument across the allocation */
+    return ret(vm, 2, mk_ptr(pair));
 }
 
 /* Pseudo-terminal ownership stays in the system layer; SML gets only a

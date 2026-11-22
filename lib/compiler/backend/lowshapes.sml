@@ -34,7 +34,8 @@
      tag comes first on every way there (IfTag, Switch, or ConTag compared
      with a constant by imm_eq, poly_eq or int_eq, then If), or it was made
      by that constructor, or it is a block's parameter every jump to which
-     passes such a value. A datatype open to a functor's argument, whose
+     passes such a value; the ways into a handler's block are those to
+     where it was pushed. A datatype open to a functor's argument, whose
      layout a descriptor says (Ty.isOpen, Ty.flatOf), is left out.
    --pass-stats counts what was checked against a known shape and what was
    not ("shaped", "unshaped" on the line of `shapes`). RUNE_SHAPES=1 runs it
@@ -65,6 +66,8 @@ struct
     | Ty.ExnCon => Opaque "exception constructor"
     | Ty.Gen _ => Unknown
     | Ty.Var _ => Unknown
+    | Ty.App _ => Unknown
+    | Ty.Forall (_, b) => ofTy consOf b
     | Ty.Con (stamp, _, _) =>
         if List.exists (fn s => s = stamp) immediates then Imm
         else if stamp = #stamp Types.stringTycon orelse stamp = #stamp Types.bytearrayTycon then Opaque "bytes"
@@ -84,7 +87,7 @@ struct
   (* what an operation makes, where it alone says *)
   fun made (oper : operation) : shape =
     case oper of
-      Const (Lambda.CString _) => Opaque "bytes"
+      Const (Literal.CString _) => Opaque "bytes"
     | Const _ => Imm
     | Unit => Imm
     | Tuple [] => Imm
@@ -315,9 +318,11 @@ struct
              jump back to a loop's head, where what holds was known before
              it: a variable's tag never changes) *)
           val entries : facts option array = Array.array (Int.max (nb, 1), NONE)
-          (* a loop's head, which a jump back goes to, and a handler's block,
-             entered where its region raises: what holds there is not
-             worked out *)
+          (* a loop's head, which a jump back goes to, and a handler's block
+             pushed after it: what holds there is not worked out. A
+             handler's block pushed before it knows what held where each push
+             was: its region, where it is entered from, comes after the push,
+             and a variable's tag never changes *)
           val backInto = Array.array (Int.max (nb, 1), false)
           (* reached on a way from the entry: a block that is not is dead,
              and nothing is known of its tags *)
@@ -460,6 +465,7 @@ struct
                       | _ => ())
                  | ConTag y => subject (here, fn () => "a ConTag", y, isData)
                  | Call (fv, _) => subject (here, fn () => "a Call", fv, fn Clo => true | _ => false)
+                 | CallN (fv, _) => subject (here, fn () => "a CallN", fv, fn Clo => true | _ => false)
                  | CallK (g, xs) => callee (here, g, xs)
                  | Closure (g, vs) =>
                      ignore (List.foldl (fn (SOME y, k) => (captured (here, g, k, y); k + 1) | (NONE, k) => k + 1) 0 vs)
@@ -487,6 +493,7 @@ struct
               fun argTags xs = SOME (List.map (fn x => known (facts, x)) xs)
               fun goto (l, xs, facts') = case blockOf l of SOME j => arrive (i, j, facts', argTags xs) | NONE => ()
               fun edge (l, facts') = case blockOf l of SOME j => arrive (i, j, facts', NONE) | NONE => ()
+              val () = List.app (fn Push h => edge (h, facts) | _ => ()) instrs
               (* a test of tags: If on imm_eq of a ConTag of y and a constant,
                  or of the ConTags of two values *)
               fun tagTest c =
@@ -496,7 +503,7 @@ struct
                       let
                         fun parts (t, k) =
                           case (makesOf (t), makesOf (k)) of
-                            (SOME (ConTag y), SOME (Const (Lambda.CInt n))) =>
+                            (SOME (ConTag y), SOME (Const (Literal.CInt n))) =>
                               if IntInf.>= (n, IntInf.fromInt 0) andalso IntInf.< (n, IntInf.fromInt 65536)
                               then SOME (OfTag (y, IntInf.toInt n)) else NONE
                           | (SOME (ConTag y), SOME (ConTag z)) => SOME (Same (y, z))
@@ -528,11 +535,13 @@ struct
                    edge (d, narrow (facts, y, fn ts => without (ts, List.map #1 cases))))
               | TailCallK (g, xs) => callee (here, g, xs)
               | TailCall (fv, _) => subject (here, fn () => "a TailCall", fv, fn Clo => true | _ => false)
+              | TailCallN (fv, _) => subject (here, fn () => "a TailCallN", fv, fn Clo => true | _ => false)
               | _ => ()
             end
           (* the loops' heads and the handlers' blocks *)
           val () = Vector.appi (fn (i, {instrs, transfer, ...} : block) =>
-                                  (List.app (fn Push h => (case blockOf h of SOME j => Array.update (backInto, j, true) | NONE => ())
+                                  (List.app (fn Push h => (case blockOf h of SOME j => if j <= i then Array.update (backInto, j, true) else ()
+                                                         | NONE => ())
                                               | _ => ()) instrs;
                                    List.app (fn l => case blockOf l of SOME j => if j <= i then Array.update (backInto, j, true) else ()
                                                                      | NONE => ())

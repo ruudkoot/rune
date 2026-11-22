@@ -1,0 +1,182 @@
+(* run: after hs-rts.mid *)
+(* seq, error as Raise, a pattern-match failure, catch over an IOError.
+   IO a is unit -> a; a program is in direct style here, as `>>=` at IO
+   inlines. The catch-all gtry is the harness's, not Haskell's.
+     print (seq (1 :: Int) (2 :: Int))
+     print (const 1 (error "unused"))
+     try: print (seq (error "boom" :: Int) (3 :: Int))           ErrorCall boom
+     let t = error "again" :: Int
+     try: print t   twice: raises each time, no <<loop>>
+     try: print (head' ([] :: [Int]))                            PatternMatchFail
+     let x = x + 1 :: Int
+     try: print x   twice                                        NonTermination
+     r <- catch (ioError (userError "bad") >> return 0)
+                (\e -> putStrLn ("caught: " ++ ioeGetErrorString e) >> return 7)
+     print r
+     try: catch (error "not io" >> return ()) (\_ -> putStrLn "wrong")   ErrorCall not io
+     s <- catch (readFile "/nonexistent/x") (\e -> return "io failed")
+     putStrLn s
+     try: print (1 `div` (0 :: Int))     prim's Div
+     error "final"    rhc's top-level handler: message on stderr, exit 1 *)
+(datatype option ('a) (0 "NONE") (1 "SOME" : 'a))
+(funs
+  (fn gseq ['a 'b] ((vsqA : 'a susp) (vsqB : 'b susp)) : 'b
+    (let (vsqV : 'a) (app gforce['a] vsqA)
+    (return (app gforce['b] vsqB))))
+  (fn gconst ['a 'b] ((vcnA : 'a susp) (vcnB : 'b susp)) : 'a
+    (return (app gforce['a] vcnA)))
+  (fn gerrorCode ['a] ((veMsg : string)) : unit -> 'a
+    (fun
+      (fn veC ((veU : unit)) : 'a
+        (let (veE : exn) (mkexn gexnError veMsg)
+        (raise veE)))
+      (return veC)))
+  (fn gerror ['a] ((verM : string)) : 'a susp
+    (let (verC : unit -> 'a) (app gerrorCode['a] verM)
+    (return (app gdelay['a] verC))))
+  (fn ghead ['a] ((vhdL : 'a hlist susp)) : 'a
+    (let (vhdV : 'a hlist) (app gforce['a hlist] vhdL)
+    (let (vhdT : int) (tag vhdV)
+    (let (vhdC : bool) (prim poly_eq vhdT 1 : (int * int) -> bool)
+    (if vhdC
+      (let (vhdP : 'a susp * 'a hlist susp) (decon 1 vhdV : 'a hlist)
+      (let (vhdH : 'a susp) (select 0 vhdP)
+      (return (app gforce['a] vhdH))))
+      (let (vhdE : exn) (mkexn gexnPat "exceptions.hs:7:1-20: Non-exhaustive patterns in function head'")
+      (raise vhdE)))))))
+  (fn gioError ['a] ((vioM : string)) : 'a
+    (let (vioE : exn) (mkexn gexnIO vioM)
+    (raise vioE)))
+  (fn gcatch ['a] ((vctA : unit -> 'a) (vctH : string -> unit -> 'a)) : 'a
+    (handle vctX
+      (return (app vctA ()))
+      (let (vctC : exncon) (exncon vctX)
+      (let (vctI : bool) (prim ptr_eq vctC gexnIO : (exncon * exncon) -> bool)
+      (if vctI
+        (let (vctM : string) (exnarg vctX : string)
+        (let (vctK : unit -> 'a) (app vctH vctM)
+        (return (app vctK ()))))
+        (raise vctX))))))
+  (fn greadFile ((vrfP : string)) : string
+    (let (vrfO : int option) (prim file_open vrfP 0 : (string * int) -> int option)
+    (let (vrfT : int) (tag vrfO)
+    (let (vrfC : bool) (prim poly_eq vrfT 1 : (int * int) -> bool)
+    (if vrfC
+      (let (vrfFd : int) (decon 1 vrfO : int option)
+      (return (prim file_read_all vrfFd : int -> string)))
+      (return (app gioError[string] "openFile: does not exist")))))))
+  (fn gputIntS ((vpisX : int susp)) : unit
+    (let (vpisI : int) (app gforce[int] vpisX)
+    (return (app gputInt vpisI))))
+  (* the harness's catch-all: the name of what was raised, and a string payload where it has one *)
+  (fn gtry ((vtrA : unit -> unit)) : unit
+    (handle vtrX
+      (return (app vtrA ()))
+      (let (vtrN : string) (prim exn_name vtrX : exn -> string)
+      (let (vtrC : exncon) (exncon vtrX)
+      (let (vtrE : bool) (prim ptr_eq vtrC gexnError : (exncon * exncon) -> bool)
+      (let (vtrPa : bool) (prim ptr_eq vtrC gexnPat : (exncon * exncon) -> bool)
+      (join jtrShow ((vtrM : string))
+        (let (vtrL : string) (prim string_concat "raised " vtrN : (string * string) -> string)
+        (let (vtrL2 : string) (prim string_concat vtrL vtrM : (string * string) -> string)
+        (return (app gputs vtrL2))))
+        (if vtrE
+          (let (vtrS : string) (exnarg vtrX : string)
+          (let (vtrS2 : string) (prim string_concat ": " vtrS : (string * string) -> string)
+          (jump jtrShow vtrS2)))
+          (if vtrPa
+            (let (vtrP : string) (exnarg vtrX : string)
+            (let (vtrP2 : string) (prim string_concat ": " vtrP : (string * string) -> string)
+            (jump jtrShow vtrP2)))
+            (jump jtrShow "")))))))))))
+(val gzeroC : int susp (return (app gdone[int] 0)))
+(do ()
+  (let (vzeroS : int susp) gzeroC
+  (let (vone : int susp) (app gdone[int] 1)
+  (let (vtwo : int susp) (app gdone[int] 2)
+  (let (vthree : int susp) (app gdone[int] 3)
+  (let (vr1 : int) (app gseq[int, int] vone vtwo)
+  (let (vu1 : unit) (app gputInt vr1)
+  (let (vunused : int susp) (app gerror[int] "unused")
+  (let (vr2 : int) (app gconst[int, int] vone vunused)
+  (let (vu2 : unit) (app gputInt vr2)
+  (fun
+    (fn vt3 ((vt3U : unit)) : unit
+      (let (vboom : int susp) (app gerror[int] "boom")
+      (let (vt3R : int) (app gseq[int, int] vboom vthree)
+      (return (app gputInt vt3R)))))
+    (let (vu3 : unit) (app gtry vt3)
+    (let (vagain : int susp) (app gerror[int] "again")
+    (fun
+      (fn vt4 ((vt4U : unit)) : unit
+        (return (app gputIntS vagain)))
+      (let (vu4 : unit) (app gtry vt4)
+      (let (vu5 : unit) (app gtry vt4)
+      (fun
+        (fn vt5 ((vt5U : unit)) : unit
+          (let (vt5N : int hlist susp) (app gdone[int hlist] (con0 0 : int hlist))
+          (let (vt5H : int) (app ghead[int] vt5N)
+          (return (app gputInt vt5H)))))
+        (let (vu6 : unit) (app gtry vt5)
+        (let (vx : int susp) (app ghole[int] ())
+        (fun
+          (fn vxC ((vxU : unit)) : int
+            (let (vxI : int) (app gforce[int] vx)
+            (return (prim int_add vxI 1 : (int * int) -> int))))
+          (let (vu7 : unit) (app gpatch[int] vx vxC)
+          (fun
+            (fn vt6 ((vt6U : unit)) : unit
+              (return (app gputIntS vx)))
+            (let (vu8 : unit) (app gtry vt6)
+            (let (vu9 : unit) (app gtry vt6)
+            (fun
+              (fn vc1 ((vc1U : unit)) : int
+                (let (vc1R : unit) (app gioError[unit] "bad")
+                (return 0)))
+              (fn vh1 ((vh1E : string)) : unit -> int
+                (fun
+                  (fn vh1K ((vh1U : unit)) : int
+                    (let (vh1S : string) (prim string_concat "caught: " vh1E : (string * string) -> string)
+                    (let (vh1P : unit) (app gputs vh1S)
+                    (return 7))))
+                  (return vh1K)))
+              (let (vr3 : int) (app gcatch[int] vc1 vh1)
+              (let (vu10 : unit) (app gputInt vr3)
+              (fun
+                (fn vc2 ((vc2U : unit)) : unit
+                  (let (vc2E : unit susp) (app gerror[unit] "not io")
+                  (return (app gforce[unit] vc2E))))
+                (fn vh2 ((vh2E : string)) : unit -> unit
+                  (fun
+                    (fn vh2K ((vh2U : unit)) : unit
+                      (return (app gputs "wrong")))
+                    (return vh2K)))
+                (fn vt7 ((vt7U : unit)) : unit
+                  (return (app gcatch[unit] vc2 vh2)))
+                (let (vu11 : unit) (app gtry vt7)
+                (fun
+                  (fn vc3 ((vc3U : unit)) : string
+                    (return (app greadFile "/nonexistent/x")))
+                  (fn vh3 ((vh3E : string)) : unit -> string
+                    (fun
+                      (fn vh3K ((vh3U : unit)) : string
+                        (return "io failed"))
+                      (return vh3K)))
+                  (let (vs : string) (app gcatch[string] vc3 vh3)
+                  (let (vu12 : unit) (app gputs vs)
+                  (fun
+                    (fn vt8 ((vt8U : unit)) : unit
+                      (let (vz : int) (app gforce[int] vzeroS)
+                      (let (vq : int) (prim int_div 1 vz : (int * int) -> int)
+                      (return (app gputInt vq)))))
+                    (let (vu13 : unit) (app gtry vt8)
+                    (handle vtopX
+                      (let (vfinal : unit susp) (app gerror[unit] "final")
+                      (return (app gforce[unit] vfinal)))
+                      (let (vtopC : exncon) (exncon vtopX)
+                      (let (vtopE : bool) (prim ptr_eq vtopC gexnError : (exncon * exncon) -> bool)
+                      (if vtopE
+                        (let (vtopS : string) (exnarg vtopX : string)
+                        (let (vtopP : unit) (prim print_err vtopS : string -> unit)
+                        (return (prim exit 1 : int -> unit))))
+                        (return (prim exit 2 : int -> unit))))))))))))))))))))))))))))))))))))))))

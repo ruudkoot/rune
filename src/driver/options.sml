@@ -191,8 +191,13 @@ struct
     \  --pass-stats=expand  and the functors' applications the expansion copied,\n\
     \                    those it left calls, and the most it copied for one\n\
     \  --read-mid FILE   read a Mid program as --dump-after=mid prints it, and\n\
-    \                    make and check it as the pass mid would, but no bytecode\n\
+    \                    make and check it as the pass mid would; with -o, its\n\
+    \                    bytecode too, as a whole program's\n\
     \  --mid-roundtrip   check that Mid printed, read and printed again is the same\n\
+    \  --check-casts     check at run time that a cast whose result is no\n\
+    \                    suspension is given what is evaluated (any_check), for\n\
+    \                    testing a front end that makes suspensions (docs/ir.md,\n\
+    \                    Suspensions); the code is what it is without it elsewhere\n\
     \  --target=T        the bytecode to make: registers (runevm's, the default,\n\
     \                    from -O1) or stack (runevm-stack's)\n\
     \  --version         print the version and exit\n\
@@ -233,6 +238,14 @@ struct
     case Elaborate.freeModeOf m of
       SOME mode => mode
     | NONE => raise Usage ("--free-tyvars: refuse, monotype, dummy, later or later-monotype, not " ^ m)
+
+  (* A name --passes, --dump-before or --dump-after gives, which a compile
+     must have: an optional pass of the pipeline, or a stage -- the
+     driver's front end (Main), the pipeline's, Emit's -- or all *)
+  fun stages () : string list = ["lex", "select", "parse", "elaborate"] @ Pipeline.stageNames () @ ["emit", "all"]
+  fun known (option : string, what : string, names : string list) (name : string) : string =
+    if List.exists (fn n => n = name) names then name
+    else raise Usage (option ^ " requires " ^ what ^ " of " ^ String.concatWith ", " names ^ ", not " ^ name)
 
   (* --flex-records=MODE, --overloading=MODE and --free-tyvars=MODE, before
      the options of fixed spelling *)
@@ -289,9 +302,9 @@ struct
     | ["--cache-dir"] => raise Usage "--cache-dir requires a directory"
     | "--no-cache" :: rest => (noCache := true; parse rest)
     | "--cache-trim" :: rest => (cacheTrim := true; parse rest)
-    | "--cache-max-age" :: d :: rest => (UnitCache.maxAge := maxAgeOf d; parse rest)
+    | "--cache-max-age" :: d :: rest => (StorePolicy.maxAge := maxAgeOf d; parse rest)
     | ["--cache-max-age"] => raise Usage "--cache-max-age requires a number of days, or none"
-    | "--cache-max-size" :: n :: rest => (UnitCache.maxSize := maxSizeOf n; parse rest)
+    | "--cache-max-size" :: n :: rest => (StorePolicy.maxSize := maxSizeOf n; parse rest)
     | ["--cache-max-size"] => raise Usage "--cache-max-size requires a size, or none"
     | "--explain-rebuild" :: rest => (explainRebuild := true; parse rest)
     | "--verify-cache" :: rest => (verifyCache := true; parse rest)
@@ -336,13 +349,17 @@ struct
     | "--read-mid" :: f :: rest => (readMid := SOME f; parse rest)
     | ["--read-mid"] => raise Usage "--read-mid requires a file"
     | "--mid-roundtrip" :: rest => (midRoundTrip := true; parse rest)
+    | "--check-casts" :: rest => (Lower.checkCasts := true; parse rest)
     | "--pass-stats" :: rest => (Pass.stats := true; parse rest)
     | "--version" :: rest => (showVersion := true; parse rest)
     | "--help" :: rest => (showHelp := true; parse rest)
     | "-h" :: rest => (showHelp := true; parse rest)
     | a :: rest =>
         (case valued a of
-           SOME ("--passes", v) => (Pass.only := SOME (String.fields (fn c => c = #",") v); parse rest)
+           SOME ("--passes", v) =>
+             (Pass.only := SOME (List.map (known ("--passes=P,...", "an optional pass", Pipeline.optionalNames ()))
+                                          (List.filter (fn n => n <> "") (String.fields (fn c => c = #",") v)));
+              parse rest)
          | SOME ("--pass-stats", "elab") => (Pass.stats := true; ElabStats.enable (); parse rest)
          | SOME ("--pass-stats", "hash") => (Pass.stats := true; Pickle.counting := true; parse rest)
          | SOME ("--pass-stats", "expand") => (Pass.stats := true; Expand.stats := true; parse rest)
@@ -350,8 +367,10 @@ struct
          | SOME ("--lint", v) =>
              if List.exists (fn l => l = v) ["off", "0", "1", "2", "3"] then (Pass.lintGiven := Pass.levelOf v; parse rest)
              else raise Usage "--lint= requires off, 0, 1, 2 or 3"
-         | SOME ("--dump-before", v) => (Pass.dumpBefore := !Pass.dumpBefore @ [v]; parse rest)
-         | SOME ("--dump-after", v) => (Pass.dumpAfter := !Pass.dumpAfter @ [v]; parse rest)
+         | SOME ("--dump-before", v) =>
+             (Pass.dumpBefore := !Pass.dumpBefore @ [known ("--dump-before=P", "a stage", stages ()) v]; parse rest)
+         | SOME ("--dump-after", v) =>
+             (Pass.dumpAfter := !Pass.dumpAfter @ [known ("--dump-after=P", "a stage", stages ()) v]; parse rest)
          | SOME ("--target", v) =>
              if v = "stack" orelse v = "registers" then (target := v; parse rest)
              else raise Usage "--target requires stack or registers"

@@ -1,10 +1,12 @@
 (* The Unicode library (docs/plans/repl.md, The libraries; docs/plans/utf8.md,
    M5): UTF-8, the display widths of code points, grapheme clusters,
-   normalisation, identifiers and the security mechanisms of UTS #39, from
-   the tables that scripts/gen-unicode-tables.py writes; its files in load
-   order, in the form of lib/basis/library.build. The compiler shares every
-   file (rune.build): its lexer reads identifiers by Identifier and
-   Normalize, and warns by UnicodeSecurity. *)
+   normalisation, identifiers, the security mechanisms of UTS #39, and the
+   general categories and simple case mappings of code points
+   (docs/plans/language/haskell98.md, D21), from the tables that
+   bin/rune-generate unicode writes; its files in load order, in the form
+   of lib/basis/library.build. The compiler shares every file (rune.build):
+   its lexer reads identifiers by Identifier and Normalize, and warns by
+   UnicodeSecurity. *)
 annotate "demand" in
   utf8_sig.sml
   utf8.sml
@@ -23,4 +25,7 @@ annotate "demand" in
   security_data.sml
   security_sig.sml
   security.sml
+  code_point_data.sml
+  code_point_sig.sml
+  code_point.sml
 end

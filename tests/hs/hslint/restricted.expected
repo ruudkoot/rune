@@ -1,0 +1,4 @@
+TYPE	Main	a :: Double
+TYPE	Main	b :: Char
+TYPE	Main	c :: Double
+SIGNED	Main	main :: IO ()

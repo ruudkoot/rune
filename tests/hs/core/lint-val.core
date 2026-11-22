@@ -1,0 +1,3 @@
+; fail: [val] in val x: x is declared of type Bool, and its expression is of type !Int
+; CoreLint, val: a value of the top level of its type
+(val x Bool 1)

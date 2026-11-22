@@ -5,7 +5,7 @@
    functions -- which Emit writes. Stack and Regs make it from Low. *)
 structure Code =
 struct
-  open Lambda
+  open Literal
 
   (* An operand of Ops: a number, or a label whose offset it is. *)
   datatype operand = I of int | L of int
@@ -72,6 +72,7 @@ struct
   val () = CompilerState.cellRoot ("Code.nglobals", nglobals)
   val nextLabel = ref 0
   val () = CompilerState.cellRoot ("Code.nextLabel", nextLabel)
+  val () = Pass.counter nextLabel
   (* The source files positions refer to, in the order they were first seen;
      an index into this is what the line table holds. *)
   val files : string list ref = ref []
@@ -213,7 +214,7 @@ struct
 
   fun dump (p : program) : string =
     let
-      fun const (c, (acc, i)) = ("const " ^ Int.toString i ^ " = " ^ constToString c ^ "\n" :: acc, i + 1)
+      fun const (c, (acc, i)) = ("const " ^ Int.toString i ^ " = " ^ Literal.toString c ^ "\n" :: acc, i + 1)
       val cs = String.concat (List.rev (#1 (List.foldl const ([], 0) (#consts p))))
       val fs = String.concat (List.map (fn f => "function " ^ Int.toString (#id f) ^ " " ^ #name f ^ " (locals " ^ Int.toString (#nlocals f) ^ ")\n" ^
                                            String.concat (List.map (fn it => itemToString it ^ "\n") (#code f))) (#funcs p))

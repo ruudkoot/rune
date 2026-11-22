@@ -1209,6 +1209,17 @@ void ms_room_dynamic(Masm *m, int r, uint32_t above, AsmLabel *slow) {
     as_cmp_rm(&m->a, R_S0, VMR, OFF(stack_room));
     as_jcc(&m->a, CC_A, slow);
 }
+/* the same for the general path's cases shared by the calls of n arguments
+   (item 24, emit.c: apply_shared): the room of r words (r may be rax) past
+   the bytes in register above over the frame's base, a call's, or (above
+   -1) past its base, a tail call's; to slow where there is none, which a
+   general path in C claims (rax clobbered) */
+void ms_room_shared(Masm *m, int r, int above, AsmLabel *slow) {
+    as_lea(&m->a, R_S0, BASER, r, VALUE_SIZE, -VALUE_SIZE * ROOM_SLACK);
+    if (above >= 0) as_add_rr(&m->a, R_S0, above);
+    as_cmp_rm(&m->a, R_S0, VMR, OFF(stack_room));
+    as_jcc(&m->a, CC_A, slow);
+}
 void ms_room_compared(Masm *m, int r, uint32_t need) {
     as_lea(&m->a, r, BASER, -1, 1, need <= ROOM_SLACK ? 0 : VALUE_SIZE * (int32_t)(need - ROOM_SLACK));
 }
@@ -1284,6 +1295,26 @@ void ms_load_kind(Masm *m, int r, int obj) {
     as_and_ri(&m->a, r, OBJ_KIND_MASK);
 #endif
 }
+/* ---- suspensions (value.h: K_THUNK, K_IND, obj_become_thunk,
+   obj_blackhole, obj_become_ind's kind; docs/ir.md, Suspensions) ---- */
+void ms_jump_if_immediate(Masm *m, int r, AsmLabel *to) {
+    as_test_ri(&m->a, r, 1);
+    as_jcc(&m->a, CC_NE, to);
+}
+void ms_set_kind(Masm *m, int obj, int kind, int r) {
+    as_ld8(&m->a, r, obj, (int32_t)offsetof(Obj, kind));
+    as_and_ri(&m->a, r, OBJ_GC_BITS);
+    as_or_ri(&m->a, r, kind);
+    as_st8(&m->a, obj, (int32_t)offsetof(Obj, kind), r);
+}
+/* the contag's low byte, its high one being THUNK_UNEVALUATED's, on the
+   JIT's machines, which are little-endian */
+_Static_assert(THUNK_UNEVALUATED == 0 && THUNK_BLACKHOLE > 0 && THUNK_BLACKHOLE < 256,
+               "a suspension goes under evaluation by the low byte of its contag");
+void ms_blackhole(Masm *m, int obj) { as_st8i(&m->a, obj, (int32_t)offsetof(Obj, contag), THUNK_BLACKHOLE); }
+/* a selector's state the same way (thunk_selector, D17's C): below 256 */
+_Static_assert(THUNK_SELECTOR > THUNK_BLACKHOLE && THUNK_SELECTOR < 256, "a selector's state is the low byte of its contag");
+void ms_set_selector(Masm *m, int obj, int r) { as_st8(&m->a, obj, (int32_t)offsetof(Obj, contag), r); }
 /* `=` in line (masm.h): values_equal's answers that need no walk. A
    string's bytes are compared a word at a time, its last word's bytes past
    the length -- the high ones on the JIT's machines, which are
@@ -1667,6 +1698,71 @@ void ms_alloc(Masm *m, int kind, int contag, uint32_t n, AsmLabel *slow) {
 void ms_alloc_undo(Masm *m, int kind, uint32_t n) {
     if (m->alloc_reg) as_sub_ri(&m->a, BASEI, (int32_t)obj_size_of(kind, n));
 }
+void ms_alloc_dynamic(Masm *m, int kind, int len, int size, AsmLabel *slow) {
+    int role = ms_role(m, MR_ALLOC);
+    if (m->alloc_reg) {
+        AsmLabel undo, done; as_label_init(&undo); as_label_init(&done);
+        as_mov_rr(&m->a, R_S0, BASEI);
+        as_add_rr(&m->a, BASEI, size);
+        as_cmp_rm(&m->a, BASEI, VMR, OFF(alloc_limit));
+        as_jcc(&m->a, CC_A, &undo);
+        as_add_mi(&m->a, VMR, OFF(objects_allocated), 1);
+        as_jmp(&m->a, &done);
+        as_bind(&m->a, &undo);
+        as_sub_rr(&m->a, BASEI, size);
+        as_jmp(&m->a, slow);
+        as_bind(&m->a, &done);
+        as_label_free(&undo); as_label_free(&done);
+    } else {
+        as_cmp_mi(&m->a, VMR, OFF(gc_stress), 0);
+        as_jcc(&m->a, CC_NE, slow);
+        as_ld64(&m->a, R_S0, VMR, OFF(alloc.used));
+        as_lea(&m->a, R_S1, R_S0, size, 1, 0);
+        as_cmp_rm(&m->a, R_S1, VMR, OFF(alloc.size));
+        as_jcc(&m->a, CC_A, slow);
+        as_st64(&m->a, VMR, OFF(alloc.used), R_S1);
+        as_add_rm_to_mem(&m->a, VMR, OFF(bytes_allocated), size);
+        as_add_mi(&m->a, VMR, OFF(objects_allocated), 1);
+        as_add_rm(&m->a, R_S0, VMR, OFF(alloc.from));
+    }
+    as_st32i(&m->a, R_S0, (int32_t)offsetof(Obj, kind), (int32_t)(uint32_t)kind);
+    as_st32(&m->a, R_S0, (int32_t)offsetof(Obj, len), len);
+    m->nfields = UINT32_MAX;
+    ms_role(m, role);
+}
+/* What D15 C's cases in compiled code do to a partial application
+   (emit.c, apply_fast): an object's layout is masm.c's alone. */
+void ms_store_field_reg(Masm *m, int obj, uint32_t i, int r) {
+    if (i >= m->nfields) bug("a field the object does not have", i, m->nfields);
+    as_st64(&m->a, obj, FIELD_OFF(i), r);
+}
+void ms_field_address(Masm *m, int rd, int obj, uint32_t i) { as_lea(&m->a, rd, obj, -1, 1, FIELD_OFF(i)); }
+/* the i-th value from at, where ms_field_address or a frame's base put it,
+   := the word in r: a fresh object's fields past what it holds, or a
+   callee's registers (item 24's shared cases, emit.c) */
+void ms_store_word_at(Masm *m, int at, uint32_t i, int r) { as_st64(&m->a, at, VALUE_SIZE * (int32_t)i, r); }
+void ms_object_size(Masm *m, int r) {
+    as_shl_ri(&m->a, r, VALUE_SHIFT);
+    as_add_ri(&m->a, r, (int32_t)sizeof(Obj));
+}
+void ms_set_kind_contag(Masm *m, int obj, int kind, int r) {
+    as_shl_ri(&m->a, r, 16);
+    as_or_ri(&m->a, r, kind);
+    as_st32(&m->a, obj, (int32_t)offsetof(Obj, kind), r);
+}
+void ms_copy_words(Masm *m, int src, int dst, int end, int tmp) {
+    AsmLabel loop, done; as_label_init(&loop); as_label_init(&done);
+    as_bind(&m->a, &loop);
+    as_cmp_rr(&m->a, src, end);
+    as_jcc(&m->a, CC_AE, &done);
+    as_ld64(&m->a, tmp, src, 0);
+    as_st64(&m->a, dst, 0, tmp);
+    as_add_ri(&m->a, src, VALUE_SIZE);
+    as_add_ri(&m->a, dst, VALUE_SIZE);
+    as_jmp(&m->a, &loop);
+    as_bind(&m->a, &done);
+    as_label_free(&loop); as_label_free(&done);
+}
 void ms_store_field(Masm *m, int obj, uint32_t i, int32_t s) {
     if (i >= m->nfields) bug("a field the object does not have", i, m->nfields);
     ms_store_value(m, obj, FIELD_OFF(i), s);
@@ -1810,6 +1906,11 @@ void ms_field_from_nth(Masm *m, int obj, uint32_t i, int base, uint32_t k) {
     as_fld(&m->a, F_S0, base, (int32_t)(VALUE_SIZE * k));
     as_fst(&m->a, obj, FIELD_OFF(i), F_S0);
 }
+void ms_field_from_field(Masm *m, int obj, uint32_t i, int src, uint32_t k) {
+    if (i >= m->nfields) bug("a field the object does not have", i, m->nfields);
+    as_fld(&m->a, F_S0, src, FIELD_OFF(k));
+    as_fst(&m->a, obj, FIELD_OFF(i), F_S0);
+}
 void ms_scale_index(Masm *m, int r) { as_shl_ri(&m->a, r, VALUE_SHIFT); }
 void ms_slot_from_nth_raw(Masm *m, int32_t d, int base, uint32_t k) {
     as_fld(&m->a, F_S0, base, (int32_t)(VALUE_SIZE * k));
@@ -1915,6 +2016,79 @@ void ms_emit_barrier(Asm *a, int win, MsHelper helper) {
     as_mov_rr(&m.a, R_S1, R_S0);
     as_ld64(&m.a, R_S0, VMR, OFF(ret_value));
     as_jmp_r(&m.a, R_S1);
+    *a = m.a;
+}
+void ms_emit_select(Asm *a, int win, MsHelper helper) {
+    Masm m;
+    memset(&m, 0, sizeof m);
+    m.a = *a; m.win = win; m.nfields = UINT32_MAX;
+    AsmLabel same, take, chain;
+    as_label_init(&same); as_label_init(&take); as_label_init(&chain);
+    /* its tuple, through one indirection: a constructor of tag 0 */
+    ms_load_len(&m, R_S1, R_S0);
+    as_cmp_ri(&m.a, R_S1, 2);
+    as_jcc(&m.a, CC_B, &same);
+    ms_load_field_bits(&m, R_S1, R_S0, 1);
+    ms_jump_if_immediate(&m, R_S1, &same);
+    ms_load_kind(&m, R_S2, R_S1);
+    AsmLabel con; as_label_init(&con);
+    as_cmp_ri(&m.a, R_S2, K_IND);
+    as_jcc(&m.a, CC_NE, &con);
+    ms_load_field_bits(&m, R_S1, R_S1, 0);
+    ms_jump_if_immediate(&m, R_S1, &same);
+    ms_load_kind(&m, R_S2, R_S1);
+    as_bind(&m.a, &con);
+    as_label_free(&con);
+    as_cmp_ri(&m.a, R_S2, K_CON);
+    as_jcc(&m.a, CC_NE, &same);
+    ms_load_contag(&m, R_S2, R_S1);
+    as_cmp_ri(&m.a, R_S2, 0);
+    as_jcc(&m.a, CC_NE, &same);
+    /* field i, i = contag - THUNK_SELECTOR, within the tuple */
+    ms_load_contag(&m, R_S2, R_S0);
+    as_sub_ri(&m.a, R_S2, THUNK_SELECTOR);
+    ms_load_len(&m, R_S3, R_S1);
+    as_cmp_rr(&m.a, R_S2, R_S3);
+    as_jcc(&m.a, CC_AE, &same);
+    as_ld64x(&m.a, R_S2, R_S1, R_S2, 8, (int32_t)FIELD_OFF(0));
+    /* a field that is a selector: C goes on from the selector */
+    ms_jump_if_immediate(&m, R_S2, &take);
+    ms_load_kind(&m, R_S3, R_S2);
+    as_cmp_ri(&m.a, R_S3, K_THUNK);
+    as_jcc(&m.a, CC_NE, &take);
+    ms_load_contag(&m, R_S3, R_S2);
+    as_cmp_ri(&m.a, R_S3, THUNK_SELECTOR);
+    as_jcc(&m.a, CC_AE, &chain);
+    as_bind(&m.a, &take);
+    as_mov_rr(&m.a, R_S0, R_S2);
+    as_bind(&m.a, &same);
+    as_ret(&m.a);
+    /* a chain of selectors: vm_selected from the first, which steps it as
+       the collector would (Brent's method on a cycle), every home C would
+       clobber kept in the VM's cells around the call, as the stub's caller
+       keeps none */
+    as_bind(&m.a, &chain);
+    for (int k = 0; k < AS_NHOMES_G; k++) { int r = as_home_g(win, k); if (!as_keeps_g(win, r)) as_st64(&m.a, VMR, gspill(r), r); }
+    for (int k = 0; k < AS_NHOMES_F; k++) { int f = as_home_f(win, k); if (!as_keeps_f(win, f)) as_fst(&m.a, VMR, fspill(f), f); }
+#if JIT_TARGET == 2
+    as_st64(&m.a, VMR, gspill(X30), X30);   /* the stub's return, which the call takes */
+#else
+    as_sub_ri(&m.a, R_SP, 8);               /* the stack as at a call of compiled code, which the call of the stub moved */
+#endif
+    as_mov_rr(&m.a, ms_arg(&m, 1), R_S0);
+    as_mov_rr(&m.a, ms_arg(&m, 0), VMR);
+    uint64_t at = 0;
+    memcpy(&at, &helper, sizeof helper);
+    as_call_c(&m.a, win, at);
+#if JIT_TARGET == 2
+    as_ld64(&m.a, X30, VMR, gspill(X30));
+#else
+    as_add_ri(&m.a, R_SP, 8);
+#endif
+    for (int k = 0; k < AS_NHOMES_G; k++) { int r = as_home_g(win, k); if (!as_keeps_g(win, r)) as_ld64(&m.a, r, VMR, gspill(r)); }
+    for (int k = 0; k < AS_NHOMES_F; k++) { int f = as_home_f(win, k); if (!as_keeps_f(win, f)) as_fld(&m.a, f, VMR, fspill(f)); }
+    as_ret(&m.a);
+    as_label_free(&same); as_label_free(&take); as_label_free(&chain);
     *a = m.a;
 }
 void ms_emit_call_interp(Asm *a, int win, MsHelper helper, AsmLabel *leave, int callret) {

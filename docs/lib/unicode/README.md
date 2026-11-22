@@ -3,15 +3,17 @@
 UTF-8, read and written strictly, the display width of a code point,
 grapheme clusters as Unicode Standard Annex \#29 defines them, the
 normalisation forms NFC and NFD of Annex \#15, the identifiers of Annex \#31
-with the profile that Rune takes for Standard ML, and the security
-mechanisms of Unicode Technical Standard \#39.
+with the profile that Rune takes for Standard ML, the security mechanisms
+of Unicode Technical Standard \#39, and the general category and the simple
+case mappings of a code point.
 
 The tables are made from the Unicode Character Database by
 `bin/rune-generate unicode`, all of one version. The profile of
 [`Identifier`](str/Identifier.md) leaves out two sets that the script writes down and freezes
 at Unicode 18.0.0, so that no later version of Unicode changes which names
 are valid; the data of [`UnicodeSecurity`](str/UnicodeSecurity.md) change with every version, and
-suit warnings rather than rules.
+suit warnings rather than rules. The categories and case mappings of
+[`CodePoint`](str/CodePoint.md) are those of the version too.
 
 [How to read these pages](../conventions.md) &middot; [the structures](structures.md) &middot; [exceptions](exceptions.md) &middot; [what depends on what](depends.md) &middot; [what is documented](coverage.md) &middot; index: [a](index/a.md) [b](index/b.md) [c](index/c.md) [d](index/d.md) [e](index/e.md) [f](index/f.md) [h](index/h.md) [i](index/i.md) [l](index/l.md) [m](index/m.md) [n](index/n.md) [o](index/o.md) [p](index/p.md) [q](index/q.md) [r](index/r.md) [s](index/s.md) [t](index/t.md) [u](index/u.md) [v](index/v.md) [w](index/w.md) [y](index/y.md)
 
@@ -19,6 +21,7 @@ suit warnings rather than rules.
 
 | Signature |  |
 | --- | --- |
+| [`CODE_POINT`](sig/CODE_POINT.md) | Code points: the general category of each, and its simple case mappings, by the Unicode Character Database. |
 | [`DISPLAY_WIDTH`](sig/DISPLAY_WIDTH.md) | Display widths: how many columns of a terminal a code point takes. |
 | [`GRAPHEME`](sig/GRAPHEME.md) | Grapheme clusters: the characters a reader sees, by the rules of Unicode Standard Annex \#29. |
 | [`IDENTIFIER`](sig/IDENTIFIER.md) | Identifiers: which code points may make a name, by Unicode Standard Annex \#31, and the profile of it that Rune takes for Standard ML. |

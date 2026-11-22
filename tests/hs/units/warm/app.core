@@ -1,0 +1,8 @@
+; A unit of hs/units/warm: it takes Shape, area and twice of lib.core, and
+; printInt and Unit of lib/base.core, naming them.
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (s Shape (con Square 3))
+    (let (a Int (area s))
+    (let (b Int (twice a))
+    (printInt b w))))))

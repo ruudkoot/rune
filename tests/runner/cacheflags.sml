@@ -83,6 +83,7 @@ struct
      key ("match-work-more", "--match-work", ["--match-work=1000000000"]),
      free ("match-work-default", "--match-work", ["--match-work=1000000"]),
      key ("no-inline-functors", "--no-inline-functors", ["--no-inline-functors"]),
+     key ("check-casts", "--check-casts", ["--check-casts"]),
      key ("target-stack", "--target", ["--target=stack"]), free ("target-registers", "--target", ["--target=registers"]),
      (* in the key of the input files' units; --or-patterns and
         --no-unicode-lints in every unit's (lib-* below) *)

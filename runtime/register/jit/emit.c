@@ -420,6 +420,42 @@ static void string_compare(Jit *j, int32_t p, int32_t d, int32_t x, int32_t y, A
 
 static void alloc(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d, int32_t a, int32_t b, const uint8_t *L);
 /* PRIM p d args in line, or 0 where p is not one done in line */
+/* thunk_selector's mark in line (D17's C), as the loop has it (fastprim.h):
+   slow is where an index that is no int goes, NULL where the section
+   vouches for an int (ms_imm_trusted), which no code then tests */
+static void mark_selector(Jit *j, int32_t d, int32_t x, int32_t y, int32_t z, AsmLabel *slow) {
+    /* D17's C, as the loop has it (fastprim.h): the state THUNK_SELECTOR + i
+       in R_S3, to slow where i is no int; then nothing, unless s is an
+       unevaluated suspension of two fields or more whose first is t's
+       word, when its contag's low byte becomes that state */
+    AsmLabel done; as_label_init(&done);
+    ms_need_word(M, x);
+    ms_need_word(M, y);
+    ms_one_imm(M, z, T_INT, slow);
+    ms_untag(M, R_S0, T_INT);
+    as_cmp_ri(A, R_S0, 256 - THUNK_SELECTOR);
+    as_jcc(A, CC_AE, &done);          /* unsigned: a negative i too */
+    as_mov_rr(A, R_S3, R_S0);
+    as_add_ri(A, R_S3, THUNK_SELECTOR);
+    ms_load_bits(M, R_S1, x);
+    ms_jump_if_immediate(M, R_S1, &done);
+    ms_load_kind(M, R_S2, R_S1);
+    as_cmp_ri(A, R_S2, K_THUNK);
+    as_jcc(A, CC_NE, &done);
+    ms_load_contag(M, R_S2, R_S1);
+    as_cmp_ri(A, R_S2, THUNK_UNEVALUATED);
+    as_jcc(A, CC_NE, &done);
+    ms_load_len(M, R_S2, R_S1);
+    as_cmp_ri(A, R_S2, 2);
+    as_jcc(A, CC_B, &done);
+    ms_load_field_bits(M, R_S2, R_S1, 1);
+    ms_cmp_bits(M, R_S2, y);
+    as_jcc(A, CC_NE, &done);
+    ms_set_selector(M, R_S1, R_S3);
+    as_bind(A, &done);
+    ms_set(M, d, T_UNIT, 0);
+    as_label_free(&done);
+}
 static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t n) {
     if (n == 0 || n > 3) return 0;
     int32_t x = read_i32(L), y = n > 1 ? read_i32(L + 4) : x, z = n > 2 ? read_i32(L + 8) : x;
@@ -429,6 +465,9 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_int_add: case PRIM_int_sub: case PRIM_int_mul: case PRIM_int_div: case PRIM_int_mod:
     case PRIM_int_quot: case PRIM_int_rem: case PRIM_int_neg: case PRIM_int_lt: case PRIM_int_le:
     case PRIM_int_gt: case PRIM_int_ge: case PRIM_int_order: case PRIM_int_to_char:
+    case PRIM_intinf_add: case PRIM_intinf_sub: case PRIM_intinf_mul: case PRIM_intinf_div: case PRIM_intinf_mod:
+    case PRIM_intinf_quot: case PRIM_intinf_rem: case PRIM_intinf_neg: case PRIM_intinf_lt: case PRIM_intinf_le:
+    case PRIM_intinf_gt: case PRIM_intinf_ge: case PRIM_intinf_order: case PRIM_intinf_from_int: case PRIM_intinf_to_int:
     case PRIM_word_add: case PRIM_word_sub: case PRIM_word_mul: case PRIM_word_div: case PRIM_word_mod:
     case PRIM_word_lt: case PRIM_word_le: case PRIM_word_gt: case PRIM_word_ge: case PRIM_word_order:
     case PRIM_word_andb: case PRIM_word_orb: case PRIM_word_xorb: case PRIM_word_notb:
@@ -457,16 +496,42 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_real_exp: case PRIM_real_ln: case PRIM_real_sin: case PRIM_real_cos: case PRIM_real_tan:
     case PRIM_real_atan: case PRIM_real_sinh: case PRIM_real_cosh: case PRIM_real_tanh:
     case PRIM_real_atan2: case PRIM_real_pow:
+    case PRIM_thunk_make: case PRIM_thunk_selector:
         break;
     default:
         return 0;
     }
+    /* thunk_selector where tier 2's homes vouch for its index an int: no
+       slow path, which no code would jump to (its stub was 165 bytes of
+       x86-64 at every mark: gap 4's tuning) */
+    if (p == PRIM_thunk_selector && n == 3 && ms_imm_trusted(M, z, T_INT)) { mark_selector(j, d, x, y, z, NULL); return 1; }
     /* the slow path: the helper; its index, since nothing here adds another */
     Slow *s = ms_slow(M, SLOW_PRIM, j->next);
     if (!s) return 1;
     s->a = p; s->b = d; s->L = L;
     int which = M->nslow - 1;
     AsmLabel *slow = &M->slow[which]->here;
+    /* IntInf.int (haskell98 M31): of two immediates, an int's operation,
+       and so the int's code; the slow path, set above, is the IntInf.int's
+       own primitive, which takes a large operand and makes a large result.
+       Its registers are of no representation the section vouches for
+       (ms_imm_trusted), so that code tests every tag. */
+    switch (p) {
+    case PRIM_intinf_add: p = PRIM_int_add; break;
+    case PRIM_intinf_sub: p = PRIM_int_sub; break;
+    case PRIM_intinf_mul: p = PRIM_int_mul; break;
+    case PRIM_intinf_div: p = PRIM_int_div; break;
+    case PRIM_intinf_mod: p = PRIM_int_mod; break;
+    case PRIM_intinf_quot: p = PRIM_int_quot; break;
+    case PRIM_intinf_rem: p = PRIM_int_rem; break;
+    case PRIM_intinf_neg: p = PRIM_int_neg; break;
+    case PRIM_intinf_lt: p = PRIM_int_lt; break;
+    case PRIM_intinf_le: p = PRIM_int_le; break;
+    case PRIM_intinf_gt: p = PRIM_int_gt; break;
+    case PRIM_intinf_ge: p = PRIM_int_ge; break;
+    case PRIM_intinf_order: p = PRIM_int_order; break;
+    default: break;
+    }
     switch (p) {
     case PRIM_poly_eq: equal(j, d, x, y, 1, slow); break;
     case PRIM_imm_eq: equal(j, d, x, y, 0, slow); break;
@@ -532,6 +597,9 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
     case PRIM_int_ge: compare(j, d, x, y, T_INT, CC_GE, slow); break;
     case PRIM_int_order: two(j, x, y, T_INT, slow); as_cmp_rr(A, R_S0, R_S1); set_order(j, d, CC_GE, CC_G); break;
     case PRIM_int_to_char: ms_one_imm(M, x, T_INT, slow); ms_int_to_char(M, slow); ms_set_num(M, d, T_CHAR, R_S0, slow); break;
+    /* an immediate is the same word as an int and as an IntInf.int: under
+       RUNE_INT64 ms_one_imm sends a box to the primitive */
+    case PRIM_intinf_from_int: case PRIM_intinf_to_int: ms_one_imm(M, x, T_INT, slow); ms_set_num(M, d, T_INT, R_S0, slow); break;
 
     case PRIM_word_add: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_ADD, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
     case PRIM_word_sub: two(j, x, y, T_WORD, slow); ms_word_arith(M, MS_SUB, slow); ms_set_num(M, d, T_WORD, R_S0, slow); break;
@@ -751,6 +819,28 @@ static int prim_inline(Jit *j, int32_t p, int32_t d, const uint8_t *L, uint32_t 
         ms_set_reg(M, d, T_CHAR, R_S1);
         break;
     case PRIM_ref_get: ms_load_obj(M, R_S0, x, K_REF, slow); ms_load_field(M, d, R_S0, 0); break;
+    /* a suspension of a fresh closure (haskell98 M9b; E2's prototype had
+       it in line): one that captures is made in place, its kind rewritten,
+       the collector's bits kept (fastprim.h); one that captures nothing, of
+       a length below 2, may be a constant the program shares, and the
+       suspension is made beside it, of its function, as the primitive makes
+       it (prims.c, p_thunk_make): an allocation in line, as ref_new's */
+    case PRIM_thunk_make: {
+        AsmLabel captures, done; as_label_init(&captures); as_label_init(&done);
+        ms_load_obj(M, R_S0, x, K_CLOSURE, slow);
+        ms_load_len(M, R_S1, R_S0);
+        as_cmp_ri(A, R_S1, 2);
+        as_jcc(A, CC_AE, &captures);
+        alloc(j, K_THUNK, THUNK_UNEVALUATED, 1, FILL_SUSP, d, x, 0, NULL);
+        as_jmp(A, &done);
+        as_bind(A, &captures);
+        ms_set_kind(M, R_S0, K_THUNK, R_S1);
+        ms_set_reg(M, d, T_PTR, R_S0);
+        as_bind(A, &done);
+        as_label_free(&captures); as_label_free(&done);
+        break;
+    }
+    case PRIM_thunk_selector: mark_selector(j, d, x, y, z, slow); break;
     case PRIM_ref_set:
         ms_need_word(M, y);
         ms_load_obj(M, R_S0, x, K_REF, slow);
@@ -888,6 +978,7 @@ static void alloc(Jit *j, int kind, int contag, uint32_t n, int fill, int32_t d,
     case FILL_ONE: ms_need_word(M, a); break;
     case FILL_CLOSURE: for (uint32_t i = 0; i + 1 < n; i++) ms_need_word(M, read_i32(L + 4 * i)); break;
     case FILL_MKEXN: ms_need_word(M, a); ms_need_word(M, b); break;
+    case FILL_SUSP: ms_need_word(M, a); break;
     default: break;
     }
     AsmLabel *slow = jit_alloc_slow(j, kind, contag, n, fill, d, a, b, L);
@@ -907,6 +998,12 @@ void emit_TUPLE(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uin
 void emit_CLOSURE(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c, const uint8_t *L, uint32_t n) {
     (void)pc; (void)c;
     alloc(j, K_CLOSURE, 0, n + 1, FILL_CLOSURE, a, b, 0, L);
+}
+/* D15 C: a closure of c parameters says c in its contag (src/isa/regs.sml) */
+void emit_CLOSUREN(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c, int32_t d, const uint8_t *L, uint32_t n) {
+    (void)pc; (void)d;
+    if (c < 2) { jit_unsupported(j); return; }
+    alloc(j, K_CLOSURE, c, n + 1, FILL_CLOSURE, a, (int32_t)CLOSURE_NARY(b), 0, L);   /* field 0 no function (item 24) */
 }
 void emit_SELECT(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
     (void)pc;
@@ -1398,13 +1495,32 @@ static void called(Jit *j, uint32_t pc) {
    representation would choose the address a call jumps to (the linting
    roadmap's D8); rcx := the table of calls (CallInfo, M6), read from the
    VM, which a unit loaded grows and may move */
-static void closure_function(Jit *j, int32_t a, int obj) {
-    ms_load_obj(M, obj, a, K_CLOSURE, jit_fatal(j, FATAL_CALL, 0, 0, 0));
+static void closure_function(Jit *j, int32_t a, int obj, int kind, AsmLabel *general, uint32_t n) {
+    ms_load_obj(M, obj, a, kind, jit_fatal(j, kind == K_THUNK ? FATAL_ENTER : FATAL_CALL, 0, 0, 0));
+    /* D15 C: a closure of another arity than the call gives, or a partial
+       application, is the interpreter's general path's (SLOW_APPLY,
+       reg_apply). A call of one argument tests no parameters (item 24):
+       field 0 of a closure of more (CLOSURE_NARY) and of a partial application
+       (REG_PAP) is negative, which the check of the index sends there. A
+       call of n >= 2 tests the contag, n, then CLOSURE_NARY(f)'s word, -2 - w
+       for the function's */
+    if (general && n >= 2) {
+        ms_load_contag(M, R_S6, obj);
+        as_cmp_ri(A, R_S6, (int32_t)n);
+        as_jcc(A, CC_NE, general);
+    }
     ms_load_field_bits(M, R_S6, obj, 0);   /* field 0: the function, its word */
+    if (general && n >= 2) {
+        as_cmp_ri(A, R_S6, 2 * (int32_t)CLOSURE_NARY(0) + 1);
+        as_jcc(A, CC_G, general);
+        as_neg(A, R_S6);
+        as_sub_ri(A, R_S6, 2);
+    }
     as_ld32(A, R_S3, VMR, OFF(prog.nfuncs));
     as_lea(A, R_S3, R_S3, R_S3, 1, 1);   /* the word of the number of functions */
     as_cmp_rr(A, R_S6, R_S3);
-    as_jcc(A, CC_AE, jit_fatal(j, FATAL_FUNCTION, 0, 0, 0));   /* unsigned: negative too */
+    /* unsigned: negative too, the general path's for a call of one */
+    as_jcc(A, CC_AE, general && n == 1 ? general : jit_fatal(j, FATAL_FUNCTION, 0, 0, 0));
     as_ld64(A, R_S1, VMR, OFF(jit_calls));
 }
 /* the callee's entry from the table (rcx) by its function's word (r11) */
@@ -1469,12 +1585,528 @@ static void fill_unit_dynamic(Jit *j) {
     as_bind(A, &done);
     as_label_free(&loop); as_label_free(&done);
 }
+/* ---- D15 C tuned: the general path's common cases in compiled code ----
+   A call through a closure that has not as many parameters as the call
+   gives arguments, or through a partial application, was the general
+   path's alone (SLOW_APPLY: reg_apply in C, and the code left twice, into
+   the function entered and back through the return barrier). Three of its
+   cases stay in compiled code, as GHC's stg_ap_* do, each after the call's
+   own checks, out of the way of a call that finds the arity it wants:
+   - a closure of more parameters than the call gives: a partial
+     application made (a K_CLOSURE of n + 2 fields, field 0 REG_PAP, field 1
+     the closure, then the arguments; its contag what it still wants), and
+     the call's value -- in a tail call, the frame's;
+   - a partial application that wants as many arguments as the call
+     gives: its function entered with what it holds and then the call's
+     arguments, as a call through the closure it holds -- in a tail call,
+     in the frame's place;
+   - a partial application that wants more arguments than the call gives:
+     another made, of what it holds and the arguments (its size known when
+     it runs: ms_alloc_dynamic);
+   - a closure of one parameter given n >= 2: the program's <apply 1 n-1>
+     entered as a known function, given the closure and the arguments,
+     which calls it with the first and the result with the rest.
+   Anything else -- the allocation's nursery full, a partial application
+   given more than it wants, a closure of k >= 2 given more than k -- goes
+   to C as before. Under --jit-returns=call (whose landing follows its call), for
+   a program without every arity in the section, and with
+   RUNE_JIT_APPLY_FAST=0 (the measurement before), none. */
+static int apply_fast_on(Jit *j) {
+    static int on = -1;
+    if (on < 0) { const char *e = getenv("RUNE_JIT_APPLY_FAST"); on = !(e && *e == '0'); }
+    return on && !j->callret && j->jit->all_meta;
+}
+/* jit_apply_fast_counts[k] += 1, where RUNE_APPLY_STATS asks (r scratch) */
+static void apply_counted(Jit *j, int k, int r) {
+    if (!reg_apply_stats) return;
+    as_mov_ri(A, r, (int64_t)(intptr_t)&jit_apply_fast_counts[k]);
+    as_add_mi(A, r, 0, 1);
+}
+/* the word of the function of the closure in rdx into r11, checked as
+   closure_function checks it (r8 clobbered); rcx := the table of calls.
+   The closure is a partial application's, of more than one parameter:
+   field 0 CLOSURE_NARY(f), whose word w gives f's as -2 - w (item 24) */
+static void function_word(Jit *j) {
+    ms_load_field_bits(M, R_S6, R_S2, 0);
+    as_neg(A, R_S6);
+    as_sub_ri(A, R_S6, 2);
+    as_ld32(A, R_S3, VMR, OFF(prog.nfuncs));
+    as_lea(A, R_S3, R_S3, R_S3, 1, 1);
+    as_cmp_rr(A, R_S6, R_S3);
+    as_jcc(A, CC_AE, jit_fatal(j, FATAL_FUNCTION, 0, 0, 0));
+    as_ld64(A, R_S1, VMR, OFF(jit_calls));
+}
+/* the partial application in rax made for the closure in rdx (of r8
+   parameters) given the n arguments; to `fail` where the nursery has no
+   room, the bump undone */
+static void make_pap(Jit *j, uint32_t n, const int32_t *args, AsmLabel *general) {
+    AsmLabel fail; as_label_init(&fail);
+    ms_alloc(M, K_CLOSURE, 0, n + 2, &fail);   /* rax; rcx clobbered */
+    as_sub_ri(A, R_S3, (int32_t)n);
+    ms_set_kind_contag(M, R_S0, K_CLOSURE, R_S3);   /* its contag: what it still wants */
+    ms_store_field_imm(M, R_S0, 0, T_INT, REG_PAP);
+    ms_store_field_reg(M, R_S0, 1, R_S2);
+    for (uint32_t i = 0; i < n; i++) ms_store_field(M, R_S0, 2 + i, args[i]);
+    AsmLabel done; as_label_init(&done);
+    as_jmp(A, &done);
+    as_bind(A, &fail);
+    ms_alloc_undo(M, K_CLOSURE, n + 2);
+    as_jmp(A, general);
+    as_bind(A, &done);
+    as_label_free(&fail); as_label_free(&done);
+}
+/* the words from [rax] up to [r8] to [rcx] up (r11 clobbered) */
+static void copy_words(Jit *j) { ms_copy_words(M, R_S0, R_S1, R_S3, R_S6); }
+/* rax := a partial application of what the one in rdx holds and the n
+   arguments, which it wants fewer of than it wants (its contag the less
+   by n), or to general where the nursery has no room (rdx clobbered) */
+static void more_pap(Jit *j, uint32_t n, const int32_t *args, AsmLabel *general) {
+    ms_load_len(M, R_S6, R_S2);
+    as_add_ri(A, R_S6, (int32_t)n);   /* its fields */
+    as_mov_rr(A, R_S3, R_S6);
+    ms_object_size(M, R_S3);
+    ms_alloc_dynamic(M, K_CLOSURE, R_S6, R_S3, general);
+    ms_load_contag(M, R_S3, R_S2);
+    as_sub_ri(A, R_S3, (int32_t)n);
+    ms_set_kind_contag(M, R_S0, K_CLOSURE, R_S3);
+    ms_store_field_imm(M, R_S0, 0, T_INT, REG_PAP);
+    ms_load_field_bits(M, R_S3, R_S2, 1);
+    ms_store_field_reg(M, R_S0, 1, R_S3);
+    as_sub_ri(A, R_S6, (int32_t)n + 2);
+    ms_scale_index(M, R_S6);
+    ms_field_address(M, R_S2, R_S2, 2);
+    as_add_rr(A, R_S6, R_S2);
+    ms_field_address(M, R_S1, R_S0, 2);
+    ms_copy_words(M, R_S2, R_S1, R_S6, R_S3);
+    for (uint32_t i = 0; i < n; i++) ms_store_value(M, R_S1, (int32_t)sizeof(Value) * (int32_t)i, args[i]);
+}
+/* rax := the first of what the partial application in register a holds,
+   r8 := past its last */
+static void pap_held(Jit *j, int32_t a) {
+    ms_load_bits(M, R_S0, a);
+    ms_load_len(M, R_S3, R_S0);
+    as_sub_ri(A, R_S3, 2);
+    ms_scale_index(M, R_S3);
+    ms_field_address(M, R_S0, R_S0, 2);
+    as_add_rr(A, R_S3, R_S0);
+}
+/* A call's cases, at odd (rdx the closure or partial application that the
+   call's checks refused), before its landing, after: the frame pushed with
+   after as its return word, or (a partial application made) the value in
+   rax as a callee's return leaves it */
+static void apply_fast(Jit *j, int32_t a, uint32_t n, const int32_t *args, AsmLabel *odd, AsmLabel *general,
+                       AsmLabel *after, int grow) {
+    uint32_t above = j->m.nlocals + MS_HEADER;
+    uint32_t stub = n >= 2 ? reg_apply_stub(j->vm, 1, n - 1) : UINT32_MAX;
+    AsmLabel pap, make, over, more; as_label_init(&pap); as_label_init(&make); as_label_init(&over); as_label_init(&more);
+    ms_role(M, MR_CLOS);
+    as_bind(A, odd);
+    ms_load_field_bits(M, R_S6, R_S2, 0);
+    as_cmp_ri(A, R_S6, 2 * REG_PAP + 1);   /* REG_PAP's word: a closure of more than one parameter holds CLOSURE_NARY(f), negative too */
+    as_jcc(A, CC_E, &pap);
+    ms_load_contag(M, R_S3, R_S2);   /* its parameters; 0 for one */
+    if (stub != UINT32_MAX) { as_cmp_ri(A, R_S3, 0); as_jcc(A, CC_E, &over); }
+    as_cmp_ri(A, R_S3, (int32_t)n);
+    as_jcc(A, CC_A, &make);
+    as_jmp(A, general);
+    /* a partial application made: the call's value */
+    as_bind(A, &make);
+    apply_counted(j, 0, R_S6);
+    make_pap(j, n, args, general);
+    ms_count(M, 1);   /* the RESULT the interpreter runs after the general path's value, which the landing passes over */
+    as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)above);   /* as the landing finds a callee's base */
+    as_jmp(A, after);
+    /* a partial application entered: its closure called with what it
+       holds, then the call's arguments */
+    as_bind(A, &pap);
+    ms_load_contag(M, R_S3, R_S2);
+    as_cmp_ri(A, R_S3, (int32_t)n);
+    as_jcc(A, CC_A, &more);
+    as_jcc(A, CC_NE, general);
+    apply_counted(j, 1, R_S3);
+    ms_load_field_bits(M, R_S2, R_S2, 1);
+    function_word(j);
+    ms_role(M, MR_ROOM);
+    room_dynamic(j, grow, above);
+    ms_role(M, MR_ARGS);
+    pap_held(j, a);
+    as_lea(A, R_S1, BASER, -1, 1, (int32_t)sizeof(Value) * (int32_t)above);
+    copy_words(j);
+    for (uint32_t i = 0; i < n; i++) ms_store_nth(M, R_S1, i, args[i]);
+    function_word(j);
+    callee_entry(j, R_S5);
+    ms_role(M, MR_FRAME);
+    call_header(j, R_S2, 0, after, R_H2);
+    as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)above);
+    ms_role(M, MR_JUMP);
+    as_jmp_r(A, R_S5);
+    /* a partial application given fewer than it wants: another, of what it
+       holds and the arguments, the call's value */
+    as_bind(A, &more);
+    apply_counted(j, 5, R_S6);
+    more_pap(j, n, args, general);
+    ms_count(M, 1);
+    as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)above);
+    as_jmp(A, after);
+    /* a closure of one over-applied: its stub, a known function */
+    if (stub != UINT32_MAX) {
+        const Function *fn = &j->vm->prog.funcs[stub];
+        as_bind(A, &over);
+        apply_counted(j, 3, R_S3);
+        ms_role(M, MR_ROOM);
+        room(j, above + fn->nlocals + fn->maxstack);
+        ms_role(M, MR_ARGS);
+        ms_store_nth(M, BASER, above, a);
+        for (uint32_t i = 0; i < n; i++) ms_store_nth(M, BASER, above + 1 + i, args[i]);
+        ms_role(M, MR_FRAME);
+        call_header(j, -1, fn->reads_closure, after, R_S3);
+        as_add_ri(A, BASER, (int32_t)sizeof(Value) * (int32_t)above);
+        ms_role(M, MR_JUMP);
+        to_callee(j, stub, fn);
+    }
+    as_label_free(&pap); as_label_free(&make); as_label_free(&over); as_label_free(&more);
+}
+/* A tail call's cases, at odd: in the frame's place, its return word
+   kept; the arguments, for n >= 2, above the frame already (tail_object),
+   and for one put there first */
+static void apply_fast_tail(Jit *j, int32_t a, uint32_t n, const int32_t *args, AsmLabel *odd, AsmLabel *general, int grow) {
+    uint32_t nl = j->m.nlocals;
+    uint32_t stub = n >= 2 ? reg_apply_stub(j->vm, 1, n - 1) : UINT32_MAX;
+    AsmLabel pap, make, over, more; as_label_init(&pap); as_label_init(&make); as_label_init(&over); as_label_init(&more);
+    ms_role(M, MR_CLOS);
+    as_bind(A, odd);
+    ms_load_field_bits(M, R_S6, R_S2, 0);
+    as_cmp_ri(A, R_S6, 2 * REG_PAP + 1);   /* REG_PAP's word: a closure of more than one parameter holds CLOSURE_NARY(f), negative too */
+    as_jcc(A, CC_E, &pap);
+    ms_load_contag(M, R_S3, R_S2);
+    if (stub != UINT32_MAX) { as_cmp_ri(A, R_S3, 0); as_jcc(A, CC_E, &over); }
+    as_cmp_ri(A, R_S3, (int32_t)n);
+    as_jcc(A, CC_A, &make);
+    as_jmp(A, general);
+    /* a partial application made: the frame's value, returned */
+    as_bind(A, &make);
+    apply_counted(j, 0, R_S6);
+    make_pap(j, n, args, general);
+    ms_count(M, 1);   /* the RET of <apply return>, which the general path enters with it */
+    ms_role(M, MR_RET);
+    as_jmp_ret(A, BASER, HEADER_AT(0, 1));
+    /* a partial application entered in the frame's place: what it holds,
+       then the arguments, gathered above the frame -- [nlocals + n, ...),
+       past the arguments' copies at [nlocals, nlocals + n) -- and moved
+       down to the frame's base, lowest first */
+    as_bind(A, &pap);
+    ms_load_contag(M, R_S3, R_S2);
+    as_cmp_ri(A, R_S3, (int32_t)n);
+    as_jcc(A, CC_A, &more);
+    as_jcc(A, CC_NE, general);
+    apply_counted(j, 2, R_S3);
+    ms_role(M, MR_ARGS);
+    if (n == 1) ms_store_nth(M, BASER, nl, args[0]);
+    ms_load_field_bits(M, R_S2, R_S2, 1);
+    function_word(j);
+    ms_role(M, MR_ROOM);
+    room_dynamic(j, grow, nl + n);   /* the gathering's: the callee's room past the frame's and the copies */
+    ms_role(M, MR_ARGS);
+    pap_held(j, a);
+    as_lea(A, R_S1, BASER, -1, 1, (int32_t)sizeof(Value) * (int32_t)(nl + n));
+    copy_words(j);
+    /* rcx past what it holds: the arguments after them, from their copies */
+    for (uint32_t i = 0; i < n; i++) {
+        as_ld64(A, R_S6, BASER, (int32_t)sizeof(Value) * (int32_t)(nl + i));
+        as_st64(A, R_S1, (int32_t)sizeof(Value) * (int32_t)i, R_S6);
+    }
+    as_lea(A, R_S3, R_S1, -1, 1, (int32_t)sizeof(Value) * (int32_t)n);
+    as_lea(A, R_S0, BASER, -1, 1, (int32_t)sizeof(Value) * (int32_t)(nl + n));
+    as_mov_rr(A, R_S1, BASER);
+    copy_words(j);
+    function_word(j);
+    callee_entry(j, R_S5);
+    ms_role(M, MR_FRAME);
+    as_st64(A, BASER, HEADER_AT(0, 2), R_S2);
+    ms_role(M, MR_JUMP);
+    as_jmp_r(A, R_S5);
+    /* a partial application given fewer than it wants: another, returned */
+    as_bind(A, &more);
+    apply_counted(j, 5, R_S6);
+    more_pap(j, n, args, general);
+    ms_count(M, 1);
+    ms_role(M, MR_RET);
+    as_jmp_ret(A, BASER, HEADER_AT(0, 1));
+    /* a closure of one over-applied: its stub in the frame's place, given
+       the closure and the arguments, from their copies above the frame */
+    if (stub != UINT32_MAX) {
+        const Function *fn = &j->vm->prog.funcs[stub];
+        uint32_t need = nl + n + 1;
+        if (fn->nlocals + fn->maxstack > need) need = fn->nlocals + fn->maxstack;
+        as_bind(A, &over);
+        apply_counted(j, 4, R_S3);
+        ms_role(M, MR_ARGS);
+        ms_store_nth(M, BASER, nl + n, a);
+        /* the room by the grow that makes the call again (grow_slow), as
+           the partial application's: a claim makes the clean part unit from
+           the frame's registers' end, where the copies are, when the
+           room was given up (an interrupt, a leave for the interpreter) */
+        ms_role(M, MR_ROOM);
+        as_mov_ri(A, R_S3, (int64_t)need);
+        ms_room_dynamic(M, R_S3, 0, &M->slow[grow]->here);
+        ms_role(M, MR_ARGS);
+        for (uint32_t i = 0; i < n; i++) ms_slot_from_nth_raw(M, (int32_t)(1 + i), BASER, nl + i);
+        ms_slot_from_nth_raw(M, 0, BASER, nl + n);
+        ms_role(M, MR_FRAME);
+        if (fn->reads_closure) as_st64i(A, BASER, HEADER_AT(0, 2), (int32_t)mk_unit());
+        ms_role(M, MR_JUMP);
+        to_callee(j, stub, fn);
+    }
+    as_label_free(&pap); as_label_free(&make); as_label_free(&over); as_label_free(&more);
+}
+
+/* ---- item 24: the general path's cases shared, out of line ----
+   The cases above, made in line at every call through a closure, were
+   most of each such call's code, and of the time a compile takes (the
+   tiny programs of A0 under --jit=all: 1.5% to 5% of their run), for
+   calls few of which ever find a closure of another arity. A call of n
+   arguments, n up to VM_APPLY_ARGS, carries instead a hand-off
+   (apply_hand) to code that every call of n arguments shares, and every
+   tail call of n another (apply_shared: made when a call first wants it,
+   and placed in the region's top): the arguments' words in
+   VM.apply_args, and in r8 the address of the call's record, three
+   32-bit words after its jump -- its landing's offset from the record
+   (REC_AFTER), its general path's (SLOW_APPLY: REC_BACK), and its frame's
+   registers and header in bytes (REC_ABOVE); a tail call's landing and
+   frame unused. The shared code tests the closure the call's checks
+   refused (rdx) with rax, rcx, rdx, r8 and r11 alone, which are no home,
+   and where no case applies goes on at the call's general path with the
+   frame, its homes and the count as the call left them; once a case has
+   what it needs (a room, an allocation), the homes are free -- those
+   wanted after the call were written back for it, and its landing loads
+   them again -- and it is made as apply_fast and apply_fast_tail make it,
+   the arguments read from VM.apply_args: a tail call's straight to the
+   frame's base, since nothing is read from the frame's registers. A room
+   short goes to the general path, which claims it. */
+#define APPLY_ARG(i) ((int32_t)(OFF(apply_args) + sizeof(Value) * (i)))
+enum { REC_AFTER = 0, REC_BACK = 4, REC_ABOVE = 8 };
+static void shared_counted(Asm *a, int k, int r) {
+    if (!reg_apply_stats) return;
+    as_mov_ri(a, r, (int64_t)(intptr_t)&jit_apply_fast_counts[k]);
+    as_add_mi(a, r, 0, 1);
+}
+/* rd := the address of the record's (r8) entry at k */
+static void shared_rec(Masm *m, int rd, int k) {
+    as_ld32s(&m->a, rd, R_S3, k);
+    as_add_rr(&m->a, rd, R_S3);
+}
+/* rd := the word of the function of the closure in c, of more than one
+   parameter (CLOSURE_NARY: -2 - w); to bad where it is past the functions
+   (tmp clobbered), unless bad is NULL */
+static void shared_function_word(Masm *m, int rd, int c, int tmp, AsmLabel *bad) {
+    ms_load_field_bits(m, rd, c, 0);
+    as_neg(&m->a, rd);
+    as_sub_ri(&m->a, rd, 2);
+    if (!bad) return;
+    as_ld32(&m->a, tmp, VMR, OFF(prog.nfuncs));
+    as_lea(&m->a, tmp, tmp, tmp, 1, 1);
+    as_cmp_rr(&m->a, rd, tmp);
+    as_jcc(&m->a, CC_AE, bad);
+}
+/* the room of the frame of the function whose word is in r11 (rax, r9
+   clobbered), past the call's frame (r9 := REC_ABOVE's bytes) or at a
+   tail call's base, else to back */
+static void shared_room(Masm *m, int tail, AsmLabel *back) {
+    as_ld64(&m->a, R_S0, VMR, OFF(jit_calls));
+    as_ld64x(&m->a, R_S0, R_S0, R_S6, 8, (int32_t)offsetof(CallInfo, need) - 8);
+    if (!tail) as_ld32s(&m->a, R_S1, R_S3, REC_ABOVE);
+    ms_room_shared(m, R_S0, tail ? -1 : R_S1, back);
+}
+/* the room had: a call's frame made past its own, BASER its base (rcx
+   the bytes), with the landing's return word (r8's record read last) */
+static void shared_frame(Masm *m, int tail) {
+    if (tail) return;
+    as_add_rr(&m->a, BASER, R_S1);
+    shared_rec(m, R_S1, REC_AFTER);
+    if (JIT_RET_BIAS) as_add_ri(&m->a, R_S1, JIT_RET_BIAS);
+    as_st64(&m->a, BASER, HEADER_AT(0, 1), R_S1);
+}
+/* the value in rax, a partial application made, the call's: on at its
+   landing, BASER the callee's base as there, or a tail call's frame's,
+   returned (r11 clobbered) */
+static void shared_value(Masm *m, int tail) {
+    ms_count(m, 1);   /* the RESULT the landing passes over, or <apply return>'s RET */
+    if (tail) { as_jmp_ret(&m->a, BASER, HEADER_AT(0, 1)); return; }
+    as_ld32s(&m->a, R_S6, R_S3, REC_ABOVE);
+    as_add_rr(&m->a, BASER, R_S6);
+    shared_rec(m, R_S6, REC_AFTER);
+    as_jmp_r(&m->a, R_S6);
+}
+/* r11 the function's word: into its code, or the interpreter's stub, which
+   reads r11 (ms_emit_call_interp) */
+static void shared_enter(Masm *m) {
+    as_ld64(&m->a, R_S3, VMR, OFF(jit_calls));
+    as_ld64x(&m->a, R_S0, R_S3, R_S6, 8, (int32_t)offsetof(CallInfo, entry) - 8);
+    as_jmp_r(&m->a, R_S0);
+}
+static void emit_apply_shared(VM *vm, Masm *m, uint32_t n, int tail) {
+    Asm *a = &m->a;
+    uint32_t stub = n >= 2 ? reg_apply_stub(vm, 1, n - 1) : UINT32_MAX;
+    AsmLabel back, pap, make, more, over, fail;
+    as_label_init(&back); as_label_init(&pap); as_label_init(&make); as_label_init(&more); as_label_init(&over); as_label_init(&fail);
+    ms_load_field_bits(m, R_S6, R_S2, 0);
+    as_cmp_ri(a, R_S6, 2 * REG_PAP + 1);   /* a partial application; a closure of more than one parameter holds CLOSURE_NARY(f) */
+    as_jcc(a, CC_E, &pap);
+    ms_load_contag(m, R_S1, R_S2);   /* its parameters; 0 for one */
+    if (stub != UINT32_MAX) { as_cmp_ri(a, R_S1, 0); as_jcc(a, CC_E, &over); }
+    as_cmp_ri(a, R_S1, (int32_t)n);
+    as_jcc(a, CC_A, &make);
+    /* the call's general path, as it left it */
+    as_bind(a, &back);
+    shared_rec(m, R_S6, REC_BACK);
+    as_jmp_r(a, R_S6);
+    /* a closure of more parameters: a partial application made, the call's value */
+    as_bind(a, &make);
+    shared_counted(a, 0, R_S6);
+    ms_alloc(m, K_CLOSURE, 0, n + 2, &fail);   /* rax */
+    as_sub_ri(a, R_S1, (int32_t)n);
+    ms_set_kind_contag(m, R_S0, K_CLOSURE, R_S1);   /* what it still wants */
+    ms_store_field_imm(m, R_S0, 0, T_INT, REG_PAP);
+    ms_store_field_reg(m, R_S0, 1, R_S2);
+    for (uint32_t i = 0; i < n; i++) {
+        as_ld64(a, R_S6, VMR, APPLY_ARG(i));
+        ms_store_field_reg(m, R_S0, 2 + i, R_S6);
+    }
+    shared_value(m, tail);
+    as_bind(a, &fail);
+    ms_alloc_undo(m, K_CLOSURE, n + 2);
+    as_jmp(a, &back);
+    /* a partial application that wants n: its closure's function entered
+       with what it holds, then the arguments */
+    as_bind(a, &pap);
+    ms_load_contag(m, R_S1, R_S2);
+    as_cmp_ri(a, R_S1, (int32_t)n);
+    as_jcc(a, CC_A, &more);
+    as_jcc(a, CC_NE, &back);
+    shared_counted(a, tail ? 2 : 1, R_S1);
+    ms_load_field_bits(m, R_S1, R_S2, 1);   /* the closure it holds, of more than one parameter */
+    shared_function_word(m, R_S6, R_S1, R_S0, &back);
+    shared_room(m, tail, &back);
+    shared_frame(m, tail);
+    ms_load_len(m, R_S3, R_S2);
+    as_sub_ri(a, R_S3, 2);
+    ms_scale_index(m, R_S3);
+    ms_field_address(m, R_S0, R_S2, 2);
+    as_add_rr(a, R_S3, R_S0);
+    as_mov_rr(a, R_S1, BASER);
+    ms_copy_words(m, R_S0, R_S1, R_S3, R_S6);   /* what it holds; rcx past it */
+    for (uint32_t i = 0; i < n; i++) {
+        as_ld64(a, R_S6, VMR, APPLY_ARG(i));
+        ms_store_word_at(m, R_S1, i, R_S6);
+    }
+    ms_load_field_bits(m, R_S1, R_S2, 1);
+    as_st64(a, BASER, HEADER_AT(0, 2), R_S1);   /* the frame's closure */
+    shared_function_word(m, R_S6, R_S1, R_S0, NULL);
+    shared_enter(m);
+    /* a partial application given fewer than it wants: another, of what it
+       holds and the arguments, the call's value; the homes free once it is
+       made (r9 one) */
+    as_bind(a, &more);
+    shared_counted(a, 5, R_S6);
+    ms_load_len(m, R_S6, R_S2);
+    as_add_ri(a, R_S6, (int32_t)n);   /* its fields */
+    as_mov_rr(a, R_S1, R_S6);
+    ms_object_size(m, R_S1);
+    ms_alloc_dynamic(m, K_CLOSURE, R_S6, R_S1, &back);   /* rax */
+    ms_load_contag(m, R_S1, R_S2);
+    as_sub_ri(a, R_S1, (int32_t)n);
+    ms_set_kind_contag(m, R_S0, K_CLOSURE, R_S1);
+    ms_store_field_imm(m, R_S0, 0, T_INT, REG_PAP);
+    ms_load_field_bits(m, R_S1, R_S2, 1);
+    ms_store_field_reg(m, R_S0, 1, R_S1);
+    ms_load_len(m, R_S6, R_S2);
+    as_sub_ri(a, R_S6, 2);
+    ms_scale_index(m, R_S6);
+    ms_field_address(m, R_S2, R_S2, 2);
+    as_add_rr(a, R_S6, R_S2);
+    ms_field_address(m, R_S1, R_S0, 2);
+    ms_copy_words(m, R_S2, R_S1, R_S6, R_S4);   /* what it held; rcx past it */
+    for (uint32_t i = 0; i < n; i++) {
+        as_ld64(a, R_S4, VMR, APPLY_ARG(i));
+        ms_store_word_at(m, R_S1, i, R_S4);
+    }
+    shared_value(m, tail);
+    /* a closure of one given more: the program's <apply 1 n-1>, given the
+       closure and the arguments */
+    if (stub != UINT32_MAX) {
+        as_bind(a, &over);
+        shared_counted(a, tail ? 4 : 3, R_S1);
+        as_mov_ri(a, R_S6, 2 * (int64_t)stub + 1);
+        shared_room(m, tail, &back);
+        shared_frame(m, tail);
+        ms_store_word_at(m, BASER, 0, R_S2);
+        for (uint32_t i = 0; i < n; i++) {
+            as_ld64(a, R_S1, VMR, APPLY_ARG(i));
+            ms_store_word_at(m, BASER, 1 + i, R_S1);
+        }
+        as_st64i(a, BASER, HEADER_AT(0, 2), (int32_t)mk_unit());   /* a known function's: none */
+        shared_enter(m);
+    }
+    as_label_free(&back); as_label_free(&pap); as_label_free(&make); as_label_free(&more); as_label_free(&over); as_label_free(&fail);
+}
+/* the shared code of the calls of n arguments (tail: of the tail calls),
+   made and placed when a call first wants it; NULL where it cannot be */
+static const void *apply_shared(Jit *j, uint32_t n, int tail) {
+    JitProgram *jit = j->jit;
+    if (n < 1 || n > VM_APPLY_ARGS) return NULL;
+    if (jit->apply_shared[tail][n]) return jit->apply_shared[tail][n];
+    Masm m;
+    memset(&m, 0, sizeof m);
+    as_init(&m.a);
+    m.win = j->m.win; m.nfields = UINT32_MAX;   /* (Windows's convention as the function's) */
+    m.alloc_reg = 1;   /* as every function's code keeps it (compile.c) */
+    emit_apply_shared(j->vm, &m, n, tail);
+    const void *at = m.a.failed ? NULL : jit_place_shared(jit, m.a.buf, m.a.n);
+    as_free(&m.a);
+    jit->apply_shared[tail][n] = at;
+    return at;
+}
+/* a call's hand-off at odd (rdx the closure its checks refused) to the
+   shared code, and its record: after, its landing, for a call that is
+   not a tail call */
+static void apply_hand(Jit *j, uint32_t n, const int32_t *args, AsmLabel *odd, AsmLabel *general, AsmLabel *after,
+                       const void *shared) {
+    AsmLabel rec; as_label_init(&rec);
+    ms_role(M, MR_CLOS);
+    as_bind(A, odd);
+    ms_role(M, MR_ARGS);
+    for (uint32_t i = 0; i < n; i++) ms_store_value(M, VMR, APPLY_ARG(i), args[i]);
+    ms_role(M, MR_JUMP);
+    as_lea_label(A, R_S3, &rec);
+    as_jmp_to(A, shared);
+    as_bind(A, &rec);
+    size_t rec_at = A->n;
+    as_u32(A, 0);
+    if (after) as_offset32_at(A, rec_at + REC_AFTER, rec_at, after);
+    as_u32(A, 0);
+    as_offset32_at(A, rec_at + REC_BACK, rec_at, general);
+    as_u32(A, after ? (uint32_t)sizeof(Value) * (j->m.nlocals + MS_HEADER) : 0);
+    as_label_free(&rec);
+}
+
 /* A call through a closure reads a home last where it stores the
    argument, and until then keeps what it found in rax, rcx, rdx, r8 and
    r11 alone: every other general register may be a home (asm.h), and a
-   slow path writes the homes back. After it they are free. */
-void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
-    if (result_at(j, j->next) < 0) { jit_unsupported(j); return; }   /* a call the compiler follows by RESULT, always */
+   slow path writes the homes back. After it they are free. ENTER is the
+   same call of a suspension, of kind K_THUNK, which is a loop where its
+   code has said BLACKHOLE. */
+static void call_object(Jit *j, uint32_t pc, int32_t a, uint32_t n, const int32_t *args, int kind) {
+    AsmLabel *general = NULL, *gen_c = NULL;
+    AsmLabel odd; as_label_init(&odd);
+    int fast = kind == K_CLOSURE && apply_fast_on(j);
+    if (kind == K_CLOSURE) {
+        Slow *g = ms_slow(M, SLOW_APPLY, j->next);
+        if (!g) { as_label_free(&odd); return; }
+        g->a = (int32_t)pc;
+        gen_c = &g->here;
+        general = fast ? &odd : gen_c;
+    }
+    if (result_at(j, j->next) < 0) { jit_unsupported(j); as_label_free(&odd); return; }   /* a call the compiler follows by RESULT, always */
     AsmLabel after; as_label_init(&after);   /* the landing (M6) */
     /* before the restart label: the slots stay right across a restart (M9);
        under --jit-profile, every home live here, which the profile's helper
@@ -1483,11 +2115,19 @@ void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     if (j->jit->profile) ms_writeback(M, pc);
     else ms_writeback_call(M, pc, j->next + 5, result_at(j, j->next));
     ms_role(M, MR_ARGS);
-    ms_need_word(M, b);
+    for (uint32_t i = 0; i < n; i++) ms_need_word(M, args[i]);
     int grow = grow_slow(j);
-    if (grow < 0) { as_label_free(&after); return; }
+    if (grow < 0) { as_label_free(&after); as_label_free(&odd); return; }
     ms_role(M, MR_CLOS);
-    closure_function(j, a, R_S2);
+    closure_function(j, a, R_S2, kind, general, n);
+    if (kind == K_THUNK) {
+        /* a loop: Loop raised, out of line (compile.c, SLOW_LOOP) */
+        Slow *s = ms_slow(M, SLOW_LOOP, j->next);
+        if (!s) { as_label_free(&after); return; }
+        ms_load_contag(M, R_S3, R_S2);
+        as_cmp_ri(A, R_S3, THUNK_BLACKHOLE);
+        as_jcc(A, CC_E, &s->here);
+    }
     called(j, pc);
     ms_role(M, MR_ROOM);
     room_dynamic(j, grow, j->m.nlocals + MS_HEADER);
@@ -1496,7 +2136,7 @@ void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
        from register b (the last home read), the rest as the stack's clean
        part has them (M6) or unit where not every function has its arity
        in the section */
-    ms_store_nth(M, BASER, j->m.nlocals + MS_HEADER, b);
+    for (uint32_t i = 0; i < n; i++) ms_store_nth(M, BASER, j->m.nlocals + MS_HEADER + i, args[i]);
     callee_entry(j, R_S5);
     /* r11 stays the function's word, which the stub of the interpreter
        wants (ms_emit_call_interp); the fill its number */
@@ -1516,27 +2156,141 @@ void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     ms_role(M, MR_JUMP);
     if (j->callret) as_call_ret_r(A, R_S5);   /* (M7) */
     else as_jmp_r(A, R_S5);   /* its code, or the interpreter (the table of calls, M6) */
+    if (fast) {
+        const void *shared = apply_shared(j, n, 0);
+        if (shared) apply_hand(j, n, args, &odd, gen_c, &after, shared);
+        else apply_fast(j, a, n, args, &odd, gen_c, &after, grow);
+    }
     call_landing(j, &after);
     as_label_free(&after);
+    as_label_free(&odd);
 }
-void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
+void emit_CALL(Jit *j, uint32_t pc, int32_t a, int32_t b) { call_object(j, pc, a, 1, &b, K_CLOSURE); }
+void emit_ENTER(Jit *j, uint32_t pc, int32_t a, int32_t b) { call_object(j, pc, a, 1, &b, K_THUNK); }
+/* ---- suspensions (docs/ir.md, Suspensions) ----
+   FORCE: a branch to o with the value, where register s holds no
+   unevaluated suspension -- what an indirection holds, else s's word; on
+   to the ENTER after it where it holds one. A value of any kind is tested
+   whatever the section says: no representation is a suspension's alone.
+   A selector (D17's C), its contag THUNK_SELECTOR or more, is given to C
+   first (compile.c, SLOW_SELECT; vm_selected): where its tuple is
+   evaluated, register s is given the field the collector would give it,
+   which is tested again, so that a selector reduced by a collection or not
+   counts the same (D17's count), as the interpreter's FORCE. Where the
+   program does not rerun (s.b), a call that syncs nothing. */
+void emit_FORCE(Jit *j, uint32_t pc, int32_t a, int32_t b, int32_t c) {
+    (void)pc;
+    AsmLabel have, thunk, enter; as_label_init(&have); as_label_init(&thunk); as_label_init(&enter);
+    ms_need_word(M, b);
+    ms_load_bits(M, R_S0, b);
+    ms_jump_if_immediate(M, R_S0, &have);
+    ms_load_kind(M, R_S1, R_S0);
+    as_cmp_ri(A, R_S1, K_THUNK);
+    as_jcc(A, CC_E, &thunk);
+    as_cmp_ri(A, R_S1, K_IND);
+    as_jcc(A, CC_NE, &have);
+    ms_load_field_bits(M, R_S0, R_S0, 0);
+    as_bind(A, &have);
+    ms_set_bits(M, a, R_S0);
+    as_jmp(A, jit_label(j, (uint32_t)c));
+    as_bind(A, &thunk);
+    Slow *s = ms_slow(M, SLOW_SELECT, j->next);
+    if (s) {
+        s->a = b;
+        s->b = !j->vm->prog.reruns;
+        ms_load_contag(M, R_S1, R_S0);
+        as_cmp_ri(A, R_S1, THUNK_SELECTOR);
+        as_jcc(A, CC_AE, &s->here);
+        as_jmp(A, &enter);
+        /* back with what C gave in rax, register s written: tested again */
+        as_bind(A, &s->back);
+        ms_jump_if_immediate(M, R_S0, &have);
+        ms_load_kind(M, R_S1, R_S0);
+        as_cmp_ri(A, R_S1, K_THUNK);
+        as_jcc(A, CC_E, &enter);
+        as_cmp_ri(A, R_S1, K_IND);
+        as_jcc(A, CC_NE, &have);
+        ms_load_field_bits(M, R_S0, R_S0, 0);
+        as_jmp(A, &have);
+    }
+    as_bind(A, &enter);
+    as_label_free(&have); as_label_free(&thunk); as_label_free(&enter);
+}
+/* the running frame's closure into rax, which must be a suspension */
+static void suspension(Jit *j, int what) {
+    closure(j, what);
+    ms_load_kind(M, R_S1, R_S0);
+    as_cmp_ri(A, R_S1, K_THUNK);
+    as_jcc(A, CC_NE, jit_fatal(j, what, 0, 0, 0));
+}
+/* UPDATE's: a suspension, or an indirection already -- lazy ML's, which a
+   force from inside its own code updated first (D57, M26) */
+static void suspension_or_ind(Jit *j, int what) {
+    closure(j, what);
+    ms_load_kind(M, R_S1, R_S0);
+    AsmLabel ok;
+    as_label_init(&ok);
+    as_cmp_ri(A, R_S1, K_THUNK);
+    as_jcc(A, CC_E, &ok);
+    as_cmp_ri(A, R_S1, K_IND);
+    as_jcc(A, CC_NE, jit_fatal(j, what, 0, 0, 0));
+    as_bind(A, &ok);
+    as_label_free(&ok);
+}
+/* BLACKHOLE and UPDATE: a write of the suspension's header, and UPDATE's
+   of its first field through the barrier; while the low-pause collector's
+   cycle marks, the whole in C (compile.c, SLOW_THUNK), which shades what
+   the suspension let go */
+void emit_BLACKHOLE(Jit *j, uint32_t pc) {
+    (void)pc;
+    suspension(j, FATAL_BLACKHOLE);
+    Slow *s = ms_slow(M, SLOW_THUNK, j->next);
+    if (!s) return;
+    s->a = -1;
+    ms_need_unmarked(M, &s->here);
+    ms_blackhole(M, R_S0);
+    as_bind(A, &s->back);
+}
+void emit_UPDATE(Jit *j, uint32_t pc, int32_t a) {
+    (void)pc;
+    ms_need_word(M, a);
+    suspension_or_ind(j, FATAL_UPDATE);
+    Slow *s = ms_slow(M, SLOW_THUNK, j->next);
+    if (!s) return;
+    s->a = a;
+    ms_need_unmarked(M, &s->here);
+    ms_set_kind(M, R_S0, K_IND, R_S1);
+    ms_set_field(M, R_S0, 0, a);
+    as_bind(A, &s->back);
+}
+static void tail_object(Jit *j, uint32_t pc, int32_t a, uint32_t n, const int32_t *args) {
+    Slow *g = ms_slow(M, SLOW_APPLY, j->next);
+    if (!g) return;
+    g->a = (int32_t)pc;
+    int fast = apply_fast_on(j);
+    AsmLabel odd; as_label_init(&odd);
+    AsmLabel *general = fast ? &odd : &g->here;
     /* the frame is replaced: of its homes only the argument is wanted, and
        under --jit-profile every one, which the profile's helper (called)
        loads again (M9) */
     ms_role(M, MR_ARGS);
     if (j->jit->profile) ms_writeback(M, pc);
-    else ms_need_word(M, b);
+    else for (uint32_t i = 0; i < n; i++) ms_need_word(M, args[i]);
     int grow = grow_slow(j);
-    if (grow < 0) return;
+    if (grow < 0) { as_label_free(&odd); return; }
+    /* more than one argument: above the frame first, since they are read
+       from its registers, which become the callee's (D15 C) */
+    if (n > 1) for (uint32_t i = 0; i < n; i++) ms_store_nth(M, BASER, j->m.nlocals + i, args[i]);
     ms_role(M, MR_CLOS);
-    closure_function(j, a, R_S2);
+    closure_function(j, a, R_S2, K_CLOSURE, general, n);
     called(j, pc);
     ms_role(M, MR_ROOM);
     room_dynamic(j, grow, 0);
     ms_role(M, MR_ARGS);
     /* the callee's registers are this frame's, from its base: register 0
        from register b, the last home read */
-    ms_store_nth(M, BASER, 0, b);
+    if (n == 1) ms_store_nth(M, BASER, 0, args[0]);
+    else for (uint32_t i = 0; i < n; i++) ms_slot_from_nth_raw(M, (int32_t)i, BASER, j->m.nlocals + i);
     callee_entry(j, R_S5);
     if (!j->jit->all_meta) {   /* (r11 the function's word again after, as in CALL) */
         as_shr_ri(A, R_S6, 1);
@@ -1552,8 +2306,15 @@ void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) {
     ms_role(M, MR_JUMP);
     if (j->callret) as_push_ret(A, BASER, HEADER_AT(0, 1));   /* the entry stores it again (M7) */
     as_jmp_r(A, R_S5);   /* its code, or the interpreter (the table of calls, M6) */
+    if (fast) {
+        const void *shared = apply_shared(j, n, 1);
+        if (shared) apply_hand(j, n, args, &odd, &g->here, NULL, shared);
+        else apply_fast_tail(j, a, n, args, &odd, &g->here, grow);
+    }
     ms_role(M, MR_BODY);
+    as_label_free(&odd);
 }
+void emit_TAILCALL(Jit *j, uint32_t pc, int32_t a, int32_t b) { tail_object(j, pc, a, 1, &b); }
 /* after a CALL or CALLK a RESULT is the callee's RET's to do, and is passed
    over (compile.c, phantom); after a PRIMPUSH it takes what the primitive
    left on the stack, above the registers */
@@ -1704,4 +2465,26 @@ void emit_RAISE(Jit *j, uint32_t pc, int32_t a) {
     as_bind(A, &hand);
     ms_handback(M, RUN_INTERP);
     as_label_free(&hand);
+}
+
+/* ---- D15 C: calls of n arguments through a closure ----
+   In line where the closure has n parameters, as CALL is where it has
+   one; any other, and a partial application, the general path's
+   (SLOW_APPLY). Where not every function has its arity in the section, a
+   callee's registers would be filled from the second (fill_unit_dynamic),
+   which an argument is: left to the interpreter. */
+static int call_args(Jit *j, const uint8_t *L, uint32_t n, int32_t *args) {
+    if (n < 2 || n > 64 || !j->jit->all_meta) { jit_unsupported(j); return 0; }
+    for (uint32_t i = 0; i < n; i++) args[i] = read_i32(L + 4 * i);
+    return 1;
+}
+void emit_CALLN(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint32_t n) {
+    (void)b;
+    int32_t args[64];
+    if (call_args(j, L, n, args)) call_object(j, pc, a, n, args, K_CLOSURE);
+}
+void emit_TAILCALLN(Jit *j, uint32_t pc, int32_t a, int32_t b, const uint8_t *L, uint32_t n) {
+    (void)b;
+    int32_t args[64];
+    if (call_args(j, L, n, args)) tail_object(j, pc, a, n, args);
 }

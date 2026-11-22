@@ -1,0 +1,1 @@
+parse-nk-nested.hs:2:10: error: the variable operator `+` in a pattern: only a constructor operator can stand there

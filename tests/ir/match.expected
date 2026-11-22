@@ -2,14 +2,10 @@
 (seq
   (set g1
     (fn (v1 : 'a list) : int
-      (try
-        (if
-          (prim poly_eq
-            (tag v1)
-            0)
-          0
-          fail)
-        (try
+      (join j1 ()
+        (join j2 ()
+          (raise
+            (mkexn (builtinexn 0) ()))
           (if
             (prim poly_eq
               (tag v1)
@@ -23,7 +19,11 @@
                   (prim int_add
                     1
                     (app g1 v4)))))
-            fail)
-          (raise
-            (mkexn (builtinexn 0) ()))))))
+            (jump j2)))
+        (if
+          (prim poly_eq
+            (tag v1)
+            0)
+          0
+          (jump j1)))))
   ())

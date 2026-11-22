@@ -1,0 +1,5 @@
+(True,True,True)
+(True,5,[])
+[P 1 'a',P 1 'b',P 2 'a',P 2 'b']
+True
+(False,True,4)

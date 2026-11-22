@@ -1,0 +1,51 @@
+; run: --read-core tests/hs/core/lib/base.core
+; What is not forced does not run: an error bound and not used, given to
+; an argument not used, in a field not read, in the elements of a list
+; whose length is taken; a lambda and a partial application are values,
+; so seq on them is no force of their bodies; take of an infinite list.
+;   let e = error "e" in print 1                  1
+;   print (const 2 (error "c"))                   2
+;   print (head (3 : error "tail"))               3
+;   print (length [error "a", error "b"])         2
+;   print (seq (\x -> error "f") 4)               4
+;   print (seq (plus (error "p")) 5)              5
+;   print (take 3 (repeat 7))                     [7,7,7]
+(val const (forall (a b) (-> a b a)) (\ (@a @b (x a) (y b)) x))
+(val plus (-> Int Int Int) (\ ((x Int) (y Int)) (case x a (_ (case y b (_ (prim int_add a b)))))))
+(val head (forall (a) (-> (List a) a))
+  (\ (@a (xs (List a))) (case xs v ((Cons y _) y) ((Nil) (error @a "head")))))
+(val repeat (forall (a) (-> a (List a))) (\ (@a (x a)) (letrec ((xs (List a) (con Cons @a x xs))) xs)))
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (e Int (error @Int "e"))
+    (case (printInt 1 w) o1
+      ((utuple w1 _)
+        (let (c Int (error @Int "c"))
+        (let (k Int (const @Int @Int 2 c))
+        (case (printInt k w1) o2
+          ((utuple w2 _)
+            (let (t (List Int) (error @(List Int) "tail"))
+            (let (l (List Int) (con Cons @Int 3 t))
+            (let (h Int (head @Int l))
+            (case (printInt h w2) o3
+              ((utuple w3 _)
+                (let (a Int (error @Int "a"))
+                (let (b Int (error @Int "b"))
+                (let (n0 (List Int) (con Nil @Int))
+                (let (l1 (List Int) (con Cons @Int b n0))
+                (let (l2 (List Int) (con Cons @Int a l1))
+                (let (n Int (length @Int l2))
+                (case (printInt n w3) o4
+                  ((utuple w4 _)
+                    (let (fn (-> Int Int) (\ ((x Int)) (error @Int "f")))
+                    (case fn _
+                      (_ (case (printInt 4 w4) o5
+                           ((utuple w5 _)
+                             (let (p Int (error @Int "p"))
+                             (let (pp (-> Int Int) (plus p))
+                             (case pp _
+                               (_ (case (printInt 5 w5) o6
+                                    ((utuple w6 _)
+                                      (let (r (List Int) (repeat @Int 7))
+                                      (let (r3 (List Int) (take @Int 3 r))
+                                        (printIntList r3 w6))))))))))))))))))))))))))))))))))))

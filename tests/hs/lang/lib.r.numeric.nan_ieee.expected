@@ -1,0 +1,4 @@
+("-0.0e0","-0.0","-0.00")
+(["NaN","Infinity","-Infinity"],["NaN","Infinity","-Infinity"])
+["NaN","Infinity","-Infinity"]
+([True],[Infinity],[" rest"])

@@ -1,0 +1,5 @@
+# rhc's policy (D55; tests/runner/hsperf.sml): reading the head of a file written whole costs little more than the
+# write; read strictly, the read would cost as much again.
+a: 20000 read
+b: 20000 write
+ratio: 1.3

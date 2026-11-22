@@ -37,12 +37,11 @@ struct
 
   and unitMid (c : wctx, v : MidCanon.unitMid) : unit =
     case v of
-      {mid = mid', datatypes = datatypes', funNames = funNames', pins = pins', opens = opens'} =>
+      {mid = mid', datatypes = datatypes', pins = pins', opens = opens'} =>
         (P.list (fn (_, x_1) => def (c, x_1)) (#w c, mid');
          P.list (fn (_, x_2) => (case x_2 of (x_3, x_4) => (#tycon c x_3; datatypeInfo (c, x_4)))) (#w c, datatypes');
-         P.list (fn (_, x_5) => (case x_5 of (x_6, x_7) => (#stamp c x_6; P.string (#w c, x_7)))) (#w c, funNames');
-         P.list (fn (_, x_8) => (case x_8 of (x_9, x_10) => (#tycon c x_9; P.list (fn (_, x_11) => (case x_11 of (x_12, x_13) => (P.nat (#w c, x_12); P.option (fn (_, x_14) => P.nat (#w c, x_14)) (#w c, x_13)))) (#w c, x_10)))) (#w c, pins');
-         P.list (fn (_, x_15) => #tycon c x_15) (#w c, opens'))
+         P.list (fn (_, x_5) => (case x_5 of (x_6, x_7) => (#tycon c x_6; P.list (fn (_, x_8) => (case x_8 of (x_9, x_10) => (P.nat (#w c, x_9); P.option (fn (_, x_11) => P.nat (#w c, x_11)) (#w c, x_10)))) (#w c, x_7)))) (#w c, pins');
+         P.list (fn (_, x_12) => #tycon c x_12) (#w c, opens'))
 
   and rdatatypeInfo (c : rctx) : MidCanon.datatypeInfo =
     let
@@ -54,10 +53,9 @@ struct
     let
       val mid' = P.rlist (fn _ => rdef c) (#r c)
       val datatypes' = P.rlist (fn _ => let val x_1 = #tycon c () val x_2 = rdatatypeInfo c in (x_1, x_2) end) (#r c)
-      val funNames' = P.rlist (fn _ => let val x_3 = #stamp c () val x_4 = P.rstring (#r c) in (x_3, x_4) end) (#r c)
-      val pins' = P.rlist (fn _ => let val x_5 = #tycon c () val x_6 = P.rlist (fn _ => let val x_7 = P.rnat (#r c) val x_8 = P.roption (fn _ => P.rnat (#r c)) (#r c) in (x_7, x_8) end) (#r c) in (x_5, x_6) end) (#r c)
+      val pins' = P.rlist (fn _ => let val x_3 = #tycon c () val x_4 = P.rlist (fn _ => let val x_5 = P.rnat (#r c) val x_6 = P.roption (fn _ => P.rnat (#r c)) (#r c) in (x_5, x_6) end) (#r c) in (x_3, x_4) end) (#r c)
       val opens' = P.rlist (fn _ => #tycon c ()) (#r c)
-    in {mid = mid', datatypes = datatypes', funNames = funNames', pins = pins', opens = opens'} end
+    in {mid = mid', datatypes = datatypes', pins = pins', opens = opens'} end
   (* ---- end of codecs of a unit's Mid ---- *)
   end
 

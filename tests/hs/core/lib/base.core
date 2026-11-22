@@ -1,0 +1,152 @@
+; What the run tests of tests/hs/core share, read before each with
+; --read-core: lists, pairs, Maybe, and printing, in Core. An action is a
+; function of the state token, World -> (utuple World T), as the Prelude's
+; IO is (D25); a program threads the token itself, in direct style.
+
+(data List (a) (Nil) (Cons a (List a)))
+(data Pair (a b) (Pair a b))
+(data Maybe (a) (Nothing) (Just a))
+(data Unit () (Unit))
+
+; ---- lists
+
+(val map (forall (a b) (-> (-> a b) (List a) (List b)))
+  (\ (@a @b (f (-> a b)) (xs (List a)))
+    (case xs ys
+      ((Nil) (con Nil @b))
+      ((Cons y rest) (let (fy b (f y)) (let (fr (List b) (map @a @b f rest)) (con Cons @b fy fr)))))))
+
+(val take (forall (a) (-> !Int (List a) (List a)))
+  (\ (@a (n !Int) (xs (List a)))
+    (case (prim int_le n 0) stop
+      ((True) (con Nil @a))
+      ((False)
+        (case xs ys
+          ((Nil) (con Nil @a))
+          ((Cons y rest) (case (prim int_sub n 1) m (_ (let (tr (List a) (take @a m rest)) (con Cons @a y tr))))))))))
+
+(val length (forall (a) (-> (List a) Int))
+  (\ (@a (xs (List a)))
+    (case xs ys
+      ((Nil) 0)
+      ((Cons _ rest) (case (length @a rest) n (_ (prim int_add n 1)))))))
+
+; xs !! n
+(val index (forall (a) (-> (List a) !Int a))
+  (\ (@a (xs (List a)) (n !Int))
+    (case xs ys
+      ((Nil) (case (prim exn_error "!!: index too large") e (_ (prim raise @a e))))
+      ((Cons y rest) (case (prim int_eq n 0) z ((True) y) ((False) (case (prim int_sub n 1) m (_ (index @a rest m)))))))))
+
+(val append (forall (a) (-> (List a) (List a) (List a)))
+  (\ (@a (xs (List a)) (ys (List a)))
+    (case xs zs
+      ((Nil) ys)
+      ((Cons z rest) (let (r (List a) (append @a rest ys)) (con Cons @a z r))))))
+
+; ---- text
+
+(val digits (-> !Int Str)
+  (\ ((n !Int))
+    (case (prim int_lt n 10) small
+      ((True) (case (prim int_add n 48) c (_ (case (prim char_chr c) ch (_ (prim str_from_char ch))))))
+      ((False)
+        (case (prim int_quot n 10) q
+          (_ (case (prim int_rem n 10) r
+               (_ (case (digits q) a (_ (case (digits r) b (_ (prim str_concat a b)))))))))))))
+
+(val showInt (-> !Int Str)
+  (\ ((n !Int))
+    (case (prim int_lt n 0) neg
+      ((True) (case (prim int_neg n) m (_ (case (digits m) d (_ (prim str_concat "-" d))))))
+      ((False) (digits n)))))
+
+; the elements of a list of Str between brackets, by commas
+(val showStrs (-> (List Str) Str)
+  (\ ((xs (List Str)))
+    (letrec ((rest (-> (List Str) Str)
+               (\ ((ys (List Str)))
+                 (case ys zs
+                   ((Nil) "]")
+                   ((Cons z more) (case z s (_ (case (rest more) r (_ (case (prim str_concat "," s) c (_ (prim str_concat c r))))))))))))
+      (case xs zs
+        ((Nil) "[]")
+        ((Cons z more) (case z s (_ (case (rest more) r (_ (case (prim str_concat "[" s) c (_ (prim str_concat c r))))))))))))
+
+(val showIntList (-> (List Int) Str)
+  (\ ((xs (List Int)))
+    (let (show (-> Int Str) (\ ((x Int)) (case x v (_ (showInt v)))))
+      (let (strs (List Str) (map @Int @Str show xs))
+        (showStrs strs)))))
+
+; ---- actions
+
+(val putStr (-> !Str World (utuple World Unit))
+  (\ ((s !Str) (w World))
+    (case (prim print_str s w) w1 (_ (let (u Unit (con Unit)) (utuple w1 u))))))
+
+(val putStrLn (-> !Str World (utuple World Unit))
+  (\ ((s !Str) (w World))
+    (case (prim str_concat s "\n") t (_ (putStr t w)))))
+
+(val printInt (-> Int World (utuple World Unit))
+  (\ ((x Int) (w World))
+    (case x v (_ (case (showInt v) s (_ (putStrLn s w)))))))
+
+(val printIntList (-> (List Int) World (utuple World Unit))
+  (\ ((xs (List Int)) (w World))
+    (case (showIntList xs) s (_ (putStrLn s w)))))
+
+(val printBool (-> Bool World (utuple World Unit))
+  (\ ((b Bool) (w World))
+    (case b v ((True) (putStrLn "True" w)) ((False) (putStrLn "False" w)))))
+
+; error s, which no catch of Haskell 98 takes
+(val error (forall (a) (-> !Str a))
+  (\ (@a (s !Str)) (case (prim exn_error s) e (_ (prim raise @a e)))))
+
+; ---- counting, for the tests of sharing: a cell made once, by a CAF, and
+; ticked where a computation runs, with the token real_world gives
+
+(val newCounter (-> Unit (Ref Int))
+  (\ ((u Unit))
+    (case (prim real_world) w (_ (case (prim ref_new @Int 0 w) r ((utuple _ c) c))))))
+
+(val tick (-> (Ref Int) Unit)
+  (\ ((r (Ref Int)))
+    (case r c
+      (_ (case (prim real_world) w
+           (_ (case (prim ref_get @Int c w) g
+                ((utuple w1 n)
+                  (case n m (_ (case (prim int_add m 1) m1 (_ (case (prim ref_set @Int c m1 w1) _ (_ (con Unit)))))))))))))))
+
+(val printCount (-> (Ref Int) World (utuple World Unit))
+  (\ ((r (Ref Int)) (w World))
+    (case r c (_ (case (prim ref_get @Int c w) g ((utuple w1 n) (printInt n w1)))))))
+
+; ---- exceptions
+
+; catch of Haskell 98: an IOError's handler, given its message; any other
+; exception raised again
+(val catchIO (forall (a) (-> (-> World (utuple World a)) (-> Str World (utuple World a)) World (utuple World a)))
+  (\ (@a (act (-> World (utuple World a))) (h (-> Str World (utuple World a))) (w World))
+    (let (handler (-> !Exn World (utuple World a))
+           (\ ((e !Exn) (w1 World))
+             (case (prim exn_kind e) k
+               (1 (case (prim exn_message e) m (_ (h m w1))))
+               (_ (prim raise_io @a e w1)))))
+      (prim catch @a act handler w))))
+
+; the harness's: the name of what was raised, and its message where it is
+; an error or a failed match
+(val try (-> (-> World (utuple World Unit)) World (utuple World Unit))
+  (\ ((act (-> World (utuple World Unit))) (w World))
+    (let (handler (-> !Exn World (utuple World Unit))
+           (\ ((e !Exn) (w1 World))
+             (case (prim exn_name e) n
+               (_ (case (prim str_concat "raised " n) l
+                    (_ (case (prim exn_kind e) k
+                         (0 (case (prim exn_message e) m (_ (case (prim str_concat l ": ") l1 (_ (case (prim str_concat l1 m) l2 (_ (putStrLn l2 w1))))))))
+                         (2 (case (prim exn_message e) m (_ (case (prim str_concat l ": ") l1 (_ (case (prim str_concat l1 m) l2 (_ (putStrLn l2 w1))))))))
+                         (_ (putStrLn l w1)))))))))
+      (prim catch @Unit act handler w))))

@@ -80,7 +80,13 @@ struct
        alone ("test-lsp-protocol", [], ["src/lsp/*", "lib/lsp/*", "lib/jsonrpc/*", "tests/lsp/*", "tools/lsp/*", "runelsp.build"]),
        alone ("test-compiler-state", [], ["lib/compiler/*", "tests/lib/compiler/*", "tests/compiler/*", "tools/compiler/*"]),
        alone ("test-lsp-bench", [], ["tools/lsp/*", "tests/lsp/*"]),
-       step ("test-lsp-oracle", {cpus = 1, memory = 2000, pools = [], after = []}, [],
+       (* the oracle's three runs, three jobs (tests/lsp/README.md): each
+          about 700 to 900 s of CPU, its peak memory measured *)
+       step ("test-lsp-oracle-walk", {cpus = 1, memory = 3200, pools = [], after = []}, [],
+             ["lib/compiler/api/*", "lib/compiler/driver/unitbasis.sml", "tools/lsp/*", "tests/lsp/oracle/*"]),
+       step ("test-lsp-oracle-focus", {cpus = 1, memory = 2000, pools = [], after = []}, [],
+             ["lib/compiler/api/*", "lib/compiler/driver/unitbasis.sml", "tools/lsp/*", "tests/lsp/oracle/*"]),
+       step ("test-lsp-oracle-store", {cpus = 1, memory = 2000, pools = [], after = []}, [],
              ["lib/compiler/api/*", "lib/compiler/driver/unitbasis.sml", "tools/lsp/*", "tests/lsp/oracle/*"]),
        (* the scale target (D28): what the load cannot move in make check,
           its times nightly *)
@@ -111,6 +117,12 @@ struct
      {name = "ffi-linux32", probe = "test -r \"${FFI_LINUX32_PREFIX:-build/deps/libffi/linux32/install}/rune-ffi-dependency.json\" && test -x bin/runevm-ffi32 && test -x bin/runevm-stack-ffi32", hint = "make ffi-libffi-linux32 ffi-portability; native32 execution needs an unrestricted host"},
      {name = "ffi-aarch64", probe = "command -v qemu-aarch64 && test -r \"${FFI_AARCH64_PREFIX:-build/deps/libffi/aarch64/install}/rune-ffi-dependency.json\" && test -x bin/runevm-ffi-aarch64.bin && test -x bin/runevm-stack-ffi-aarch64.bin", hint = "make ffi-libffi-aarch64 ffi-portability; install Clang, target sysroot/binutils and qemu-user"},
      {name = "ffi-ppc64", probe = "command -v qemu-ppc64 && test -r \"${FFI_PPC64_PREFIX:-build/deps/libffi/ppc64/install}/rune-ffi-dependency.json\" && test -x bin/runevm-ffi-ppc64.bin && test -x bin/runevm-stack-ffi-ppc64.bin", hint = "make ffi-libffi-ppc64 ffi-portability; install Clang, target sysroot/binutils and qemu-user"},
+     (* the Windows VMs make foreign calls only when built over a provisioned
+        libffi; build/foreign-winNN-selected holds the flags they were built with *)
+     {name = "ffi-windows32", probe = "grep -qF -- -DRUNE_FFI=1 build/foreign-win32-selected",
+      hint = "provision libffi for 32-bit Windows, then build the Windows VMs over it: make ffi-libffi-windows32 windows (docs/ffi/release.md)"},
+     {name = "ffi-windows64", probe = "grep -qF -- -DRUNE_FFI=1 build/foreign-win64-selected",
+      hint = "provision libffi for 64-bit Windows, then build the Windows VMs over it: make ffi-libffi-windows64 windows (docs/ffi/release.md)"},
      {name = "clang", probe = "command -v ${CLANG:-clang}", hint = "install Clang for independent C frontend comparisons"},
      {name = "windows-sdk", probe = "test -d \"$RUNEFFI_WINDOWS_SDK/um\" && test -d \"$RUNEFFI_MSVC_INCLUDE\"",
       hint = "set RUNEFFI_WINDOWS_SDK and RUNEFFI_MSVC_INCLUDE as described in ffi/win32/README.md"},
@@ -127,6 +139,7 @@ struct
         hint="install jupyter_client and pyzmq for python3 (Ubuntu: python3-jupyter-client python3-zmq)"}]
     @ Hosts.capabilities @ Native.capabilities @ Heap.capabilities @ ScenarioJobs.capabilities @ GMPJobs.capabilities @ TerminalJobs.capabilities
     @ [{name = "grep-pcre", probe = "printf LIST | grep -P '^LIST$'", hint = "GNU grep with PCRE for LAWS_PROGRAMS"}]
+    @ HsLang.capabilities @ HsSyntax.capabilities @ HsOracles.capabilities @ HsLazyPorts.capabilities
 
   (* each file of expectations read by the one engine (docs/testing.md,
      Expectations): it parses, and its skips name programs that are there.
@@ -171,11 +184,13 @@ struct
      also names the same file (for example Basis docs or JIT dump checks). *)
   val broadInputs = ["src/*", "lib/compiler/*", "runtime/*", "lib/basis/*", "lib/test/runner/*",
                      "Makefile", "tools/builder/*", "tools/generate/*", "scripts/*"]
-  val tests = List.foldl (fn (path, tree) => Test.tag ("covers:" ^ path) tree)
-    (Test.describe "" [make, expected, Lang.tests, Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, TerminalJobs.tree, Protocols.tree, Portability.tree, ForeignModelJobs.tree, FfiJobs.tree, Canary.tests, CompilerMutants.tree ()]) broadInputs
+  (* built when asked, not when the runner starts: a command of a job
+     (bin/rune-test hs-roundtrip-one ...) needs none of it *)
+  fun tests () = List.foldl (fn (path, tree) => Test.tag ("covers:" ^ path) tree)
+    (Test.describe "" [make, expected, Lang.tests (), Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, HsCore.tree (), TerminalJobs.tree, Protocols.tree, Portability.tree, ForeignModelJobs.tree, FfiJobs.tree, Canary.tests, CompilerMutants.tree (), HsLang.tree (), HsRoundTrip.tree (), HsConformance.tree (), HsSyntax.tree (), HsNames.tree (), HsMutants.tree (), HsMeta.tree (), HsGen.tree (), HsReduce.tree (), HsInterpVm.tree (), HsOracles.tree (), HsLibrary.tree (), HsPerf.tree (), HsLintJobs.tree (), HsRhcCorpus.tree (), HsLazyPorts.tree (), HsCorpusRun.tree (), HsUnits.tree (), Thunks.tree, HsSnapshotJobs.tree (), HsIfaceJobs.tree (), HsDesugarJobs.tree (), HsSimplifyJobs.tree (), HsSimplifyFigures.tree ()]) broadInputs
 
   fun requirements () =
-    let val rows = Test.leaves tests
+    let val rows = Test.leaves (tests ())
         fun need (ok, why) = if ok then () else raise Fail ("check requirements: " ^ why)
         fun meta name = case List.find (fn {path, ...} => path = name) rows of
             SOME {meta, ...} => meta | NONE => raise Fail ("missing inventory case: " ^ name)
@@ -217,7 +232,27 @@ val () =
   | ["check-requirements"] => Inventory.requirements ()
   | args =>
       case BuildChecks.command args of SOME action => action () | NONE =>
+      case HsOracles.command args of SOME action => action () | NONE =>
+      case HsRhcCorpus.command args of SOME action => action () | NONE =>
+      case HsLazyPorts.command args of SOME action => action () | NONE =>
+      case HsCorpusRun.command args of SOME action => action () | NONE =>
+      case HsChecks.command args of SOME action => action () | NONE =>
       case CompilerMutants.command args of SOME action => action () | NONE =>
+      case HsSyntax.command args of SOME action => action () | NONE =>
+      case HsNames.command args of SOME action => action () | NONE =>
+      case HsLibrary.command args of SOME action => action () | NONE =>
+      case HsMutants.command args of SOME action => action () | NONE =>
+      case HsMeta.command args of SOME action => action () | NONE =>
+      case HsGen.command args of SOME action => action () | NONE =>
+      case HsReduce.command args of SOME action => action () | NONE =>
+      case HsInterpVm.command args of SOME action => action () | NONE =>
+      case HsDesugarJobs.command args of SOME action => action () | NONE =>
+      case HsSimplifyJobs.command args of SOME action => action () | NONE =>
+      case HsSimplifyFigures.command args of SOME action => action () | NONE =>
+      case HsPerf.command args of SOME action => action () | NONE =>
+      case HsLintJobs.command args of SOME action => action () | NONE =>
+      case HsSnapshotJobs.command args of SOME action => action () | NONE =>
+      case HsIfaceJobs.command args of SOME action => action () | NONE =>
       case WindowsJobs.command args of SOME action => action () | NONE =>
       case Benchmarks.command args of SOME action => action () | NONE =>
       case ScenarioJobs.command args of SOME action => action () | NONE =>
@@ -242,12 +277,30 @@ val () =
       case Oracles.command args of
         SOME f => f ()
       | NONE =>
+      case Thunks.command args of
+        SOME f => f ()
+      | NONE =>
+      case HsLang.command args of
+        SOME f => f ()
+      | NONE =>
+      case HsRoundTrip.command args of
+        SOME f => f ()
+      | NONE =>
+      case HsConformance.command args of
+        SOME f => f ()
+      | NONE =>
           case Tools.command args of
+            SOME f => f ()
+          | NONE =>
+          case HsCore.command args of
+            SOME f => f ()
+          | NONE =>
+          case HsUnits.command args of
             SOME f => f ()
           | NONE => case Protocols.command args of
                       SOME f => f ()
                     | NONE =>
                   case Portability.command args of
                     SOME f => f ()
-                  | NONE => Cli.mainWith {tests = Inventory.tests, capabilities = Inventory.capabilities,
+                  | NONE => Cli.mainWith {tests = Inventory.tests (), capabilities = Inventory.capabilities,
                                             quarantine = "tests/runner/quarantine.txt"}

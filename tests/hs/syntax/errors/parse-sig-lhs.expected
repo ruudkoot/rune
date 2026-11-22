@@ -1,0 +1,1 @@
+parse-sig-lhs.hs:2:1: error: a type signature whose left-hand side is not variables

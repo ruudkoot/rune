@@ -259,3 +259,51 @@ case ROP_FIELD: {
     emit_FIELD(j, pc, a, b, c, d);
     break;
 }
+case ROP_FORCE: {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    int32_t c = read_i32(code + pc + 9);
+    emit_FORCE(j, pc, a, b, c);
+    break;
+}
+case ROP_ENTER: {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    emit_ENTER(j, pc, a, b);
+    break;
+}
+case ROP_BLACKHOLE: {
+    emit_BLACKHOLE(j, pc);
+    break;
+}
+case ROP_UPDATE: {
+    int32_t a = read_i32(code + pc + 1);
+    emit_UPDATE(j, pc, a);
+    break;
+}
+case ROP_CLOSUREN: {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    int32_t c = read_i32(code + pc + 9);
+    int32_t d = read_i32(code + pc + 13);
+    const uint8_t *L = code + pc + 17;
+    uint32_t n = (uint32_t)d;
+    emit_CLOSUREN(j, pc, a, b, c, d, L, n);
+    break;
+}
+case ROP_CALLN: {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    const uint8_t *L = code + pc + 9;
+    uint32_t n = (uint32_t)b;
+    emit_CALLN(j, pc, a, b, L, n);
+    break;
+}
+case ROP_TAILCALLN: {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    const uint8_t *L = code + pc + 9;
+    uint32_t n = (uint32_t)b;
+    emit_TAILCALLN(j, pc, a, b, L, n);
+    break;
+}

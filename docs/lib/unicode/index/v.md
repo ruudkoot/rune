@@ -2,7 +2,7 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) **v** [w](w.md) [y](y.md)
 
-- `version` (val): [DISPLAY_WIDTH](../sig/DISPLAY_WIDTH.md#val-version), [GRAPHEME](../sig/GRAPHEME.md#val-version), [IDENTIFIER](../sig/IDENTIFIER.md#val-version), [NORMALIZE](../sig/NORMALIZE.md#val-version), [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#val-version)
+- `version` (val): [CODE_POINT](../sig/CODE_POINT.md#val-version), [DISPLAY_WIDTH](../sig/DISPLAY_WIDTH.md#val-version), [GRAPHEME](../sig/GRAPHEME.md#val-version), [IDENTIFIER](../sig/IDENTIFIER.md#val-version), [NORMALIZE](../sig/NORMALIZE.md#val-version), [UNICODE_SECURITY](../sig/UNICODE_SECURITY.md#val-version)
 
 ---
 

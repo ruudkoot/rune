@@ -1,0 +1,157 @@
+(* run: after hs-rts.mid *)
+(* polymorphic recursion against each pass that rewrites calls:
+   Workers (a tuple parameter; a curried function), Lift (a local function that
+   abstracts over a type and recurs at another), Refs (a ref parameter given on
+   in a tail call at another type), mutual recursion at growing types with a
+   static function, results in globals (a tuple, a constructor), and a
+   specialised closure. Each sums to a known number on build 6 1. *)
+(datatype nest ('a) (0 "NNil") (1 "NCons" : 'a * ('a * 'a) nest))
+(datatype res ('a) (0 "RNone") (1 "ROne" : 'a))
+(funs
+  (fn gbuild ['a] ((vbN : int) (vbX : 'a)) : 'a nest
+    (let (vbZ : bool) (prim poly_eq vbN 0 : (int * int) -> bool)
+    (if vbZ
+      (return (con0 0 : 'a nest))
+      (let (vbP : 'a * 'a) (tuple vbX vbX)
+      (let (vbN1 : int) (prim int_sub vbN 1 : (int * int) -> int)
+      (let (vbR : ('a * 'a) nest) (app gbuild['a * 'a] vbN1 vbP)
+      (let (vbC : 'a * ('a * 'a) nest) (tuple vbX vbR)
+      (return (con 1 vbC : 'a nest))))))))))
+(* a tuple it only takes apart: Workers flattens *)
+(funs
+  (fn gflat ['a] ((vn2fP : int * 'a nest)) : int
+    (let (vn2fA : int) (select 0 vn2fP)
+    (let (vn2fN : 'a nest) (select 1 vn2fP)
+    (let (vn2fT : int) (tag vn2fN)
+    (let (vn2fC : bool) (prim poly_eq vn2fT 1 : (int * int) -> bool)
+    (if vn2fC
+      (let (vn2fQ : 'a * ('a * 'a) nest) (decon 1 vn2fN : 'a nest)
+      (let (vn2fR : ('a * 'a) nest) (select 1 vn2fQ)
+      (let (vn2fA1 : int) (prim int_add vn2fA 1 : (int * int) -> int)
+      (let (vn2fT2 : int * ('a * 'a) nest) (tuple vn2fA1 vn2fR)
+      (return (app gflat['a * 'a] vn2fT2))))))
+      (return vn2fA))))))))
+(* curried: Workers makes it take both *)
+(funs
+  (fn gcur ['a] ((vcA : int)) : 'a nest -> int
+    (fun
+      (fn vcG ((vcN : 'a nest)) : int
+        (let (vcT : int) (tag vcN)
+        (let (vcC : bool) (prim poly_eq vcT 1 : (int * int) -> bool)
+        (if vcC
+          (let (vcQ : 'a * ('a * 'a) nest) (decon 1 vcN : 'a nest)
+          (let (vcR : ('a * 'a) nest) (select 1 vcQ)
+          (let (vcA1 : int) (prim int_add vcA 2 : (int * int) -> int)
+          (let (vcF : ('a * 'a) nest -> int) (app gcur['a * 'a] vcA1)
+          (return (app vcF vcR))))))
+          (return vcA)))))
+      (return vcG))))
+(* a ref given on in a tail call at another type *)
+(funs
+  (fn grefs ['a] ((vrR : int ref) (vrN : 'a nest)) : int
+    (let (vrT : int) (tag vrN)
+    (let (vrC : bool) (prim poly_eq vrT 1 : (int * int) -> bool)
+    (if vrC
+      (let (vrQ : 'a * ('a * 'a) nest) (decon 1 vrN : 'a nest)
+      (let (vrS : ('a * 'a) nest) (select 1 vrQ)
+      (let (vrV : int) (prim ref_get vrR : int ref -> int)
+      (let (vrV1 : int) (prim int_add vrV 3 : (int * int) -> int)
+      (let (vrU : unit) (prim ref_set vrR vrV1 : (int ref * int) -> unit)
+      (return (app grefs['a * 'a] vrR vrS)))))))
+      (return (prim ref_get vrR : int ref -> int)))))))
+(* mutual recursion, each at its own type, a static function *)
+(funs
+  (fn gev ['a] ((veF : int -> int) (veN : 'a nest)) : int
+    (let (veT : int) (tag veN)
+    (let (veC : bool) (prim poly_eq veT 1 : (int * int) -> bool)
+    (if veC
+      (let (veQ : 'a * ('a * 'a) nest) (decon 1 veN : 'a nest)
+      (let (veR : ('a * 'a) nest) (select 1 veQ)
+      (let (veH : int) (app veF 1)
+      (let (veS : int) (app god['a * 'a] veF veR)
+      (return (prim int_add veH veS : (int * int) -> int))))))
+      (return 0)))))
+  (fn god ['a] ((voF : int -> int) (voN : 'a nest)) : int
+    (let (voT : int) (tag voN)
+    (let (voC : bool) (prim poly_eq voT 1 : (int * int) -> bool)
+    (if voC
+      (let (voQ : 'a * ('a * 'a) nest) (decon 1 voN : 'a nest)
+      (let (voR : ('a * 'a) nest) (select 1 voQ)
+      (let (voH : int) (app voF 2)
+      (let (voS : int) (app gev['a * 'a] voF voR)
+      (return (prim int_add voH voS : (int * int) -> int))))))
+      (return 0))))))
+(* a result that is a tuple, and one that is a constructor, through the recursion *)
+(funs
+  (fn gtup ['a] ((vn2tN : 'a nest)) : int * int
+    (let (vn2tT : int) (tag vn2tN)
+    (let (vn2tC : bool) (prim poly_eq vn2tT 1 : (int * int) -> bool)
+    (if vn2tC
+      (let (vn2tQ : 'a * ('a * 'a) nest) (decon 1 vn2tN : 'a nest)
+      (let (vn2tR : ('a * 'a) nest) (select 1 vn2tQ)
+      (let (vn2tP : int * int) (app gtup['a * 'a] vn2tR)
+      (let (vn2tA : int) (select 0 vn2tP)
+      (let (vn2tB : int) (select 1 vn2tP)
+      (let (vn2tA1 : int) (prim int_add vn2tA 1 : (int * int) -> int)
+      (let (vn2tB1 : int) (prim int_add vn2tB 2 : (int * int) -> int)
+      (return (tuple vn2tA1 vn2tB1)))))))))
+      (return (tuple 0 0))))))
+  (fn gsum ['a] ((vsuN : 'a nest)) : int res
+    (let (vsuT : int) (tag vsuN)
+    (let (vsuC : bool) (prim poly_eq vsuT 1 : (int * int) -> bool)
+    (if vsuC
+      (let (vsuQ : 'a * ('a * 'a) nest) (decon 1 vsuN : 'a nest)
+      (let (vsuR : ('a * 'a) nest) (select 1 vsuQ)
+      (let (vsuP : int res) (app gsum['a * 'a] vsuR)
+      (let (vsuPT : int) (tag vsuP)
+      (let (vsuPC : bool) (prim poly_eq vsuPT 1 : (int * int) -> bool)
+      (if vsuPC
+        (let (vsuV : int) (decon 1 vsuP : int res)
+        (let (vsuV1 : int) (prim int_add vsuV 1 : (int * int) -> int)
+        (return (con 1 vsuV1 : int res))))
+        (return (con 1 1 : int res))))))))
+      (return (con0 0 : int res)))))))
+(funs
+  (fn gdbl ((vdbX : int)) : int
+    (return (prim int_mul 2 vdbX : (int * int) -> int)))
+  (fn gmain ((vmU : unit)) : unit
+    (let (vn : int nest) (app gbuild[int] 6 1)
+    (let (vp1 : int * int nest) (tuple 100 vn)
+    (let (va : int) (app gflat[int] vp1)
+    (let (vu1 : unit) (app gputInt va)
+    (let (vf : int nest -> int) (app gcur[int] 200)
+    (let (vb : int) (app vf vn)
+    (let (vu2 : unit) (app gputInt vb)
+    (let (vrf : int ref) (prim ref_new 300 : int -> int ref)
+    (let (vc : int) (app grefs[int] vrf vn)
+    (let (vu3 : unit) (app gputInt vc)
+    (let (vd : int) (app gev[int] gdbl vn)
+    (let (vu4 : unit) (app gputInt vd)
+    (let (ve : int * int) (app gtup[int] vn)
+    (let (ve0 : int) (select 0 ve)
+    (let (ve1 : int) (select 1 ve)
+    (let (vu5 : unit) (app gputInt ve0)
+    (let (vu6 : unit) (app gputInt ve1)
+    (let (vg : int res) (app gsum[int] vn)
+    (let (vgT : int) (tag vg)
+    (let (vgC : bool) (prim poly_eq vgT 1 : (int * int) -> bool)
+    (if vgC
+      (let (vgV : int) (decon 1 vg : int res)
+      (let (vu7 : unit) (app gputInt vgV)
+      (* a local function abstracting over a type, recurring at another, capturing k: Lift *)
+      (let (vk : int) (prim ref_get vrf : int ref -> int)
+      (fun
+        (fn vlocal ['b] ((vlN : 'b nest)) : int
+          (let (vlT : int) (tag vlN)
+          (let (vlC : bool) (prim poly_eq vlT 1 : (int * int) -> bool)
+          (if vlC
+            (let (vlQ : 'b * ('b * 'b) nest) (decon 1 vlN : 'b nest)
+            (let (vlR : ('b * 'b) nest) (select 1 vlQ)
+            (let (vlS : int) (app vlocal['b * 'b] vlR)
+            (return (prim int_add vlS vk : (int * int) -> int)))))
+            (return 0)))))
+        (let (vh : int) (app vlocal[int] vn)
+        (return (app gputInt vh)))))))
+      (return (app gputs "impossible")))))))))))))))))))))))))
+(do ()
+  (return (app gmain ())))

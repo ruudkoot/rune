@@ -16,10 +16,22 @@ instruction set, the primitives and the command line;
 
 `--intinf=auto|gmp|sml` selects arithmetic in the current VM. The default
 `auto` uses a supported GMP build when present, otherwise the independent
-SML implementation. An explicit unavailable `gmp` request fails at startup.
+implementation. An explicit unavailable `gmp` request fails at startup.
 `RUNEVM_INTINF` supplies a default for wrappers; the command-line option wins.
-The stack VM and native output use SML. The same register bytecode works in
-both builds; images contain canonical Rune values, never GMP pointers.
+The stack VM and native output use the independent implementation. The same
+register bytecode works in both builds; images contain canonical Rune values,
+never GMP pointers.
+
+An `IntInf.int` is an immediate where its number fits 63 bits, and otherwise
+a pair of its sign and its canonical magnitude (haskell98 M31). Its
+arithmetic and comparisons are primitives, `intinf_add` and the rest
+([bytecode.md](bytecode.md), *Primitives*): two immediates are worked on in
+line, and anything else by `runtime/intinf.c`, whose independent
+implementation is its own arithmetic in 32-bit digits, and which multiplies
+and divides a large operand with GMP where it is selected. The other
+operations of `IntInf` -- the bit operations, shifts, powers, text -- are
+SML over a number's sign and magnitude, with GMP's primitives below where it
+is selected.
 
 `--intinf-max-bits N` sets the finite magnitude budget (default 134217728;
 range 64 through 1073741822). This is an operational limit, not a mathematical
@@ -33,10 +45,12 @@ total-process memory guarantee: Rune's managed heap, GMP's stack temporaries,
 allocator metadata, and system overhead are separate. Both limits remain
 finite, and restoration preserves the stricter saved/invocation value.
 
-SML handles parsing, normalization, small values, exception rules and dispatch.
-The C bindings use documented `mpz` import/export with one-byte words in
-little-endian order, floor division for `div`/`mod`, and truncation for
-`quot`/`rem`. Zero divisors are rejected before entering GMP. Each returning
+SML handles parsing, exception rules and dispatch for the operations that
+are SML; the primitives of `IntInf.int` normalize, raise `Div` and dispatch
+in C. The C bindings use documented `mpz` import/export with one-byte words in
+little-endian order (32-bit native words, least significant first, for the
+digits of `IntInf.int`'s primitives), floor division for `div`/`mod`, and
+truncation for `quot`/`rem`. Zero divisors are rejected before entering GMP. Each returning
 primitive clears all its GMP objects; allocation hooks enforce the budget
 and terminate through the runtime-limit path on exhaustion or allocation
 failure. They never return NULL or unwind through `longjmp`. Hooks are
@@ -183,6 +197,19 @@ the program's code are not in the heap.
   one, grows it by doubling. A heap stops growing at three quarters of
   what a `size_t` counts, and where the system will give no more chunks a
   run ends with `runevm: out of memory`.
+* The value stack is not in the heap, but a full collection takes it all
+  (*The roots*): a run a million frames deep pays for its frames' roots at
+  every full collection, however little its heap holds. `runevm
+  --heap-stack M` counts the stack as live data beside the heap's where the
+  heap's size is worked out (not where `--heap-limit` is held to): `roots`,
+  the slots the last full collection took as roots, a word each; `all`,
+  every slot of the stack; `off`, nothing, the default. Every collector
+  sizes so -- the two, the copier, and the low-pause collector at the end
+  of its cycle -- and a native program takes it from `RUNEVM_OPTIONS`. A
+  deep stack then makes fewer full collections in a larger heap: a
+  recursion 10^6 deep that keeps 48 MB of lists live a while makes 37 full
+  collections in a heap of 48 MB, 26 in 63 MB with `roots`, and 7 in
+  208 MB with `all`. It is a run's setting, which an image does not keep.
 * It never shrinks. With the copier the memory a run takes moves in
   doubling steps: the compiler compiling itself keeps 42 MB at most and
   runs in a heap of 134 MB, from the 64 MiB `bin/rune` starts it with
@@ -377,8 +404,25 @@ raise lowers to the frame it goes on in (`vm_frame_pop`; in `runevm`, a
 return barrier at the watermark's frame, whose return alone goes below
 it: docs/plans/native-frames.md, M5). The frames below
 it have not run since that collection left nothing young in them, so a
-deep recursion is not scanned again at every minor collection; a full
-collection scans the whole stack.
+deep recursion is not scanned again at every minor collection. A full
+collection, and the start of the low-pause collector's cycle, take the whole
+stack; on the register VM they decode again only the frames that ran since
+the last collection, and for the frames below them take the slots that the
+last walk -- a full collection's, or, once the run has made one, a minor
+collection's -- found roots, which it keeps a bit a slot (the stack's
+summary, `runtime/gc/copy.c`): those frames have not run, returned or been
+returned into since, so their roots are the same slots. For a program with
+suspensions a minor collection keeps each frame's function and place as
+well, and the next full collection makes of those that are still there the
+closures' bits and the tables of where they wait (*CAF tables* below), most
+of a minor collection's frames being gone by then. So a deep recursion
+is not decoded again at every full collection either, where each used to
+walk every frame -- its header, its return word, its live registers -- which
+in rhc's programs that consume a lazy list recursively, a million frames
+deep, was 58-79% of a full collection's time and up to half of a run's (the
+haskell98 roadmap, M25). `--gc-verify` decodes those frames again and checks
+the summary against them. (`runevm-stack` keeps its frames in records and
+takes every slot of its stack as a root: it has nothing to decode.)
 
 Of the globals, a minor collection takes only those written since the last
 one, and of the constants only those made since (`MINOR_ROOTS`): every
@@ -403,6 +447,36 @@ callee runs. The liveness is the one the JIT keeps its registers by
 (`runtime/register/live.c`), worked out from a function's code the first
 time a collection finds a frame of it waiting; nothing is added to the
 bytecode, to an image, or to the code that runs.
+
+**CAF tables.** In a program with suspensions -- one some function of which
+says `UPDATE` or `BLACKHOLE`: rhc's, and lazy ML's -- a full collection
+takes a global only where code that may still run reads it, as GHC's
+static reference tables have it (the haskell98 roadmap's D19;
+`runtime/gc/caf.c`). A top-level lazy list that nothing reads once it is
+walked, a CAF, is then let go where it would be kept for the whole run.
+What each function's code reaches is worked out from the bytecode at the
+first such collection: the globals its code reads and, through every
+function it calls by name or makes a closure of, theirs, one table to a
+strongly connected group of the call graph (about a millisecond for rhc's
+programs). A collection takes the table of each frame from where it waits
+(the running frame's whole), of each closure and suspension not yet
+evaluated it marks, and of what the units loaded export; the frames' own
+closures come last, so that one only the frames hold does not keep all its
+function reaches; and it makes unit every global none of those reached. The
+full collection, the copier and the low-pause collector's cycle take them,
+on both VMs and in native code. The cycle keeps the globals as they were
+when it began, beside what they are, for its snapshot; and a suspension
+not yet evaluated that goes under evaluation (`BLACKHOLE`) or is updated
+(`UPDATE`) while it marks has its code's table taken then, as marking it
+would have (`gc_barrier_code`, `runtime/vm.h`): its code goes on in a frame
+the snapshot never saw, and the cycle's end would otherwise make unit a
+global that code still reads. A program of SML has
+no suspensions, builds no table and keeps its globals as roots, as before;
+`runevm --caf-tables off` keeps them roots in any program, and
+`--caf-tables on` takes the tables in any (a test of them). Minor
+collections take the globals written since the last, as above. `--stats`
+says what the tables did: the CAFs (globals that held a suspension), those
+let go, and the globals let go in all.
 
 ### What is kept that the program no longer needs
 
@@ -431,9 +505,11 @@ expects:
 * **What any handler of a function needs is kept at every call of the
   function,** in the handler's range or not, since a callee may raise into
   a handler.
-* **A global is a root for the whole run.** What is bound at the top level
+* **A global is a root for the whole run** in a program without
+  suspensions (all of SML's but lazy ML's). What is bound at the top level
   and used by a function is a global, whether or not anything will use it
-  again.
+  again; a program with suspensions keeps one only while live code may
+  read it (*CAF tables*, above).
 * **The stack bytecode and native programs keep every slot.** On
   `runevm-stack` and in a program `runeopt` made every slot of the stack
   is a root. A slot there is reused by the next value of any kind, which
@@ -472,7 +548,8 @@ what `Runtime.stats` says is live.
   the low-pause collector, every such collection begins a cycle where none
   marks, and every slice marks a few hundred bytes, a slice coming every 64
   bytes allocated, so that `make test-gc` and `make test-stress` run every
-  store of the suites while a cycle marks. With `--nursery 0` every such
+  store of the suites while a cycle marks; with `--gc-stress-full`, every
+  such collection is a full one. With `--nursery 0` every such
   allocation moves everything, which is how `make test-stress` (every 101st
   allocation: the interpreters with `--nursery 0`, the JIT with a nursery
   of 4 KiB) finds a primitive that keeps a heap pointer in a C variable
@@ -523,8 +600,8 @@ and the second the columns, by which a script reads them (`bin/rune-measure mmu`
 | `used_before` | the bytes in use when the pass began |
 | `copied`, `copied_objs` | the bytes and the objects it copied (a pass of a cycle: that it marked) |
 | `promoted` | a minor pass's copy, the bytes it moved out of the nursery; 0 for a full one |
-| `slots`, `live_slots` | the slots of the value stack it looked at (a minor pass: above the watermark), and of them those that were roots (the others were dead registers of frames waiting for a call) |
-| `frames` | the waiting frames whose live registers it asked for |
+| `slots`, `live_slots` | the slots of the value stack it looked at (a minor pass: above the watermark), and of them those that were roots (the others were dead registers of frames waiting for a call, and the words of frames' headers but their closures) |
+| `frames` | the waiting frames whose live registers it asked for (a full pass: those that ran since the last collection; the stack's summary has the others, *The roots*) |
 | `other_roots` | the globals, constants, frames' closures, built-in exceptions, boxed reals and handles it visited |
 | `cards_dirty`, `cards_scanned`, `remembered` | a minor pass's: the cards it found marked, the cards of the blocks marked dirty, and the large objects made since the last that it scanned whole |
 | `live_after`, `heap_size` | the bytes in use after it and the heap's size |
@@ -580,6 +657,29 @@ is a change to the collector and not to everything that touches the heap.
   any, gives the field that pointed to it what it holds (along a chain of
   at most 16), so that the indirection dies; the copier of `--nursery 0`
   and the low-pause collector's cycle keep it as it is.
+* **A selector is reduced** (Wadler's rule; the haskell98 roadmap's D17):
+  a suspension `thunk_selector` marked, of field i of a tuple (or of a value
+  of any data type of one constructor, a constructor of tag 0 too), is given up
+  by a minor collection (where young), a full one and the copier of
+  `--nursery 0`, the field that pointed to it given field i of the tuple
+  once the tuple is evaluated, along a chain of selectors as far as it
+  goes, a cycle stopped by Brent's method (`gc_shortcut_walk`,
+  `runtime/gc/gc.h`). Each collector tests a field's kind first, one
+  comparison, and walks out of line only from a suspension or an
+  indirection: a program of SML, which makes neither, pays that comparison,
+  about 2% of its collections' instructions and 0.01% of a run's (the
+  compiler compiling itself 0.16%). Where the program reruns (lazy ML's),
+  the walk keeps the indirection's guard and gives no field a component
+  that is a suspension or an indirection. The low-pause collector's cycle
+  reduces none. `FORCE` applies the same rule where the program meets a
+  selector (`vm_selected`, `runtime/heap.c`; every engine: the two loops,
+  the JIT's tiers and runeopt's code): one whose tuple is evaluated is
+  given its field before it would be entered, so that a selector's code
+  runs only where its tuple is not evaluated, which no collection can have
+  reduced either. A program's `--count` is then the same wherever its
+  collections fall, which differs between the engines (tier 2 boxes reals
+  otherwise, and fills its nursery otherwise) and with `--nursery`
+  (`hs/selectors`; D17's count).
 * **The collector's state is the VM's** (`GcState`), and where the next
   object goes is the allocating thread's (`AllocState`): no variable of
   the collector is the process's, so two VMs of a process collect each by
@@ -1045,8 +1145,8 @@ the program -- and the table of their exports, so that a session saved after
 loading goes on loading. A program of native code (`runeopt`) loads no units.
 
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
-`--gc-stress`, `--gc-stress-cycles`, `--gc-verify`, `--checked`, `--heap-size`, `--heap-limit`,
-`--heap-fill`, `--nursery`, `--gc`, `--old-space`, `--stack-size`, `--equality-work`, `--gc-log`,
+`--gc-stress`, `--gc-stress-cycles`, `--gc-stress-full`, `--gc-verify`, `--checked`, `--heap-size`, `--heap-limit`,
+`--heap-fill`, `--heap-stack`, `--nursery`, `--gc`, `--old-space`, `--caf-tables`, `--stack-size`, `--equality-work`, `--gc-log`,
 `--emulate-fork`, `--restore`, `--name`, `--version` -- is described in
 [bytecode.md](bytecode.md).
 
@@ -1067,8 +1167,8 @@ that the one writes what the other reads.
 What differs:
 
 * The options of `runevm` (`--count`, `--stats`, `--heap-size`,
-  `--heap-limit`, `--heap-fill`, `--nursery`, `--gc`, `--old-space`, `--equality-work`, `--gc-stress`, `--gc-stress-cycles`,
-  `--gc-verify`, `--gc-log`, `--checked`) come from the environment
+  `--heap-limit`, `--heap-fill`, `--heap-stack`, `--nursery`, `--gc`, `--old-space`, `--equality-work`, `--gc-stress`, `--gc-stress-cycles`,
+  `--gc-stress-full`, `--caf-tables`, `--gc-verify`, `--gc-log`, `--checked`) come from the environment
   variable `RUNEVM_OPTIONS`, after
   those the program was made with (`runeopt --options`), and the program takes
   the variable out of its environment.

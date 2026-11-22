@@ -322,11 +322,19 @@ struct
 
   fun viewOf (t : ty, v : string) = case #view t of SOME f => f ^ " " ^ v | NONE => v
 
-  (* the parts of a sum with their bytes: those written as themselves *)
-  fun numbered (t : ty) : (int * part) list =
-    #2 (List.foldl (fn (p, (i, acc)) => case #writeAs p of
-                                          SOME _ => (i, acc @ [(~1, p)])
-                                        | NONE => (i + 1, acc @ [(i, p)])) (0, []) (#parts t))
+  (* the parts of a sum with their bytes: those written as themselves;
+     where an instance writes a value it has written by a byte of its own
+     (share), the parts skip that byte, so that a part added after it keeps
+     the bytes of those before *)
+  fun numberedSkipping (skip : int option) (t : ty) : (int * part) list =
+    let fun next i = if SOME i = skip then i + 1 else i
+    in
+      #2 (List.foldl (fn (p, (i, acc)) => case #writeAs p of
+                                            SOME _ => (i, acc @ [(~1, p)])
+                                          | NONE => let val i = next i in (i + 1, acc @ [(i, p)]) end) (0, []) (#parts t))
+    end
+  val numbered = numberedSkipping NONE
+  fun numberedIn (i : instance) = numberedSkipping (Option.map #tag (#share i))
 
   (* An arm's body is one line where it fits in a line of 110, and else one
      line for each part of it: a body marks where it breaks, \001 a part of a
@@ -374,7 +382,7 @@ struct
               val fs = List.map (fn (f : field) => (checkLayer (cx, whereOf (t, p) ^ "." ^ #name f, #codec f, #layer f);
                                                     wexp (cx, #codec f, #layer f, var (#name f)))) (#fields p)
             in (pattern (p, SOME o var), seqTop (note @ tag @ fs)) end
-      val body = cases (viewOf (t, "v"), List.map arm (numbered t), NONE)
+      val body = cases (viewOf (t, "v"), List.map arm (numberedIn i t), NONE)
       val body =
         case #share i of
           NONE => body
@@ -404,7 +412,7 @@ struct
         case #fields p of
           [] => construct p
         | fs => letTop (List.map (fieldRead p) fs, construct p)
-      val parts = List.filter (fn (n, _) => n >= 0) (numbered t)
+      val parts = List.filter (fn (n, _) => n >= 0) (numberedIn i t)
       val body =
         if #sum t then
           let val bad = "_ => raise " ^ #bad fam ^ " \"" ^ #bad i ^ "\""

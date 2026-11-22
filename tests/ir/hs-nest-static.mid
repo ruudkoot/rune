@@ -1,0 +1,37 @@
+(* run: after hs-rts.mid *)
+(* polymorphic recursion with a function argument that does not change: its
+   place is static, so a specialiser may copy for it, and every copy calls the
+   function at a bigger type.
+     data Nest a = Nil | Cons !a !(Nest (a,a))
+     count :: (Int -> Int) -> Nest a -> Int
+     count f Nil = 0
+     count f (Cons _ r) = f 1 + count f r *)
+(datatype nest ('a) (0 "NNil") (1 "NCons" : 'a * ('a * 'a) nest))
+(funs
+  (fn gbuild ['a] ((vbN : int) (vbX : 'a)) : 'a nest
+    (let (vbZ : bool) (prim poly_eq vbN 0 : (int * int) -> bool)
+    (if vbZ
+      (return (con0 0 : 'a nest))
+      (let (vbP : 'a * 'a) (tuple vbX vbX)
+      (let (vbN1 : int) (prim int_sub vbN 1 : (int * int) -> int)
+      (let (vbR : ('a * 'a) nest) (app gbuild['a * 'a] vbN1 vbP)
+      (let (vbC : 'a * ('a * 'a) nest) (tuple vbX vbR)
+      (return (con 1 vbC : 'a nest))))))))))
+(funs
+  (fn gcount ['a] ((vcF : int -> int) (vcN : 'a nest)) : int
+    (let (vcT : int) (tag vcN)
+    (let (vcC : bool) (prim poly_eq vcT 1 : (int * int) -> bool)
+    (if vcC
+      (let (vcP : 'a * ('a * 'a) nest) (decon 1 vcN : 'a nest)
+      (let (vcR : ('a * 'a) nest) (select 1 vcP)
+      (let (vcH : int) (app vcF 1)
+      (let (vcS : int) (app gcount['a * 'a] vcF vcR)
+      (return (prim int_add vcH vcS : (int * int) -> int))))))
+      (return 0))))))
+(funs
+  (fn gdbl ((vdbX : int)) : int
+    (return (prim int_mul 2 vdbX : (int * int) -> int))))
+(do ()
+  (let (vn : int nest) (app gbuild[int] 12 1)
+  (let (vc : int) (app gcount[int] gdbl vn)
+  (return (app gputInt vc)))))

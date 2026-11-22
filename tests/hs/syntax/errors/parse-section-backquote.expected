@@ -1,0 +1,1 @@
+parse-section-backquote.hs:2:11: error: expected an expression after the operator of a right section, found `)`

@@ -1,0 +1,12 @@
+; A unit of hs/units/abi: it gives N all its arguments, so that alone it
+; would make N bare, where lib.core made it a box (an ABI fact of lib's
+; interface, H9); and it declares a constructor Foo and takes the value Foo
+; of lib.core, a name of two kinds.
+(data T () (Foo))
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (n (N Int) (wrap 2))
+    (case (cast n Int) k
+      (_ (case Foo f
+           (_ (case (prim int_add f k) s
+                (_ (printInt s w))))))))))

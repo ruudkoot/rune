@@ -1,0 +1,4 @@
+# tiebreak under --cycle-default=module
+tests/hs/types/tiebreak/A.hs:13:11: error: the type variable of `(Fractional a, RealFrac a)` arose in modules whose default declarations differ (A, B), so it has no one default (D30)
+TYPE	A	f	Integral a => Bool -> a
+TYPE	B	g	Integral b => Bool -> a -> b

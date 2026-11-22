@@ -1,0 +1,1 @@
+parse-simple-context.hs:2:11: error: a class assertion on other than a type variable, in the context of a class or an instance declaration

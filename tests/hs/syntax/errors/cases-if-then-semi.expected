@@ -1,0 +1,1 @@
+cases-if-then-semi.hs:3:3: error: expected `then` after the condition of `if`, found a new line at the indentation of its layout block

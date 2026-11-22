@@ -1,0 +1,6 @@
+; fail: [force] in val g: x, of type Int, may be unevaluated where !Int is wanted, an argument of inc
+; CoreLint, force: a force forgotten behind a cast, which E1 found runs
+; silently at tier 2 when it reaches Mid; Core's types see it
+(newtype N () MkN Int)
+(val inc (-> !Int Int) (\ ((n !Int)) (prim int_add n 1)))
+(val g (-> N Int) (\ ((n N)) (let (x Int (cast n Int)) (inc x))))

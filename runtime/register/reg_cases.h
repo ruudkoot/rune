@@ -79,9 +79,10 @@ CASE(ENV) {
     TRACE(ROP_ENV, a, b, 0);
     pc += 9;
     count++;
-    /* the header's closure: a closure, or unit where the frame has none */
+    /* the header's closure: a closure, a suspension whose code has not
+       yet said BLACKHOLE, or unit where the frame has none */
     Value cv = CLOSURE();
-    if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_CLOSURE || (uint32_t)b + 1 >= obj_len(val_ptr(cv))) FATAL("environment slot %d out of range", b);
+    if (!val_is_ptr(cv) || !obj_has_env(val_ptr(cv)) || (uint32_t)b + 1 >= obj_len(val_ptr(cv))) FATAL("environment slot %d out of range", b);
     R(a) = obj_field(val_ptr(cv), b + 1);
     NEXT;
 }
@@ -91,7 +92,7 @@ CASE(SELF) {
     pc += 5;
     count++;
     Value cv = CLOSURE();
-    if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_CLOSURE) FATAL("SELF outside a closure");
+    if (!val_is_ptr(cv) || (obj_kind(val_ptr(cv)) != K_CLOSURE && obj_kind(val_ptr(cv)) != K_THUNK)) FATAL("SELF outside a closure");
     R(a) = cv;
     NEXT;
 }
@@ -105,8 +106,13 @@ CASE(CALL) {
     CENSUS_CALL(0, R(b), CENSUS_REP(p, vm->func, b));
     Value arg = R(b);
     Obj *c = EXPECT(R(a), K_CLOSURE, "closure in call");
+    /* D15 C, item 24: no test of the closure's parameters -- field 0 is a
+       function only in a closure of one; a closure of more (CLOSURE_NARY) and a
+       partial application (REG_PAP) hold a negative, the general path's
+       (reg_apply, isa_regs.c) */
     int64_t fidx = val_imm(obj_field(c, 0));
-    if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
+    if (fidx < 0) APPLY(R(a), 1, &R(b), 0);
+    if ((uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
     size_t top = (size_t)(sp - vm->stack) + FRAME_HEADER;
     ROOM(top, fn);
@@ -138,8 +144,13 @@ CASE(TAILCALL) {
     CENSUS_CALL(1, R(b), CENSUS_REP(p, vm->func, b));
     Value arg = R(b);
     Obj *c = EXPECT(R(a), K_CLOSURE, "closure in call");
+    /* D15 C, item 24: no test of the closure's parameters -- field 0 is a
+       function only in a closure of one; a closure of more (CLOSURE_NARY) and a
+       partial application (REG_PAP) hold a negative, the general path's
+       (reg_apply, isa_regs.c) */
     int64_t fidx = val_imm(obj_field(c, 0));
-    if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
+    if (fidx < 0) APPLY(R(a), 1, &R(b), 1);
+    if ((uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
     size_t top = vm->fp;
     ROOM(top, fn);
@@ -584,5 +595,158 @@ CASE(FIELD) {
     if (vm->checked && obj_contag(o) != c) FATAL("FIELD of a constructor of tag %d where %d is wanted", (int)obj_contag(o), (int)c);
     if ((uint32_t)d >= obj_len(o)) FATAL("constructor field %d out of range", d);
     R(a) = obj_field(o, d);
+    NEXT;
+}
+CASE(FORCE) {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    int32_t c = read_i32(code + pc + 9);
+    TRACE(ROP_FORCE, a, b, c);
+    pc += 13;
+    count++;
+    Value v = R(b);
+    if (val_is_ptr(v)) {
+      int k = obj_kind(val_ptr(v));
+      if (k == K_THUNK && obj_contag(val_ptr(v)) >= THUNK_SELECTOR) {
+          /* a selector whose tuple is evaluated: its field, as the
+             collector would give it (vm_selected, D17's count) */
+          Value w = vm_selected(vm, v);
+          if (w != v) {
+              R(b) = v = w;
+              k = val_is_ptr(v) ? obj_kind(val_ptr(v)) : -1;
+          }
+      }
+      if (k == K_THUNK) NEXT;
+      if (k == K_IND) v = obj_field(val_ptr(v), 0);
+    }
+    R(a) = v;
+    pc = (uint32_t)c;
+    NEXT;
+}
+CASE(ENTER) {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    TRACE(ROP_ENTER, a, b, 0);
+    pc += 9;
+    count++;
+    POLL(9);
+    Value arg = R(b);
+    Obj *c = EXPECT(R(a), K_THUNK, "suspension");
+    /* a loop (D12): Loop raised, from here, as RAISE raises */
+    if (obj_contag(c) == THUNK_BLACKHOLE) { SYNC(); vm_raise_loop(vm); RELOAD(); RAISED(); }
+    int64_t fidx = val_imm(obj_field(c, 0));
+    if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
+    Function *fn = &p->funcs[fidx];
+    size_t top = (size_t)(sp - vm->stack) + FRAME_HEADER;
+    ROOM(top, fn);
+    HEADER(top, pc, mk_ptr(c));
+    vm->fp = top;
+    vm->func = (uint32_t)fidx;
+    Value *slot = vm->stack + top;
+    slot[0] = arg;
+    for (uint32_t i = 1; i < fn->nlocals; i++) slot[i] = mk_unit();
+    ENTER(slot, fn);
+    HANDOVER((uint32_t)fidx);
+    NEXT;
+}
+CASE(BLACKHOLE) {
+    TRACE(ROP_BLACKHOLE, 0, 0, 0);
+    pc += 1;
+    count++;
+    Value cv = CLOSURE();
+    if (!val_is_ptr(cv) || obj_kind(val_ptr(cv)) != K_THUNK) FATAL("BLACKHOLE outside a suspension");
+    vm_blackhole(vm, val_ptr(cv));
+    NEXT;
+}
+CASE(UPDATE) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(ROP_UPDATE, a, 0, 0);
+    pc += 5;
+    count++;
+    Value cv = CLOSURE();
+    if (!val_is_ptr(cv) || (obj_kind(val_ptr(cv)) != K_THUNK && obj_kind(val_ptr(cv)) != K_IND)) FATAL("UPDATE outside a suspension");
+    obj_become_ind(vm, val_ptr(cv), R(a));
+    NEXT;
+}
+CASE(CLOSUREN) {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    int32_t c = read_i32(code + pc + 9);
+    int32_t d = read_i32(code + pc + 13);
+    const uint8_t *L = code + pc + 17;
+    uint32_t n = (uint32_t)d;
+    TRACE(ROP_CLOSUREN, a, b, c);
+    pc += 17 + 4 * n;
+    count++;
+    if (c < 2) FATAL("a closure of %d parameters made by CLOSUREN", c);
+    SYNC();
+    Obj *cl = vm_alloc_fields(vm, K_CLOSURE, (uint16_t)c, n + 1);
+    Value *f = obj_fields(cl);
+    f[0] = mk_int(CLOSURE_NARY(b));   /* no function: a call of one argument is the general path's (item 24) */
+    for (uint32_t i = 0; i < n; i++) f[i + 1] = R(LIST(i));
+    R(a) = mk_ptr(cl);
+    NEXT;
+}
+CASE(CALLN) {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    const uint8_t *L = code + pc + 9;
+    uint32_t n = (uint32_t)b;
+    TRACE(ROP_CALLN, a, b, 0);
+    pc += 9 + 4 * n;
+    count++;
+    POLL(9 + 4 * n);
+    CENSUS_CALL(5, R(a), CENSUS_REP(p, vm->func, a));
+    Obj *c = EXPECT(R(a), K_CLOSURE, "closure in call");
+    int64_t w = val_imm(obj_field(c, 0));
+    /* the general path for any other arity, and for a partial application (REG_PAP) */
+    if (obj_contag(c) != n || w > CLOSURE_NARY(0)) APPLY_LIST(R(a), n, 0);
+    int64_t fidx = CLOSURE_NARY(w);
+    if ((uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
+    Function *fn = &p->funcs[fidx];
+    size_t top = (size_t)(sp - vm->stack) + FRAME_HEADER;
+    ROOM(top, fn);
+    /* the arguments read before the frame is pushed, which R would read */
+    Value *slot = vm->stack + top;
+    for (uint32_t i = 0; i < n; i++) slot[i] = R(LIST(i));
+    for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();
+    HEADER(top, pc, mk_ptr(c));
+    vm->fp = top;
+    vm->func = (uint32_t)fidx;
+    ENTER(slot, fn);
+    HANDOVER((uint32_t)fidx);
+    NEXT;
+}
+CASE(TAILCALLN) {
+    int32_t a = read_i32(code + pc + 1);
+    int32_t b = read_i32(code + pc + 5);
+    const uint8_t *L = code + pc + 9;
+    uint32_t n = (uint32_t)b;
+    TRACE(ROP_TAILCALLN, a, b, 0);
+    pc += 9 + 4 * n;
+    count++;
+    POLL(9 + 4 * n);
+    CENSUS_CALL(6, R(a), CENSUS_REP(p, vm->func, a));
+    Obj *c = EXPECT(R(a), K_CLOSURE, "closure in call");
+    int64_t w = val_imm(obj_field(c, 0));
+    if (obj_contag(c) != n || w > CLOSURE_NARY(0)) APPLY_LIST(R(a), n, 1);
+    int64_t fidx = CLOSURE_NARY(w);
+    if ((uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
+    Function *fn = &p->funcs[fidx];
+    size_t top = vm->fp;
+    size_t need = (size_t)(sp - vm->stack) + n;
+    if (top + fn->nlocals + fn->maxstack > need) need = top + fn->nlocals + fn->maxstack;
+    if (need > vm->stack_cap) { SYNC(); vm_grow_stack(vm, need); RELOAD(); c = val_ptr(R(a)); }
+    /* the arguments above the frame first, since they are its registers */
+    Value *tmp = sp;
+    for (uint32_t i = 0; i < n; i++) tmp[i] = R(LIST(i));
+    Value *slot = vm->stack + top;
+    memmove(slot, tmp, (size_t)n * sizeof(Value));
+    for (uint32_t i = n; i < fn->nlocals; i++) slot[i] = mk_unit();
+    /* the frame's header keeps its caller and its return; its closure is the callee's */
+    CLOSURE() = mk_ptr(c);
+    vm->func = (uint32_t)fidx;
+    ENTER(slot, fn);
+    HANDOVER((uint32_t)fidx);
     NEXT;
 }

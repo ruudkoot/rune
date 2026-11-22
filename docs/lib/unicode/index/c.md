@@ -2,11 +2,17 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [h](h.md) [i](i.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [y](y.md)
 
+- `category` (type): [CODE_POINT](../sig/CODE_POINT.md#type-category)
+- `category` (val): [CODE_POINT](../sig/CODE_POINT.md#val-category)
+- `ClosePunctuation` (con): [CODE_POINT](../sig/CODE_POINT.md#con-closepunctuation)
 - `clusters` (val): [GRAPHEME](../sig/GRAPHEME.md#val-clusters)
 - `codePoint` (val): [DISPLAY_WIDTH](../sig/DISPLAY_WIDTH.md#val-codepoint)
 - `columns` (val): [DISPLAY_WIDTH](../sig/DISPLAY_WIDTH.md#val-columns)
 - `combiningClass` (val): [NORMALIZE](../sig/NORMALIZE.md#val-combiningclass)
+- `ConnectorPunctuation` (con): [CODE_POINT](../sig/CODE_POINT.md#con-connectorpunctuation)
+- `Control` (con): [CODE_POINT](../sig/CODE_POINT.md#con-control)
 - `count` (val): [GRAPHEME](../sig/GRAPHEME.md#val-count)
+- `CurrencySymbol` (con): [CODE_POINT](../sig/CODE_POINT.md#con-currencysymbol)
 
 ---
 

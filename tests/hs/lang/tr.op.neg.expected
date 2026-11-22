@@ -1,0 +1,4 @@
+negate (fromInteger 5)
+(fromInteger 1 - fromInteger 2)
+((fromInteger 1 + fromInteger 2),(fromInteger 1 + fromInteger 2))
+negate (fromInteger 3)

@@ -1,0 +1,14 @@
+2
+1
+raised ErrorCall: boom
+raised ErrorCall: again
+raised ErrorCall: again
+raised PatternMatchFail: exceptions.hs:7:1-20: Non-exhaustive patterns in function head'
+raised NonTermination
+raised NonTermination
+caught: bad
+7
+raised ErrorCall: not io
+io failed
+raised Div
+status 1

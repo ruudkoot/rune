@@ -1,0 +1,16 @@
+(* The Core simplifier (the haskell98 roadmap's M23, D47-D49): what its
+   passes share, the folding of literals, the simplifier's rounds, the
+   specialiser at known dictionaries, eta-expansion, and the passes, on
+   core.build alone; used by the library's library.build. *)
+files
+  coresimplify_base.sml
+  coresimplify_fold.sml
+  coresimplify_simp.sml
+  coresimplify_spec.sml
+  coresimplify_eta.sml
+  corestrict_sig.sml
+  corestrict.sml
+  coresimplify_cheap.sml
+  coresimplify_sig.sml
+  coresimplify.sml
+end

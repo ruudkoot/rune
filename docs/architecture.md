@@ -28,7 +28,7 @@ one intermediate representation to the next, `--dump-before=PASS` and
 | Parser | `lib/compiler/frontend/ast.sml`, `fixity.sml`, `parser.sml` | tokens → `Ast.program` | Recursive descent. Infix expressions/patterns are collected as flat item lists and resolved by precedence climbing against the current fixity environment (`infix` directives are lexically scoped and threaded across files). `fun` clause heads try the `(p op q) r` form first, then the generic form. Every node has an id of its own (`Ast.id`, its constructor's last field), given in the order the parser makes nodes and fresh in each copy of a tree (`SyntaxAst.copy`); clauses, record labels and sequences of explicit type variables keep their spans (a match rule's runs from its pattern's start to its body's end, `Ast.spanOfRule`). |
 | Elaboration | `lib/compiler/elab/types.sml`, `overload.sml`, `unify.sml`, `env.sml`, `sigmatch.sml`, `elaborate.sml`, `witness.sml`, `sourcety.sml` | AST → AST with annotations, and witnesses by node id | Hindley–Milner with levels for let-polymorphism, kinds on type variables for overloading (`KOverload`: the admissible kinds `int word real char string`; `Overload` maps a type constructor, by stamp, to its kind, to the primitive or top-level variable behind each operator and to the form of its constants; the basis library adds types to it with `_overload`, and int and word constants are typed with an overloaded variable of their kind, whose resolved type `Translate` finds in the constant's slot) and flexible records (`KFlex`), value restriction via non-expansiveness. Fills the mutable annotation slots in the AST (`varinfo`, `patinfo`, record types for `#lab` and `{...}`) instead of building a separate typed tree. Every binder gets a globally unique integer stamp. Overloaded operators and constants are defaulted where their context ends (`--overloading`; by default at the end of each value declaration at structure level), flexible records' labels must be determined where theirs does (`--flex-records`). What the Definition leaves open and the slots do not hold is recorded by node id in `Witness` (the instance of a constructor in a pattern; the types of wildcards, raises and `[]` patterns; the type names a datatype declaration created; the explicit type variables a value declaration scopes; the type variables each binding generalised, taken at the binding; the default an overloaded identifier or constant was given; whether each top-level declaration elaborated): what a failed declaration recorded is dropped where it fails, what a unit recorded when it is undone. `SourceTy` reads those types after `Elaborate.finish`, only when asked (`--dump-witnesses`, a checker, an editor): immutable and hash-consed, with record labels, equality, type variables' names and overloading classes, each cell zonked once under a step budget. Types are built from type names (`Types.tycon`: stamp, arity, equality attribute) and type functions; `Env.TyStr` is the Definition's type structure. `SigMatch` implements signatures (flexible names + environment), `where type`/`sharing` as realisations, matching by enrichment and ascription. |
 | AstLint | `lib/compiler/elab/astlint.sml` | elaborated AST → nothing, or a bug | At `--lint=2`, so in every test compile ([ir.md](ir.md), *AstLint*): the derivation the elaborator found for the Core checked against the Definition's chapter 4, after `Elaborate.finish` and before Translate. It reads the syntax, the witnesses, the slots and the binders' types as `SourceTy`, keeps an environment of its own and works every node's type out bottom-up by equality and one-way matching, with its own `Clos`, non-expansiveness and scope of explicit type variables; it never unifies and calls nothing of `Unify`, `SigMatch` or `Types`. The module language is read by chapter 5 from what the elaborator records of its fresh names (`Elaborate.sigRecords` and the others), only what is imported left as axioms. |
-| Match compilation | `lib/compiler/core/lambda.sml`, `matchcomp.sml` | patterns → `Lambda` tests | From `-O1`, a match of two rules or more is a decision tree: each value tested once on a way through, the rules' bodies join points (`Join`, `Jump`), the last constructor of a datatype the rules all name untested (docs/ir.md, *Matches*). Otherwise rules are tried in order; each test that fails executes `Fail`, which jumps to the enclosing `Try`'s fallback (the next rule). Irrefutable patterns emit no tests. Constructor tests compare `ConTag`; exception patterns compare constructor identity. |
+| Match compilation | `lib/compiler/core/lambda.sml`, `matchcomp.sml` | patterns → `Lambda` tests | From `-O1`, a match of two rules or more is a decision tree: each value tested once on a way through, the rules' bodies join points (`Join`, `Jump`), the last constructor of a datatype the rules all name untested (docs/ir.md, *Matches*). Otherwise rules are tried in order, each the scope of a join point that is the next rule, which each of its tests that fails jumps to. Irrefutable patterns emit no tests. Constructor tests compare `ConTag`; exception patterns compare constructor identity. |
 | Translation | `lib/compiler/core/translate.sml` | annotated AST → `Lambda.lexp` | Records become tuples in canonical label order (evaluated in source order), `while` becomes a tail-recursive local function, overloaded operators resolve to typed primitives, constructors/exceptions applied directly avoid closures, so do applications of a variable bound to a primitive (`val op + = _prim "int_add" : ...` in the basis library, and `val size = String.size` after it), top-level bindings become globals (`SetGlobal`/`Global`), everything else is lexically scoped `Let`/`LetRec`. |
 | Mid | `lib/compiler/core/ty.sml`, `mid.sml`, `tomid.sml`, `midlint.sml`, `midtext.sml` | Lambda → `Mid.program` | A-normal form with join points, typed in the manner of System F, the top level a list of definitions; its types, and Lambda's, are hash-consed (`Ty.ty`, each node made once and numbered, every walk memoised on the numbers); see [ir.md](ir.md). |
 | Optimisation (from `-O1`) | `lib/compiler/core/shake.sml`, `lift.sml`, `workers.sml`, `simplify.sml`, `target.sml` | Mid → Mid | Tree shaking (the globals nothing done for its effect reaches go), lambda lifting, workers and wrappers, then shrinking reductions in rounds after a census, with inlining (its frames kept for traces) and the specialisation of higher-order functions to known functions; see [ir.md](ir.md), *The optimisations of Mid*. `Target` says what the middle end is told of the machine, such as the precision constants are folded at. `-O0` runs none of them. |
@@ -65,7 +65,8 @@ the Basis and checking declarations.
 `runedoc` ([docs/plans/docgen.md](plans/docgen.md)) is a second program built
 from the same sources: `runedoc.build` names the libraries `unicode` and
 `json`, uses the compiler library's `frontend.build` -- its utilities, its
-frontend and elaborator, `BasisManifest` and `LibraryIndex` -- as a friend of
+frontend and elaborator, `BasisManifest` and `LibraryIndex`, which come
+after the compiler from Mid on (`mid.build`) -- as a friend of
 that library ([build.md](build.md), *Reaching in*), and lists `src/doc`. It
 reads a library the way the compiler does (the same lexer, parser,
 elaborator and library index), so what it documents is what the compiler
@@ -289,6 +290,86 @@ a header (docs/build.md) is compiled in the basis library and what it
 requires alone, and a program sees what it names: `BasisManifest.scopes` says
 what each scope sees, `select` chooses by it, and `LibraryScope`'s walk puts
 each file in its scope, for each of the compiler's ways through the libraries.
+
+## rhc
+
+rhc, the Haskell 98 compiler ([rhc.md](rhc.md) for its use), is a second
+front end on the same compiler, built by Rune alone (`rhc.build`, D42 of
+[plans/language/haskell98.md](plans/language/haskell98.md)):
+
+```
+FILE.hs ──► RhcGraph ──► HsLexer, HsLayout ──► HsRename, ──► HsKinds, HsInfer, ──► HsDesugar, ──► Core ──► CoreToMid ──► Mid ──► MidPipeline
+            modules       HsParser            HsFixity      HsClasses, HsDerive    HsMatch                                       (Rune's passes,
+            and groups    AST                 names         evidence (HsEvidence)                                                Lower, a target)
+                                                             │
+                                               HsLint: a second inference, the evidence replayed, the Core held to the source types
+```
+
+**Where it joins.** rhc meets Rune's compiler at Mid (D1): everything from
+Mid down is shared, nothing above it. `lib/compiler/mid.build` is that
+layer, Mid and its text, codecs and lints, Rune's optional passes,
+`Lower`, the targets, `Emit`, the linker and the store, with no lexer,
+parser, elaborator, `Translate` or `ToMid` of SML's (D41); rhc's build is a
+friend of the compiler's library and uses it alone, with a `Config` of its
+own (`src/rhc/config.sml`, rhc's identity, over `rhc.plan`). A front end
+gives Mid what [ir.md](ir.md), *What a front end gives Mid*, says, and runs
+`MidPipeline.lowOfMid` with the passes it chooses. Mid took two things for
+a lazy language: a suspension type `susp` with forcing as one primitive
+node (form C, D3; [ir.md](ir.md), *Suspensions*), and types a variable
+heads, Haskell's `m a` and `(->)`, with a forall in fields (D4).
+
+**The front end** is `lib/language/haskell`, in layers that each name only
+those before it (`library.build`): the syntax (`syntax.build`: the
+lexer, the layout algorithm of 9.3, the parser and its printers), names
+(`names.build`: modules and their exports, the renamer, fixity
+resolution after renaming, and `HsUsage`, what a compile reads of other
+units), types (`types.build`: kinds, the checker by dependency group,
+classes and instances, evidence records for every overloaded use, deriving,
+and a module's interface), Core (`core.build`), HsLint (`hslint.build`)
+and desugaring (`desugar.build`: the Report's translations and its order
+of matching). `src/rhc` is the driver: the module graph and its strongly
+connected groups (`RhcGraph`), names and checking over the graph
+(`RhcNames`), units (`RhcDriver`), the options (`RhcOptions`) and `main`.
+
+**Core** (D2) is rhc's own typed lazy language: System F with a type
+variable applied, lazy `let` and `letrec`, and `case` as the one place a
+value is forced, with a text form that reads back to the same program
+(`CoreText`). Desugaring makes it; `CoreLint` checks it at every level;
+`CoreInterp` runs it, the reference the compiled program is held to; and
+`CoreRuntime` and `CorePrim` are the primitives the Report leaves to an
+implementation, which the library's `PreludeRuntime` names. `CoreToMid`
+lowers it: a lazy slot to a `susp`, a forcing `case` to Mid's force and
+its `Case`, and Core's types to Mid's, a type variable applied among them
+([ir.md](ir.md), *Mid*).
+
+**The checks.** Beside CoreLint and Mid's lints, HsLint (D54) checks a
+program a second time at level 2: an inference of its own, a
+transliteration of Typing Haskell in Haskell that shares nothing with the
+checker but the renamer, the checker's evidence records replayed by
+Faxén's rules and held to it, and the Core desugaring made held to the
+translation of the source types (the target check). A program the checker
+accepts and HsLint refuses is a bug of rhc's.
+
+**Units and the store** (D43 to D45). Each strongly connected group of the
+module graph is a unit, checked from the interfaces of the units before it
+(`HsModIface`, by entity, with fingerprints by recursive group) and
+desugared alone; its entry in the store, Rune's `UnitStore` with a format,
+head and key of rhc's (`RhcStore`), keeps its interfaces (`HsIface`), its
+desugaring's interface, HsLint's part of it and its Core, and is taken
+again where every read its compile made (`HsUsage`) gives what it gave.
+The link joins the units' Core and compiles what `main` reaches whole,
+behind a memo of its own. The library is compiled once by make into a
+store, the snapshot `bin/rhc.layer`, from which every check and compile of
+`bin/rhc` takes the library's units, so that a program's compile reads its
+own modules alone (`RhcDriver.front`); `--whole` reads the library too, the
+reference. [units.md](units.md), *rhc's units*, has the store's details
+and what a compile costs.
+
+**Tests** are `tests/hs` and the `hs*` families of `tests/runner`
+([testing.md](testing.md), *rhc's tests*): the Report's statements as rows
+of `tests/hs/conformance.tsv`, each held by tests, the corpus against the
+oracles, and the snapshot, the units and the interpreter against the whole
+compile.
 
 ## Adding a language feature (checklist)
 

@@ -35,7 +35,9 @@ struct
         val ()=X.writeFile out "open.sml" "open XC2PolyBuiltin\n" val ()=copy (xc2 ^ "/xc2.sml") (out ^ "/xc2.sml")
         val ()=X.copies out here ["mem.sml","prologue.sml","rts.sml"]
         val prefix=List.map (fn name => out ^ "/" ^ name) ["xc2.sml","mem.sml","prologue.sml","rts.sml","stubs.sml","open.sml"]
-        val ()=X.listFile out "prefix" (prefix @ !files) val ()=X.writeFile out "flags" ""
+        (* overloading settled over a top-level declaration, as Poly/ML does
+           (topdec): its library defaults a literal by a later use *)
+        val ()=X.listFile out "prefix" (prefix @ !files) val ()=X.writeFile out "flags" "--overloading=topdec\n"
         val ()=X.trim out (List.take (prefix,5)) val lib=out ^ "/lib/basis"
         val ()=List.app rmTree [lib ^ "/int64.sml",lib ^ "/seal_int64.sml"]
         (* the trimmed Basis's build without them; its index, derived, then

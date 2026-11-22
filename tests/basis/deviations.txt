@@ -96,6 +96,9 @@ native:smlnj*@* | *.fromString/whitespace-[avfr]* | HOST-BUG | IntInf.fromString
 native:smlnj*@* | IntInf.fmt/*HEX* | HOST-BUG | IntInf.fmt StringCvt.HEX produces the digits a to f, not A to F
 native:smlnj*@* | IntInf.pow/*1-to-~* | HOST-BUG | IntInf.pow (i, j) is 0 for | i | = 1 and j < 0
 native:polyml@5.9.2 | IntInf.~>>/* | HOST-BUG | IntInf.~>> of a negative number that does not fit a machine word rounds towards zero, not down (~2^100 ~>> 0w101 is 0, not ~1); 5.7.1 rounds down
+native:polyml@5.9.2 | @section/intinf/immediate-edges-xorb | HOST-BUG | IntInf.xorb of a long positive number and ~1 (2^64 - 1, ~1) aborts the process: arb.cpp:1423, logical_long, Assertion `sign == 0 || borrowW == 0' failed
+native:smlnj-legacy@* | IntInf.xorb/edge-2^62-1-with-~1 | HOST-BUG | IntInf.xorb (2^62 - 1, ~1) is 0, not ~2^62, which notb (2^62 - 1) gives; 2^62 - 1 and ~2^62 are its Int.maxInt and Int.minInt
+native:smlnj-dev@* | IntInf.xorb/edge-2^62-1-with-~1 | HOST-BUG | IntInf.xorb (2^62 - 1, ~1) is 0, not ~2^62, which notb (2^62 - 1) gives; 2^62 - 1 and ~2^62 are its Int.maxInt and Int.minInt
 native:smlnj*@* | IntInf.scan/BIN-* | HOST-BUG | IntInf.scan StringCvt.BIN accepts characters that are not binary digits ("2" is 2, "0b101" and "0x1" are numbers)
 native:smlnj*@* | IntInf.scan/OCT-* | HOST-BUG | IntInf.scan StringCvt.OCT accepts the digits 8 and 9 and the letter x ("0x17" is 15)
 native:mlkit@* | IntInf.fromString/whitespace-[avfr]* | HOST-BUG | scan and fromString of IntInf skip space, tab and newline only, not vertical tab, form feed and carriage return
@@ -146,8 +149,11 @@ native:smlnj*@* | Math.asin/near-*-accurate | SPEC-AMBIGUOUS | asin near 1 and ~
 native:mlton@* | Real.nextAfter/equal-zeros-returns-r* | SPEC-AMBIGUOUS | nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = ~0.0)
 native:polyml@* | Real.nextAfter/equal-zeros-returns-r* | SPEC-AMBIGUOUS | nextAfter (r, t) with r = t returns t, as C's nextafter does; the test takes the reading of SML/NJ, r ("If r = t then it returns r", and 0.0 = ~0.0)
 native:polyml@* | Real.nextAfter/*Inf-towards-zero | HOST-BUG | Real.nextAfter (posInf, 0.0) is maxFinite, not posInf
-native:polyml@* | Real.*ound/just-below-half | HOST-BUG | round and realRound of 0.49999999999999994 give 1 (they add 0.5 and floor)
-native:polyml@* | Real.realRound/large-odd | HOST-BUG | Real.realRound (2^52 + 1) is 2^52 + 2
+native:polyml@* | Real.realRound/just-below-half | HOST-BUG | realRound of 0.49999999999999994 is 1 (it adds 0.5 and floors; round gives 0)
+native:polyml@* | Real.realRound/large-odd* | HOST-BUG | Real.realRound (2^52 + 1) is 2^52 + 2, and realRound ~(2^52 + 1) is ~2^52
+native:polyml@* | Real.realRound/TO_* | HOST-BUG | realRound depends on the rounding mode: it is floor (x + 0.5), or ceil (x - 0.5) for an even number and a half, and the sum is rounded in the mode that is set (libpolyml/reals.cpp, PolyRealRound), so that 0.49999999999999994 gives 1, 2^52 + 1 gives 2^52 + 2, a zero result loses its sign, and under TO_NEGINF realRound 0.5 is ~0.0
+native:polyml@* | Real.realRound/law-every-mode | HOST-BUG | realRound depends on the rounding mode: it adds 0.5 and the sum is rounded in the mode that is set (libpolyml/reals.cpp, PolyRealRound)
+native:polyml@* | Real32.realRound/TO_* | HOST-BUG | Real32.realRound depends on the rounding mode: it is floor (x + 0.5), or ceil (x - 0.5) for an even number and a half, in binary32, and the sum is rounded in the mode that is set (libpolyml/reals.cpp, PolyRealFRound), so that the greatest binary32 below one half gives 1 and 2^23 + 1 gives 2^23 + 2
 native:polyml@* | Real.realRound/negzero-sign | HOST-BUG | Real.realRound (~0.25) is 0.0, not ~0.0
 native:polyml@* | Real.fmt/GEN-integral-* | HOST-BUG | GEN prints integral values with ".0" ("1.0")
 native:polyml@* | Real.toString/integral-* | HOST-BUG | toString prints integral values with ".0" ("1.0")
@@ -162,10 +168,17 @@ xc1:smlnj32@* | Real.toLargeInt/* | WIDTH | lib/basis/real.sml converts through 
 xc1:smlnj32@* | Real.fromLargeInt/* | WIDTH | lib/basis/real.sml converts numbers below 2^55 through int; the host's int has 31 bits, so Overflow
 native:smlnj*@* | Real.realFloor/zero | HOST-BUG | Real.realFloor 0.0 is ~0.0
 native:smlnj*@* | Real.real*/*huge | HOST-BUG | realFloor, realCeil and realTrunc are inexact beyond 2^52 (realFloor 1E300 <> 1E300, realCeil maxFinite = inf)
-native:smlnj*@* | Real.realRound/large-odd | HOST-BUG | Real.realRound (2^52 + 1) is 2^52
+native:smlnj*@* | Real.realRound/*large-odd* | HOST-BUG | realRound is x + 2^52 - 2^52 (x - 2^52 + 2^52 below zero) to nearest, and the sum is rounded: Real.realRound (2^52 + 1) is 2^52, realRound ~(2^52 + 1) is ~2^52
+native:smlnj*@* | Real.realRound/TO_*-*negative-half | HOST-BUG | realRound loses the sign of a zero result whatever the rounding mode: realRound ~0.5 is 0.0
+native:smlnj*@* | Real.realRound/TO_*-just-below-half-negative | HOST-BUG | realRound loses the sign of a zero result whatever the rounding mode: realRound ~0.49999999999999994 is 0.0
+native:smlnj-legacy@* | Real.round/*large-odd* | HOST-BUG | round is floor (x + 0.5), or ceil (x - 0.5) where that is odd, and the sums are rounded in the rounding mode that is set (smlnj/init/pervasive.sml): round (2^52 + 1) is 2^52 + 2 to nearest and 2^52 under TO_NEGINF
+native:smlnj-dev@* | Real.round/*large-odd* | HOST-BUG | round is floor (x + 0.5), or ceil (x - 0.5) where that is odd, and the sums are rounded in the rounding mode that is set (smlnj/init/pervasive.sml): round (2^52 + 1) is 2^52 + 2 to nearest and 2^52 under TO_NEGINF
+native:smlnj-legacy@* | Real.round/TO_POSINF-two-to-the-53 | HOST-BUG | under TO_POSINF round 2^53 is 2^53 + 2: round is floor (x + 0.5), and x + 0.5 rounds up
+native:smlnj-dev@* | Real.round/TO_POSINF-two-to-the-53 | HOST-BUG | under TO_POSINF round 2^53 is 2^53 + 2: round is floor (x + 0.5), and x + 0.5 rounds up
+native:smlnj*@* | Real.round/TO_[NZ]*-just-above-half | HOST-BUG | round (0.5 + 2^~53) is 0, not 1: floor (x + 0.5) is 1, since x + 0.5 rounds to 1 (but under TO_POSINF), and being odd gives way to ceil (x - 0.5), which is 0, ceil being ~1 - floor (~(x - 0.5 + 1.0)) and the sum rounding to 1 (docs/bugreport/smlnj/Real.ceil)
 native:smlnj*@* | Real.real*/negzero-sign | HOST-BUG | realCeil, realTrunc and realRound lose the sign of a zero result
 *:smlnj*@* | Real.ceil/small-positive | HOST-BUG | Real.ceil minPos is 0: ceil is ~1 - floor (~(x + 1.0)), which is one too small whenever x + 1.0 rounds (docs/bugreport/smlnj/Real.ceil)
-native:smlnj32@* | Real.round/minInt-minus-half-tie-to-even | HOST-BUG | Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt: round computes ceil (x - 0.5), which is out of range (docs/bugreport/smlnj/Real.ceil)
+native:smlnj32@* | Real.round/*minInt-minus-half-tie-to-even | HOST-BUG | Real.round (minInt - 0.5) raises Overflow although the tie rounds to the even minInt: round computes ceil (x - 0.5), which is out of range (docs/bugreport/smlnj/Real.ceil)
 native:smlnj32@* | Real.fromLargeInt/sticky-bit | HOST-BUG | Real.fromLargeInt (2^100 + 2^47 + 1) rounds down to 2^100: it adds the top three 30-bit digits in floating point, rounding twice, and drops the rest (docs/bugreport/smlnj/Real.fromLargeInt)
 *:smlnj*@* | Real.fmt/GEN-seventeen-digits | HOST-BUG | GEN (SOME 17) 0.1 is "0.1": at most 15 significant digits are produced
 native:smlnj*@* | Real.fmt/GEN-notation-* | HOST-BUG | GEN does not choose the shorter notation and pads the exponent to two digits ("0.001", "~1.5E~07")
@@ -216,6 +229,11 @@ native:mlkit@* | Real.nextAfter/equal-zeros-returns-r* | SPEC-AMBIGUOUS | nextAf
 *:mlkit@* | Real.ceil/minInt* | HOST-BUG | ceil of minInt = ~2^62 (and of minInt - 0.5, the same real) raises Overflow: the runtime compares with minInt - 1.0, which rounds to minInt
 *:mlkit@* | Real.trunc/minInt* | HOST-BUG | trunc of minInt = ~2^62 (and of minInt - 0.5, the same real) raises Overflow: the runtime compares with minInt - 1.0, which rounds to minInt
 *:mlkit@* | Real.toInt/TO_[PZ]*-minInt | HOST-BUG | toInt TO_POSINF and TO_ZERO are ceil and trunc, which raise Overflow for minInt = ~2^62
+native:mlkit@* | Real.round/*large-odd* | HOST-BUG | round is floor (x + 0.5), or floor x where x + 0.5 is whole and floor x even, and x + 0.5 is rounded in the rounding mode that is set (lib/mlkit/basis/Real.sml): round (2^52 + 1) is 2^52 + 2 and round ~(2^52 + 1) is ~2^52 to nearest
+native:mlkit@* | Real.round/TO_[NZ]*-just-above-half | HOST-BUG | round (0.5 + 2^~53) is 0, not 1: x + 0.5 rounds to 1 (but under TO_POSINF), which round takes for a tie, and floor x is 0, which is even
+native:mlkit@* | Real.round/TO_POSINF-near-maxInt | HOST-BUG | under TO_POSINF round (2^62 - 512) is minInt: x + 0.5 rounds up to 2^62, whose floor wraps around (as ceil's does: Real.ceil/Overflow-above-maxInt)
+native:mlkit@* | Real.realRound/TO_* | HOST-BUG | realRound depends on the rounding mode, as (x + 2^52) - 2^52 would: under TO_POSINF realRound 2.5 is 3.0, under TO_NEGINF realRound 1.5 is 1.0 and realRound 0.5 is ~0.0
+native:mlkit@* | Real.realRound/law-every-mode | HOST-BUG | realRound depends on the rounding mode: under TO_POSINF realRound 2.5 is 3.0
 native:mlkit@* | Real.toLargeInt/TO_*INF-negative | HOST-BUG | toLargeInt rounds the magnitude of a negative real in the mode given, so that TO_NEGINF and TO_POSINF are exchanged for it: toLargeInt TO_NEGINF ~2.5 is ~2
 native:mlkit@* | Real.toLargeInt/law-agrees-with-toInt | HOST-BUG | toLargeInt rounds the magnitude of a negative real in the mode given, so that TO_NEGINF and TO_POSINF disagree with floor and ceil on negative reals
 native:mlkit@* | Real.fromLargeInt/sticky-bit | HOST-BUG | fromLargeInt adds up the reals of 30-bit parts, rounding at each step: 2^100 + 2^47 + 1 becomes 2^100, not 2^100 + 2^48

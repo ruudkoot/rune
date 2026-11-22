@@ -118,6 +118,9 @@ RUNEOPT ?= bin/runeopt
 # refuses to build past. Each list is without build/config.sml, which each
 # program loads first, and the program's entry point, which is each system's own.
 PLANS    := rune.plan runedoc.plan runeopt.plan runeisa.plan runeffi.plan
+# the plans of the programs Rune alone builds, which no host reads: rhc's,
+# over which scripts/gen-version.sh --config works out its identity
+RUNE_ONLY_PLANS := rhc.plan
 plan-sources = $(filter-out build/config.sml src/main/%,$(shell sh scripts/plan-files.sh $(1)))
 SOURCES  := $(call plan-sources,rune.plan)
 GEN_SML  := lib/compiler/backend/opcodes.sml lib/compiler/backend/prims.sml lib/compiler/backend/regcodes.sml
@@ -126,6 +129,7 @@ SOURCES_DOC := $(call plan-sources,runedoc.plan)
 SOURCES_OPT := $(call plan-sources,runeopt.plan)
 SOURCES_ISA := $(call plan-sources,runeisa.plan)
 SOURCES_FFI := $(call plan-sources,runeffi.plan)
+SOURCES_RHC := $(call plan-sources,rhc.plan)
 BUILDFILES := build/rune.mlb build/rune.cm build/polyml-build.sml build/rune-mlkit.mlb build/runedoc.mlb build/runedoc.cm build/runedoc-polyml-build.sml build/runedoc-mlkit.mlb build/runeopt.mlb build/runeopt.cm build/runeopt-polyml-build.sml build/runeopt-mlkit.mlb build/runeisa.mlb build/runeisa.cm build/runeisa-polyml-build.sml build/runeisa-mlkit.mlb build/runeffi.mlb build/runeffi.cm build/runeffi-polyml-build.sml build/runeffi-mlkit.mlb
 VERSIONGEN := build/config.sml runtime/version.h lib/compiler/config.sml
 BUILDGEN := $(BUILDFILES) $(VERSIONGEN)
@@ -172,7 +176,7 @@ FFI_FLAGS := -DRUNE_FFI=$(FFI_ENABLED) $(if $(filter 1,$(FFI_ENABLED)),$(if $(FF
 FFI_LIBS := $(if $(filter 1,$(FFI_ENABLED)),$(if $(FFI_PREFIX),$(FFI_PREFIX)/lib/libffi.a,$(shell pkg-config --libs libffi)) $(if $(filter posix,$(SYS)),-ldl))
 FFI_INPUTS := $(if $(and $(filter 1,$(FFI_ENABLED)),$(FFI_PREFIX)),$(wildcard $(FFI_PREFIX)/include/ffi.h $(FFI_PREFIX)/include/ffitarget.h $(FFI_PREFIX)/lib/libffi.a $(FFI_PREFIX)/rune-ffi-dependency.json))
 build/librune/foreign.o bin/runevm bin/runevm-stack bin/runevm-asan bin/runevm-stack-asan: $(FFI_INPUTS)
-RT_SRCS := runtime/callback.c runtime/foreign.c runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
+RT_SRCS := runtime/callback.c runtime/foreign.c runtime/intinf.c runtime/runtime.c runtime/heap.c runtime/gc/chunk.c runtime/gc/copy.c runtime/gc/minor.c runtime/gc/los.c runtime/gc/mark.c runtime/gc/immix.c runtime/gc/segfit.c runtime/gc/compact.c runtime/gc/cycle.c runtime/gc/check.c runtime/gc/log.c runtime/gc/share.c runtime/gc/caf.c runtime/loader.c runtime/debug.c runtime/stack/isa_stack.c runtime/prims.c runtime/image.c
 VM_SRCS := runtime/main.c runtime/stack/interp.c $(RT_SRCS) runtime/sys/sys_$(SYS).c
 VM_HDRS := runtime/callback.h runtime/foreign.h runtime/foreign_prim.h runtime/intinf.h runtime/vm.h runtime/frames_array.inc runtime/value.h runtime/gc/gc.h runtime/native/native_offsets.h runtime/stack/loop.h runtime/sys/sys.h runtime/version.h $(GEN_C)
 RT_OBJS := $(patsubst runtime/%.c,build/librune/%.o,$(RT_SRCS) runtime/sys/sys_$(SYS).c)
@@ -288,7 +292,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: check-docs-generated test-mutants test-compiler-mutants test-cache-mutants test-cache-random isa check-isa codecs check-codecs test-ir check-levels check-units test-incremental test-layers test-deps test-dynamic test-build test-install test-dist check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall dist test-int64 test-laws-hosts
+.PHONY: check-docs-generated test-mutants test-compiler-mutants test-cache-mutants test-rhc-mutants test-cache-random isa check-isa codecs check-codecs test-ir check-levels check-units test-incremental test-layers test-deps test-dynamic test-build test-install test-dist check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall dist test-int64 test-laws-hosts
 
 all: vm boot runedoc runeopt runeffi basis-cache
 
@@ -320,9 +324,11 @@ bin/rune-compiler-state-duplicate.rbc: $(RUNE) lib/compiler/util/ordmap.sml lib/
 	$(RUNE) lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml tests/compiler/state-duplicate.sml -o $@
 bin/rune-compiler-state-tests.rbc: $(RUNE) tests/compiler/state-tests.build FORCE
 	$(RUNE) --build tests/compiler/state-tests.build -o $@
-# the store of units alone, with a client of its own and no compiler (the build-system roadmap's M6)
+# the store of units alone, with a client of its own and no compiler (the build-system roadmap's M6), and its
+# policy, with the settings it reads and no UnitCache (the haskell98 roadmap's M20)
 STORE_TEST_SRCS := lib/compiler/util/ordmap.sml lib/compiler/util/inttable.sml lib/compiler/state_sig.sml lib/compiler/state.sml \
-                   lib/compiler/util/pickle.sml lib/compiler/driver/unitstore.sml tests/lib/compiler/store.sml
+                   lib/compiler/util/pickle.sml lib/compiler/driver/unitstore.sml lib/compiler/settings.sml \
+                   lib/compiler/driver/storepolicy.sml tests/lib/compiler/store.sml
 bin/rune-compiler-store-tests.rbc: $(RUNE) $(STORE_TEST_SRCS) FORCE
 	$(RUNE) --library test/unit $(STORE_TEST_SRCS) -o $@
 # the syntax's node ids, the elaborator's witnesses and SourceTy (the linting roadmap's M11)
@@ -469,13 +475,22 @@ bin/rune-lsp-replay.rbc: $(RUNE) tests/lsp/client.sml tools/lsp/seconds.sml tool
 	$(RUNE) --build tools/lsp/replay.build -o $@
 ORACLE = bin/runevm --jit=opt --equality-work 1000000000 --heap-limit
 ORACLE_PATHS = placed,walked,rebound,loaded,cutoff,broken,failed,cancelled,query
-.PHONY: test-lsp-oracle test-lsp-oracle-corpora
-test-lsp-oracle: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
+# The oracle on the compiler's own build, in three runs that are three targets,
+# so that make check runs them as three jobs of one CPU each: as one job they
+# took about 2,300 s of CPU and passed 3,600 s of wall under make check's load
+# (tests/lsp/README.md). test-lsp-oracle is all three.
+.PHONY: test-lsp-oracle test-lsp-oracle-walk test-lsp-oracle-focus test-lsp-oracle-store test-lsp-oracle-corpora
+test-lsp-oracle: test-lsp-oracle-walk test-lsp-oracle-focus test-lsp-oracle-store
+test-lsp-oracle-walk: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
 	@mkdir -p build/lsp
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
 	  --scenarios tests/lsp/oracle/rune.tsv --out build/lsp/oracle-rune.jsonl --require placed,walked,rebound,cutoff,failed,cancelled,query
+test-lsp-oracle-focus: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
+	@mkdir -p build/lsp
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
 	  --scenarios tests/lsp/oracle/rune.tsv --focus --out build/lsp/oracle-rune-focus.jsonl --share --require $(ORACLE_PATHS),opened,shared,byneed
+test-lsp-oracle-store: bin/rune-lsp-oracle.rbc bin/rune-lsp-contexts.rbc
+	@mkdir -p build/lsp
 	rm -rf build/lsp/store
 	$(RUNE) --units -O0 --build rune.build --cache-dir build/lsp/store -o build/lsp/store.rbc 2>/dev/null
 	$(ORACLE) 4294967296 bin/rune-lsp-oracle.rbc --lib "$(abspath lib)" --build "$(abspath rune.build)" \
@@ -610,7 +625,7 @@ $(BUILDFILES) &: $(PLANS) scripts/plan-files.sh scripts/gen-build-files.sh
 # its list). make check compares each with what the compiler prints.
 .PHONY: plans
 plans:
-	@for p in $(PLANS); do $(RUNE) --plan $${p%.plan}.build > $$p.$$$$ && mv -f $$p.$$$$ $$p || { rm -f $$p.$$$$; exit 1; }; done
+	@for p in $(PLANS) $(RUNE_ONLY_PLANS); do $(RUNE) --plan $${p%.plan}.build > $$p.$$$$ && mv -f $$p.$$$$ $$p || { rm -f $$p.$$$$; exit 1; }; done
 
 # The version is git's (scripts/gen-version.sh): asked on every make, and
 # written only when it changes, so that a new commit, a checkout or the first
@@ -771,7 +786,53 @@ bin/rune-mlkit: bin/rune-mlkit.bin Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\n$(RUNE_I)exec "$$d/rune-mlkit.bin" --lib "$$d/../lib" "$$@"\n' > $@
 	chmod +x $@
 
-# ---------------------------------------------------------------- runedoc
+# ---------------------------------------------------------------- rhc
+# rhc, the Haskell 98 compiler of the haskell98 roadmap
+# (docs/plans/language/haskell98.md), which Rune alone builds (D42). Its
+# Config is its own, over rhc.plan (scripts/gen-version.sh --config;
+# docs/building.md, The compiler's identity): written on every make, as
+# build/config.sml is, and only when it changes.
+.PHONY: rhc test-rhc
+rhc: bin/rhc
+# rhc's tests (tests/hs/core; tests/runner/hscore.sml), part of make check
+test-rhc: bin/rhc vm bin/rune-test
+	$(RUNE_TEST) --tier test-rhc
+src/rhc/config.sml: FORCE | $(VERSIONGEN)
+	@sh scripts/gen-version.sh --config rhc.plan $@
+bin/rhc.rbc: $(RUNE) rhc.build $(SOURCES_RHC) src/main/rhc-main.sml
+	@mkdir -p bin
+	$(RUNE) --build rhc.build -o $@
+# rhc's snapshot (D45's A, rulings 66 and 67; docs/units.md, rhc's units):
+# the library of share/rhc compiled once into a store, which bin/rhc names
+# as a layer, read only (--snapshot), so that a check or a compile takes
+# the library's units from it and reads, checks and desugars a program's
+# own modules alone. Made from a Main that imports every module of the
+# library, in each order of a match, which a unit's configuration holds
+# (D34: the Report's at -O0 and -O1, Sestoft's trees at -O2 and above, so
+# that a compile at any level finds the library's units), at RUNE_LINT=2,
+# so that its entries, HsLint's part of each unit
+# among them, stand for a compile at any level; a unit's entry holds no
+# code, so one snapshot serves every target. The directory it names is the
+# one bin/rhc gives, $(CURDIR)/bin/../share/rhc. The store is kept between
+# makes, an entry keyed by rhc's configuration and the library's texts,
+# and after each make holds the configurations of the rhc that made it
+# alone (--prune-store drops the others, file by file as the store's trim
+# drops what it drops).
+RHC_SHARE := $(shell find share/rhc -type f 2>/dev/null)
+RHC_LIBRARY_MODULES := Array Char Complex CPUTime Directory IO Ix List Locale Maybe Monad Numeric Random Ratio System Time
+bin/rhc.layer: bin/rhc.rbc bin/runevm $(RHC_SHARE)
+	mkdir -p build/rhc-layer
+	{ for m in $(RHC_LIBRARY_MODULES); do echo "import $$m"; done; printf 'main :: IO ()\nmain = return ()\n'; } > build/rhc-layer/Main.hs
+	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --store $@ --match=report build/rhc-layer/Main.hs -o build/rhc-layer/main.rbc < /dev/null
+	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --store $@ --match=sestoft build/rhc-layer/Main.hs -o build/rhc-layer/main.rbc < /dev/null
+	bin/runevm bin/rhc.rbc --prune-store $@
+	touch $@
+bin/rhc: bin/rhc.rbc bin/rhc.layer bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(cd "$$(dirname "$$0")" && pwd -P)\nl=; [ -d "$$d/rhc.layer" ] && l="--snapshot $$d/rhc.layer"\nexec "$$d/runevm" "$$d/rhc.rbc" --share "$$d/../share/rhc" $$l "$$@"\n' > $@
+	chmod +x $@
+check-tools: bin/rhc
+
+# ---------------------------------------------------------------- runeffi
 # Runeffi is an SML program. Header processing is an explicit command and
 # never an action executed from the .build language.
 .PHONY: runeffi runeffi-host-builds ffi check-ffi-generated
@@ -1260,7 +1321,8 @@ bin/runevm32.exe: $(WIN_NEW_SRCS) $(VM_HDRS) $(NEW_HDRS) $(GMP_CROSS_TOOL) build
 test-windows-text: bin/rune-test bin/rune-windows windows $(RUNE) bin/rune.rbc bin/rune.stack.rbc
 	RUNE=$(RUNE) WINCC='$(WINCC)' WINCC32='$(WINCC32)' $(RUNE_TEST) --tier test-windows-text
 
-test-windows: bin/rune-matrix bin/rune-test bin/rune-windows bin/rune-protocol-check bin/rune-terminal windows $(RUNE) bin/rune.rbc bin/rune.stack.rbc bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel
+test-windows: bin/rune-matrix bin/rune-test bin/rune-windows bin/rune-protocol-check bin/rune-terminal windows vm $(RUNE) bin/rune.rbc bin/rune.stack.rbc bin/rune-repl bin/rune-repl.cmd bin/rune-dap bin/rune-kernel \
+              bin/rune-scenarios bin/rune-ffi-check bin/runeffi bin/rune-win32-check
 	RUNE=$(RUNE) WINCC='$(WINCC)' WINCC32='$(WINCC32)' $(RUNE_TEST) --tier test-windows
 	WSLENV=RUNEVM_INTINF:RUNEVM_JIT:$$WSLENV RUNEVM_JIT=all RUNE=$(abspath $(RUNE_STACK)) bin/rune-matrix -j $(JOBS) --configs windows
 	bin/rune-protocol-check dap --windows
@@ -1450,7 +1512,7 @@ bin/dist/runevm-ppc64: $(NEW_SRCS_X64) $(VM_HDRS) $(NEW_HDRS) Makefile $(GMP_CRO
 # Basis suite gets longer than the two minutes a program is otherwise given:
 # the largest of the monomorphic tests takes 34 s here and about six minutes
 # there.
-test-portability: portability $(RUNE) vm bin/rune-test
+test-portability: portability $(RUNE) vm bin/rune-windows bin/rune-matrix bin/rune-test
 	$(RUNE_TEST) --tier test-portability
 
 # ---------------------------------------------------------------- tests
@@ -1512,7 +1574,7 @@ test-gc: $(RUNE) vm bin/rune-test | build/.doctor-check
 test-all: host-builds vm bin/rune-test | build/.doctor-check
 	$(RUNE_TEST) --tier test-all
 
-check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/runeopt-boot bin/rune.stack.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc bin/rune-test | build/.doctor-check
+check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/runeopt-boot bin/rune.stack.rbc bin/runedoc.stack.rbc bin/runeopt.stack.rbc bin/runevm-stack bin/rune-test | build/.doctor-check
 	$(RUNE_TEST) --tier check-cross
 
 # Every instruction says where it came from, and the line is one the file has.
@@ -1521,7 +1583,7 @@ check-cross: host-builds bin/rune-boot bin/runedoc-boot bin/runeopt-boot bin/run
 # and in units, on both bytecodes and at tier 2 of the JIT, with the lint of
 # every pass on, which makes the register bytecode's same bytes as with it off
 # (docs/plans/middle-end.md, M2; docs/plans/correctness/linting.md, M1).
-test-ir: $(RUNE) bin/rune-test
+test-ir: $(RUNE) vm bin/rune-test
 	$(RUNE_TEST) --tier test-ir
 
 check-levels: $(RUNE) vm basis-cache bin/rune-test
@@ -1634,7 +1696,7 @@ test-install: all repl dap kernel mlton smlnj-legacy bin/runedoc-mlton bin/runeo
 
 # the distribution archives, with stand-in binaries (bin/rune-scenarios dist),
 # and one with the compiler and its frozen layer, installed and compiling
-test-dist: $(RUNE) vm basis-cache bin/rune-scenarios bin/rune-test
+test-dist: $(RUNE) vm basis-cache bin/rune-scenarios bin/rune-windows bin/rune-test
 	$(RUNE_TEST) --tier test-dist
 
 # the compiler as a service, a prototype (src/driver/serve.sml)
@@ -1665,7 +1727,7 @@ check-docs: check-docs-generated bin/rune-test bin/rune-doc-check
 
 check-docs-generated: $(RUNE) $(RUNEDOC) FORCE
 	$(RUNE_STACK) --basis-check
-	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml lib/sdl/*.sml lib/ffi/win32/common/*.sml lib/ffi/win32/native/*.sml lib/ffi/win32/sdldriver/*.sml lib/ffi/win32/model/*.sml lib/ffi/win32/mock/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) lib/compiler/*.sml lib/compiler/*/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
+	$(RUNEDOC) --lint lib/basis/*.sml lib/random/*.sml lib/test/property/*.sml lib/test/property/basis/*.sml lib/test/property/basis/*/*.sml lib/test/unit/*.sml lib/test/runner/*.sml lib/language/c/*.sml lib/language/haskell/*.sml lib/ffi/model/*.sml lib/ffi/marshal/*.sml lib/ffi/runtime/*.sml lib/sdl/*.sml lib/ffi/win32/common/*.sml lib/ffi/win32/native/*.sml lib/ffi/win32/sdldriver/*.sml lib/ffi/win32/model/*.sml lib/ffi/win32/mock/*.sml $(foreach l,$(REPL_LIBS),lib/$(l)/*.sml) lib/compiler/*.sml lib/compiler/*/*.sml src/*/*.sml && echo "lint-docs: OK (the comments of the libraries and of src are in the language of doc comments)"
 	$(RUNEDOC) $(DOCS_BASIS) --check
 	$(RUNEDOC) $(DOCS_RANDOM) --check
 	$(RUNEDOC) $(DOCS_PROPERTY) --check
@@ -1673,6 +1735,7 @@ check-docs-generated: $(RUNE) $(RUNEDOC) FORCE
 	$(RUNEDOC) $(DOCS_UNIT) --check
 	$(RUNEDOC) $(DOCS_RUNNER) --check
 	$(RUNEDOC) $(DOCS_C) --check
+	$(RUNEDOC) $(DOCS_HASKELL) --check
 	$(RUNEDOC) $(DOCS_FFI_MODEL) --check
 	$(RUNEDOC) $(DOCS_FFI_MARSHAL) --check
 	$(RUNEDOC) $(DOCS_FFI_RUNTIME) --check
@@ -1736,6 +1799,9 @@ DOCS_FFI_MODEL := --lib lib --library ffi/model --out docs/lib/ffi/model --basis
                   --conventions ../../conventions.md
 DOCS_C := --lib lib --library language/c --out docs/lib/language/c --basis-docs ../../basis \
           --conventions ../../conventions.md
+# rhc's front end and Core (docs/plans/language/haskell98.md, M8)
+DOCS_HASKELL := --lib lib --library language/haskell --out docs/lib/language/haskell --basis-docs ../../basis \
+                --conventions ../../conventions.md
 # the libraries of docs/plans/repl.md (The libraries), each in
 # docs/lib/NAME (DOC_LIBS). The heading of the library's
 # README.md is its name, on its pages and in the overview below.
@@ -1766,6 +1832,7 @@ DOCS_OVERVIEW := --lib lib --overview docs/lib \
 	--library-page jupyter \
 	--library-page digest \
 	--library-page language/c \
+	--library-page language/haskell \
 	--library-page ffi/model \
 	--library-page ffi/marshal \
 	--library-page ffi/runtime \
@@ -1784,6 +1851,7 @@ docs: $(RUNEDOC) FORCE
 	$(RUNEDOC) $(DOCS_UNIT)
 	$(RUNEDOC) $(DOCS_RUNNER)
 	$(RUNEDOC) $(DOCS_C)
+	$(RUNEDOC) $(DOCS_HASKELL)
 	$(RUNEDOC) $(DOCS_FFI_MODEL)
 	$(RUNEDOC) $(DOCS_FFI_MARSHAL)
 	$(RUNEDOC) $(DOCS_FFI_RUNTIME)
@@ -1822,7 +1890,7 @@ test-doc: $(RUNEDOC) vm FORCE bin/rune-test
 
 # The libraries beside the basis library and rune --library (tests/lib;
 # docs/plans/quickcheck.md, D1).
-test-lib: $(RUNE) $(RUNEDOC) vm FORCE bin/rune-test
+test-lib: $(RUNE) $(RUNEDOC) vm FORCE bin/rune-protocol-check bin/rune-test
 	$(RUNE_TEST) --tier test-lib
 
 .PHONY: test-compiler-api
@@ -1876,7 +1944,7 @@ perf-check: $(RUNE) bin/runedoc vm bin/rune.rbc bin/runedoc.rbc bin/rune.stack.r
 # (bin/rune names bin/runevm outright), or every compile would be quadratic too.
 GC_STRESS ?= 101
 GC_STRESS_BASIS ?= 1009
-test-stress: $(RUNE) vm bin/rune-test | build/.doctor-check
+test-stress: $(RUNE) vm bin/rune-matrix bin/rune-test | build/.doctor-check
 	GC_STRESS_BASIS=$(GC_STRESS_BASIS) $(RUNE_TEST) --tier test-stress
 
 # ------------------------------------------------------------- native code
@@ -1903,14 +1971,14 @@ bin/runevm-native: bin/runevm-native.rbc bin/runevm Makefile
 ifeq ($(NATIVE_HOST),yes)
 # test-native-steps reads the stack compiler's bytecode of every program of
 # tests/lang in tests/out, which the runner's tier makes first.
-test-native: bin/runevm-native bin/runeopt-mlton bin/rune-native-check build/librune.a $(RUNE) vm bin/rune.stack.rbc bin/rune-test | build/.doctor-native
+test-native: bin/runevm-native bin/runeopt-mlton bin/runeopt-templates bin/rune-native-check build/librune.a $(RUNE) vm bin/rune.stack.rbc bin/rune-test | build/.doctor-native
 	$(RUNE_TEST) --tier test-native
 # Compatibility entry point for the native generator's count/debug/bootstrap checks.
-test-native-steps: bin/runevm-native bin/runeopt-mlton bin/rune-native-check build/librune.a $(RUNE) vm bin/rune.stack.rbc bin/rune-test | build/.doctor-native
+test-native-steps: bin/runevm-native bin/runeopt-mlton bin/runeopt-templates bin/rune-native-check build/librune.a $(RUNE) vm bin/rune.stack.rbc bin/rune-test | build/.doctor-native
 	$(RUNE_TEST) 'native/code/*'
 
 # Extra stress ways use the same cases and limits as the normal native way.
-test-native-stress: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/rune-test | build/.doctor-native
+test-native-stress: bin/runevm-native bin/runeopt-mlton build/librune.a $(RUNE) vm bin/rune-matrix bin/rune-test | build/.doctor-native
 	GC_STRESS_BASIS=$(GC_STRESS_BASIS) $(RUNE_TEST) --tier test-native-stress
 
 ASAN_CFLAGS := -std=c17 -g -O1 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer
@@ -2081,7 +2149,7 @@ bin/runevm-jit: bin/runevm Makefile
 bin/runevm-opt: bin/runevm Makefile
 	printf '#!/bin/sh\nexec "$(ROOT)/bin/runevm" --jit=all --jit-tier=2 "$$@"\n' > $@
 	chmod +x $@
-test-register-jit: bin/runevm-jit bin/runevm-opt $(LOW_LEVEL_BINS) $(RUNE) bin/rune-test
+test-register-jit: bin/runevm-jit bin/runevm-opt $(LOW_LEVEL_BINS) $(RUNE) vm bin/runevm-gcbits bin/runevm-census bin/rune-heap-check bin/rune-measure bin/rune-test
 	$(RUNE_TEST) --tier test-register-jit
 test-register-jit-steps: bin/runevm-jit bin/runevm-opt $(LOW_LEVEL_BINS) $(RUNE) bin/rune-test
 	$(RUNE_TEST) --tier test-register-jit-steps
@@ -2155,15 +2223,38 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/benchmarkrun.sml tests/runner/benchmarkextras.sml tests/runner/benchmarkfaults.sml tests/runner/benchmarkmeasurement.sml tests/runner/inventorytests.sml tests/runner/benchmarks.sml \
                tests/runner/scenarios.sml tests/runner/installchecks.sml tests/runner/binaryfixtures.sml tests/runner/archivecheck.sml tests/runner/distchecks.sml tests/runner/vscodechecks.sml tests/runner/scenariojobs.sml \
                tests/runner/cacheplant.sml tests/runner/incrementalfixtures.sml tests/runner/incremental.sml tests/runner/cachefacts.sml tests/runner/cacheflags.sml tests/runner/cachechecks.sml tests/runner/warmchecks.sml tests/runner/storechecks.sml tests/runner/incrementalextra.sml tests/runner/intinfjobs.sml tests/runner/measurementjobs.sml tests/runner/gmpjobs.sml \
-               tests/runner/exampleprojects.sml tests/runner/oracles.sml tests/runner/tools.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
+               tests/runner/exampleprojects.sml tests/runner/oracles.sml tests/runner/thunks.sml tests/runner/tools.sml tests/runner/hscore.sml tests/runner/terminaljobs.sml tests/runner/protocols.sml tests/runner/vmchecks.sml tests/runner/vmoracles.sml tests/runner/windowschecks.sml tests/runner/platformfaults.sml tests/runner/windowsjobs.sml tests/runner/portability.sml \
                tests/runner/ffimodeljobs.sml tests/runner/ffijobs.sml tests/runner/compilermutantlist.sml tests/runner/cachemutantlist.sml tests/runner/compilermutants.sml \
+               tests/runner/hsconformance.sml tests/runner/hslang.sml tests/runner/hsroundtrip.sml \
+               tests/runner/hssyntax.sml tests/runner/hsnames.sml tests/runner/hslibrary.sml tests/runner/hsmutantlist.sml tests/runner/hsmutants.sml \
+               tests/runner/hsmeta.sml tests/runner/hsgen.sml tests/runner/hsreduce.sml tests/runner/hsinterp.sml tests/runner/hsdesugar.sml tests/runner/hssimplify.sml tests/runner/hsperf.sml tests/runner/hslint.sml tests/runner/hssource.sml tests/runner/hscorpus.sml \
+               tests/runner/hsoracles.sml tests/runner/hsrhccorpus.sml tests/runner/hslazyports.sml tests/runner/hscorpusrun.sml tests/runner/hssimplifyfigures.sml tests/runner/hssnapshot.sml tests/runner/hsiface.sml tests/runner/hschecks.sml tests/runner/hsunits.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) FORCE \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
 	$(RUNE) --library test/runner --library json --library digest --library test/unit $(RUNNER_SRCS) -o $@
+# The runner's jobs run at RUNE_LINT=2 unless it is set, and run bin/rhc with
+# no store (RHC_STORE empty, the haskell98 roadmap's D58), so that none
+# writes a .rhc beside a test's program; a job that tests the store names
+# one of its own (--store) or unsets RHC_STORE in a directory of its own.
 bin/rune-test: bin/rune-test.rbc bin/runevm Makefile bin/rune-generate bin/rune-inventory
-	printf '#!/bin/sh\nd=$$(dirname "$$0")\n: "$${RUNE_LINT=2}"\nexport RUNE_LINT\nexec "$$d/runevm" "$$d/rune-test.rbc" "$$@"\n' > $@
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\n: "$${RUNE_LINT=2}"\nexport RUNE_LINT\nRHC_STORE=\nexport RHC_STORE\nexec "$$d/runevm" "$$d/rune-test.rbc" "$$@"\n' > $@
 	chmod +x $@
+
+# The syntax of Haskell 98 in lib/language/haskell (the haskell98 roadmap's
+# M11): the driver of its tests, tests/hs/syntax/README.md, and their jobs,
+# tests/runner/hssyntax.sml.
+HS_SYNTAX_SRCS := lib/language/haskell/library.build lib/language/haskell/syntax.build $(wildcard lib/language/haskell/*.sml) \
+                  tests/hs/syntax/driver.build tests/hs/syntax/generate.sml tests/hs/syntax/driver.sml
+check-tools: bin/rune-hs-syntax
+bin/rune-hs-syntax.rbc: $(RUNE) $(HS_SYNTAX_SRCS) FORCE
+	$(RUNE) -O2 --build tests/hs/syntax/driver.build -o $@
+bin/rune-hs-syntax: bin/rune-hs-syntax.rbc bin/runevm Makefile
+	printf '#!/bin/sh\nd=$$(dirname "$$0")\nexec "$$d/runevm" --equality-work 2000000000 "$$d/rune-hs-syntax.rbc" "$$@"\n' > $@
+	chmod +x $@
+.PHONY: test-hs-syntax
+test-hs-syntax: $(RUNE) vm bin/rune-hs-syntax bin/rune-test
+	$(RUNE_TEST) --tier test-hs-syntax
 
 # Individual SML native checks avoid rebuilding the complete test inventory
 # in every worker process. Scheduling and requirements remain in rune-test.
@@ -2210,6 +2301,12 @@ test-mutants: $(RUNEDOC) vm FORCE bin/rune-test bin/rune-doc-check
 test-compiler-mutants: $(RUNE) vm basis-cache bin/rune-test bin/rune-incremental bin/rune-repl
 	$(RUNE_TEST) --tier test-compiler-mutants
 
+# rhc's mutants (tests/runner/hsmutants.sml; docs/testing.md, rhc's mutants), each
+# built into an rhc of its own and held to the jobs it names: minutes. HS_MUTANTS=HL01
+# runs those alone; make check only builds them.
+test-rhc-mutants: $(RUNE) vm bin/rune-test bin/rhc
+	$(RUNE_TEST) --tier test-rhc-mutants
+
 # Those of the cache alone (tests/runner/cachemutantlist.sml; docs/testing.md, The
 # checks of the cache), each against the checks that must see it: minutes
 test-cache-mutants: $(RUNE) vm basis-cache bin/rune-test bin/rune-incremental bin/rune-repl
@@ -2245,8 +2342,13 @@ check-tools: $(LOW_LEVEL_BINS) bin/runevm-jit bin/runevm-opt bin/rune-build bin/
 
 # The tier quick: tests/lang in its first way, the libraries, tests/doc and
 # the canaries, under a minute (docs/testing.md, Tiers, profiles and what
-# changed).
-quick: $(RUNE) vm runedoc bin/rune-test | build/.doctor-check
+# changed). QUICK_TOOLS is what else its tests run: rhc's programs and the
+# syntax's, the libraries' interop, and the runner's own checks of the heap,
+# the matrix, the laws of the hosts, the benchmarks and native code's launcher.
+QUICK_TOOLS := bin/rhc bin/rune-hs-syntax bin/rune-protocol-check bin/rune-heap-check bin/rune-matrix bin/rune-laws-hosts \
+               bin/rune-measure bin/rune-bench-check bin/rune-budget.rbc \
+               $(if $(filter yes,$(NATIVE_HOST)),bin/runevm-native bin/rune-native-check $(RUNEOPT))
+quick: $(RUNE) vm runedoc $(QUICK_TOOLS) bin/rune-test | build/.doctor-check
 	$(RUNE_TEST) --tier quick
 
 # The tests of the tier check, each step of the old recipe a test of the
@@ -2267,7 +2369,7 @@ clean:
 	  -type d \( -name .cm -o -name MLB -o -name .rune \) -prune -exec rm -rf {} +
 
 .PHONY: test-intinf
-test-intinf: $(RUNE) bin/runevm bin/runevm-stack bin/rune-intinf bin/rune-test
+test-intinf: $(RUNE) bin/runevm bin/runevm-stack bin/runevm-sml bin/rune-intinf bin/rune-test
 	INTINF_RUNE=$(abspath $(RUNE)) $(RUNE_TEST) --tier test-intinf
 
 # ---------------------------------------------------------------- install
@@ -2363,7 +2465,7 @@ bench-check: build/bench-catalog.rbc vm bin/rune-test bin/rune-bench-check
 	BENCH_PROFILE=$(BENCH_PROFILE) BENCH_CONFIGS=$(BENCH_CONFIGS) BENCH_FILTER='$(BENCH_FILTER)' bin/rune-bench-check catalogue
 
 # Bounded correctness/metadata only; wall-clock thresholds stay outside check.
-bench-smoke: build/bench-catalog.rbc build/bench-report.rbc build/bench-counts.rbc build/bench-coverage.rbc vm bin/rune-test bin/rune-bench-check
+bench-smoke: build/bench-catalog.rbc build/bench-report.rbc build/bench-counts.rbc build/bench-coverage.rbc vm bin/rune-test bin/rune-bench-check bin/rune-measure
 	bin/runevm build/bench-coverage.rbc --check
 	$(RUNE_TEST) --tier bench-smoke
 
@@ -2503,7 +2605,7 @@ bin/rune-ffi-shim-check: bin/rune-ffi-shim-check.rbc bin/runevm Makefile
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-ffi-shim-check.rbc" "$$@"\n' > $@
 	chmod +x $@
 .PHONY: test-ffi-shims test-ffi-shims-hosts
-test-ffi-shims: $(RUNE) vm bin/rune-ffi-shim-check bin/rune-test bin/rune-windows
+test-ffi-shims: $(RUNE) $(RUNEOPT) vm windows bin/rune-ffi-shim-check bin/rune-test bin/rune-windows
 	$(RUNE_TEST) --tier test-ffi-shims
 test-ffi-shims-hosts: $(RUNE) vm bin/rune-ffi-shim-check bin/rune-test
 	$(RUNE_TEST) --tier test-ffi-shims-hosts
@@ -2531,7 +2633,7 @@ bin/rune-header-layout-check: bin/rune-header-layout-check.rbc bin/rune-header-l
 	printf '#!/bin/sh\nd=$$(dirname "$$0")\nif [ -z "$${RUNE_TEST_ROOT:-}" ]; then RUNE_TEST_ROOT=$$(CDPATH= cd "$$d/.." && pwd); export RUNE_TEST_ROOT; fi\nexec "$$d/runevm" "$$d/rune-header-layout-check.rbc" "$$@"\n' > $@
 	chmod +x $@
 .PHONY: test-ffi-header-layout test-ffi-real32
-test-ffi-header-layout: $(RUNE) vm bin/rune-header-layout-check bin/rune-test
+test-ffi-header-layout: $(RUNE) vm bin/rune-header-layout-check bin/rune-test bin/rune-windows
 	$(RUNE_TEST) --tier test-ffi-header-layout
 test-ffi-real32: $(RUNE) vm bin/rune-header-layout-check bin/rune-test
 	$(RUNE_TEST) --tier test-ffi-real32
@@ -2664,7 +2766,7 @@ test-sdl: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
 	$(RUNE_TEST) --tier test-sdl
 test-sdl-gui: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
 	$(RUNE_TEST) --tier test-sdl-gui
-test-sdl-windows: $(RUNE) vm bin/runeffi bin/rune-sdl-check bin/rune-test
+test-sdl-windows: $(RUNE) vm windows bin/runeffi bin/rune-sdl-check bin/rune-test bin/rune-windows
 	$(RUNE_TEST) --tier test-sdl-windows
 test-sdl-asan: $(RUNE) vm-asan bin/runeffi bin/rune-sdl-check bin/rune-test
 	$(RUNE_TEST) --tier test-sdl-asan

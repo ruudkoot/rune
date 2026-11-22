@@ -92,7 +92,7 @@ struct
             val e = case name of NONE => e | SOME name => setEnv ("RUNEVM_NAME", name) e
         in Posix.Process.exece (exe, exe :: args, e) end
       val unary = ["--count", "--stats", "--emulate-fork", "--checked", "--gc-verify", "--gc-compact", "--gc-stress-cycles"]
-      val binary = ["--heap-size", "--heap-limit", "--equality-work", "--heap-fill", "--gc-stress", "--gc-log",
+      val binary = ["--heap-size", "--heap-limit", "--equality-work", "--heap-fill", "--heap-stack", "--gc-stress", "--gc-log",
                     "--nursery", "--nursery-max", "--gc", "--old-space"]
       fun parse ([], _, _) = delegate []
         | parse ("--name" :: name :: rest, options, _) = parse (rest, options, if name = "" then NONE else SOME name)

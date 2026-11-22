@@ -1,0 +1,29 @@
+; run: --read-core tests/hs/core/lib/base.core
+; A strict field and a strict parameter take a value: it is forced before
+; the constructor is made, or the function called, so the count moves
+; before the field is read.
+;   data S = S !Int
+;   let s = S (f 1) in s `seq` print count; case s of S x -> print x; print count
+(data S () (S !Int))
+(val runs (Ref Int) (case (con Unit) u (_ (newCounter u))))
+(val f (-> Int Int) (\ ((x Int)) (case (tick runs) _ (_ (case x v (_ (prim int_add v 1)))))))
+(val mk (-> Int S) (\ ((x Int)) (case (f x) v (_ (con S v)))))
+(val twice (-> !Int Int) (\ ((n !Int)) (prim int_mul n 2)))
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (let (s S (mk 1))
+    (case s sv
+      (_ (case (printCount runs w) o1
+           ((utuple w1 _)
+             (case sv sw
+               ((S x)
+                 (case (printInt x w1) o2
+                   ((utuple w2 _)
+                     (case (printCount runs w2) o3
+                       ((utuple w3 _)
+                         (let (a Int (f 20))
+                         (case a av
+                           (_ (case (printCount runs w3) o4
+                                ((utuple w4 _)
+                                  (let (b Int (twice av))
+                                    (printInt b w4))))))))))))))))))))

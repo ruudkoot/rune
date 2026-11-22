@@ -7,7 +7,7 @@
 | Status | required |
 | Implementations | 2 |
 | Documentation | 37 of 37 entries documented |
-| Tests | 270 checks of 35 entries |
+| Tests | 272 checks of 35 entries |
 | Source | [lib/basis/sig\_text\_io.sml](../../../../lib/basis/sig_text_io.sml) |
 
 ## Synopsis
@@ -492,9 +492,9 @@ val flushOut : outstream -> unit
 > no-op on terminated streams", and a closed stream is terminated too),
 > flushing a closed outstream does nothing rather than raising.
 
-<details><summary>Tests (6)</summary>
+<details><summary>Tests (7)</summary>
 
-For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `makes-output-visible` &middot; `nothing-to-flush` &middot; `twice` &middot; `closed-stream-is-a-no-op`
+For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `makes-output-visible` &middot; `nothing-to-flush` &middot; `twice` &middot; `closed-stream-is-a-no-op` &middot; `Io-device-full` (raises)
 
 For `WideTextIO`, in [tests/basis/widetextio.sml](../../../../tests/basis/widetextio.sml): `reaches-the-file`
 
@@ -512,9 +512,9 @@ val closeOut : outstream -> unit
 
 **Raises** [`IO.Io`](../sig/IO.md#exn-io) if the flush or the close fails.
 
-<details><summary>Tests (5)</summary>
+<details><summary>Tests (6)</summary>
 
-For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `flushes` &middot; `twice` &middot; `other-streams-stay-open`
+For `TextIO`, in [tests/basis/textio.sml](../../../../tests/basis/textio.sml): `flushes` &middot; `twice` &middot; `other-streams-stay-open` &middot; `Io-device-full` (raises)
 
 In [tests/basis/fn/imperative\_io\_fn.sml](../../../../tests/basis/fn/imperative_io_fn.sml), applied to `TextIO`, `WideTextIO`: `shared-stream` (raises) &middot; `flushes-and-closes`
 

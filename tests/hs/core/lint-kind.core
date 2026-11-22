@@ -1,0 +1,3 @@
+; fail: [kind] in val f: Int in the binder x is of kind *, and is applied
+; CoreLint, kind: Int takes no argument
+(val f (-> Int Int) (\ ((x (Int Int))) 0))

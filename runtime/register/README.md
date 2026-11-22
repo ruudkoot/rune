@@ -77,6 +77,26 @@ state are structs of the VM (`GcState`, `AllocState`, `runtime/vm.h`): the
 fast path bumps `alloc.used` against `alloc.size` -- in compiled code a
 pointer in a register of its own against `VM.alloc_limit`, below.
 
+**Suspensions** (docs/ir.md, *Suspensions*; docs/plans/language/haskell98.md,
+D11): a lazy front end's suspension is a `K_THUNK`, a flat closure that
+`thunk_make` makes of a fresh one in place (`fastprim.h`, and `emit.c` in
+line), its state in the header's tag: unevaluated, or under evaluation
+once its code has said `BLACKHOLE`, when `obj_scanned_fields` gives the
+collector none of its fields -- the code read what it captured at its entry
+(`Low.hoistEnv`), so that a suspension running lets go of them. `UPDATE`
+makes it a `K_IND` of its value in place (`obj_become_ind`), whose first
+field alone the collector follows and which it shortcuts. `FORCE` takes a
+value that is no unevaluated suspension, an indirection's through it, and
+jumps on; else `ENTER` enters the suspension as `CALL` enters a closure,
+`RESULT` after it, and a suspension under evaluation is a loop, a fatal
+error. A frame that runs a suspension's code reads its closure
+(`Function.reads_closure`: `BLACKHOLE` and `UPDATE` as `ENV` and `SELF`),
+which it updates; `CALL` stops a `K_THUNK`, where the interpreter and tier
+1 test the kind, and tier 2 does not where the section says the register
+holds a pointer. While the low-pause collector's cycle marks, `BLACKHOLE`
+shades the fields it lets go (`vm_blackhole`) and `UPDATE` stores through
+the barrier, in C (`SLOW_THUNK`).
+
 ## Frames, registers and the stack
 
 A frame lives in the value stack (docs/plans/native-frames.md, M4): its
@@ -109,11 +129,19 @@ frame's caller from its header -- the info word where the return word
 is the interpreter's, else the landing's code object, which says the
 caller's function and pc for each of its landings (`jit_landing_info`:
 the code by address among the region's code objects, the landing by its
-offset, the last 256 return words asked kept, with how far below the
-frame the caller's base is). The walks of the collections and of the
-barrier (`vm_frames_from`, `reg_barrier_pass`) step down without a call:
-a return word one of the two they met last, as a deep recursion's frames
-are, or one of the 256, is read in line. Of a header the collector scans
+offset, the return words asked last kept, one a slot of 65536 by a hash
+of the word -- `JIT_SEEN_BITS`, `jit.h`: with 256 the code's layout
+decided which of a program's landings shared a slot, and so what a
+collection of a deep stack cost -- with how far below the frame the
+caller's base is; code that dies forgets them, the slots written since
+the last time emptied).
+The walks of the collections and of the barrier (`vm_frames_from`,
+`reg_barrier_pass`) step down without a call: a return word one of the
+two they met last, as a deep recursion's frames are, or one the cache
+holds, is read in line. A full collection's walk, as a minor one's, goes
+down to the lowest frame that has run since the last collection, and takes
+the roots of the frames below from the stack's summary that the walks keep
+(`gc/copy.c`; docs/runtime.md, *The roots*). Of a header the collector scans
 the closure alone, made `unit` where the frame's function does not read
 one, so that it keeps nothing alive, and makes `unit` the info word of a
 frame compiled code called, which does not write it, where the slot
@@ -172,6 +200,28 @@ image stops at one with its value on the stack -- the value is pushed and
 `RESULT` takes it. A raise (`vm_raise`) resets the frame, the stack and
 the handlers to the innermost handler's, pushes the exception and enters
 the handler's code, which begins with `CATCH d`.
+
+Calls through a closure test its parameters (D15 C; [docs/bytecode.md](../../docs/bytecode.md),
+*Calls through a closure*): `CALL` enters a closure whose field 0 is a
+function, a closure of one, testing nothing else (item 24, option 1: a
+closure of k >= 2 parameters holds `CLOSURE_NARY(f)`, `-2 - f`, there, and a
+partial application -1, both negative, which the check of the index finds),
+`CALLN f n a...` one whose contag is `n` (`CLOSUREN` makes them), its
+function `CLOSURE_NARY` of its field 0 again, and any
+other -- a closure of another number of parameters, a partial application
+(field 0 the int -1) -- goes to the general path, `reg_apply`
+(`isa_regs.c`), with the closure and the arguments pushed above the
+registers (`APPLY`, `reg_words.h`; each frame's `maxstack` has room for
+them): a partial application made, which the `RESULT` after takes, or in a
+tail call returned through `<apply return>`; a closure of fewer parameters
+entered through `<apply K R>`, which calls it with its first and what it
+gives with the rest; a partial application's held values put before the
+arguments and the call made again. `vm_isa_after_load` adds `<apply return>`
+and the `<apply K R>` a program needs (the most parameters a `CLOSUREN`
+gives, the most arguments a `CALLN` gives: `Program.apply_amax`,
+`apply_nmax`, found by the check of the code). `RUNE_APPLY_STATS=1`
+prints the general path's uses at exit, and the compiled code's
+(*Tier 1*); `=2` the uses by site too.
 
 ## The loop
 
@@ -405,7 +455,24 @@ contract (docs/native.md) for the register bytecode, at run time, in C.
   home and stored from one as the double it is, no word between. An
   int as a real and a real as an int are in line too (`int_to_real`,
   `real_abs`, `real_trunc`, `real_floor`, `real_ceil`): one conversion,
-  with the primitive for what an int does not hold and for a NaN. The
+  with the primitive for what an int does not hold and for a NaN. A
+  suspension of a fresh closure (`thunk_make`, a lazy front end's) is in
+  line: of one that captures, the closure's kind rewritten, the
+  collector's bits kept (`ms_set_kind`), as the loop has it; of one that
+  captures nothing, which may be a constant the program shares, a
+  suspension of one field made beside it, its function's (an allocation
+  in line, `FILL_SUSP`), as the primitive makes it. A selector's mark
+  (`thunk_selector`, D17's C) is in line too, in the loop and at both
+  tiers: the suspension's kind, state, length and first field tested, and
+  the state's low byte written (`ms_set_selector`), as BLACKHOLE writes
+  it; an `i` that is no int is the primitive's, and where tier 2's homes
+  vouch for an int it has no slow path at all. `FORCE` of a selector, in
+  a program that does not rerun, calls the select stub of the region
+  from its slow path (`ms_emit_select`), which takes the selector's step
+  in code -- the selector as it is where its tuple is not evaluated, the
+  field where it is -- and calls `vm_selected` only for a chain of
+  selectors, keeping every home C clobbers itself, so that each FORCE's
+  slow path is a call; a program that reruns calls it synced. The
   primitives that are a function of the C library on reals and nothing
   else (`real_exp`, `real_ln`, `real_sin`, `real_cos`, `real_tan`,
   `real_atan`, `real_sinh`, `real_cosh`, `real_tanh`, `real_atan2`,
@@ -516,10 +583,47 @@ argument gives, and tier 1 keep the slots; so do calls through a closure,
 whose callee is not known. A call through a closure (`CALL`, `TAILCALL`) finds
 both in that table by the word of the closure's function (`2f + 1`: the
 entry at 8 times it less 8, the room at 8 times it; checked against the
-number of functions where the section does not vouch for the closure),
+number of functions even where the section vouches for the closure,
+unsigned, so that a negative word -- a closure of more parameters, a
+partial application -- goes to the cases below: a call of one argument
+tests nothing else, item 24),
 the room claimed (a slow path claims and starts the instruction over),
 the registers made, the header's closure and return word written and
-the entry jumped to. `RET` takes the value's word into `rax` and jumps
+the entry jumped to; `CALLN` and `TAILCALLN` the same for a closure whose
+contag is their number of arguments, the function's word `-2 - w` of the
+word `w` of its `CLOSURE_NARY(f)`. A closure of another number of
+parameters, or a partial application, is taken after the call's code,
+out of the way of the call that finds what it wants, by four cases kept in
+compiled code (D15 C, `apply_fast` and `apply_fast_tail` in `emit.c`): a
+partial application made in line (the call's value, as a callee's return
+leaves it at the landing; a tail call's frame returning it), a partial
+application of as many more arguments as the call gives entered as a call
+of its closure with what it holds and then the arguments (in a tail call
+gathered above the frame and moved down to its base), one given fewer
+than it wants made another (`ms_alloc_dynamic`), and a closure of one
+given more entered through the program's `<apply 1 n-1>`, a known call
+(in a tail call the arguments and the closure gathered above the frame:
+its room is claimed by the grow that makes the call again, since a claim
+makes the clean part unit from the frame's registers' end, where they are
+-- `tests/thunks/overtail.sml`, at both tiers under `--deopt-stress`);
+anything else -- the nursery full, a closure of k >= 2 given more than k
+-- goes to `reg_apply` in C (`SLOW_APPLY`, `jit_h_apply`), which goes on in
+the code of the function it entered, or after the `RESULT` in the
+caller's. A call of up to 8 arguments (`VM_APPLY_ARGS`) does not carry
+the cases in line (the haskell98 roadmap's item 24: they were most of its
+code, and of a compile's time): it hands its arguments' words over in
+`VM.apply_args` and, in `r8`, the address of a record after its jump --
+its landing's offset, its general path's, its frame's size -- to the
+cases' code that every call of as many arguments shares, and every tail
+call of as many another (`apply_shared` in `emit.c`), made when a call
+first wants it and placed at the region's top (`jit_place_shared`). That
+code tests the closure with the registers that are no home and goes on at
+the call's general path, with everything as the call left it, where no
+case applies or the room is short; a case it makes, it makes as the
+cases in line do, a tail call's arguments straight to the frame's base.
+The cases are off under `--jit-returns=call` and for a program
+without every arity in the section, and `RUNE_JIT_APPLY_FAST=0` turns them
+off, for a measurement. `RET` takes the value's word into `rax` and jumps
 where the frame's return word says, testing nothing: two instructions
 -- to the landing of the caller's compiled call, which moves `r14` back
 by the caller's registers and the header, loads the homes needed after
@@ -1055,7 +1159,12 @@ runs interpreted until it returns or is unwound, and what it calls runs
 at its own tier; entering a resumed frame's code at its resume point is
 the table of pc to address, M6. Under `--jit=all` `make test-register-jit`
 holds `--restore`, `Runtime.restore` and the emulated fork to the
-interpreter's output and counts.
+interpreter's output and counts. A frame's closure may be a suspension,
+evaluated or not, and an image writes unit for the fields of an object the
+collector does not follow (an indirection's but its first, a suspension's
+under evaluation), which may point to what is gone (`put_object`); the
+kernel `tests/thunks/image.sml` saves from inside a suspension's code and
+goes on there when restored (`tests/runner/thunks.sml`).
 
 ## What is measured, and how
 

@@ -39,7 +39,7 @@ struct
   type pos = Source.span * {name : string, site : Source.span option} list
 
   datatype operation =
-      Const of Lambda.const
+      Const of Literal.const
     | Unit
     | Con0 of int                         (* a nullary constructor, by its tag *)
     | Global of int
@@ -49,6 +49,8 @@ struct
     | Env of int                          (* a value the running closure captured *)
     | Self                                (* the running closure *)
     | Call of var * var                   (* closure, argument *)
+    | CallN of var * var list             (* closure, two or more arguments: as many calls of one would be
+                                             (D15 C, eval/apply proper; the register target only) *)
     | CallK of int * var list             (* a known function, by its id, and its arguments: no closure *)
     | Prim of string * var list
     | Tuple of var list
@@ -82,6 +84,7 @@ struct
                                                      and the one for the rest *)
     | Return of var
     | TailCall of var * var
+    | TailCallN of var * var list          (* closure, two or more arguments (D15 C) *)
     | TailCallK of int * var list
     | Raise of var
 
@@ -115,6 +118,7 @@ struct
     case oper of
       SetGlobal (_, v) => [v]
     | Call (f, a) => [f, a]
+    | CallN (f, xs) => f :: xs
     | CallK (_, vs) => vs
     | Prim (_, vs) => vs
     | Tuple vs => vs
@@ -138,8 +142,106 @@ struct
     | Switch (v, _, _) => [v]
     | Return v => [v]
     | TailCall (f, a) => [f, a]
+    | TailCallN (f, xs) => f :: xs
     | TailCallK (_, vs) => vs
     | Raise v => [v]
+
+  (* An operation and a transfer with each variable they read given by f. *)
+  fun mapOperation (f : var -> var) (oper : operation) : operation =
+    case oper of
+      Const c => Const c
+    | Unit => Unit
+    | Con0 t => Con0 t
+    | Global g => Global g
+    | Slot g => Slot g
+    | SetGlobal (g, v) => SetGlobal (g, f v)
+    | Env i => Env i
+    | Self => Self
+    | Call (c, a) => Call (f c, f a)
+    | CallN (c, xs) => CallN (f c, List.map f xs)
+    | CallK (k, vs) => CallK (k, List.map f vs)
+    | Prim (p, vs) => Prim (p, List.map f vs)
+    | Tuple vs => Tuple (List.map f vs)
+    | Select (i, v) => Select (i, f v)
+    | Con (t, vs) => Con (t, List.map f vs)
+    | Decon (t, v) => Decon (t, f v)
+    | Field (t, i, v) => Field (t, i, f v)
+    | ConTag v => ConTag (f v)
+    | NewExn n => NewExn n
+    | BuiltinExn k => BuiltinExn k
+    | MkExn (c, p) => MkExn (f c, f p)
+    | ExnCon v => ExnCon (f v)
+    | ExnArg v => ExnArg (f v)
+    | Closure (k, vs) => Closure (k, List.map (Option.map f) vs)
+    | SetEnv (c, i, v) => SetEnv (f c, i, f v)
+  fun mapTransfer (f : var -> var) (t : transfer) : transfer =
+    case t of
+      Goto (l, vs) => Goto (l, List.map f vs)
+    | If (v, a, b) => If (f v, a, b)
+    | IfTag (v, tag, a, b) => IfTag (f v, tag, a, b)
+    | Switch (v, cases, d) => Switch (f v, cases, d)
+    | Return v => Return (f v)
+    | TailCall (c, a) => TailCall (f c, f a)
+    | TailCallN (c, xs) => TailCallN (f c, List.map f xs)
+    | TailCallK (k, vs) => TailCallK (k, List.map f vs)
+    | Raise v => Raise (f v)
+
+  (* Whether a function is a suspension's code (docs/ir.md, Suspensions):
+     one that says thunk_blackhole in its entry block, where it goes under
+     evaluation. *)
+  (* a suspension's code: Haskell's says thunk_blackhole at its entry; lazy
+     ML's never goes under evaluation, and says thunk_self_update, after
+     which its closure may be an indirection already, which a force from
+     inside it made (D57, M26) *)
+  fun suspensionCode (f : func) : bool =
+    case #blocks f of
+      {instrs, ...} :: _ =>
+        List.exists (fn Def (_, Prim ("thunk_blackhole", _)) => true | _ => false) instrs
+        orelse List.exists (fn ({instrs, ...} : block) =>
+                              List.exists (fn Def (_, Prim ("thunk_self_update", _)) => true | _ => false) instrs) (#blocks f)
+    | [] => false
+
+  (* A suspension's code with what it captured read at its entry, before it
+     goes under evaluation, after which the collector follows none of its
+     closure's fields (BLACKHOLE), or before a lazy ML one's closure may have
+     become an indirection, of which it follows the first alone: each slot
+     read once, by the first read of it, moved to the entry block's start,
+     and every other read of the slot that variable. Any other function as
+     it is. *)
+  fun hoistEnv (f : func) : func =
+    if not (suspensionCode f) then f
+    else
+      let
+        (* the variable read of each slot, and what each other read is *)
+        val reads : (int * var) list ref = ref []
+        val renamed : var IntMap.map ref = ref IntMap.empty
+        val () =
+          List.app (fn ({instrs, ...} : block) =>
+                      List.app (fn Def (x, Env i) =>
+                                     (case List.find (fn (j, _) => j = i) (!reads) of
+                                        SOME (_, y) => renamed := IntMap.insert (!renamed, x, y)
+                                      | NONE => reads := (i, x) :: !reads)
+                                 | _ => ()) instrs)
+                   (#blocks f)
+        fun name x = case IntMap.find (!renamed, x) of SOME y => y | NONE => x
+        fun instr (Def (_, Env _)) = NONE
+          | instr (Def (x, oper)) = SOME (Def (x, mapOperation name oper))
+          | instr i = SOME i
+        val blocks =
+          List.map (fn {label, params, instrs, transfer} =>
+                      {label = label, params = params, instrs = List.mapPartial instr instrs,
+                       transfer = mapTransfer name transfer})
+                   (#blocks f)
+        val hoisted = List.map (fn (i, x) => Def (x, Env i)) (List.rev (!reads))
+        val blocks =
+          case blocks of
+            {label, params, instrs, transfer} :: rest =>
+              {label = label, params = params, instrs = hoisted @ instrs, transfer = transfer} :: rest
+          | [] => []
+      in
+        {id = #id f, name = #name f, params = #params f, ncaptured = #ncaptured f, nvars = #nvars f, blocks = blocks,
+         pos = #pos f, reps = #reps f, result = #result f, captures = #captures f}
+      end
 
   fun size (p : program) : int =
     List.foldl (fn ({blocks, ...} : func, n) =>
@@ -165,7 +267,7 @@ struct
       fun vs xs = String.concatWith " " (List.map v xs)
       fun opText oper =
         case oper of
-          Const c => "const " ^ Lambda.constToString c
+          Const c => "const " ^ Literal.toString c
         | Unit => "()"
         | Con0 t => "con0 " ^ Int.toString t
         | Global x => "global " ^ g x
@@ -174,6 +276,7 @@ struct
         | Env i => "env " ^ Int.toString i
         | Self => "self"
         | Call (f, a) => "call " ^ vs [f, a]
+        | CallN (f, xs) => "calln " ^ vs (f :: xs)
         | CallK (f, xs) => "callk f" ^ Int.toString f ^ (if null xs then "" else " " ^ vs xs)
         | Prim (p, xs) => "prim " ^ p ^ " " ^ vs xs
         | Tuple xs => "tuple " ^ vs xs
@@ -205,6 +308,7 @@ struct
             "    switch " ^ v x ^ String.concat (List.map (fn (t, b) => " " ^ Int.toString t ^ ":" ^ l b) cases) ^ " else " ^ l d
         | Return x => "    return " ^ v x
         | TailCall (f, a) => "    tailcall " ^ vs [f, a]
+        | TailCallN (f, xs) => "    tailcalln " ^ vs (f :: xs)
         | TailCallK (f, xs) => "    tailcallk f" ^ Int.toString f ^ (if null xs then "" else " " ^ vs xs)
         | Raise x => "    raise " ^ v x
       fun block ({label, params, instrs, transfer = t} : block) =

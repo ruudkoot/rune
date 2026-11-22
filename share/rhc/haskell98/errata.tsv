@@ -1,0 +1,29 @@
+# The published errata of the Revised Haskell 98 Report: all 18 entries, in their order, of
+# https://www.haskell.org/definition/haskell98-revised-bugs.html, the last dated September 2008. rhc's text is the
+# Report of December 2002 plus these errata (the haskell98 roadmap's D38). The online Report, and so pristine/, has
+# none of them applied. An erratum that changes the Report's code is applied in the modules of this directory and is
+# an entry of overlay.tsv; every other one is about prose, the grammar or an index, and the column `where` says what
+# rhc does with it.
+# Columns: id; date; section (the Report's, or the index); erratum, in short; kind (code, prose, grammar, index);
+# online (unapplied: the old wording is in the online text and the new is not; untested; book: the printed book only);
+# here (applied in these files, or none); where; reading (R1 to R54 of docs/plans/language/haskell98.md, the
+# haskell98 roadmap, and of its drafts' results/E9/readings.md; - for none).
+id	date	section	erratum	kind	online	here	where	reading
+e.2005.12.comment	Dec 2005	2.2	The production of an end-of-line comment admits --: although it is a varsym: comment -> dashes [ any<symbol | :> {any} ] newline	grammar	unapplied	none	rhc's lexer	R8
+e.2004.07.fieldorder	Jul 2004	3.17.2, case 6	Labelled fields are matched in the order they are named in the pattern's field list, not in the order of the declaration	prose	unapplied	none	rhc's translation of patterns, and a test of the order of evaluation	R16
+e.2005.01.matchwording	Jan 2005	3.17.2, case 6	"Matching a constructor pattern using labeled fields", not "matching against a constructor": a wording	prose	unapplied	none	nothing to do	-
+e.2008.03.nplusk	Mar 2008	3.17.2, case 8	n+k: the x of "succeeds if x >= k" should be v	prose	unapplied	none	nothing to do	R15
+e.2004.07.fixitytable	Jul 2004	4.4.2	Table 4.1 lacks =<<, infixr 1; the HTML captions the table "Table 2"	prose	unapplied	none	nothing to do: Prelude.hs declares infixr 1 =<<	R52
+e.2003.05.enumstrict	May 2003	6.3.4	The enumFrom family on Float and Double is strict in all its arguments, and the code's enumFrom and enumFromThen are not: a seq is added to the instances for Float and Double	code	unapplied	applied	Prelude.hs, instance Enum Float and instance Enum Double: enumFrom, enumFromThen (overlay ov.prelude.enumfloat)	R39
+e.2003.06.properfraction	Jun 2003	6.4.6	properFraction x is (n,f) with x = n+f, n integral, |f| < 1, n zero or of x's sign, and f zero or of x's sign: the old wording fails at zero	prose	unapplied	none	a test's expectation	R45
+e.2008.02.doexample	Feb 2008	7.2	The example of do notation shows its prompt late, being buffered: use putStrLn, or set stdout unbuffered first	prose	unapplied	none	a test's expectation	-
+e.2003.02.lex	Feb 2003	8.2	lex: an identifier may start with an underscore: isIdInit c = isAlpha c || c == '_' in the third guard, and '_' out of isSingle	code	unapplied	applied	PreludeText.hs, lex (overlay ov.preludetext.lex)	R43
+e.2004.09.exportvar	Sep 2004	9.5	In the third production of export, the qvar in parentheses after qtycls is var, as in 5.2	grammar	unapplied	none	rhc's parser	R34
+e.2005.08.approxrational	Aug 2005	12	approxRational returns the simplest rational within the closed interval, not the open one	prose	unapplied	none	nothing to do in the code, which the erratum describes; a test pins the closed interval	R44
+e.2003.03.ixlaw	Mar 2003	15	The law map index (range (l,u)) = [0..rangeSize (l,u)] is bogus: map (index (l,u)) (range (l,u)) = [0 .. rangeSize (l,u) - 1]	prose	unapplied	none	a test of the corrected law	-
+e.2008.09.generic	Sep 2008	17	genericTake, genericDrop and genericSplitAt treat a negative number as 0, as take, drop and splitAt do, instead of calling error: their code is replaced	code	unapplied	applied	List.hs, genericTake, genericDrop, genericSplitAt, now the erratum's code (overlay ov.list.generic)	R48
+e.2003.03.chartypo	Mar 2003	19	"converts the to the character it encodes" lacks "string"	prose	unapplied	none	nothing to do	R52
+e.2006.11.closetypo	Nov 2006	21.3.2	"doing so not an error" lacks "is"	prose	unapplied	none	nothing to do	R52
+e.2003.07.index	Jul 2003	online index	The index gives no type for either, and a wrong one for print, which is print :: Show a => a -> IO ()	index	unapplied	none	nothing to do: the index holds no code	-
+e.2006.10.breakindex	Oct 2006	online index	The index's example of break is wrong; break (>2) [1,2,3] == ([1,2],[3]) is right	index	untested	none	nothing to do: the index holds no code	-
+e.2005.06.printedindex	Jun 2005	printed index	The printed index has no entry for the keywords (reservedid), nor for where	index	book	none	nothing to do: the printed book only	-

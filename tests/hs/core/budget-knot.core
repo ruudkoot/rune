@@ -1,0 +1,26 @@
+; run: --read-core tests/hs/core/lib/base.core --read-core tests/hs/core/lib/size-1000.core
+; budget: lib/size-1000.core lib/size-2000.core
+; A sharing budget for a recursive value (D6; rhc's policy, not the
+; Report's): fibs = 0 : 1 : zipWith (+) fibs (tail fibs), knotted through a
+; letrec, the n-th mod a prime. Each cell is made once only where the knot
+; is shared; unshared, the count grows exponentially in n. So the counts at
+; 1000 and at 2000 are held to linear growth, at most 2.2 times.
+(val zipPlus (-> (List Int) (List Int) (List Int))
+  (\ ((xs (List Int)) (ys (List Int)))
+    (case xs xv
+      ((Nil) (con Nil @Int))
+      ((Cons x xr)
+        (case ys yv
+          ((Nil) (con Nil @Int))
+          ((Cons y yr)
+            (let (s Int (case x a (_ (case y b (_ (case (prim int_add a b) c (_ (prim int_mod c 1000003))))))))
+              (let (r (List Int) (zipPlus xr yr)) (con Cons @Int s r)))))))))
+(val tail (forall (a) (-> (List a) (List a)))
+  (\ (@a (xs (List a))) (case xs v ((Cons _ r) r) ((Nil) (error @(List a) "tail")))))
+(val main (-> World (utuple World Unit))
+  (\ ((w World))
+    (letrec ((fibs (List Int)
+               (let (t (List Int) (tail @Int fibs))
+                 (let (z (List Int) (zipPlus fibs t))
+                   (let (one (List Int) (con Cons @Int 1 z)) (con Cons @Int 0 one))))))
+      (case size n (_ (let (f Int (index @Int fibs n)) (printInt f w)))))))

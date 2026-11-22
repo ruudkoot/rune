@@ -1,0 +1,1 @@
+parse-then.hs:2:13: error: expected `then` after the condition of `if`, found `else`

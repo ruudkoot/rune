@@ -1,0 +1,4 @@
+TYPE	Main	f :: a -> a
+TYPE	Main	g :: a -> Integer
+SIGNED	Main	main :: IO ()
+DEFAULT	Main	6:1	Num a -> Integer

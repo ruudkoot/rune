@@ -157,8 +157,12 @@ static void put_object(Stream *s, Obj *o, VM *vm) {
         } else if (!obj_has_fields(o)) {
             put(s, obj_bytes(o), obj_payload_bytes(obj_kind(o), obj_len(o)));
         } else {
+            /* the fields the collector does not follow are dead, and may
+               point to what is gone: an indirection's but the first, a
+               suspension's under evaluation (value.h, obj_scanned_fields) */
             Value *f = obj_fields(o);
-            for (uint32_t i = 0; i < obj_len(o); i++) put_value(s, f[i], vm);
+            uint32_t live = obj_scanned_fields(o);
+            for (uint32_t i = 0; i < obj_len(o); i++) put_value(s, i < live ? f[i] : mk_unit(), vm);
         }
 }
 
@@ -382,7 +386,7 @@ int64_t vm_fork(VM *vm) {
     fflush(NULL);
     for (size_t i = 0; i < vm->nfiles; i++) {
         FILE *f = vm->files[i];
-        if (f && vm->file_modes[i] == 0 && sys_ftell(f) >= 0) sys_fseek(f, 0, SEEK_CUR);
+        if (f && ((vm->file_modes[i] & 0x0f) == 0 || (vm->file_modes[i] & 0x0f) == 3) && sys_ftell(f) >= 0) sys_fseek(f, 0, SEEK_CUR);
     }
     FILE *out = sys_fork_start();
     if (!out) return -1;
@@ -792,6 +796,7 @@ static int read_image(VM *vm, FILE *in, int want, uint64_t *foreign_floor, char 
     for (int i = 0; i < REAL_BOXES; i++) vm->real_boxes[i] = get_obj(&s);
     vm->interrupt_mask = (int)get_u32(&s);
     vm->interrupt_exn = get_obj(&s);
+    vm->loop_exn = NULL;   /* (vm.h) made again at the next loop */
 
     uint64_t sp = get_u64(&s);
     if (!s.ok || !fits(sp, sizeof(Value))) return failed(&s, err, errlen, "the image is cut short");
@@ -851,12 +856,13 @@ static int read_image(VM *vm, FILE *in, int want, uint64_t *foreign_floor, char 
     vm->files[2] = stderr;
     for (size_t i = 0; i < vm->nfiles && s.ok; i++) {
         int fd = (int)get_u32(&s);
-        vm->file_modes[i] = get_u8(&s);
+        /* the mode of file_open, without what a file of mode 3 did last */
+        vm->file_modes[i] = get_u8(&s) & 0x0f;
         uint8_t mode = vm->file_modes[i];
         if (kind == IMAGE_FORK) {
             /* the descriptors came with the child */
             if (i >= 3 && fd >= 0 && s.ok)
-                vm->files[i] = sys_fdopen(fd, mode == 0 ? "rb" : mode == 1 ? "wb" : "ab");
+                vm->files[i] = sys_fdopen(fd, mode == 0 ? "rb" : mode == 1 ? "wb" : mode == 3 ? "r+b" : "ab");
         } else {
             /* nothing was inherited: open the file again where it was left.
                A file written to is opened for update, not truncated. */
@@ -864,7 +870,7 @@ static int read_image(VM *vm, FILE *in, int want, uint64_t *foreign_floor, char 
             int64_t at = (int64_t)get_u64(&s);
             if (!s.ok) { free(path); break; }
             if (i >= 3 && path && path[0]) {
-                FILE *f = sys_fopen(path, mode == 0 ? "rb" : mode == 1 ? "r+b" : "ab");
+                FILE *f = sys_fopen(path, mode == 0 ? "rb" : mode == 1 || mode == 3 ? "r+b" : "ab");
                 if (!f) {
                     free(path);
                     return failed(&s, err, errlen, "a file the image was saved with cannot be opened again");
@@ -903,7 +909,9 @@ static int read_image(VM *vm, FILE *in, int want, uint64_t *foreign_floor, char 
                 ok = fr[i].func < p->nfuncs
                      && fr[i].base <= vm->sp
                      && (i == 0 || (fr[i].ret_pc < p->code_len && starts[fr[i].ret_pc]))
-                     && (!fr[i].closure || obj_kind(fr[i].closure) == K_CLOSURE);
+                     && (!fr[i].closure || obj_kind(fr[i].closure) == K_CLOSURE
+                         /* a suspension's code runs with it as its closure, which may have its value since */
+                         || obj_kind(fr[i].closure) == K_THUNK || obj_kind(fr[i].closure) == K_IND);
         }
         for (size_t i = 0; ok && i < vm->hp; i++)
             ok = vm->handlers[i].pc < p->code_len && starts[vm->handlers[i].pc]
@@ -972,6 +980,8 @@ int vm_become(VM *vm, const char *path) {
     next->gc.old_kind = vm->gc.old_kind;
     next->gc.compact_always = vm->gc.compact_always;
     next->gc.stress_cycles = vm->gc.stress_cycles;
+    next->gc.stress_full = vm->gc.stress_full;
+    next->caf_mode = vm->caf_mode;   /* (its CAF tables made afresh, from the image's code: runtime/gc/caf.c) */
     next->intinf_max_bits = vm->intinf_max_bits;
     next->intinf_gmp_memory = vm->intinf_gmp_memory;
     next->intinf_mode = vm->intinf_mode;

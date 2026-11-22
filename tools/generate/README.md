@@ -23,7 +23,7 @@ version, host provisioning and installation adapters remain independent.
 | `perf KIND PARAMS...` | Module-language performance inputs, including signatures, sharing and nested functors |
 | `fxp` | The fixed XML input, preserving the original binary64 LCG and recursive length output |
 | `entities` / `digest-vectors` | Named HTML references / independently established cryptographic vectors |
-| `unicode [UCD_DIR] [--out-root DIR]` | Five Unicode tables and nine conformance datasets from pinned sources |
+| `unicode [UCD_DIR] [--out-root DIR]` | Six Unicode tables and ten conformance datasets from pinned sources |
 | `inventory [OPTIONS]` | Pinned benchmark discovery, classification, provenance and TSV publication |
 
 Run `bin/rune-inventory` for the inventory mode directly. Its `--query` interface

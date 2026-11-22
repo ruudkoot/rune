@@ -1,0 +1,1 @@
+expected `->` after a guard of an alternative, found `::`

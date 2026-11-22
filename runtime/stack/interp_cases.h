@@ -184,7 +184,8 @@ CASE(CALL) {
     Value cv = POP();
     Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
     int64_t fidx = val_imm(obj_field(c, 0));
-    if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
+    if (fidx < 0) { PUSH(cv); PUSH(arg); APPLY(1, 0); }
+    if ((uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
     size_t at = (size_t)(sp - vm->stack);
     vm_push_frame(vm, (uint32_t)fidx, c, PC, at);
@@ -205,7 +206,8 @@ CASE(TAILCALL) {
     Value cv = POP();
     Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
     int64_t fidx = val_imm(obj_field(c, 0));
-    if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
+    if (fidx < 0) { PUSH(cv); PUSH(arg); APPLY(1, 1); }
+    if ((uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
     Function *fn = &p->funcs[fidx];
     size_t at = FRAME->base;
     FRAME->func = (uint32_t)fidx;
@@ -449,5 +451,129 @@ CASE(FIELD) {
     if (vm->checked && obj_contag(c) != a) FATAL("FIELD of a constructor of tag %d where %d is wanted", (int)obj_contag(c), (int)a);
     if ((uint32_t)b >= obj_len(c)) FATAL("constructor field %d out of range", b);
     PUSH(obj_field(c, b));
+    NEXT;
+}
+CASE(FORCE) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_FORCE, a, 0);
+    pc += 5;
+    count++;
+    Value v = TOP(0);
+    if (val_is_ptr(v)) {
+      int k = obj_kind(val_ptr(v));
+      if (k == K_THUNK && obj_contag(val_ptr(v)) >= THUNK_SELECTOR) {
+          /* a selector whose tuple is evaluated: its field, as the
+             collector would give it (vm_selected, D17's count) */
+          Value w = vm_selected(vm, v);
+          if (w != v) {
+              TOP(0) = v = w;
+              k = val_is_ptr(v) ? obj_kind(val_ptr(v)) : -1;
+          }
+      }
+      if (k == K_THUNK) NEXT;
+      if (k == K_IND) TOP(0) = obj_field(val_ptr(v), 0);
+    }
+    JUMP_TO(a);
+    NEXT;
+}
+CASE(ENTER) {
+    TRACE(OP_ENTER, 0, 0);
+    pc += 1;
+    count++;
+    POLL();
+    Value arg = POP();
+    Value tv = POP();
+    Obj *c = EXPECT(tv, K_THUNK, "suspension");
+    /* a loop (D12): Loop raised, from here, as RAISE raises */
+    if (obj_contag(c) == THUNK_BLACKHOLE) { SYNC(); vm_raise_loop(vm); RELOAD(); NEXT; }
+    int64_t fidx = val_imm(obj_field(c, 0));
+    if (fidx < 0 || (uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
+    Function *fn = &p->funcs[fidx];
+    size_t at = (size_t)(sp - vm->stack);
+    vm_push_frame(vm, (uint32_t)fidx, c, PC, at);
+    size_t need = at + fn->nlocals + fn->maxstack;
+    if (need > vm->stack_cap) vm_grow_stack(vm, need);
+    Value *slot = vm->stack + at;
+    slot[0] = arg;
+    for (uint32_t i = 1; i < fn->nlocals; i++) slot[i] = mk_unit();
+    ENTER(slot, fn);
+    NEXT;
+}
+CASE(BLACKHOLE) {
+    TRACE(OP_BLACKHOLE, 0, 0);
+    pc += 1;
+    count++;
+    SYNC();
+    op_BLACKHOLE(vm, 0, 0);
+    RELOAD();
+    NEXT;
+}
+CASE(UPDATE) {
+    TRACE(OP_UPDATE, 0, 0);
+    pc += 1;
+    count++;
+    SYNC();
+    op_UPDATE(vm, 0, 0);
+    RELOAD();
+    NEXT;
+}
+CASE(ARITY) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_ARITY, a, 0);
+    pc += 5;
+    count++;
+    SYNC();
+    op_ARITY(vm, a, 0);
+    RELOAD();
+    NEXT;
+}
+CASE(CALLN) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_CALLN, a, 0);
+    pc += 5;
+    count++;
+    POLL();
+    int32_t n = a - 1;   /* TOP takes a signed index */
+    Value cv = TOP(n);
+    Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
+    int64_t w = val_imm(obj_field(c, 0));
+    if (obj_contag(c) != n || w > CLOSURE_NARY(0)) APPLY(n, 0);
+    int64_t fidx = CLOSURE_NARY(w);
+    if ((uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
+    Function *fn = &p->funcs[fidx];
+    size_t at = (size_t)(sp - vm->stack) - (size_t)n - 1;
+    vm_push_frame(vm, (uint32_t)fidx, c, PC, at);
+    size_t need = at + fn->nlocals + fn->maxstack;
+    if (need > vm->stack_cap) vm_grow_stack(vm, need);
+    Value *slot = vm->stack + at;
+    memmove(slot, slot + 1, (size_t)n * sizeof(Value));
+    for (uint32_t i = (uint32_t)n; i < fn->nlocals; i++) slot[i] = mk_unit();
+    ENTER(slot, fn);
+    NEXT;
+}
+CASE(TAILCALLN) {
+    int32_t a = read_i32(code + pc + 1);
+    TRACE(OP_TAILCALLN, a, 0);
+    pc += 5;
+    count++;
+    POLL();
+    int32_t n = a - 1;   /* TOP takes a signed index */
+    Value cv = TOP(n);
+    Obj *c = EXPECT(cv, K_CLOSURE, "closure in call");
+    int64_t w = val_imm(obj_field(c, 0));
+    if (obj_contag(c) != n || w > CLOSURE_NARY(0)) APPLY(n, 1);
+    int64_t fidx = CLOSURE_NARY(w);
+    if ((uint64_t)fidx >= p->nfuncs) FATAL("bad function index");
+    Function *fn = &p->funcs[fidx];
+    size_t at = FRAME->base;
+    FRAME->func = (uint32_t)fidx;
+    FRAME->closure = c;
+    size_t need = at + fn->nlocals + fn->maxstack;
+    Value *from = sp - n;
+    if (need > vm->stack_cap) { size_t k = (size_t)(from - vm->stack); vm_grow_stack(vm, need); from = vm->stack + k; }
+    Value *slot = vm->stack + at;
+    memmove(slot, from, (size_t)n * sizeof(Value));
+    for (uint32_t i = (uint32_t)n; i < fn->nlocals; i++) slot[i] = mk_unit();
+    ENTER(slot, fn);
     NEXT;
 }

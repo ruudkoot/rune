@@ -150,7 +150,6 @@ struct
                 val lo=Vector.sub (#base unit,UnitBasis.kStamp)
                 val hi=lo+Vector.sub (#count unit,UnitBasis.kStamp)
                 val ()=Lower.knownBefore:=IntMap.filteri (fn (s,_) => s<lo orelse s>=hi) (!Lower.knownBefore)
-                val ()=Translate.funNames:= IntMap.fromList (#funNames um)
                 val low=Pipeline.lowOfMid (#mid um)
                 val code=Pipeline.targetStage low
                 val sc : Link.sessionCode={code=code,globals=IntMap.listItemsi (!Code.globals),defines=Link.defines low,
@@ -185,7 +184,7 @@ struct
                 val source={file=file,text= #text loaded,mode=Source.Ascii}
                 val ()=UnitBasis.position (!env,!fixity)
                 val key=UnitCache.key {name=name,text= #text loaded,allow=allow,settings=""}
-                val found=case (useCache,UnitCache.frozen ()) of
+                val found=case (useCache,StorePolicy.frozen ()) of
                   (true,SOME directory) => UnitCache.find (directory,UnitCache.configuration (),key)
                 | _ => UnitCache.Missed "cache disabled"
             in

@@ -54,7 +54,14 @@ virtual-memory reservation prevents startup under the smaller bound.
 ## Running the tests
 
 `make check` is `make check-tools`, which builds every tool a test needs,
-and then `bin/rune-test run --tier check`. `bin/rune-test` is the runner
+and then `bin/rune-test run --tier check`. Every other target that runs a
+tier (`make quick`, `make test-stress`, `make test-windows`, ...) names as
+its prerequisites what that tier's tests run -- the runner's tools, the
+VMs, the builds of other machines -- so that it runs alone in a tree where
+nothing else was built: a tool it does not build makes a test fail with
+`not found` (exit 127 from a shell, 126 from a tool of the runner) where
+`make check` passes, or skips one whose capability's probe runs it
+(`bin/rune-windows directory`). `bin/rune-test` is the runner
 (`lib/test/runner`, [lib/test/runner](lib/test/runner/README.md)),
 compiled by `bin/rune` from its inventory, `tests/runner/*.sml`, and run on
 `bin/runevm`. Its tests are trees of commands: each runs as a process in a
@@ -153,6 +160,7 @@ A tier or a profile is a tag (`--tier T`, `--profile P`):
 | `windows`, `portability` | `make test-windows`, `test-portability` |
 | `docs` | `make check-docs` and `test-doc` |
 | `nightly` | what `make check` does not run: the profiles' extras, the VMs of other machines, every configuration of the matrix, native code under stress and the sanitizers; once a day in CI (`.github/workflows/nightly.yml`) |
+| `hs` | rhc's tests (*rhc's tests* below): its programs, round trips and conformance table, and the runner's own checks of that machinery |
 
 The profiles `vm` and `library` hold what `make check` does not run; the
 others are parts of it, to run alone while iterating.
@@ -199,7 +207,9 @@ generated programs of functors, `functors/*`, below;
 `tests/deps`, `tests/dynamic`, `tests/buildfile` and `tests/units` as
 `scenario/*`; `tests/runner/tools.sml`), and the protocol suites (`repl/*`,
 `diagnostics/*`, `serve/*`, `repl-protocol/*`, `dap/*`, `kernel/*`,
-`incremental/*`; `tests/runner/protocols.sml`). Scenario and protocol policy
+`incremental/*`; `tests/runner/protocols.sml`), and rhc's (`hs/*`, *rhc's
+tests* below; `tests/runner/hslang.sml`, `tests/runner/hsroundtrip.sml`,
+`tests/runner/hsconformance.sml`). Scenario and protocol policy
 is Standard ML. Heap, benchmark, native, terminal and low-level checks also
 have individual SML jobs. Make builds prerequisites; the three retained
 compatibility jobs for generated docs, benchmark coverage and ISA checks
@@ -352,6 +362,86 @@ and by `bin/rune-matrix` for the hosts; `tests/basis/law-skips.txt` (lines of
 three fields, of every way) by the engine for the laws
 (`tests/runner/laws.sml`).
 
+## rhc's oracles and corpus
+
+rhc, the Haskell 98 compiler of `docs/plans/language/haskell98.md`, is judged against oracles and a corpus that
+stay outside the tree (M3, D52). The corpus's licences, its manifests and its compat layer are
+`tests/hs/corpus/` (README.md there): the programs are read through `RUNE_HS_CORPUS`, a directory holding the trees
+that `tests/hs/corpus/trees.tsv` pins, but for the 188 of D56's set, vendored in `tests/hs/corpus/vendored/` under
+a notice each, the nearest `LICENSE` or `PROVENANCE` above them: 45 with their trees' licence files (GHC's
+testsuite's BSD-3, jhc's MIT), and 143 that no licence covers with a `PROVENANCE` written here (their upstream and
+commit, the upstream paths, the authors and origin their headers name, what notice there is, and the date). The
+owner's rules: code not under CC0 lands with its licence beside it, and code under no licence with a `PROVENANCE`
+beside it. The oracles are GHC 9.4.7 with
+a strict shim, Hugs, nhc98 and MicroHs (`tests/hs/oracles/README.md`: each oracle's variable, pin and recipe, and
+the shims, which the run builds). The family is `tests/runner/hssource.sml`, `hscorpus.sml`, `hsoracles.sml` and
+`hschecks.sml`:
+
+- `hs-oracles/ORACLE/conformance`, `judge-SET`, `run-SET` and `@stale`, in the tier `nightly`, each requiring its
+  oracle's capability (`hs-ghc`, `hs-hugs`, `hs-nhc98`, `hs-microhs`) and `hs-corpus`: they reproduce E7's 82
+  conformance tests against what their suites expect, and E8's verdicts and run set against what E8 recorded. A
+  difference is a failure unless a line of `tests/hs/oracles.txt` explains it, in the format of *Expectations*
+  with the outcome first in its reason (`hugs | conformance98/layout/do::conformance | HOST-BUG | reject: R56:
+  ...`); `@stale` fails a line that explains no failure of a job that ran. A disagreement on a conformance test
+  cites its reading of the Report (`tests/hs/readings.md` from R55). `hs-oracles/rhc/conformance` and its
+  `@stale`, needing `rhc` and `hs-corpus`, judge rhc on the same 82 the same way (a module but Main checked with
+  `--typecheck-only`, a program compiled and run on the register VM), its lines of way `rhc` (G2's line
+  "conformance98 green, or each failure a recorded reading").
+- `hs-corpus/data`, `source` and `faults`, in `check`: the data is whole and agrees with itself and with
+  `oracles.txt`, nothing lands under `tests/hs/corpus/` but its data, each of E7's hard cases has a reading, the
+  source rewrites do what E8's did on planted text, and the harness fails where it must on fake oracles.
+
+A job is also a command: `bin/rune-test hs-oracle conformance hugs`, `hs-oracle judge ghc nofib-2019`,
+`hs-oracle run nhc98 jhc`, `hs-oracle stale ghc`, `hs-oracle ghc-shim`; `RUNE_HS_OUT` moves their output from the
+run's directory.
+
+rhc goes through the same corpus (`tests/runner/hsrhccorpus.sml`, `hslazyports.sml`), in the tier `nightly`:
+
+- `hs-rhc-corpus/m13-SET` and `rest-SET`, needing `rhc` and `hs-corpus`: each program of
+  `tests/hs/corpus/accept.tsv`, prepared in the variants the oracles judge it in and last under D35's
+  `--dotted-names`, through `bin/rhc --typecheck-only`, which stops after names and fixity until M13 lands and then
+  checks types.
+  `m13-SET` are the rows of M13's done-when, both judges accepting and nothing needed (815 in all, in `h98`);
+  `rest-SET` the others. A program both judges accept and rhc refuses is a finding: it fails its job unless a
+  line of `tests/hs/rhc-corpus.txt` names its cause, in the format of *Expectations* with the outcome first
+  (`rhc | ghc/should_compile/x::check | RUNE-DEV | reject: ...`); what rhc says of a program the judges do not
+  both accept is kept in the job's results and judged by nothing. `@stale` fails a line that explains no
+  refusal of a job that ran.
+- `hs-lazy-ports/PORT`, needing `rhc` and `rhc-compiles` (which compiles and runs hello, so held until rhc
+  compiles): the Haskell beside each `-lazy` port of `examples/benchmarks` that `tests/hs/lazy-ports.tsv` marks
+  `ready` (GHC prints nofib's fixture in fast mode, and its imports reach the Report), prepared as the corpus is
+  (or in the variant the manifest records, sphere-lazy's `harness`, its hash over `Integer` as the compat layer's,
+  by the lead's ruling 54), compiled by rhc and run on `bin/runevm` with nofib's arguments and input, against nofib's output, the fixture
+  the SML port is validated against. The manifest says why each other port is held; a finding is a line of
+  `tests/hs/rhc-corpus.txt` (`rhc | lazy/PORT::run | ...`).
+- `hs-corpus-run/ID` (D56, B): each of D56's 188 compiled by rhc once for each target, the stack bytecode for `test`
+  and the register one for `register` and `register-opt` (the lead's ruling 52; refused, in E8's variant, then
+  rewritten, then under `--dotted-names`, D35's flag for the corpus), and run in D56's three ways, its output E8's
+  expected one (the same, the same words, or numbers equal to about five digits) and its status 0; all 188 vendored
+  and in `check`, but those `tests/hs/corpus-nightly.txt` names, whose run is over D56's second in a way of `check`
+  (the lead's ruling 47), `nightly`; held while the row `prog.main.value` is Planned. Each step's wall time is kept
+  beside the logs (`LOG.times`). A program both judges ran right (GHC's and Hugs's outputs E8's) that rhc refuses
+  (`compile`), ends otherwise (`exit`) or prints otherwise (`diff`) is a finding, and fails its job unless a line of
+  `tests/hs/rhc-corpus.txt` gives its cause (`rhc | ID::run | CATEGORY | OUTCOME: ...`); what it does where the
+  judges do not both run it right is kept in the results. Nightly, `hs-corpus-run/sestoft/ID` compiles each program
+  whose run in the Report's order no line explains with its matches as Sestoft's decision trees (`--match=sestoft`),
+  runs it on the register VM and holds it to the same judge, its label `sestoft` (the lead's ruling 59,
+  `tr.case.obligation`). Nightly too, `hs-corpus-run/levels/ID` compiles each program of the run set's two nofib
+  trees that GHC -O0 ran right (E8: 56 and 82) at rhc's `-O0` and `-O2` and holds both runs on the register VM to
+  E8's output, its label `levels` (G2's line on the clean nofib programs). `hs-corpus-run/@stale` (and
+  `@stale-nightly`) fails a line that explains no failure of a job that ran. `hs-rhc-corpus/vendored-SET`, in
+  `check`, a job a set, puts the 45 under a `LICENSE` through `--typecheck-only` as the nightly jobs above put the
+  whole corpus, and `hs-rhc-corpus/provenance-SET`, nightly, the 143 under a `PROVENANCE` (ruling 46: D56 puts the
+  188's runs in `check`, not a names job, and the nightly jobs above check the 143 too). `hs-corpus/vendored`
+  (nightly, with the trees) holds `tests/hs/corpus/vendored/` to the trees' bytes at their commits, and
+  `hs-corpus/data` to the vendored programs' files and notices and nothing more: it refuses a file with no `LICENSE`
+  or `PROVENANCE` beside it or above it, or under another notice than its row of `licences.tsv` names, and a
+  `PROVENANCE` that does not name its tree's upstream and commit or quote the owner's rule. `bin/rune-test
+  hs-corpus-vendor` makes it again from the trees, leaving each `PROVENANCE` as written.
+- `hs-corpus/faults` holds the first to a fake rhc. Commands: `bin/rune-test hs-rhc-corpus m13 ghc-legacy`,
+  `hs-rhc-corpus stale`, `hs-lazy-ports calendar-lazy`; `RUNE_HS_RHC`, `RUNE_HS_RUNEVM`, `RUNE_HS_RHC_TXT` and
+  `RUNE_HS_LAZY_PORTS` stand in other tools and files.
+
 ## Generated functor programs
 
 `bin/rune-functor-gen` (`tests/runner/functorgen.sml`) draws programs of
@@ -418,6 +508,891 @@ is shrunk and kept in `DIR/failures/seedS-caseN`: its units, `program.sml`
 each mode compiled with and printed; the run goes on with the next seed.
 `bin/rune-functor-gen show --seed 0xHEX --size N` prints the program of a
 failure's replay token `HEX:N`, as it was drawn.
+
+## rhc's tests
+
+rhc, the Haskell 98 compiler of [plans/language/haskell98.md](plans/language/haskell98.md),
+has its programs under `tests/hs`, run by the machinery that runs
+`tests/lang` (`tests/runner/lang.sml`): a suite there is a value of the
+record `Lang.suite`, which says where its programs are and what their files
+end with, who compiles and runs them, and its tags, and `Lang.tree` makes its
+jobs. Rune's is `Lang.rune`; rhc's is `HsLang.rhc` (`tests/runner/hslang.sml`).
+
+A compile of rhc's keeps its units in a store, `.rhc` beside the program,
+unless `RHC_STORE` is empty ([rhc.md](rhc.md)), and `bin/rune-test` sets
+`RHC_STORE` empty for itself and its jobs, so that no test writes a store
+in `tests/hs` and every compile of a test's is made from its sources. A job
+that tests the store names one of its own, `--store DIR` in its own
+directory (`hs/units/*`, `hs/hslint/faults`'s units), or unsets
+`RHC_STORE` there (`hs/units/default`, `hs/units/concurrent`).
+
+* **Programs.** A program is a file `NAME.hs` or `NAME.lhs`, or a directory
+  `NAME` with a `Main.hs` or `Main.lhs` in it, whose other modules rhc finds
+  beside it. Its siblings are named from `NAME` in both cases, beside the
+  file or the directory, and are Rune's: `.expected`, `.cargs`, `.args`,
+  `.vmargs`, `.stdin`, `.exitcode`, `.stderr`, `.stderr-head`, `.cwarn`,
+  and `.typecheck-ok` beside a refused program that `--typecheck-only`
+  accepts: a check takes a file as the module it holds, and only a compile
+  asks that it be `Main` (the roadmap's D53; `prog.main.name`).
+  Two programs of one name in a directory (a `.hs` beside a `.lhs`) are a
+  failure of `hs/runner/programs`.
+* **Three directories.** `tests/hs/lang` holds the programs compiled and
+  run, `tests/hs/errors` those refused, with the text of their `.expected`
+  in the first line of what rhc says, and `tests/hs/accept` those only
+  checked, which `bin/rhc --typecheck-only` accepts saying nothing (or their
+  `.cwarn`). The jobs are `hs/compile/COMPILER/NAME`, by `bin/rhc
+  --target=stack` (`stack`) and `bin/rhc` (`register`);
+  `hs/errors/register/NAME`; `hs/lang/WAY/NAME` in the three ways of the
+  roadmap's D56, `test` (`bin/runevm-stack`), `register` (`bin/runevm`) and
+  `register-opt` (tier 2); `hs/lang/typecheck/NAME`,
+  `hs/errors/typecheck/NAME` and `hs/accept/NAME`. They need the capability
+  `rhc` (`bin/rhc`); where there is no program there is no job. With
+  `--accept`, the way `register` writes `.expected`. A compile writes
+  `NAME/prog.rbc` in the run's directory (`Lang.suite`'s `binary`), so that
+  `getProgName`, the bytecode file's base name (the lead's ruling 33), is
+  `prog` in every way, as in `hs/jit` and `hs/interp-vm`. `RUNE_HS_RHC_FLAGS`
+  gives every compile of the suite options before its own: with `-O2` the
+  suite runs at the level of the Core simplifier and Sestoft's trees (D34)
+  on both bytecodes.
+* **Tiers** (the roadmap's D56, B; the lead's rulings 45, 47 and 48). A program of
+  `tests/hs/lang` runs in `check` in the three ways, with its two compiles
+  and its check, unless `tests/hs/lang-nightly.txt` names it (a program
+  over D56's second in any of the three ways, or whose run on Core's
+  interpreter, as `hs/desugar/orders` makes it, is past a minute, with its
+  measured time), when all its jobs are `nightly`, in every family;
+  `hs/errors/register/NAME` is `check` and `hs/errors/typecheck/NAME`
+  `nightly`; `hs/accept/NAME` is `check`. The register way and the refused
+  programs are also `quick`. The families that repeat a program
+  (`hs/desugar/orders`, `hs/meta`'s relations, `hs/roundtrip/rhc`,
+  `hs/interp-vm`, and the shards of `hs/snapshot` and `hs/hslint`) run in
+  `check` a fixed sample, one program in `HsLang.sampleOneIn` (16), those
+  whose name's FNV-1a hash is 0 modulo it, and never one of
+  `lang-nightly.txt`; `nightly`, every program (`tests/runner/hslang.sml`,
+  `HsLang.sampled`). The families that are the conformance's evidence,
+  each a program of its own, are never sampled (the lead's ruling 52):
+  `hs/compile`, `hs/lang`'s ways and checks, `hs/accept`, `hs/errors` and
+  the corpus's runs, whose tiers are *rhc's oracles and corpus*'s.
+* **What they cover.** `covers:` tags for `tests/hs`, `lib/language/haskell`,
+  `src/rhc`, `share/rhc` and `rhc.build`, so that `--affected` runs rhc's
+  tests alone for a change there, and everything for a change to the
+  compiler, as for any test.
+* **The runner's own suite.** The same machinery is held to its work without
+  rhc: `hs/runner/...` is a suite of the same kind over `tests/hs/runner`,
+  whose compiler and VM are a stub, commands of `bin/rune-test`
+  (`hs-stub-compile`, `hs-stub-run`). It compiles and runs a `.hs`, a `.lhs`
+  and a program of two modules in a directory, one that exits with a
+  status and one that warns, refuses one and checks one. The stub's
+  bytecode is what the program's `putStrLn`s print, so a program that the
+  runner hands the wrong file prints something else. A stub VM that prints
+  nothing must fail every program for its output (`hs/runner/silent/NAME`,
+  whose judge is the run's turned round), as the oracle `jit` fails a run
+  that prints nothing where it should.
+* **The oracle `jit`** (`tests/runner/oracles.sml`) takes the compiler and
+  the path a program's siblings are named from (`bin/rune-test jit-one-with
+  COMPILER BASE SOURCE`), and runs rhc's programs nightly, interpreted and in
+  every mode of the JIT (`hs/jit/NAME`), beside D56's three ways in `check`:
+  the same output, instruction counts and standard error, but for a program
+  whose path depends on its run, which says so on a line `-- jit: output only:
+  REASON` and has its output alone compared (`jit-one-output`; the global
+  generator's program, seeded from the clock). In `check`, `hs/selectors`
+  holds programs of selectors (D17's C) to it in every mode --
+  `tests/hs/selectors/count` and two of `tests/hs/lang` whose counts once
+  differed by where the engines collect -- and `hs/selectors/nursery` holds
+  count's instructions the same interpreted at five nurseries, so that a
+  selector the collector reduced counts as one it did not (D17's count);
+  `hs/selectors/generalised` holds that `--selectors=generalised` changes a
+  generalised binding's desugaring and the bytecode, and that without it
+  the bytecode is `--selectors=monomorphic`'s; and `hs/selectors/shapes`
+  that `--selector-shapes=off` marks fewer selectors at Core to Mid and
+  changes count's bytecode, the default's being `--selector-shapes=on`'s,
+  and that through one store a link with each keeps its own bytecode.
+
+**Round trips** (the roadmap's D28; `tests/runner/hsroundtrip.sml`). On every
+file of `tests/hs/lang`, `tests/hs/accept` and `tests/hs/roundtrip`
+(`hs/roundtrip/rhc/PATH`, from `tests/hs`, with the explicit print's two tests,
+`nightly`, and in `check` (and `quick`) the sample of ruling 47 by the file's
+base name; `hs/roundtrip/rhc-printers/PATH` with the implicit and exact
+prints', `nightly`):
+
+* the **tree test:** the file printed with explicit braces parses to the
+  tree the file does, its locations erased;
+* the **token test:** the tokens of that print are the tokens the layout
+  algorithm makes of the file, but for empty items (a `;` after `{` or `;`,
+  or before `}`) and a trailing comma before `)`. A parser that drops a part
+  of the tree prints without it, and the reparse agrees with itself, so the
+  tree test passes; only this test sees it;
+* both again on the **implicit print**, with layout, since a printer that
+  prints only braces never exercises the layout algorithm;
+* the **exact test:** the exact print of the file is the file, byte for byte;
+* and, where the tool has a generator, the **generated trees:** from a fixed
+  seed, each printed tree parses to the tree it was printed from, and goes
+  round as a file does (`hs/roundtrip/rhc/@generated`).
+
+A tool is the commands that do these, each given a file and printing to
+its standard output: `print`, `implicit`, `exact`, `tokens` (one token a
+line, a token of the layout algorithm as `{`, `;` or `}`), `tree` (the tree
+as text, locations erased) and `generate SEED COUNT DIR`, which writes
+`DIR/gen-K.hs` and its tree `DIR/gen-K.tree`. rhc's are options of `bin/rhc`
+(`HsRoundTrip.rhc`), turned on as its driver gains them. A command that
+refuses a file, or prints nothing for one that is not empty, fails the
+test. The harness is held to its tests by a stub of a toy syntax of words
+(`hs-stub-syntax`), which passes on `tests/hs/runner/roundtrip`
+(`hs/roundtrip/stub/...`) through the shell as rhc's commands run; with a
+fault planted it must fail the test that sees it (`hs/roundtrip/@faults`):
+a parser that drops `where`, the token test and not the tree test; a printer
+that drops parentheses, the tree test; an exact printer that drops a
+comment, the exact test; a tree command that prints nothing; an implicit
+printer that swaps two items. `hs/roundtrip/@normalise` holds the
+normalisation to examples. The stub's commands run in the runner's process
+in those two checks and its generator's, since a command of
+`bin/rune-test` starts in about half a second.
+
+**The conformance table** (the roadmap's D53 and D38;
+`tests/runner/hsconformance.sml`). `tests/hs/conformance.tsv` has a row for
+each clause of the Haskell 98 Report: E9's 3,901, each with its `id`,
+`section`, `statement`, `class`, `test` (`accept`, `reject`, `run` or
+`none`) and `how`, from a reading of the text that no program has checked
+yet, and three columns of rhc's: `status` (`Supported`, `Partial` or
+`Planned`, the words of [language.md](language.md)), `reading` (the R
+numbers of the readings that concern the row: E9's R1 to R54, which the
+roadmap's *What the Report says* cites, and those after, each with its
+heading in `tests/hs/readings.md`, where the oracles part from the Report)
+and `deviation` (empty, or the program that pins it, `DIR/NAME` from
+`tests/hs`). The table lands as data: only errata and
+readings edit it, and no script lands to make it (`runner/migration-inventory`).
+Its text is the December 2002 Report with the published errata applied
+(D38): `tests/hs/errata.tsv` lists the page's 18 errata, each with the rows
+it edits (`rows`), those it adds (`adds`) and, where it touches none, why.
+A program of `tests/hs/lang`, `tests/hs/accept` or `tests/hs/errors` names
+the row of its name's id, the part before its first `_`, as a program of
+`tests/lang` does, and on its first line, `-- rows: ID ...`, the further
+rows it covers (a production's rows, a definition's), the readings it pins
+(`R2`) and `deviation` where it pins one. Each direction is a failure of
+`hs/conformance/table`:
+
+1. a row whose test is `accept`, `reject` or `run` and that is not
+   `Planned` has a program of its class that names it: `tests/hs/accept` or
+   `tests/hs/lang` for `accept`, `tests/hs/lang` for `run`,
+   `tests/hs/errors` for `reject`; or, where it deviates, its pin, which is
+   of the other class (a row the Report accepts and rhc refuses, R1's);
+2. what a program names is a row, of a test its directory serves, but the
+   row whose deviation it pins;
+3. a row whose test is `none` says why in `how`;
+4. a row with a reading, once it is not `Planned`, has a program that names
+   it and pins each of its readings, and a program pins only the readings of
+   the rows it names; a row with a deviation names its pin, a program that
+   names the row and says `deviation`, and has its note in
+   `tests/hs/deviations.tsv` (its ground, one of D38's four -- wrong,
+   contradictory, ambiguous, conceded by the Report -- and why), and a pin
+   and a note are each a row's;
+5. a program of `tests/hs/errors` has an `.expected`, rhc's own message, so
+   that a program refused for another reason fails.
+
+With those, the table's form: its header and the errata list's, no row or id
+twice, the classes, tests, statuses and sources of E9's columns, readings R1
+to R54 or headed in `tests/hs/readings.md`, every row accounted for (3,901
+and what the errata add), and every row whose text names an erratum listed
+by one, and back. A program's first line ends at Haskell's first newline, a
+return, a line feed or a form feed.
+`hs/conformance/faults` plants each breach in a private tree and wants it
+refused, and a tree that keeps every rule, with a row of each class
+supported and a deviation pinned, accepted. A row leaves `Planned` when its
+program exists and the judges have seen it (roadmap, M19); the roadmap's
+G2 is the state in which none is `Planned`. Until then the program's jobs,
+and its round trips, are listed and held (`SKIP`, not run: a program whose
+every row is `Planned`), so that a program can land with its clause before
+rhc passes it, and a row's leaving `Planned` is what turns them on.
+
+A clause program cites its clause in a comment at its head (`-- Report
+2.4: ...`), after its first line if that names rows, and is a whole program,
+well typed where the clause does not say otherwise, so that it stays judged
+the same as rhc grows from a parser to a compiler. Before it lands it is put
+to the oracles of D52 (GHC with the strict shim, Hugs `+98`, nhc98 `-98`,
+MicroHs as a smoke test); where they part from the Report, rhc follows
+D38's rule and the disagreement is recorded as a reading.
+
+**The syntax of Haskell 98** (`lib/language/haskell`'s `syntax.build`, the
+roadmap's M11; [tests/hs/syntax/README.md](../tests/hs/syntax/README.md)).
+rhc's commands for the round trips are `--print`, `--print-layout`,
+`--print-exact`, `--dump-tokens` and `--dump-ast --no-spans`, and its
+generator is `bin/rune-hs-syntax generate-files`, the syntax generator of
+D55. Besides the clause programs of the parser's rows,
+`tests/hs/roundtrip` holds the parser's own fixtures: a file for each part of
+the grammar and the lexical syntax, the crafted cases of the roadmap's E10
+that the syntax accepts, and, for rows of the layout rules and the lexical
+syntax, a file with its expansion written by hand beside it (`NAME.braces`).
+What those runners do not hold the syntax to is `tests/runner/hssyntax.sml`'s,
+the jobs `hs/syntax/*` (`make test-hs-syntax`) of `bin/rune-hs-syntax`: the
+first line of each diagnostic of the lexer, layout and the parser and of
+the cases the syntax refuses (`tests/hs/syntax/errors`); the tokens of the
+layout algorithm against the expansions; 2,500 trees of the syntax generator
+printed both ways and read back in one process; the parser's mutants, E10's
+five, which the tree test cannot see and the token test must, and a lexer
+that drops a comment, which only the exact print sees, each built and run
+over `tests/hs/roundtrip`; the cost of a token in `runevm --count`'s
+instructions, bytes and objects, within `tests/hs/syntax/budget`; and,
+nightly where GHC is installed (the capability `ghc`), GHC's dump of each
+file's parsed tree against its dump of the file's explicit print
+(`hs/syntax/ghc`; E10's 1,662 files of the corpus too, with
+`RUNE_HS_SYNTAX_GHC_LIST` and `RUNE_HS_SYNTAX_GHC_ROOT`), its known
+differences in `tests/hs/syntax/ghc-dump.tsv`.
+
+**Names, modules and fixity** (`lib/language/haskell`'s `names.build` and
+`src/rhc`'s graph and names, the roadmap's M12;
+[tests/hs/names/README.md](../tests/hs/names/README.md)). `--typecheck-only`,
+which judges an accept program, and a compile, which judges an error program,
+check as far as rhc goes: the program's modules, found from the file given and
+in `share/rhc/haskell98` (the wrapper `bin/rhc` passes `--share`), their
+exports and scopes, every name, fixity, and (M13) kinds, types and classes. `tests/runner/hsnames.sml`'s jobs
+`hs/names/*` compare `bin/rhc --dump-names` of each fixture of
+`tests/hs/names` with its expected files: the Report's 20 modules whole,
+against E16's export pairs, fixities and instances; E16's fixtures under both
+fixpoints (`--names=least|greatest`); a program's own `Char`; fixity by
+entity; a cycle of three signed modules; a dotted module name. And
+`hs/names/mutants` (nightly) builds the dump with one edit at a time, each of which a
+fixture must catch: the greatest fixpoint for the least, a hidden module
+importable, fixity read before names.
+
+**Kinds, types and classes** (`lib/language/haskell`'s `types.build`, the
+roadmap's M13 and M14; [tests/hs/types/README.md](../tests/hs/types/README.md)).
+The same runner's jobs `hs/types/*` compare `bin/rhc --dump-types` of each
+fixture of `tests/hs/types` under both settings of `--cycle-default` with its
+expected files: the Report's libraries checked as one unit, a cycle of modules
+with unsigned bindings and a type group across it, D30's readings of `default`
+and Rule 2 in a cycle, and deriving, each derived instance with the context the
+checker infers. `bin/rhc --dump-evidence` prints a program's evidence records
+(HsEvidence), what desugaring (M15) and HsLint (M16) read, and `bin/rhc
+--dump-derived` the methods of its derived instances, which HsDerive makes as
+trees inside the checker (D33's C) and the checker checks as a user's.
+
+**The snapshot** (`src/rhc/driver.sml`'s `RhcDriver.front`, the roadmap's
+D45, its A; rulings 66 and 67; `tests/runner/hssnapshot.sml`). `bin/rhc`
+takes the library's units from its snapshot, `bin/rhc.layer`, the library
+compiled once by make into a store it reads and never writes, and reads,
+names, checks and desugars only a program's own modules, a unit at a time
+from the interfaces of the units before it; at level 2 HsLint infers each
+unit after the parts of those before, the library's the snapshot's; and its
+Core is what `main` reaches of the units. `make bin/rhc` makes the snapshot
+again when rhc, the VM or a file of `share/rhc` changes, and keeps in it the
+configurations of the rhc that made it alone. `bin/rhc --whole` reads and
+checks the library too, the reference, as does any option that changes the
+library's reading. The jobs `hs/snapshot/*` hold the two to printing alike:
+`layer` that `bin/rhc.layer` holds the units of this rhc and no other's,
+newer than every file of `share/rhc`; `accept/K-of-4`, `errors/K-of-4` and
+`lang/K-of-8` every program of the directory checked both ways at
+`--lint=2`, with its `.cargs`, to the same standard output, standard error
+and status, so that HsLint replays each way the records of the modules the
+program reaches, and each program of `tests/hs/lang` run both ways on
+Core's interpreter, every eighth with its Core compared too in its
+canonical form (`--dump-after=desugar --canonical-core`: what `main`
+reaches, each declaration by name, since the units are joined in another
+order than a whole desugaring's and a whole one may keep a value nothing
+reaches); the shards nightly, and in make check `accept/sample`,
+`errors/sample` and `lang/sample`, the sample of ruling 47 (*Tiers*), every
+fourth program of the last with its Core compared; `bin/rune-test
+hs-snapshot-one KIND NAME` judges one. A mutant's tree (`hs-mutants`) has
+no snapshot, so a mutant makes the library's units itself.
+
+**Interfaces and usages** (`src/rhc/iface.sml`, `lib/language/haskell`'s
+`modiface.sml` and `usage.sml`, the roadmap's M21; `tests/runner/hsiface.sml`).
+A module's interface is what the renamer and the checker leave of it, and a
+unit's compile notes what it reads of its imports, found or not. The jobs
+`hs/iface/*`: `units/accept/K-of-4`, `units/errors/K-of-4` and
+`units/lang/K-of-4` check every program of the directory group by group from
+the interfaces of the groups before it (`bin/rhc --typecheck-only
+--by-interface`), to what a whole check prints, nightly; `fingerprints/CASE` holds each case of
+`tests/hs/iface/fingerprints`, a program before and after an edit, to the
+items its `moves` lists as moving (`bin/rhc --dump-iface`), every other
+staying; `usages/NAME` each program of `tests/hs/iface/usages` to its
+`.usages`, what `bin/rhc --dump-usages` says it reads, written again with
+`--accept`.
+
+**HsLint** (`lib/language/haskell`'s `hslint.build` and `src/rhc/lint.sml`,
+the roadmap's M16 and D54; [tests/hs/hslint/README.md](../tests/hs/hslint/README.md)),
+the independent check of rhc's types, as AstLint is Rune's. Its first part
+is a second inference: a transliteration of Typing Haskell in Haskell in the
+form its 11.6.3 calls conformant, with kinds and dependency groups recomputed
+and D32's readings of the monomorphism restriction and defaulting, which
+shares nothing with the checker but the renamer. rhc runs it through
+`Pass.checkAt` at level 2, after names and the checker (`--lint=2`, and
+`RUNE_LINT=2`, which `bin/rune-test` sets), so a program the checker accepts
+and HsLint refuses fails any compile of it, `lint after hslint: FILE:LINE:COL: WHY`;
+`bin/rhc --dump-hslint FILE.hs` prints what it infers, each binding's type,
+the kinds, the derived instances' contexts and the defaults it chose, or
+`REFUSED` and why. `tests/runner/hslint.sml`'s jobs `hs/hslint/*` hold it to
+what it must find: `dump/NAME` each fixture of `tests/hs/hslint` against its
+expected dump, reviewed line by line (under `--cycle-default=scc` and with
+the library's unsigned bindings, `--dump-hslint=library`, where it has those
+files), then its compile at level 2 as far as Core (`--desugar-only`), which
+must accept what the dump infers and refuse what it refuses while HsLint
+replays the checker's records and holds them and the Core to its inference,
+so that rhc's mutants of the checker (HK01 to HK05) fail a fixture's job;
+`accept/K-of-4` and `lang/K-of-4`, every program of `tests/hs/accept`
+and `tests/hs/lang` inferred, whatever its rows' status, since the second
+inference waits on no stage of the compile; and `errors/K-of-4`, every
+program of `tests/hs/errors` whose row is of the classes static, prelude or
+library refused, by HsLint or before it. A directory's programs are judged
+in four jobs, each every fourth program and a line FAIL for each it fails,
+since a job of `bin/rune-test` costs several times what rhc does on one
+program; `bin/rune-test hs-hslint-expect KIND NAME` judges one. The four are
+`nightly`, and `KIND/sample`, the sample of ruling 47 (*Tiers*), is `check`
+(D56; the lead's rulings 45 and 47). A program on
+which the two part is listed in `tests/hs/hslint/disagreements.tsv` with
+why, and its job holds the disagreement to still being there, so that a fix
+on either side is seen. The same jobs hold the two judges to one verdict on
+every program, the checker alone (`--typecheck-only --lint=off`) and
+HsLint's second inference alone (`--dump-hslint`): where they part, the
+program is listed in `tests/hs/hslint/judges.tsv` with why, and held there
+the same way. HsLint also holds the inference to a record's
+claims of it, in the dump's form (`--hslint-claims=FILE`), each difference
+refused by the rule it breaks, `[rule1] ...` (`bin/rhc --hslint-rules`
+names them); the checker's evidence records are its claims too (M13).
+Where the checker accepts a program, HsLint replays Faxén's rules on its
+evidence records (D31): Rule 1 by his `bindg` with Definition 2, every
+dictionary by his `dict tuple`, `dict var`, `dict inst` and `dict super`
+against HsLint's own classes and instances, an instance's superclasses'
+dictionaries and its methods' types, a class's methods in its
+declaration's order (`[slot]`, its dictionary's layout), and rhc's own rule
+for a cycle of modules (`[scc]`); then holds the records, read as claims, to the second
+inference. A derived instance, which HsDerive makes as the tree a user would
+write (M14), is checked as any instance is: the second inference types its
+methods at the head and the least context it derived itself (10.1, the data
+type's context with it), and replay reads their records and their methods'
+types. Once the program is desugared and CoreLint has typed its Core by
+its rules, the target check holds that Core to the second inference, Hall
+et al.'s soundness of the translation (D54's first part): each value of the
+top level, each selector and default method is of the translation of its
+source type, HsLint's own (`[target]`), each class's data type holds its
+superclasses' dictionaries then its methods in order (`[dictionary]`), and
+each instance's dictionary function takes its context's dictionaries and
+gives the class's at its head (`[dfun]`), up to the names and order of the
+variables and the order of the dictionaries, so that any route to a
+superclass is right. `faults` holds each rule to refusing its fault, as
+`astlintFaults` holds AstLint's: `tests/hs/hslint/faults.hs`, desugared,
+with its records, its Core and its own expected dump, is accepted, and with
+`RHC_HSLINT_FAULT=RULE`, which reads the first claim, record or Core type
+RULE checks corrupted, refused with `[RULE]`, against the snapshot, with
+`--whole` and in units with a store (`--units`, one of its own each time).
+Against the snapshot, and in units, each unit made at level 2 is checked
+after the parts of the units before it, HsLint inferring the unit's own
+modules alone and replaying only their records; the library's parts come
+from the snapshot's entries of its units, made once at `RUNE_LINT=2` (D45,
+rulings 66 and 67), and a unit kept in a store keeps its own. `levels` builds each fixture
+the dump infers at level 2 and at level 0, which must be the same bytes, as
+`levelsOne` holds Rune's builds: no check changes what rhc makes.
+`lint-level`, in make check and nightly, fails a run whose `RUNE_LINT` is
+not 2: G2 holds HsLint, CoreLint and MidLint clean at level 2 over every
+suite, which `bin/rune-test`'s own `RUNE_LINT=2` gives every job, and the
+nightly tier, every program of every family, is where that line stands.
+
+**rhc's library** (`share/rhc/haskell98`, the roadmap's M17 and M18: the
+Report's 20 modules in its own layout, its errata and rhc's overlay applied,
+with the Report's code as printed in `pristine/`; D36, D37, D38).
+`tests/runner/hslibrary.sml`'s jobs `hs/library/*` hold it to the Report:
+`overlay`, each module's tokens against
+`pristine/`'s, a line at a time, white space and comments dropped, every
+line where they differ an entry of `overlay.tsv` marked applied, and every
+file the Report has no text of an entry's `new:`; `pristine`, the printed
+code byte for byte as `pristine/MANIFEST.tsv` records it; `report`,
+`bin/rhc --dump-names` of the Report's 20 modules against E16's table of the
+Report (`tests/hs/library/report.names`: 663 export pairs, 35 fixities, 164
+instances), changed exactly by the lines of `tests/hs/library/overlay.names`,
+each with its entry; `compile`, `bin/rhc --whole` compiling
+`tests/hs/library/All20.hs`, a program over a name of each of the 20
+modules, which the VM runs to `All20.expected` (M18: the 20 modules compile);
+`exitzero`, `exitWith (ExitFailure 0)` an IOError that `isIllegalOperation`
+holds of (ruling 57), caught by `ExitZeroCaught` and uncaught by
+`ExitZeroUncaught`, status 1, on Core's interpreter and on the VM; and
+`devicefull`, `DeviceFull.hs` on a full device (`/dev/full`): `hFlush`, `hClose`,
+`writeFile`, `appendFile` and an unbuffered `hPutStr` raise `isFullError`
+(ruling 62), on both; and `bottomwrite`, `BottomWrite.hs` writing `"abc"` and
+then a bottom by `writeFile`, `appendFile` and `hPutStr` under each buffering
+mode: it ends with the bottom's error, and the file holds exactly `"abc"`
+(after what `appendFile`'s held), on both.
+
+**rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
+`tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants
+with rhc in Rune's place: a mutant is exact edits of a file of `rhc.plan`,
+built by the good Rune from that plan's files
+(`CompilerMutants.buildFrom`) into an rhc of its own, with no stage two, as
+rhc never compiles itself. Each names the jobs that must fail on it, jobs
+that run (rows out of `Planned`). Its job builds it, says how many of rhc's
+outputs (tokens, tree, check) on an even sample of `tests/hs`'s programs
+differ from the good rhc's, and runs the jobs it names in a tree of links to
+the root in which `bin/rhc.rbc` is the mutant's and there is no
+`bin/rhc.layer`, so that the mutant makes the library's units itself rather
+than take the good rhc's snapshot: `CAUGHT` by the first that
+fails, else `UNCAUGHT`, or `UNEXERCISED` where no output differs, or
+`STILLBORN`, each but the first a failure, as is a named job that does not
+run. A mutant that names no job is `EQUIVALENT` once it builds, its note
+arguing, after `equivalent:`, that no program tells it from rhc. `make check` holds the list to the sources (`hs-mutants/prepare`, and
+the first mutant's `built-ID`, a canary); `make test-rhc-mutants`, nightly,
+builds the others and judges them
+(`HS_MUTANTS=HL01,HP02` for some; `bin/rune-test hs-mutant-tree ID` builds a
+mutant's tree for a job to be run against it by hand). The first fourteen
+seed rhc's lexer, its literate reader, its layout and its parser, CoreLint,
+Core's interpreter and Core's text reader, these last seen by `hs/core`'s
+jobs; HK01 to HK05 the checker, seen by `hs/hslint`'s; HD01 to HD03
+deriving; HM01 to HM03 desugaring, seen by `hs/desugar`'s; HU01 to HU29
+the holes of rhc's units, seen by `hs/units/holes` (*rhc in units*); HW01 and
+HW02 strictness, its workers and wrappers, seen at -O2. F's parser
+mutants (`tests/runner/hssyntax.sml`) are the in-process kind.
+
+**rhc's metamorphic relations** (D55; `tests/runner/hsmeta.sml`). Pairs of
+programs that must behave alike, compiled by rhc and run, their exit and
+output compared: each program of `tests/hs/lang` against its print with
+every block in braces (`hs/meta/braces`, 2.7 and 9.3), that print printed
+again by layout (`hs/meta/layout`), and the program with `import Char ()`
+added (`hs/meta/import`, 5.3.1); and the pairs written by hand in
+`tests/hs/meta`, `NAME.hs` and `NAME.pair.hs`, the relation first in NAME:
+`rename` (bound variables renamed, 3.3, 3.12) and `reorder` (declarations
+reordered, 4.5.1 and the top level). Two more are made from each program:
+`hs/meta/reorder`, its top-level blocks in the reverse order, and
+`hs/meta/split`, the program split into a module
+`Lib` holding every block but `main`'s and a `Main` that imports it (5, the
+multi-module form of a joined program; none is made where a `default`
+declaration or a name qualified by `Main` would change the program). A block
+is a run of lines that a blank line ends only before a line at column 1, so
+that a class's, an instance's or a `where`'s lines stay together, and the
+blocks that define one name, a function's clauses or a signature and its
+binding, are one; the header, the module line and the imports with their
+comments and continuation lines, ends at the first declaration, the comments
+right above it going with it, and `Lib` takes the header's imports. Their own
+texts, no rhc needed, are `hs/meta/@self` (`check`). A pair
+is held while its program's rows, or the rows its relation cites, are
+`Planned`; what runs today is rhc's names on both programs of the two new
+relations, on an even sample of 30 (`hs/meta/names/*`; `reorder` in `check`, the others
+nightly, as the mechanical relations but `braces` are): as many scope errors
+in the program's own modules, and Main's exports, fixities and instances the
+same (a split's moved to `Lib`). Renaming bound variables mechanically waits
+for a dump of rhc's binding sites; the `rename` pairs are by hand.
+
+**rhc's sharing budgets** (`tests/runner/hsperf.sml`, `hs/perf/NAME`). A
+program of `tests/hs/perf` that costs far more when what the Report leaves
+unsaid is not shared (a section's operand, a file read on demand, an array's
+components) has `NAME.budget`, rhc's policy: lines `a:`, `b:` and `ratio:`.
+A program whose cost per character is the policy (`lib.r.io.buffer.line`,
+`lib.r.io.buffer.none`, `io.writefile`) has the same form, its two runs doing
+the work two ways: by line or unbuffered against by block, writing a string
+against counting it.
+Compiled by rhc and run twice under `bin/runevm --count`, on the line a and
+the line b as its standard input, the first's instructions are at most the
+ratio times the second's: a ratio separates linear from quadratic and holds
+on any machine. Held while the row the name gives is `Planned`.
+
+**Renaming, by rhc's names.** `bin/rhc --dump-binders FILE` prints each local
+name of the program's own modules, a line for each binding site (`BIND`) and
+use (`USE`): its renamed name and its bytes. `hs/meta/rename` renames each,
+where every occurrence's span is the name itself, to a name of its own length
+found nowhere in the text and no keyword (the last character changed first),
+so that no column moves and the layout stays the program's; a name whose
+binding's span covers more, as a function binding's head does, or for which
+no such name is found, is left.
+
+**rhc's interpreter against its VM** (`tests/runner/hsinterp.sml`,
+`hs/interp-vm/NAME`, nightly, and the sample of ruling 47 in `check`). Each run program of `tests/hs/lang` through rhc to
+Core, run on Core's interpreter (`bin/rhc --lint=3 FILE`) and compiled through
+Mid to the VM (`bin/rhc --lint=2 FILE -o OUT`, or the bytecode `hs/compile/register/NAME` made in the same run
+where the program has no `.cargs`, compiled once by the lead's ruling 52; `bin/runevm OUT`), with its
+`.stdin` and the VM with its `.vmargs` (as `hs/meta`'s runs are), a program of
+one file interpreted as a copy named `prog.hs`, so that `getProgName` is `prog`
+both ways: the VM prints what the interpreter printed and ends as it did, every
+bottom one bottom. A program the interpreter alone can run says so on a line
+`-- vm: no: REASON`, as `hs/core`'s `; vm: no:` does. Held while the
+program's rows are `Planned`; M15's done-when and G1 rest on it.
+
+**rhc's desugaring** (`tests/runner/hsdesugar.sml`, `hs/desugar/*`; the
+roadmap's M15, D34). Each program of `tests/hs/desugar` through rhc to
+Core, read back at `--lint=3`, and run on Core's interpreter with its
+matches in the Report's order (`hs/desugar/report/NAME`) and as decision
+trees in Sestoft's order (`hs/desugar/sestoft/NAME`, `--match=sestoft`),
+each printing `NAME.expected` and ending with `NAME.exitcode`, 0 where there
+is none; compiled through Mid and run on the VM the same
+(`hs/desugar/vm/NAME`); and printed with explicit braces (`rhc --print`),
+which desugars to the same Core text (`hs/desugar/braces/NAME`, `rhc
+--desugar-only --dump-after=desugar`). Each pair `relations/NAME.hs` and
+`NAME.parens.hs`, the program with every application of an operator in
+parentheses, desugars to the same Core text (`hs/desugar/parens/NAME`).
+Desugared a unit at a time, each strongly connected group of modules after
+the interfaces of those before it, and the units joined (`rhc
+--desugar-units`, M21), each prints the same on Core's interpreter
+(`hs/desugar/units/NAME`: nightly, and the sample of ruling 47 in `check`).
+Over the run programs of `tests/hs/lang` the two orders agree on what they
+print and on a value or a bottom (`hs/desugar/orders/NAME`: nightly, and
+the sample of ruling 47 in `check`), held while the program's rows are
+`Planned`. The programs avoid what M14's deriving and the runtime's arrays
+are still to give, and their expected output is GHC's.
+The seeds for desugaring (clause order reversed, `~` made strict, a
+`newtype`'s pattern forcing) are mutants of `lib/language/haskell/match.sml`
+that `report/order`, `report/lazy` and `report/newtype` catch (HM01 to
+HM03 of rhc's mutants).
+
+**rhc's Core simplifier** (`tests/runner/hssimplify.sml`, `hs/simplify/*`; the
+roadmap's M23, D48, D49). rhc's optimiser on Core runs at `-O2`: its passes
+(`core-simplify`, `core-specialise`, `core-eta`, `core-cheap`,
+`core-simplify-2`) each
+through `Pass.stage`, with CoreLint and HsLint's target check after each at
+level 2 and Core's text read back at level 3. Each program of
+`tests/hs/simplify` runs on Core's interpreter at `-O0` and `-O2` and on the
+VM at both (`hs/simplify/run/NAME`), printing `NAME.expected` and ending as
+`NAME.exitcode` says, with `NAME.stdin` as its input; one with a line `--
+fuel:` is compiled at `-O2` with its rewrites stopped after each of several
+counts (`--fuel=N`), every lint holding and the output the same
+(`hs/simplify/fuel/NAME`); one with `-- budget: SIZE1 SIZE2` is a sharing
+budget, its instructions at the second size given on standard input at
+most 2.2 times those at the first, at `-O0` and `-O2`, so that a thunk
+copied into a lambda or work moved under one by eta shows
+(`hs/simplify/budget/NAME`); one with lines `-- dump: has NAME` or `--
+dump: lacks NAME` has the Core the passes leave held to them, a value of
+the name there or not (a copy at known dictionaries, an overloaded original
+dropped, no `fromInteger` left), what no run shows (`hs/simplify/dump/NAME`);
+one with `-- objects: IN1 <= IN2` holds Sestoft's trees (D34's B) to making
+nothing for a match that does not fail on the run: compiled with
+`--match=sestoft` at `-O0` and `-O2`, its run on `IN1` makes at most 16
+objects more than its run on `IN2` (`hs/simplify/objects/NAME`;
+`nomatch.hs`, a match with leaves that fail against one with none, which
+a no-match continuation made at every call fails); one with a line `--
+sestoft:` is run again in the order its level does not take by default
+(D34: Sestoft's trees at `-O2` and above, the Report's order below), with
+`--match=sestoft` at `-O0` and `--match=report` at `-O2`, on Core's
+interpreter and the VM, held to the same `NAME.expected` and
+`NAME.exitcode`, the Report's order's result (`hs/simplify/sestoft/NAME`),
+so that each order meets each level: the `sestoft-*.hs` programs, on what a
+match forces and which methods it calls (a user `(==)` under literal
+patterns, n+k with a user `(>=)`, a refutable column after a bottom one,
+guards falling through, arity under `seq`, lazy patterns, and the clauses
+HsMatch's `refuted` leaves out).
+`eta.hs` is D48's bottom probe (D55's): `seq` of a
+function whose lambda is behind a case, given bottom, is bottom under the
+pedantic rule, rhc's default (D48's C), which GHC's default (`--eta=ghc`,
+D48's D, an option outside the Report) breaks, printing `eta.ghc.expected`.
+A program with `NAME.ghc.expected` holds the default to the pedantic rule
+(`hs/simplify/eta/NAME`): compiled at `-O2` with no `--eta`, on the VM and
+on Core's interpreter, and with `--eta=pedantic`, it ends as
+`NAME.expected` and `NAME.exitcode` say, and with `--eta=ghc` it prints
+`NAME.ghc.expected` and ends in a value, so that the probe tells the two
+rules apart.
+`cheap.hs` is D51's: a let of what may raise or loop -- `Int` arithmetic,
+`div`, `chr` out of range, `head []`, `error`, a loop, a case of a
+suspension that is bottom -- bound and never demanded, where cheap eagerness
+(`core-cheap`) makes only a cheap and total let a case; every program runs
+at `-O2` without it too (`--no-cheap-eagerness`), on the interpreter and the
+VM, and so does each sharing budget. `cheapnewtype.hs` holds a cheap let of
+a newtype's type a let, which CoreLint finds made a case (a case on a
+newtype).
+Over the run programs of `tests/hs/lang` (nightly, held while their rows
+are `Planned`), the VM prints at `-O2` what it prints at `-O0` and ends
+alike (`hs/simplify/lang/NAME`), and so it does over the 188 vendored
+programs of the corpus and the ready lazy ports, prepared as
+`hs-corpus-run` and `hs-lazy-ports` prepare them
+(`tests/runner/hssimplifyfigures.sml`, `hs/simplify/corpus/ID` and
+`hs/simplify/lazy/PORT`, nightly). `bin/rune-test hs-simplify-figures SET
+ID OUT [WAY...]` measures one program of those sets for *Decisions on the
+numbers* (with `RUNE_HS_RHC`, another build's rhc), every way's bytecode
+at one path, since `getProgName`'s cost grows with it: each way's output, and the
+instructions, bytes and objects of
+`runevm --count`, the suspensions made (`runevm-census`) and the
+instructions:u at tier 2 (`perf`), at `-O0` and `-O2` with each level's
+defaults (the Report's order at `-O0`, Sestoft's trees at `-O2`, D34), and
+with the Report's order at `-O2` (`O2-report`), GHC's eta (D48's D) and
+Sestoft's trees named (D34's B), on Core's interpreter where asked,
+and the eta rewrites under each rule (`stats`); `bin/rune-test
+hs-simplify-compile SET ID OUT [WAY...]` only compiles, a line a way with
+the compile's instructions:u and the bytecode's bytes. The expected outputs are GHC 9.4.7's
+(`monad.hs` with the Functor and Applicative instances GHC's Monad wants).
+The seeds for the simplifier (a thunk copied into a lambda, eta through an
+expensive let, eta through a case under the pedantic rule, a specialisation
+given the wrong dictionaries, specialisation without fuel) are mutants of
+`lib/language/haskell/coresimplify_*.sml` (`tests/runner/hsmutantlist.sml`).
+
+**rhc's reducer** (`tests/runner/hsreduce.sml`). `bin/rune-test hs-reduce
+FILE -- CMD...` shrinks a Haskell program while CMD, given a candidate's
+path as its last argument, exits 0: delta debugging over the top-level
+blocks, the header kept, then over the lines, every candidate a whole file.
+It writes FILE.reduced. `hs/reduce/@self` reduces 64 lines to the one
+declaration that a predicate on rhc's parser and a marker wants.
+
+**Bottom probes** (D55; the roadmap's *Bottom probes*). Run programs of
+`tests/hs/lang` named `ROW_probeN`: a marker printed, then a term that
+applies a Prelude function to partial values, element by element, so that
+the output says how far it got and `.exitcode` whether it then failed. The
+expected output is what the Report's own definition of the function, copied
+under another name, gives; GHC, Hugs and nhc98 agree on each. They are
+clause programs, held as the rest.
+
+**rhc's generated programs** (D55's third generator;
+`tests/runner/hsgen.sml`). Well-typed, terminating programs drawn from a
+seed, with Int, Bool and `[Int]` values, top-level functions, `let`, `case`,
+lambdas, the list functions and `const e undefined`, each with the output its
+own evaluator gives. `hs/generated/@parse` puts 32 through rhc's parser in
+`make check` now; `hs/generated/@run` (16 from seed 1, `check`) and
+`hs/generated/@nightly` (400, `nightly`) compile and run them with
+`--match=report`, held until the rows they need are out of `Planned`;
+`hs/generated/@orders` (the same 400, `nightly`) compiles them with
+`--match=sestoft`, each order named, not the level's default, Sestoft's decision trees
+held to the meaning of the Report's top-to-bottom rules (`tr.case.obligation`).
+`bin/rune-test hs-generate SEED` prints a program and its output;
+`hs-generated FIRST COUNT` runs a range, and `hs-generated-orders FIRST
+COUNT` the same with Sestoft's trees.
+
+## rhc's Core
+
+rhc, the Haskell 98 compiler of the haskell98 roadmap
+([plans/language/haskell98.md](plans/language/haskell98.md), M8), has its
+tests under `tests/hs/core`, in `tests/ir`'s form, run by the family
+`hs/core/*` (`tests/runner/hscore.sml`; tier `test-rhc`, part of `make
+check`; `make test-rhc`), beside the families of `tests/hs` (*rhc's tests*,
+above), which may take them in. A test is a file of Core text whose first line says
+what to do with it: `; run: FLAGS`, run by `bin/rhc --lint=3 FLAGS
+--read-core FILE` on Core's interpreter, its standard output held to
+`NAME.expected` and its status to `NAME.exitcode` (0 where there is none),
+and a run that prints nothing a failure, whatever is expected; `; dump:
+FLAGS`, the same for a dump of a stage; `; fail: MESSAGE`, refused with
+MESSAGE on standard error; `; refuse: FLAGS | MESSAGE`, refused with MESSAGE
+when compiled through Mid with FLAGS, which make a fault of Core to Mid on
+purpose (`--fault`, the roadmap's *rhc's mutants*): a suspension in a typed
+slot, which MidLint refuses at the boundary into Mid, a force made a
+cast, which form C's lint refuses as a force forgotten, and a use given a
+type argument of a suspension's type, which Core to Mid's own check refuses
+at lint level 2 (`fault-*.core`);
+`; forces: N FLAGS`, compiled with the dump of Core to Mid, which holds N
+`thunk_force` nodes, one for each force of Core, which the file counts by
+hand (`forces.core`). `--accept` writes the `.expected` files, to be read
+line by line. At level 3 rhc prints what it read, reads it back and
+prints it again, so print, read, print is the identity on every test.
+`tests/hs/core/lib/base.core` is what the run tests share, read before each
+by its flags. A run reads `NAME.stdin` as its standard input where there is
+one, and a test with a line `; files: own`, which writes files, runs each
+time in a directory of its own.
+
+rhc's runtime (`CoreRuntime`, the roadmap's M17: the Report's `prim*`,
+written in Core) has `prims-*.core`, Core's primitives on their edges
+(`Int` at 63 bits, `Integer` across the edges of IntInf's small range,
+`Double`, `Float` rounded to binary32), and
+`runtime-*.core`: strings unpacked lazily and at once (D24's A and B, which
+print the same), files, standard input read across the edge of a chunk, the
+classes and mappings of `Char`, and what the library's PreludeRuntime names
+beside the Report's (`runtime-library`: arrays, an IOError's details, the
+IO family's positions of files and errors of the system's), and the system's
+family's (`prims-sys`: a command's exit, the environment, the program's name
+and arguments, the clock and the zone; `prims-sys-files`: directories, a
+file's kind, access, mode and time, a listing, renames and the working
+directory); `runtime-rw`, a file opened to read and to write through one
+handle, h_open's mode 3 (ReadWriteMode), its reads and writes turned and
+sought. `end-*.core` hold the line an escaping IOError ends a program
+with to the library's Show IOError, a user's "user error (TEXT)".
+`lib/language/haskell/coreruntime`
+(`tests/lib/language/haskell/coreruntime.sml`) holds the runtime's tables to
+`lib/unicode`'s `CodePoint` at every code point below 0x100, every 1999th,
+and the first and the last of each range and run of its data.
+
+`hs/docs/help` (in `tests/runner/hscore.sml`; in make check, and skipped
+where `bin/rhc` is not built) holds rhc's manual to its help: every option
+`bin/rhc --help` lists is named, in code, in [rhc.md](rhc.md).
+
+E1's eight programs, rewritten in Core (`knot`, `cafs`, `monad`, `classes`,
+`nest`, `nest2`, `letpoly`, `exceptions`), print E1's hand-derived output,
+`knot`'s count of evaluations of a shared suspension among it. Each rule of
+CoreLint has its fault, `lint-RULE.core`, refused with its message, which
+`hs/core/@rules` holds to `bin/rhc --lint-rules` in both directions. A
+loop, an error no handler takes, a stack deeper than `--depth` and the
+steps of `--steps` run out are one bottom: rhc says which on standard error
+and ends with status 1 (`bottom-*.core`). `hs/core/@generated` runs 32
+programs of Core's generator (`bin/rhc --generate-core=SEED`; the roadmap's
+D55), each of which must pass CoreLint at level 3 and run to a value or to
+the bottom the generator puts in its input, and `hs/core/@silent` holds the
+judge of a run to failing a silent one.
+
+Each run test is also compiled by rhc through Mid (the roadmap's M10: `bin/rhc
+-o FILE`) at `-O0` and `-O2` to the register bytecode and run on its VM
+interpreted and at tier 2 (`hs/core/vm/NAME`, `check`), and at `-O1` there and
+at each level to the stack bytecode on the stack VM (`hs/core/vm-rest/NAME`,
+nightly): it
+prints what Core's interpreter printed and ends as it did, every bottom one
+bottom, a status other than 0. E1's programs, each with a line `; ways: E1`,
+also run nightly in E1's forty-five ways, twelve modes of the register VM and
+three of the stack VM at each level (`hs/core/vm45/NAME`; the roadmap's D56
+puts three ways of a run in `make check` and the rest nightly), and
+`hs/core/@generated` compiles each of its programs too, which must print on
+the VM what the interpreter printed and end in a bottom where it did. A test whose answer is the interpreter's alone
+says why on a line `; vm: no: REASON`, and is the interpreter's only: one
+whose answer depends on a suspension that raised being forced again, which
+the interpreter puts back and form C leaves under evaluation (the roadmap's
+D12; Haskell 98 cannot tell, since its `catch` takes `IOError` alone), one on
+a bound only the interpreter has, `--steps` or `--depth`, and one that waits
+on a milestone. A line `; residency: SIZE1 SIZE2` compiles the program with
+each of two files of `tests/hs/core/lib` that define `size`, and holds the
+most live with a collection at every allocation (`runevm --stats`) to the
+same at both, at `-O0` and `-O2`, interpreted and at tier 2
+(`hs/core/residency/NAME`: E2's `last` and `leak`, D12); a line `; budget:
+SIZE1 SIZE2` holds what `--count` counts at the second to at most 2.2 times
+the first (`hs/core/budget/NAME`), a sharing budget, rhc's policy and not the
+Report's, which a lost share, growing exponentially, breaks (D6).
+
+## rhc in units
+
+rhc's separate compilation (the haskell98 roadmap's M21) has its tests under
+`tests/hs/units`, run by the family `hs/units/*` (`tests/runner/hsunits.sml`;
+tier `test-rhc`, part of `make check`). `hs/units/store` compiles
+`tests/hs/units/store.sml` with Pickle, `UnitStore` and rhc's `RhcStore` and
+nothing of a compiler, as `tests/lib/compiler/store.sml` tests Rune's store,
+and runs it: an entry is found by its key and stands by its usages judged
+against what is given now, an absent name present now refuses it (H1, H2);
+one checked at a lower level of the lint is refused; a key is over every
+member and its text (H8); the overlay is read before the layers, a layer is
+read and never written, one configuration's entries are not another's; a
+damaged code section is refused where it is read, which is only where it
+is asked for; a head is read back as it was written.
+`hs/units/named` builds `tests/hs/units/named.build` on Mid's layer of the
+compiler, as rhc is built, and runs it: a unit's Mid text names another
+unit's global, which `MidText.parseWith`'s `named` gives the other's stamp,
+and every other name a fresh one. `hs/units/core/NAME` compiles each run
+test of `hs/core` a VM runs as units (`rhc --units`): rhc's runtime, the
+files its flags read and the test, each compiled apart to a unit file
+against the units before it, taking what it names of them as their
+interface gives it, and linked; what it prints is its `.expected`, and it
+ends as its `.exitcode` says. `hs/units/warm` keeps a program of units in a
+store (`rhc --units --store DIR --show-units`) and edits copies of
+`tests/hs/units/warm`'s files: each step says which units it compiles and
+which it takes from the store, links what a compile without the store
+links, byte for byte past the header, and prints what it should. Nothing
+edited takes every unit; a body's edit compiles its unit alone; a type's
+edit compiles its users too; a unit put before another that declares a name
+the other takes compiles that other, which takes it from there; and without
+it again the other's first entry is taken. `hs/units/abi` holds an
+interface's ABI facts (H9): a newtype its unit makes a box, which a unit
+that gives it all its arguments takes as a box too, and a value of one unit
+named as a constructor of another, taken as the value. `hs/units/warm-whole`
+is `hs/units/warm` with `--link=whole`, the roadmap's C (*rhc's units* in
+[units.md](units.md)): each unit is checked or taken, its Core kept, and the
+link joins the units' Core, keeps what `main` reaches and compiles it whole
+or takes it from the link memo; each step's program is also byte for byte
+what a whole compile of the same files gives. `hs/units/drive` is rhc's
+driver over a program of Haskell (`rhc FILE.hs --store DIR
+--show-units`): `tests/hs/units/drive`'s Main and Lib, copies edited, each
+step with the library's unit, Lib's, Main's and the link compiled or taken
+as it should, what it prints, and its program byte for byte `rhc Main.hs`'s
+whole compile; a body's edit of Lib takes Main by its reads' fingerprints,
+an export Main does not read takes Main too, and a type's edit of a value
+Main reads compiles Main; and a step that takes the library's unit parses
+none of its modules. `hs/units/holes/CASE` holds E13's holes (H1 to H8,
+the roadmap's *What a cache hit must satisfy*), each case of
+`tests/hs/units/holes` a program and its steps, each step's modules written
+over the last's with `want`, what it prints or `refused`, and `units`, if
+there, a line for each unit the step's compile must say it compiled or took
+(`NAME compiled`, `NAME taken`, `link` for the link): at each step the
+units' compile through one store and the whole compile both give it, and
+where they compile, the same program byte for byte; and the units' compile
+through a twin store whose hits ask every usage (`RHC_HIT=asked`) takes and
+makes each unit and the link alike, so that a hit of issue 37's A or B
+stands exactly where asking every usage puts one. A name an import comes
+to clash with (H1), an instance two imports away that moves a default (H2,
+H4) and a default declaration edited, a derived instance's context grown
+(H5), a fixity changed (H6), a module's exports grown under `module M`
+(H7), a cycle's second member edited (H8), its unit compiled and its client
+taken; E13's two GHC cases are among them. M22's SCC keys: `h8-group`, a
+recursive type group across a cycle's two modules, which an edit of either
+type moves as one, so that a client of the other is compiled, and a body
+edited in the cycle, which compiles its unit and no client; `h8-split`, a
+cycle split in two units of new names whose client is taken, since under
+the link of the roadmap's C a usage names no unit, and taken again after a
+body's edit. Six cases hold what probing the store under rhc found
+(`docs/plans/build-cache-issues.md`, issues 25 to 27, 30 and 41): `class-default`,
+a class's default given and taken away, so that an instance of another
+module that leaves the method out is made again; `instance-chain`, an
+import of an orphan instance's module taken from a module on the way and
+given back, which moves a default of a module that imports neither (5.4);
+`instance-chain-refused`, the same taking an instance out of scope, a
+refusal; `instance-moved` (issue 41), an instance moved, the same, to a
+module of the program the client's imports do not reach, a refusal;
+`literate`, one text read plain and then literate (a step's
+`rm` names the files it removes, and a step's modules are `.hs` and
+`.lhs`), the last a text whose literate reading imports a module its plain
+reading does not, which a header kept of the plain reading would leave
+out; and `fresh-names` (issue 30), a unit made after one taken,
+numbered as a build without the store numbers it, so that a comment in it
+takes the link. Issue 37's A, whose premise is that a module's scope is a
+function of its text and its imports' exports, has a case for each way an
+import's exports move: `a-exports`, an entity added that the client does
+not name, one that clashes with its own, and one it names taken away;
+`a-reexport`, an entity re-exported, then the module's own in its place, a
+body and then a type edited where it is defined; `a-module`, what `module
+N` exports moved; `a-hiding`, a name hidden that the module stops
+exporting; `a-qualified`, an import qualified alone; `a-instance`, an
+instance moved from one module to another, which no export says;
+`a-fixity`, a re-exported operator's fixity; `a-methods`, a method added
+to a class imported with `C(..)`, and two classes' methods swapped, the
+names exported the same; and `a-shadow`, an import that comes to name a
+module of the program's own in place of the library's. B's `b-before` edits
+one unit before and one after, and steps back to earlier states. Each hole
+is a mutant of rhc's (`HU01` to `HU09` and `HU11` to `HU16`, H9's the
+Prelude's names of `hs/iface/usages`, `HU11` a unit fingerprinted module by
+module; `HU18` to `HU20`, `HU22` and `HU24` the wrong hits A and B would
+make, caught by these cases and `hs/units/configs`), caught by its case;
+`HU10`, a unit taken keeping its fingerprints unasked, `HU17`, A's digest
+without each export's parent and sort, `HU21` and `HU25`, A and B under
+the greatest fixpoint of a cycle's exports as under the least, and `HU23`,
+B's digest without the entries' sums, are `EQUIVALENT`, each with its
+argument; `HU26` to `HU28`, what a unit gives with its type variables
+as the checker numbered them or its source wrote them, are caught by
+`hs/units/verify-order`, and `HU29`, an instance read without the module
+that declares it, by `instance-moved`. Nightly,
+`hs/units/random/CASE` walks each case's states (the k-th its steps 1 to
+k) in an order drawn at random, through one store, with the same
+comparison at each, so that an entry meets every edit and its undoing in
+any order (`RHC_UNITS_SEED`, else the day's, which the log says).
+`hs/units/snapshot` is hello against the snapshot (D45): a store one compile
+made is a layer, read only; hello compiled with `--layer` and an overlay of
+its own takes the library's unit from it, parses none of its modules and
+compiles Main and the link alone, its program byte for byte the whole
+compile's, and the layer is not written. `hs/units/default` is the store a
+compile keeps by default (the roadmap's D58), `RHC_STORE` unset in a
+directory of the job's: a plain compile keeps `.rhc` beside Main.hs and
+nothing else, the next takes every unit and the link from it, byte for
+byte, as does one with `--units`; a check keeps its units, which a run and
+a compile then take; `--no-store` and an empty `RHC_STORE` write nothing,
+and `RHC_STORE` names the store written. `hs/units/concurrent` runs two
+compiles at once on one `.rhc`, twice: both compile, to one program, a
+plain compile's, and a third takes every unit and the link from what they
+kept. `hs/units/memo` compiles the same program through one store at each
+level, for both instruction sets and without the strictness pass, coming
+back to each: each program is the bytes a compile without a store gives,
+and the link is taken only where a compile before had the same options
+(issue 29). `hs/units/damaged` flips a byte in the head, the middle and
+the end of each entry of a store, the store's own and then the same as a
+layer: a compile after each gives the first's bytes, the entry refused and
+made again, or stops naming the layer, never a crash (issue 28).
+`hs/units/verify` holds `--verify-store`: a store as compiled passes, and
+an entry planted with another compile's content, whose usages hold, is
+taken by a plain compile and refused by `--verify-store`. `hs/units/trim`
+makes every file of a store nine days old: the next compile takes every
+unit and the link, and the trim, due then, runs after them (issue 34).
+`hs/units/elsewhere` reads a store with a bin/rhc whose library is a copy at
+another path: it takes every unit and the link, to the same program, and
+`--verify-store` holds every entry, the snapshot's library among them, to
+what it makes of its copy (issue 31). `hs/units/configs` compiles one
+program, a cycle among its units, through one store at levels 0 and 2 of
+the lint, -O2 and both fixpoints of a cycle's exports, coming back to
+each, and through a twin store whose hits ask every usage: each unit and
+the link taken or made alike, and each program the bytes a compile without
+a store gives (issue 37). `hs/units/verify-scopes` grows an import by
+an entity its client does not name: the client stands by its usages, its
+scope's digests as they were, and `--verify-store` holds the store, those
+digests no part of what it compares, and HsLint's part of a unit numbered
+by the unit, not by the units before it (issues 37 and 40).
+`hs/units/verify-order` grows Lib by a value of its own before the
+polymorphic one Main imports, then renames the parameter of a type Main
+copies: Main is taken, and `--verify-store` holds the store after each,
+Main's Core the import's type and the type's declaration with their
+variables named by place, not as Lib's check numbered them or its source
+wrote them; and Main, its comment edited, is compiled to the Core it was,
+and the link taken (issue 40). Core in
+units has its tests among `hs/core`'s, `tests/hs/core/units-*.core`: a unit
+that takes a value of another by an import (`(import x TYPE)`) and a type by
+a copy of its declaration, the units joined (`CoreUnits.join`) and run; an
+import no unit defines, a type two units declare apart and an import at
+another type than its definition's, each refused; an import printed and
+read back, in a unit checked alone (`--typecheck-only`).
 
 ## The three oracles
 
