@@ -240,6 +240,7 @@ void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
         live += stack_replay(vm, from, below, visit);
         at = from;
     }
+    uint64_t *bits = vm->gc.stack_roots;
 #define STACK_VISIT(vm_, v_) (live++, visit((vm_), (v_)), gc_stack_bit((vm_), (v_), rec))
     for (size_t k = 0; k + 1 < nf; k++) {
         const FrameRef *f = &fr[k];
@@ -248,8 +249,11 @@ void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
         uint64_t regs = vm_callback_live(vm, f);
         GC_BELOW_FRAME(vm, f, at, end, STACK_VISIT);
         for (uint32_t r = 0; r < n && at < end; r++, at++) {
-            if (r >= 64 || ((regs >> r) & 1)) STACK_VISIT(vm, &vm->stack[at]);
-            else if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
+            if (r >= 64 || ((regs >> r) & 1)) {
+                live++;
+                visit(vm, &vm->stack[at]);
+                if (rec) bits[at >> 6] |= (uint64_t)1 << (at & 63);   /* (a waiting frame's registers: below rec) */
+            } else if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
         }
         vm->gc_counts.frames++;
     }
@@ -262,7 +266,7 @@ void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
         uint32_t n = vm->prog.funcs[f->func].nlocals;
         GC_BELOW_FRAME(vm, f, at, vm->sp, STACK_VISIT);
         for (uint32_t r = 0; r < n && at < vm->sp; r++, at++) {
-            if (r >= 64 || ((vm->top_live >> r) & 1)) STACK_VISIT(vm, &vm->stack[at]);
+            if (r >= 64 || ((vm->top_live >> r) & 1)) { live++; visit(vm, &vm->stack[at]); }   /* (above rec: no bits) */
             else if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
         }
     }

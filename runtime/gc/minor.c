@@ -201,6 +201,7 @@ static void minor_stack(VM *vm, size_t low) {
     if (!vm->frame_live) vm->gc.stack_valid = 0;   /* every slot a root: no summary */
     else if (low <= vm->gc.stack_low && from <= vm->gc.stack_valid) rec = gc_stack_record(vm, fr, nf, from);
     if (!rec && low < vm->gc.stack_low) vm->gc.stack_low = low;
+    uint64_t *bits = vm->gc.stack_roots;
 #define MINOR_VISIT(vm_, v_) (live++, promote_value((vm_), (v_)), gc_stack_bit((vm_), (v_), rec))
     if (vm->frame_live)
         for (size_t k = 0; k + 1 < nf; k++) {
@@ -210,8 +211,11 @@ static void minor_stack(VM *vm, size_t low) {
             uint64_t regs = vm_callback_live(vm, f);
             GC_BELOW_FRAME(vm, f, at, end, MINOR_VISIT);
             for (uint32_t r = 0; r < n && at < end; r++, at++) {
-                if (r >= 64 || ((regs >> r) & 1)) MINOR_VISIT(vm, &vm->stack[at]);
-                else if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
+                if (r >= 64 || ((regs >> r) & 1)) {
+                    live++;
+                    promote_value(vm, &vm->stack[at]);
+                    if (rec) bits[at >> 6] |= (uint64_t)1 << (at & 63);   /* (a waiting frame's registers: below rec) */
+                } else if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
             }
             vm->gc_counts.frames++;
         }
@@ -222,7 +226,7 @@ static void minor_stack(VM *vm, size_t low) {
         uint32_t n = vm->prog.funcs[f->func].nlocals;
         GC_BELOW_FRAME(vm, f, at, vm->sp, MINOR_VISIT);
         for (uint32_t r = 0; r < n && at < vm->sp; r++, at++) {
-            if (r >= 64 || ((vm->top_live >> r) & 1)) MINOR_VISIT(vm, &vm->stack[at]);
+            if (r >= 64 || ((vm->top_live >> r) & 1)) { live++; promote_value(vm, &vm->stack[at]); }   /* (above rec: no bits) */
             else if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
         }
     }
