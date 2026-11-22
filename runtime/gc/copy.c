@@ -210,16 +210,19 @@ size_t gc_stack_record(VM *vm, const FrameRef *fr, size_t nf, size_t from) {
     return rec;
 }
 
-/* the summary's slots below from visited, but the closures below below
-   (the CAF tables set them aside, caf_frames): as many as were roots */
+/* the summary's slots below from visited where they hold a pointer (a
+   visit does nothing to an immediate), but the closures below below (the
+   CAF tables set them aside, caf_frames): as many as were roots */
 static size_t stack_replay(VM *vm, size_t from, size_t below, void (*visit)(VM *, Value *)) {
     const uint64_t *b = vm->gc.stack_roots, *a = vm->gc.stack_aside;
     size_t n = 0;
     for (size_t w = 0; w << 6 < from; w++) {
         uint64_t x = b[w], skip = w << 6 < below ? a[w] : 0;
         if ((w + 1) << 6 > from) x &= ((uint64_t)1 << (from & 63)) - 1;
-        for (; x; x &= x - 1, n++)
-            if (!(skip & x & -x)) visit(vm, &vm->stack[(w << 6) + (size_t)__builtin_ctzll(x)]);
+        for (; x; x &= x - 1, n++) {
+            Value *v = &vm->stack[(w << 6) + (size_t)__builtin_ctzll(x)];
+            if (val_is_ptr(*v) && !(skip & x & -x)) visit(vm, v);
+        }
     }
     return n;
 }
