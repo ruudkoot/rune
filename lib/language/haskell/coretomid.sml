@@ -14,6 +14,7 @@ struct
   (* whether Core to Mid holds what it writes to its rules, which rhc sets
      at lint level 2; and what a breach of one is *)
   val checking = ref false
+  val selectorShapes = ref true
   exception Breach of string
 
   (* a type of Mid's text with susp at its head: a slot's, which no type
@@ -1067,7 +1068,7 @@ struct
          a let made that this code alone names; and x not a selector the
          desugaring marked already, nor one nothing names *)
       and markSelector (env, x, rhs, s, V, rest) =
-        case selected rhs of
+        case (if !selectorShapes then selected rhs else NONE) of
           NONE => rest
         | SOME (p, i) =>
             let

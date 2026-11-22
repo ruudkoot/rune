@@ -42,6 +42,17 @@ sig
      its polymorphic functions at `T susp`. *)
   val checking : bool ref
 
+  (* Whether a suspension is marked a selector by its shape (D17's C, gap 4:
+     `rhc --selector-shapes=on|off`); true by default.
+
+     Its code `case p of K x1 ... xn -> xi` of a data type of one
+     constructor, or a function of the program of that shape -- fst, snd,
+     a record's field -- applied to p, a local of its own, it is marked
+     after it is made (`thunk_selector`), as GHC recognises a selector
+     thunk; without it only the desugaring's marks of pattern bindings
+     (`sel_mark`) are made. *)
+  val selectorShapes : bool ref
+
   (* A breach of Core to Mid's rules, where `checking` holds: what it is. *)
   exception Breach of string
 

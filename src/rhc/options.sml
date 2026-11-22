@@ -155,6 +155,9 @@ struct
     \                        variable a lazy match of its own (default, rule (d)); or\n\
     \                        generalised, one tuple at every type and each variable its\n\
     \                        selector, marked (D17's C)\n\
+    \  --selector-shapes=S   on (default): a suspension that takes a field of a local by its\n\
+    \                        shape (fst, snd, a record's field, a case) marked a selector\n\
+    \                        at Core to Mid (D17's C); off, the desugaring's marks alone\n\
     \  --strings=S           a string literal's list: lazy, a cell as it is read (default),\n\
     \                        or whole, every cell at once, for D24's measurement\n\
     \  --desugar-only        on a program of Haskell: check it, desugar it to Core, CoreLint\n\
@@ -241,6 +244,8 @@ struct
         | go ("--fault=susp-type-arg" :: rest) = (fault := SOME CoreToMid.SuspTypeArg; go rest)
         | go ("--selectors=generalised" :: rest) = (HsDesugar.generalisedSelectors := true; go rest)
         | go ("--selectors=monomorphic" :: rest) = (HsDesugar.generalisedSelectors := false; go rest)
+        | go ("--selector-shapes=on" :: rest) = (CoreToMid.selectorShapes := true; go rest)
+        | go ("--selector-shapes=off" :: rest) = (CoreToMid.selectorShapes := false; go rest)
         | go ("--strings=lazy" :: rest) = (strings := CoreRuntime.Lazy; go rest)
         | go ("--strings=whole" :: rest) = (strings := CoreRuntime.Whole; go rest)
         | go (arg :: rest) =

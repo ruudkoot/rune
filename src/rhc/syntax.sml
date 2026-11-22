@@ -323,6 +323,7 @@ struct
               orelse String.isPrefix "--thunks=" a orelse String.isPrefix "--dump-after=" a orelse a = "--pass-stats"
               orelse String.isPrefix "--strings=" a orelse String.isPrefix "--steps=" a orelse String.isPrefix "--depth=" a
               orelse a = "--selectors=generalised" orelse a = "--selectors=monomorphic"
+              orelse a = "--selector-shapes=on" orelse a = "--selector-shapes=off"
               orelse String.isPrefix "--match=" a orelse a = "--desugar-only" orelse a = "--desugar-units"
               orelse a = "--canonical-core"
               orelse String.isPrefix "--eta=" a orelse String.isPrefix "--strictness=" a orelse a = "--simplify-stats"

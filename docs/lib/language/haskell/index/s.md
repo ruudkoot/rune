@@ -12,6 +12,7 @@
 - `scope` (type): [HS_MODULES](../sig/HS_MODULES.md#type-scope)
 - `scopeKey` (val): [HS_MODULES](../sig/HS_MODULES.md#val-scopekey)
 - `selector` (val): [HS_MATCH](../sig/HS_MATCH.md#val-selector)
+- `selectorShapes` (val): [CORE_TO_MID](../sig/CORE_TO_MID.md#val-selectorshapes)
 - `SEMI` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-semi)
 - `Sestoft` (con): [HS_MATCH](../sig/HS_MATCH.md#con-sestoft)
 - `setFields` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-setfields)
