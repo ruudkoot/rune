@@ -403,7 +403,7 @@ returned into since, so their roots are the same slots. So a deep recursion
 is not decoded again at every full collection either, where each used to
 walk every frame -- its header, its return word, its live registers -- which
 in rhc's programs that consume a lazy list recursively, a million frames
-deep, was 60-78% of a full collection's time and up to half of a run's (the
+deep, was 58-79% of a full collection's time and up to half of a run's (the
 haskell98 roadmap, M25). `--gc-verify` decodes those frames again and checks
 the summary against them. (`runevm-stack` keeps its frames in records and
 takes every slot of its stack as a root: it has nothing to decode.)
