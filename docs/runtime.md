@@ -197,6 +197,19 @@ the program's code are not in the heap.
   one, grows it by doubling. A heap stops growing at three quarters of
   what a `size_t` counts, and where the system will give no more chunks a
   run ends with `runevm: out of memory`.
+* The value stack is not in the heap, but a full collection takes it all
+  (*The roots*): a run a million frames deep pays for its frames' roots at
+  every full collection, however little its heap holds. `runevm
+  --heap-stack M` counts the stack as live data beside the heap's where the
+  heap's size is worked out (not where `--heap-limit` is held to): `roots`,
+  the slots the last full collection took as roots, a word each; `all`,
+  every slot of the stack; `off`, nothing, the default. Every collector
+  sizes so -- the two, the copier, and the low-pause collector at the end
+  of its cycle -- and a native program takes it from `RUNEVM_OPTIONS`. A
+  deep stack then makes fewer full collections in a larger heap: a
+  recursion 10^6 deep that keeps 48 MB of lists live a while makes 37 full
+  collections in a heap of 48 MB, 26 in 63 MB with `roots`, and 7 in
+  208 MB with `all`. It is a run's setting, which an image does not keep.
 * It never shrinks. With the copier the memory a run takes moves in
   doubling steps: the compiler compiling itself keeps 42 MB at most and
   runs in a heap of 134 MB, from the 64 MiB `bin/rune` starts it with
@@ -1132,7 +1145,7 @@ loading goes on loading. A program of native code (`runeopt`) loads no units.
 
 The whole command line -- `--disasm`, `--trace`, `--stats`, `--count`,
 `--gc-stress`, `--gc-stress-cycles`, `--gc-stress-full`, `--gc-verify`, `--checked`, `--heap-size`, `--heap-limit`,
-`--heap-fill`, `--nursery`, `--gc`, `--old-space`, `--caf-tables`, `--stack-size`, `--equality-work`, `--gc-log`,
+`--heap-fill`, `--heap-stack`, `--nursery`, `--gc`, `--old-space`, `--caf-tables`, `--stack-size`, `--equality-work`, `--gc-log`,
 `--emulate-fork`, `--restore`, `--name`, `--version` -- is described in
 [bytecode.md](bytecode.md).
 
@@ -1153,7 +1166,7 @@ that the one writes what the other reads.
 What differs:
 
 * The options of `runevm` (`--count`, `--stats`, `--heap-size`,
-  `--heap-limit`, `--heap-fill`, `--nursery`, `--gc`, `--old-space`, `--equality-work`, `--gc-stress`, `--gc-stress-cycles`,
+  `--heap-limit`, `--heap-fill`, `--heap-stack`, `--nursery`, `--gc`, `--old-space`, `--equality-work`, `--gc-stress`, `--gc-stress-cycles`,
   `--gc-stress-full`, `--caf-tables`, `--gc-verify`, `--gc-log`, `--checked`) come from the environment
   variable `RUNEVM_OPTIONS`, after
   those the program was made with (`runeopt --options`), and the program takes

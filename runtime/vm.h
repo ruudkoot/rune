@@ -247,6 +247,8 @@ typedef struct SfClass {
    chunks of 2 MiB, the one alloc fills last; its size is what a semispace
    was, the bytes of objects it may hold before it is collected, and
    collected into a list of its own (runtime/gc/copy.c). */
+/* --heap-stack's ways (GcState.heap_stack) */
+enum { HEAP_STACK_OFF = 0, HEAP_STACK_ROOTS = 1, HEAP_STACK_ALL = 2 };
 typedef struct GcState {
     Chunk *first, *last; /* the heap's chunks, in the order they were filled; last is alloc's */
     size_t closed;       /* the bytes of objects in every chunk but last */
@@ -332,6 +334,14 @@ typedef struct GcState {
        [0, stack_aside_valid) */
     uint64_t *stack_roots, *stack_aside;
     size_t stack_words, stack_valid, stack_aside_valid, stack_low;
+    /* --heap-stack (runtime/gc/copy.c, grown's callers): what of the stack
+       the heap's sizing counts as live data beside the heap's -- nothing
+       (HEAP_STACK_OFF, the default), the slots the last walk of the whole
+       stack found roots (HEAP_STACK_ROOTS, stack_root_bytes), or every
+       slot (HEAP_STACK_ALL) -- so that a run whose full collections each
+       take a deep stack makes fewer of them, for a larger heap */
+    int heap_stack;
+    size_t stack_root_bytes;
     HeapSeg *segs;       /* an image read back, until heap_relocate */
     size_t nsegs, segs_cap;
 } GcState;

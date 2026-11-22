@@ -279,6 +279,7 @@ void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
     if (vm->frame_live) gc_stack_recorded(vm, rec);
     vm->gc_counts.slots += vm->sp;
     vm->gc_counts.live_slots += live;
+    vm->gc.stack_root_bytes = live * sizeof(Value);
 }
 
 /* --gc-verify: the summary against the frames below the lowest that ran,
@@ -462,6 +463,14 @@ static size_t fill_of(const VM *vm, size_t n) {
    doubling, is where a heap stops (a chunk the system will not give) */
 #define HEAP_MOST (SIZE_MAX - SIZE_MAX / 4)
 
+/* used and what of the stack --heap-stack counts beside it (GcState.heap_stack),
+   for the heap's size, which it is not part of: nothing by default */
+static size_t with_stack(const VM *vm, size_t used) {
+    size_t s = vm->gc.heap_stack == HEAP_STACK_ROOTS ? vm->gc.stack_root_bytes
+             : vm->gc.heap_stack == HEAP_STACK_ALL ? vm->sp * sizeof(Value) : 0;
+    return used > SIZE_MAX - s ? SIZE_MAX : used + s;
+}
+
 static size_t grown(const VM *vm, size_t size, size_t used, size_t needed) {
     size_t want = size;
     if (vm->gc.old_kind != OLD_COPY && vm->gc.nursery) {
@@ -511,7 +520,7 @@ static void nursery_adapt(VM *vm) {
    pause (cycle.c): the heap's size and the nursery's made again from what
    it left, as after a full collection */
 void gc_after_cycle(VM *vm) {
-    vm->gc.size = grown(vm, vm->gc.size, USED_STOCK(vm), 0);
+    vm->gc.size = grown(vm, vm->gc.size, with_stack(vm, USED_STOCK(vm)), 0);
     vm->live_before = vm->live_last;
     vm->live_last = USED_STOCK(vm);
     nursery_adapt(vm);
@@ -556,7 +565,7 @@ void vm_gc(VM *vm, size_t needed) {
             vm->gc.minors = minors;
         }
         if (!ended) collect_pass(vm, vm->gc.size);
-        vm->gc.size = grown(vm, vm->gc.size, USED_STOCK(vm), needed);
+        vm->gc.size = grown(vm, vm->gc.size, with_stack(vm, USED_STOCK(vm)), needed);
     } else {
         size_t guess = vm->live_last;
         if (vm->live_last > vm->live_before) {
@@ -565,8 +574,8 @@ void vm_gc(VM *vm, size_t needed) {
                than once on a guess */
             if (guess < vm->live_last || guess > vm->gc.size) guess = vm->gc.size;
         }
-        collect_pass(vm, grown(vm, vm->gc.size, guess, needed));
-        size_t want = grown(vm, vm->gc.size, USED_STOCK(vm), needed);
+        collect_pass(vm, grown(vm, vm->gc.size, with_stack(vm, guess), needed));
+        size_t want = grown(vm, vm->gc.size, with_stack(vm, USED_STOCK(vm)), needed);
         if (want != vm->gc.size) collect_pass(vm, want);
     }
     if (USED_STOCK(vm) > vm->gc.size || needed > vm->gc.size - USED_STOCK(vm)) vm_limit(vm, "heap limit exceeded");

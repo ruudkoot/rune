@@ -35,6 +35,7 @@ struct
           option "heap-size" ["--heap-size","18446744073709551616"],
           option "heap-size-text" ["--heap-size","64M"],option "gc-stress" ["--gc-stress","18446744073709551616"],
           option "heap-fill-zero" ["--heap-fill","0"],option "heap-fill-over" ["--heap-fill","101"],
+          ("heap-stack","--heap-stack takes off, roots or all",["--heap-stack","some","empty.rbc"],NONE),
           binary "debug-files" "bad file table" (prog ^ huge),
           binary "debug-filename" "bad file name" (prog ^ one ^ huge),
           binary "debug-lines" "bad line table" (prog ^ file ^ one ^ zero),
