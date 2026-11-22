@@ -391,8 +391,22 @@ raise lowers to the frame it goes on in (`vm_frame_pop`; in `runevm`, a
 return barrier at the watermark's frame, whose return alone goes below
 it: docs/plans/native-frames.md, M5). The frames below
 it have not run since that collection left nothing young in them, so a
-deep recursion is not scanned again at every minor collection; a full
-collection scans the whole stack.
+deep recursion is not scanned again at every minor collection. A full
+collection, and the start of the low-pause collector's cycle, take the whole
+stack; on the register VM they decode again only the frames that ran since
+the last collection, and for the frames below them take the slots that the
+last walk -- a minor collection's or a full one's -- found roots, which it
+keeps a bit a slot (the stack's summary, `runtime/gc/copy.c`; for a program
+with suspensions also the frames' closures and the tables of where they
+wait, *CAF tables* below): those frames have not run, returned or been
+returned into since, so their roots are the same slots. So a deep recursion
+is not decoded again at every full collection either, where each used to
+walk every frame -- its header, its return word, its live registers -- which
+in rhc's programs that consume a lazy list recursively, a million frames
+deep, was 60-78% of a full collection's time and up to half of a run's (the
+haskell98 roadmap, M25). `--gc-verify` decodes those frames again and checks
+the summary against them. (`runevm-stack` keeps its frames in records and
+takes every slot of its stack as a root: it has nothing to decode.)
 
 Of the globals, a minor collection takes only those written since the last
 one, and of the constants only those made since (`MINOR_ROOTS`): every
@@ -570,8 +584,8 @@ and the second the columns, by which a script reads them (`bin/rune-measure mmu`
 | `used_before` | the bytes in use when the pass began |
 | `copied`, `copied_objs` | the bytes and the objects it copied (a pass of a cycle: that it marked) |
 | `promoted` | a minor pass's copy, the bytes it moved out of the nursery; 0 for a full one |
-| `slots`, `live_slots` | the slots of the value stack it looked at (a minor pass: above the watermark), and of them those that were roots (the others were dead registers of frames waiting for a call) |
-| `frames` | the waiting frames whose live registers it asked for |
+| `slots`, `live_slots` | the slots of the value stack it looked at (a minor pass: above the watermark), and of them those that were roots (the others were dead registers of frames waiting for a call, and the words of frames' headers but their closures) |
+| `frames` | the waiting frames whose live registers it asked for (a full pass: those that ran since the last collection; the stack's summary has the others, *The roots*) |
 | `other_roots` | the globals, constants, frames' closures, built-in exceptions, boxed reals and handles it visited |
 | `cards_dirty`, `cards_scanned`, `remembered` | a minor pass's: the cards it found marked, the cards of the blocks marked dirty, and the large objects made since the last that it scanned whole |
 | `live_after`, `heap_size` | the bytes in use after it and the heap's size |

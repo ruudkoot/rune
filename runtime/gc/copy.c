@@ -157,26 +157,100 @@ static inline void copy_scan(VM *vm, Chunk **cp, size_t *atp, int mode) {
    is made unit where it is a pointer (FrameRef.closure_slot, stale_slot;
    GC_BELOW_FRAME, gc.h); the other slots between frames are visited. Above
    sp the stack's clean part is made unit (vm_clean_stack, performance M6):
-   a frame made there later takes its slots as they are. */
+   a frame made there later takes its slots as they are.
+
+   The stack's summary (vm.h, GcState.stack_roots): a walk sets the bit of
+   every slot it visits below the frame that runs and clears the others'
+   -- this walk, and a minor collection's, of the frames from the
+   watermark up (minor.c, minor_stack). A frame below the lowest that has
+   run since the summary was made (GcState.stack_low, and the watermark,
+   below which no frame has run since the last collection) has not run,
+   returned or been returned into, so that its slots are as the walk left
+   them: roots where it visited them, unit or an immediate elsewhere (a
+   collection moves what a root points to, never which slots are roots).
+   The next walk visits those slots by their bits and decodes only the
+   frames above (gc_stack_frames): in a deep recursion, few -- the frames
+   that ran since the last collection -- where it decoded them all at
+   every full collection. A walk where the engine says nothing of what is
+   live (the stack bytecode, the debugger's mode) leaves no summary. */
+int gc_stack_room(VM *vm, size_t n) {
+    size_t words = (n + 63) / 64;
+    if (words <= vm->gc.stack_words) return 1;
+    size_t cap = vm->gc.stack_words ? vm->gc.stack_words : 64;
+    while (cap < words) cap *= 2;
+    uint64_t *r = realloc(vm->gc.stack_roots, cap * sizeof *r);
+    if (!r) return 0;
+    vm->gc.stack_roots = r;
+    uint64_t *a = realloc(vm->gc.stack_aside, cap * sizeof *a);
+    if (!a) return 0;
+    vm->gc.stack_aside = a;
+    vm->gc.stack_words = cap;
+    return 1;
+}
+
+size_t gc_stack_frames(VM *vm, FrameRef **out, size_t *from, size_t bound) {
+    size_t low = vm->gc.stack_low, w = vm_frames_low(vm), id = vm_frame_id(vm);
+    if (w < low) low = w;
+    if (id < low) low = id;
+    if (bound > vm->gc.stack_valid) bound = vm->gc.stack_valid;
+    *from = 0;
+    if (low && bound) {
+        /* the frames from the lowest that ran: the slots below the first's
+           header those of frames that did not, where the summary has them */
+        size_t n = vm_frames_from(vm, low, out);
+        if (n && (*out)[0].head <= bound) { *from = (*out)[0].head; return n; }
+    }
+    return vm_frames_from(vm, 0, out);
+}
+
+size_t gc_stack_record(VM *vm, const FrameRef *fr, size_t nf, size_t from) {
+    size_t rec = nf ? fr[nf - 1].head : 0;
+    if (rec > vm->sp || (rec && !gc_stack_room(vm, rec))) return 0;
+    if (rec) gc_bits_clear(vm->gc.stack_roots, from, rec);
+    return rec;
+}
+
+/* the summary's slots below from visited, as many as were roots */
+static size_t stack_replay(VM *vm, size_t from, void (*visit)(VM *, Value *)) {
+    const uint64_t *b = vm->gc.stack_roots;
+    size_t n = 0;
+    for (size_t w = 0; w << 6 < from; w++) {
+        uint64_t x = b[w];
+        if ((w + 1) << 6 > from) x &= ((uint64_t)1 << (from & 63)) - 1;
+        for (; x; x &= x - 1, n++) visit(vm, &vm->stack[(w << 6) + (size_t)__builtin_ctzll(x)]);
+    }
+    return n;
+}
+
 void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
-    size_t at = 0, dead = 0;
+    size_t at = 0, live = 0, from = 0, nf = 0;
     FrameRef *fr = NULL;
-    size_t nf = vm->frame_live ? vm_frames_from(vm, 0, &fr) : 0;   /* the frames, the top level's first (native-frames.md, M3) */
+    int cafs = 0;
+    if (!vm->frame_live) vm->gc.stack_valid = 0;   /* every slot a root: no summary */
+    else if (!(cafs = caf_frames_reuse(&fr, &nf, &from)))
+        nf = gc_stack_frames(vm, &fr, &from, SIZE_MAX);   /* the frames, the top level's first (native-frames.md, M3), from the lowest that ran */
+    /* the summary made again of the slots below the frame that runs; the
+       CAF tables' part (caf_frames) for no slot past those below from,
+       where they did not make it */
+    size_t rec = vm->frame_live ? gc_stack_record(vm, fr, nf, from) : 0;
+    if (!cafs && vm->gc.stack_aside_valid > from) vm->gc.stack_aside_valid = from;
+    if (from) {
+        live += stack_replay(vm, from, visit);
+        at = from;
+    }
+#define STACK_VISIT(vm_, v_) (live++, visit((vm_), (v_)), gc_stack_bit((vm_), (v_), rec))
     for (size_t k = 0; k + 1 < nf; k++) {
-            const FrameRef *f = &fr[k];
-            size_t end = fr[k + 1].base < vm->sp ? fr[k + 1].base : vm->sp;
-            uint32_t n = vm->prog.funcs[f->func].nlocals;
-            uint64_t live = vm_callback_live(vm, f);
-            GC_BELOW_FRAME(vm, f, at, end, visit);
-            for (uint32_t r = 0; r < n && at < end; r++, at++) {
-                if (r >= 64 || ((live >> r) & 1)) visit(vm, &vm->stack[at]);
-                else {
-                    dead++;
-                    if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
-                }
-            }
-            vm->gc_counts.frames++;
+        const FrameRef *f = &fr[k];
+        size_t end = fr[k + 1].base < vm->sp ? fr[k + 1].base : vm->sp;
+        uint32_t n = vm->prog.funcs[f->func].nlocals;
+        uint64_t regs = vm_callback_live(vm, f);
+        GC_BELOW_FRAME(vm, f, at, end, STACK_VISIT);
+        for (uint32_t r = 0; r < n && at < end; r++, at++) {
+            if (r >= 64 || ((regs >> r) & 1)) STACK_VISIT(vm, &vm->stack[at]);
+            else if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
         }
+        vm->gc_counts.frames++;
+    }
     if (nf && vm_frame_top_live(vm, &fr[nf - 1])) {
         /* the frame that runs, where runtime/register's compiled code said
            what of it is live (VM.top_live, M6): as a frame that waits, since
@@ -184,19 +258,67 @@ void gc_stack_roots(VM *vm, void (*visit)(VM *, Value *)) {
            wrote, and none is filled with unit */
         const FrameRef *f = &fr[nf - 1];
         uint32_t n = vm->prog.funcs[f->func].nlocals;
-        GC_BELOW_FRAME(vm, f, at, vm->sp, visit);
+        GC_BELOW_FRAME(vm, f, at, vm->sp, STACK_VISIT);
         for (uint32_t r = 0; r < n && at < vm->sp; r++, at++) {
-            if (r >= 64 || ((vm->top_live >> r) & 1)) visit(vm, &vm->stack[at]);
-            else {
-                dead++;
-                if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
-            }
+            if (r >= 64 || ((vm->top_live >> r) & 1)) STACK_VISIT(vm, &vm->stack[at]);
+            else if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
         }
     }
-    for (; at < vm->sp; at++) visit(vm, &vm->stack[at]);
+    for (; at < vm->sp; at++) STACK_VISIT(vm, &vm->stack[at]);
+#undef STACK_VISIT
     vm_clean_stack(vm);   /* above sp nothing is to point into what the collection leaves (M6) */
+    if (vm->frame_live) gc_stack_recorded(vm, rec);
     vm->gc_counts.slots += vm->sp;
-    vm->gc_counts.live_slots += vm->sp - dead;
+    vm->gc_counts.live_slots += live;
+}
+
+/* --gc-verify: the summary against the frames below the lowest that ran,
+   decoded again as gc_stack_roots decodes them: every slot that would be
+   visited has its bit, and every other is not a pointer; every closure
+   the CAF tables would take last has its bit, and its frame's table is
+   among the summary's (caf.c) */
+const char *gc_stack_check(VM *vm) {
+    if (!vm->frame_live || !vm->gc.stack_valid) return NULL;
+    FrameRef *fr;
+    size_t from;
+    (void)gc_stack_frames(vm, &fr, &from, SIZE_MAX);
+    if (!from) return NULL;
+    if (from > vm->sp) return "the stack's summary describes slots above sp";
+    size_t nf = vm_frames_from(vm, 0, &fr), k = 0, at = 0;
+    const uint64_t *bits = vm->gc.stack_roots, *aside = vm->gc.stack_aside;
+    size_t aside_to = vm->gc.stack_aside_valid < from ? vm->gc.stack_aside_valid : from;
+#define BIT(b_, i_) ((int)(((b_)[(i_) >> 6] >> ((i_) & 63)) & 1))
+    for (; k + 1 < nf && at < from; k++) {
+        const FrameRef *f = &fr[k];
+        size_t end = fr[k + 1].base < vm->sp ? fr[k + 1].base : vm->sp;
+        size_t below = f->closure_slot ? f->head : f->base;
+        for (; at < below && at < end && at < from; at++)
+            if (!BIT(bits, at)) return "a slot between frames that the stack's summary does not visit";
+        if (at >= from) break;
+        if (f->closure_slot && at == below && f->base <= end) {
+            for (size_t h = f->head; h < f->base && h < from; h++) {
+                int closure = vm->stack + h == f->closure_slot;
+                if (BIT(bits, h) != (closure && f->closure != NULL))
+                    return "a word of a frame's header that the stack's summary has otherwise";
+                if (closure && !f->closure && val_is_ptr(vm->stack[h])) return "a closure of a frame that reads none, a pointer";
+                if (closure && h < aside_to && BIT(aside, h) != (f->closure != NULL))
+                    return "a frame's closure that the stack's summary sets aside otherwise";
+            }
+            if (f->stale_slot && (size_t)(f->stale_slot - vm->stack) < from && val_is_ptr(*f->stale_slot))
+                return "a stale word of a frame's header, a pointer";
+            at = f->base;
+        }
+        uint32_t n = vm->prog.funcs[f->func].nlocals;
+        uint64_t live = vm_callback_live(vm, f);
+        for (uint32_t r = 0; r < n && at < end && at < from; r++, at++) {
+            int root = r >= 64 || ((live >> r) & 1);
+            if (root != BIT(bits, at)) return "a register that the stack's summary has otherwise";
+            if (!root && val_is_ptr(vm->stack[at])) return "a dead register below the frames that ran, a pointer";
+        }
+    }
+#undef BIT
+    if (aside_to && vm->caf) return caf_stack_check(vm, fr, nf, aside_to);
+    return NULL;
 }
 
 /* A collection: the heap's chunks are set aside, the live objects copied

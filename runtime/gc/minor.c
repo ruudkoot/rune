@@ -189,24 +189,29 @@ static void promote_obj(VM *vm, Obj **o) {
    holds a pointer made unit -- from the frame of the watermark up (D9),
    its header too where it has one (FrameRef.head: a tail call writes the
    closure there): the frames below it have not run since the last minor
-   collection, which left nothing young in them. */
+   collection, which left nothing young in them. The stack's summary
+   (copy.c, gc_stack_roots) made again of what it decodes, where the
+   summary has the slots below: where no frame below the watermark has run
+   since it was made; else the frames below the watermark are the lowest
+   that ran since, for the summary as for the next minor collection. */
 static void minor_stack(VM *vm, size_t low) {
     FrameRef *fr = NULL;
     size_t nf = vm_frames_from(vm, low, &fr);   /* the frames from the watermark's up (native-frames.md, M3) */
-    size_t at = nf && low ? fr[0].head : 0, dead = 0, from = at;
+    size_t at = nf && low ? fr[0].head : 0, live = 0, from = at, rec = 0;
+    if (!vm->frame_live) vm->gc.stack_valid = 0;   /* every slot a root: no summary */
+    else if (low <= vm->gc.stack_low && from <= vm->gc.stack_valid) rec = gc_stack_record(vm, fr, nf, from);
+    if (!rec && low < vm->gc.stack_low) vm->gc.stack_low = low;
+#define MINOR_VISIT(vm_, v_) (live++, promote_value((vm_), (v_)), gc_stack_bit((vm_), (v_), rec))
     if (vm->frame_live)
         for (size_t k = 0; k + 1 < nf; k++) {
             const FrameRef *f = &fr[k];
             size_t end = fr[k + 1].base < vm->sp ? fr[k + 1].base : vm->sp;
             uint32_t n = vm->prog.funcs[f->func].nlocals;
-            uint64_t live = vm_callback_live(vm, f);
-            GC_BELOW_FRAME(vm, f, at, end, promote_value);
+            uint64_t regs = vm_callback_live(vm, f);
+            GC_BELOW_FRAME(vm, f, at, end, MINOR_VISIT);
             for (uint32_t r = 0; r < n && at < end; r++, at++) {
-                if (r >= 64 || ((live >> r) & 1)) promote_value(vm, &vm->stack[at]);
-                else {
-                    dead++;
-                    if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
-                }
+                if (r >= 64 || ((regs >> r) & 1)) MINOR_VISIT(vm, &vm->stack[at]);
+                else if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
             }
             vm->gc_counts.frames++;
         }
@@ -215,19 +220,21 @@ static void minor_stack(VM *vm, size_t low) {
            (VM.top_live, M6): as a frame that waits */
         const FrameRef *f = &fr[nf - 1];
         uint32_t n = vm->prog.funcs[f->func].nlocals;
-        GC_BELOW_FRAME(vm, f, at, vm->sp, promote_value);
+        GC_BELOW_FRAME(vm, f, at, vm->sp, MINOR_VISIT);
         for (uint32_t r = 0; r < n && at < vm->sp; r++, at++) {
-            if (r >= 64 || ((vm->top_live >> r) & 1)) promote_value(vm, &vm->stack[at]);
-            else {
-                dead++;
-                if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
-            }
+            if (r >= 64 || ((vm->top_live >> r) & 1)) MINOR_VISIT(vm, &vm->stack[at]);
+            else if (val_is_ptr(vm->stack[at])) vm->stack[at] = mk_unit();
         }
     }
-    for (; at < vm->sp; at++) promote_value(vm, &vm->stack[at]);
+    for (; at < vm->sp; at++) MINOR_VISIT(vm, &vm->stack[at]);
+#undef MINOR_VISIT
     vm_clean_stack(vm);   /* the stack's clean part, above sp (gc_stack_roots, M6) */
+    if (rec) {
+        caf_record(vm, fr, nf, from, rec);
+        gc_stack_recorded(vm, rec);
+    }
     vm->gc_counts.slots += vm->sp - from;
-    vm->gc_counts.live_slots += vm->sp - from - dead;
+    vm->gc_counts.live_slots += live;
 }
 
 /* The fields of o that lie in [lo, hi), promoted: from the first in the

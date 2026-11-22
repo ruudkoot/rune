@@ -318,6 +318,20 @@ typedef struct GcState {
     size_t nqueue, queue_cap;
     uint64_t minors, fulls, promoted, large_objects, large_bytes;
     size_t old_boxes;    /* of box_bytes_live, the old space's (the nursery's die with it) */
+    /* The stack's summary (runtime/gc/copy.c, gc_stack_roots): which slots
+       the collections' walks of the stack found roots, a bit a slot, below
+       the frame that ran then. The frames below the lowest that has run
+       since are as those walks left them, so the next walk takes their
+       roots from the bits and decodes only the frames above: a full
+       collection does not decode a deep recursion again.
+       stack_valid: the slots [0, stack_valid) the bits describe;
+       stack_low: the frame that ran when they were made, or the lowest
+       watermark since of a minor collection that did not make them again
+       (minor.c); stack_aside: a bit a slot, the closure of a frame, which
+       the CAF tables take last (caf.c), for the slots
+       [0, stack_aside_valid) */
+    uint64_t *stack_roots, *stack_aside;
+    size_t stack_words, stack_valid, stack_aside_valid, stack_low;
     HeapSeg *segs;       /* an image read back, until heap_relocate */
     size_t nsegs, segs_cap;
 } GcState;

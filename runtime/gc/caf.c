@@ -53,7 +53,11 @@
 #include <string.h>
 #include <stdio.h>
 
-typedef struct PcTable { uint32_t pc, next; uint64_t epoch; uint64_t *bits; } PcTable;
+/* a frame's table; and, for the stack's summary (copy.c, gc_stack_roots),
+   the lowest frame below the summary's slots that waits where it was made
+   (SIZE_MAX: none), the walk that gave it that frame, and whether it is in
+   the summary's list (CafTables.kept) */
+typedef struct PcTable { uint32_t pc, next; uint64_t epoch; uint64_t *bits; size_t low; uint64_t low_walk; int listed; } PcTable;
 
 struct CafTables {
     int ready, failed, stale;
@@ -68,6 +72,11 @@ struct CafTables {
     PcTable *pcs;            /* frames' tables, a pool: each function's a list from pcfirst */
     uint32_t *pcfirst;       /* per function: its first frame table, 1 + its place in pcs (0: none) */
     uint32_t npcs, cappcs;
+    /* the frames' tables the stack's summary keeps (PcTable.low), for the
+       frames below the slots a walk decodes again (caf_frames) */
+    uint32_t *kept;
+    uint32_t nkept, capkept;
+    uint64_t walks;          /* the walks that made the summary's part (caf_record) */
     int noted;               /* every global looked at once for a CAF (caf_begin) */
     Value *snap;             /* the cycle's: the globals as they were when it began (caf_cycle_begin) */
     uint64_t epoch;
@@ -104,6 +113,9 @@ static void tables_free(CafTables *t) {
     free(t->reached); free(t->scc); free(t->sccbits); free(t->sccepoch); free(t->pcfirst);
     for (uint32_t i = 0; i < t->npcs; i++) free(t->pcs[i].bits);
     free(t->pcs);
+    free(t->kept);
+    t->kept = NULL;
+    t->nkept = t->capkept = 0;
     t->reached = NULL; t->scc = NULL; t->sccbits = NULL; t->sccepoch = NULL; t->pcfirst = NULL; t->pcs = NULL;
     t->npcs = t->cappcs = 0; t->nscc = 0;
     t->ready = 0;
@@ -266,6 +278,7 @@ int caf_begin(VM *vm) {
     if (!vm->caf && !(vm->caf = calloc(1, sizeof(CafTables)))) return 0;
     CafTables *t = vm->caf;
     if (t->stale) { tables_free(t); t->stale = 0; t->failed = 0; }
+    if (!t->ready) vm->gc.stack_aside_valid = 0;   /* the tables the summary kept, gone */
     if (t->failed) return 0;
     if (!t->ready) {
         int64_t t0 = sys_clock_ns();
@@ -346,6 +359,7 @@ static PcTable *pc_table(VM *vm, CafTables *t, uint32_t func, uint32_t pc) {
     if (isa_caf_walk(&vm->prog, func, pc, pc_global, pc_callee, &w) < 0) { free(b); return NULL; }
     PcTable *e = &t->pcs[t->npcs++];
     e->pc = pc; e->bits = b; e->next = t->pcfirst[func];
+    e->low = SIZE_MAX; e->low_walk = 0; e->listed = 0;
     e->epoch = bits_empty(b, t->words) ? CAF_EMPTY : 0;
     t->pcfirst[func] = t->npcs;
     return e;
@@ -358,36 +372,129 @@ static PcTable *pc_table(VM *vm, CafTables *t, uint32_t func, uint32_t pc) {
    take (caf_aside). */
 static CafAside *aside;
 static size_t naside, capaside;
-/* the frames caf_frames walked, for gc_stack_roots's walk after it in the
-   same collection (vm_frames_from, low 0, once) */
+/* room for n set aside: 0 where there is no memory (a closure not set
+   aside is marked as the frames' other roots are) */
+static int aside_room(size_t n) {
+    if (n <= capaside) return 1;
+    size_t cap = capaside ? capaside : 64;
+    while (cap < n) cap *= 2;
+    CafAside *a = realloc(aside, cap * sizeof *a);
+    if (!a) return 0;
+    aside = a; capaside = cap;
+    return 1;
+}
+/* the frames caf_frames walked, and where their slots begin, for
+   gc_stack_roots's walk after it in the same collection (once) */
 static FrameRef *reuse_f;
-static size_t reuse_n;
+static size_t reuse_n, reuse_from;
 static int reuse_on;
-int caf_frames_reuse(FrameRef **out, size_t *n) {
+int caf_frames_reuse(FrameRef **out, size_t *n, size_t *from) {
     if (!reuse_on) return 0;
     reuse_on = 0;
-    *out = reuse_f; *n = reuse_n;
+    *out = reuse_f; *n = reuse_n; *from = reuse_from;
     return 1;
 }
 void caf_frames_forget(void) { reuse_on = 0; }
+
+/* The stack's summary (copy.c, gc_stack_roots), the CAF tables' part: the
+   closures of the frames that wait, a bit a slot (GcState.stack_aside),
+   and the tables of the frames' places, each with its lowest frame
+   (PcTable.low) in a list (kept), so that a collection takes the tables
+   and the closures of the frames below the slots it decodes again from
+   them (caf_frames). Made again by a walk that decodes the frames f[0, n)
+   from slot from, where the summary has the slots below, for the slots
+   [0, rec) below the frame that runs: a table's lowest frame is the first
+   of the walk's frames that waits there, and a table that none of them
+   has, its frames gone, is let go of the list. Where the tables are not
+   made yet (or are to be made again), or a frame has no table (no memory,
+   or no walk of its code), the part has the slots below from alone. */
+static void kept_add(CafTables *t, uint32_t i, int *whole) {
+    if (t->pcs[i].listed) return;
+    if (t->nkept == t->capkept) {
+        uint32_t cap = t->capkept ? 2 * t->capkept : 64;
+        uint32_t *k = realloc(t->kept, cap * sizeof *k);
+        if (!k) { *whole = 0; return; }
+        t->kept = k; t->capkept = cap;
+    }
+    t->kept[t->nkept++] = i;
+    t->pcs[i].listed = 1;
+}
+void caf_record(VM *vm, const FrameRef *f, size_t n, size_t from, size_t rec) {
+    CafTables *t = vm->caf;
+    if (!rec || !t || !t->ready || t->stale || vm->gc.stack_aside_valid < from) {
+        if (vm->gc.stack_aside_valid > from) vm->gc.stack_aside_valid = from;
+        return;
+    }
+    gc_bits_clear(vm->gc.stack_aside, from, rec);
+    uint64_t walk = ++t->walks;
+    int whole = 1;
+    uint64_t recent[4] = {UINT64_MAX, UINT64_MAX, UINT64_MAX, UINT64_MAX};
+    unsigned next_recent = 0;
+    for (size_t i = 0; i + 1 < n && whole; i++) {
+        if (f[i].closure && f[i].closure_slot) {
+            size_t c = (size_t)(f[i].closure_slot - vm->stack);
+            if (c < rec) vm->gc.stack_aside[c >> 6] |= (uint64_t)1 << (c & 63);
+        }
+        if (f[i].func >= t->nfuncs) continue;
+        uint64_t key = ((uint64_t)f[i].func << 32) | f[i].pc;
+        if (recent[0] == key || recent[1] == key || recent[2] == key || recent[3] == key) continue;
+        recent[next_recent++ & 3] = key;
+        PcTable *pt = pc_table(vm, t, f[i].func, f[i].pc);
+        if (!pt) { whole = 0; break; }
+        if (pt->low >= from && pt->low_walk != walk) {
+            pt->low = f[i].base;
+            pt->low_walk = walk;
+            kept_add(t, (uint32_t)(pt - t->pcs), &whole);
+        }
+    }
+    if (!whole) { vm->gc.stack_aside_valid = from; return; }
+    uint32_t m = 0;
+    for (uint32_t k = 0; k < t->nkept; k++) {
+        PcTable *pt = &t->pcs[t->kept[k]];
+        if (pt->low >= from && pt->low_walk != walk) { pt->low = SIZE_MAX; pt->listed = 0; continue; }
+        t->kept[m++] = t->kept[k];
+    }
+    t->nkept = m;
+    vm->gc.stack_aside_valid = rec;
+}
 
 /* The frames' tables taken (visit: the collector's), a frame that waits
    from where its callee returns to, the one that runs all of its
    function's; and, where defer, their closures set aside. A closure only
    the frames hold runs only from where they wait; a suspension's code
    runs in its suspension under evaluation, which runs no other way, and
-   a closure taken last is marked as it would be first. */
+   a closure taken last is marked as it would be first. The frames below
+   the slots the walk decodes again (gc_stack_frames: those that have not
+   run since the stack's summary was made) are the summary's: its tables
+   whose lowest frame is among them, and its closures. */
 void caf_frames(VM *vm, void (*visit)(VM *, Value *), int defer) {
     CafTables *t = vm->caf;
-    FrameRef *f; size_t n = vm_frames_from(vm, 0, &f);
-    reuse_f = f; reuse_n = n; reuse_on = 1;
+    size_t from;
+    FrameRef *f; size_t n = gc_stack_frames(vm, &f, &from, vm->gc.stack_aside_valid);
+    reuse_f = f; reuse_n = n; reuse_from = from; reuse_on = 1;
     t->frames_walked += n;
     naside = 0;
-    if (defer && capaside < n) {
-        size_t cap = capaside ? capaside : 64;
-        while (cap < n) cap *= 2;
-        CafAside *a = realloc(aside, cap * sizeof *a);
-        if (a) { aside = a; capaside = cap; }
+    if (defer && capaside < n) aside_room(n);
+    if (from) {
+        for (uint32_t k = 0; k < t->nkept; k++) {
+            PcTable *pt = &t->pcs[t->kept[k]];
+            if (pt->low >= from || pt->epoch >= t->epoch) continue;
+            pt->epoch = t->epoch;
+            t->frames_taken++;
+            take(vm, t, pt->bits, visit);
+        }
+        if (defer)
+            for (size_t w = 0; w << 6 < from; w++) {
+                uint64_t x = vm->gc.stack_aside[w];
+                if ((w + 1) << 6 > from) x &= ((uint64_t)1 << (from & 63)) - 1;
+                for (; x; x &= x - 1) {
+                    Value *slot = &vm->stack[(w << 6) + (size_t)__builtin_ctzll(x)];
+                    if (!val_is_ptr(*slot) || (naside + n >= capaside && !aside_room(2 * capaside + 64))) continue;
+                    CafAside *a = &aside[naside++];
+                    a->slot = slot; a->root = NULL; a->was = *slot;
+                    *slot = mk_unit();
+                }
+            }
     }
     /* the last few (function, pc) taken, a mutual recursion's frames
        coming back to them: a frame of one of them is no new table */
@@ -419,6 +526,29 @@ void caf_frames(VM *vm, void (*visit)(VM *, Value *), int defer) {
         t->frames_taken++;
         take(vm, t, pt->bits, visit);
     }
+    /* the summary's part made again, as gc_stack_roots makes its bits */
+    if (vm->frame_live) {
+        size_t rec = n ? f[n - 1].head : 0;
+        if (rec > vm->sp || (rec && !gc_stack_room(vm, rec))) rec = 0;
+        caf_record(vm, f, n, from, rec);
+    }
+}
+
+/* --gc-verify (copy.c, gc_stack_check): every frame of f[0, n) below the
+   slot to, which the summary has, waits where the summary keeps a table
+   whose lowest frame is no higher */
+const char *caf_stack_check(VM *vm, const FrameRef *f, size_t n, size_t to) {
+    CafTables *t = vm->caf;
+    if (!t->ready) return NULL;
+    for (size_t i = 0; i + 1 < n && f[i + 1].head <= to; i++) {
+        if (f[i].func >= t->nfuncs) continue;
+        const PcTable *pt = NULL;
+        for (uint32_t j = t->pcfirst[f[i].func]; j; j = t->pcs[j - 1].next)
+            if (t->pcs[j - 1].pc == f[i].pc) { pt = &t->pcs[j - 1]; break; }
+        if (!pt) return "a frame below the frames that ran whose table the stack's summary does not have";
+        if (!pt->listed || pt->low > f[i].base) return "a frame below the frames that ran whose table the stack's summary does not keep";
+    }
+    return NULL;
 }
 
 /* the closures caf_frames set aside put back, the last first (a slot set
