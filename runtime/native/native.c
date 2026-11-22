@@ -320,7 +320,7 @@ typedef struct Options {
     size_t heap, gc_stress, heap_fill, heap_limit, equality_work, nursery, nursery_max;
     int old_kind;
     int stats, count, emulate_fork, checked, gc_verify, gc_compact, gc_stress_cycles, low_pause, nursery_max_set;
-    int gc_stress_full, caf_mode;
+    int gc_stress_full, caf_mode, heap_stack;
     char *restore, *gc_log;
     size_t intinf_bits, intinf_memory;
     int intinf_mode, intinf_stats, intinf_given;
@@ -359,6 +359,13 @@ static void options(const char *text, const char *where, Options *o) {
                                                                 || strcmp(words[i + 1], "on") == 0)) {
             i++;
             o->caf_mode = strcmp(words[i], "off") == 0 ? CAF_MODE_OFF : strcmp(words[i], "on") == 0 ? CAF_MODE_ON : CAF_MODE_AUTO;
+        }
+        else if (strcmp(w, "--heap-stack") == 0 && i + 1 < n) {
+            const char *m = words[++i];
+            if (strcmp(m, "off") == 0) o->heap_stack = HEAP_STACK_OFF;
+            else if (strcmp(m, "roots") == 0) o->heap_stack = HEAP_STACK_ROOTS;
+            else if (strcmp(m, "all") == 0) o->heap_stack = HEAP_STACK_ALL;
+            else { fprintf(stderr, "runevm: %s: --heap-stack takes off, roots or all, not %s\n", where, m); exit(2); }
         }
         else if (strcmp(w, "--heap-size") == 0 && i + 1 < n && size_arg(words[i + 1], &o->heap)) {
             if (o->heap < 4096) o->heap = 4096;
@@ -402,7 +409,7 @@ static void options(const char *text, const char *where, Options *o) {
             strcpy(*to, words[++i]);
         } else {
             fprintf(stderr, "runevm: %s: %s is not an option of a native program "
-                    "(--count, --stats, --heap-size N, --heap-limit N, --equality-work N, --heap-fill P, --gc-stress N, --nursery N, --nursery-max N, --gc G, --old-space S, --gc-verify, --gc-compact, --gc-stress-cycles, --gc-stress-full, --caf-tables M, --checked, --emulate-fork, "
+                    "(--count, --stats, --heap-size N, --heap-limit N, --equality-work N, --heap-fill P, --gc-stress N, --nursery N, --nursery-max N, --gc G, --old-space S, --gc-verify, --gc-compact, --gc-stress-cycles, --gc-stress-full, --caf-tables M, --heap-stack M, --checked, --emulate-fork, "
                     "--restore FILE, --gc-log FILE, --intinf=MODE, --intinf-max-bits N, --intinf-gmp-memory N, --intinf-stats)\n", where, w);
             exit(2);
         }
@@ -448,6 +455,7 @@ int main(int argc, char **argv) {
         vm->gc.stress_cycles = o.gc_stress_cycles;
         vm->gc.stress_full = o.gc_stress_full;
         vm->caf_mode = o.caf_mode;
+        vm->gc.heap_stack = o.heap_stack;
         vm->intinf_max_bits = o.intinf_bits; vm->intinf_gmp_memory = o.intinf_memory;
         vm->intinf_mode = o.intinf_mode; vm->intinf_stats = o.intinf_stats;
         int ok = child ? vm_resume(vm, argv[2], err, sizeof err) : vm_restore(vm, o.restore, err, sizeof err);
@@ -521,6 +529,7 @@ int main(int argc, char **argv) {
     vm->gc.stress_cycles = o.gc_stress_cycles;
     vm->gc.stress_full = o.gc_stress_full;
     vm->caf_mode = o.caf_mode;
+    vm->gc.heap_stack = o.heap_stack;
     heap_nursery(vm, o.nursery);
     if (o.gc_log) heap_log_open(vm, o.gc_log);
 

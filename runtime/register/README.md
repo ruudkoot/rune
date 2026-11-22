@@ -138,7 +138,10 @@ the last time emptied).
 The walks of the collections and of the barrier (`vm_frames_from`,
 `reg_barrier_pass`) step down without a call: a return word one of the
 two they met last, as a deep recursion's frames are, or one the cache
-holds, is read in line. Of a header the collector scans
+holds, is read in line. A full collection's walk, as a minor one's, goes
+down to the lowest frame that has run since the last collection, and takes
+the roots of the frames below from the stack's summary that the walks keep
+(`gc/copy.c`; docs/runtime.md, *The roots*). Of a header the collector scans
 the closure alone, made `unit` where the frame's function does not read
 one, so that it keeps nothing alive, and makes `unit` the info word of a
 frame compiled code called, which does not write it, where the slot

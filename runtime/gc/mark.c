@@ -206,6 +206,7 @@ static inline void mark_with_tables_as(VM *vm, int guard) {
         else { *a[i].root = mark_obj(vm, *a[i].root); o = *a[i].root; }
         if (o && caf_runs(o)) caf_only_add(o);
     }
+    caf_aside_bits(vm, mark_value);
     while (vm->gc.nqueue) {
         Obj *o = vm->gc.queue[--vm->gc.nqueue];
         if (caf_runs(o) && !caf_only_has(o) && caf_code_due(o)) caf_code(vm, o, caf_late_global);

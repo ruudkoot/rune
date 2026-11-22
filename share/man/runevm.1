@@ -74,6 +74,17 @@ percent of it is in use, 1 to 100 (default 50). A lower
 .I P
 makes fewer collections for more memory.
 .TP
+.BI \-\-heap\-stack " M"
+What of the value stack the heap's size counts as live data beside the
+heap's:
+.B off
+(the default),
+.B roots
+(the slots the last full collection took as roots) or
+.B all
+(every slot). A deep stack then makes fewer full collections, for a larger
+heap.
+.TP
 .BI \-\-gc\-stress " N"
 Collect before every
 .IR N th
