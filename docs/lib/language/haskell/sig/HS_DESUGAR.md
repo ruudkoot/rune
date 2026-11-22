@@ -6,7 +6,7 @@
 | --- | --- |
 | Status | required |
 | Implementations | 1 |
-| Documentation | 14 of 14 entries documented |
+| Documentation | 15 of 15 entries documented |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar\_sig.sml](../../../../../lib/language/haskell/desugar_sig.sml) |
 
@@ -81,6 +81,7 @@ to 15), the raisers (HsDsCore.raisers) and the leaves' values.](#units-m21-----a
 signature HS_DESUGAR =
 sig
   type <a href="#type-module_">module_</a> = {<a href="#fld-module_.id">id</a> : string, <a href="#fld-module_.ast">ast</a> : HsAst.module, <a href="#fld-module_.library">library</a> : bool}
+  val <a href="#val-generalisedselectors">generalisedSelectors</a> : bool ref
   val <a href="#val-program">program</a> : {<a href="#fld-program.modules">modules</a> : module_ list, <a href="#fld-program.groups">groups</a> : string list list, <a href="#fld-program.infer">infer</a> : HsInfer.env, <a href="#fld-program.evidence">evidence</a> : HsEvidence.table,
                  <a href="#fld-program.derived">derived</a> : (string * string * HsAst.decl list) list, <a href="#fld-program.prelude">prelude</a> : string * string -&gt; string option,
                  <a href="#fld-program.entity">entity</a> : string * string * string -&gt; string, <a href="#fld-program.runtime">runtime</a> : Core.program, <a href="#fld-program.leaves">leaves</a> : (string * string list) list,
@@ -132,6 +133,21 @@ resolved, and whether it is the library's.
 | <a name="fld-module_.id"></a>`id` | `string` |  |
 | <a name="fld-module_.ast"></a>`ast` | `HsAst.module` |  |
 | <a name="fld-module_.library"></a>`library` | `bool` |  |
+
+### <a name="val-generalisedselectors"></a>`generalisedSelectors`
+
+```sml
+val generalisedSelectors : bool ref
+```
+
+[`generalisedSelectors`](#val-generalisedselectors): whether a local generalised pattern binding
+takes the tuple form (`rhc --selectors=generalised`); false by default.
+
+A binding the checker generalised, of two variables or more, is then
+one tuple of its variables' components at every type, as its value is
+one suspension, and each variable that tuple's selector at its own
+types, marked (D17's C for a generalised binding); without it each
+variable is a lazy match of its own (rule (d)).
 
 ### <a name="val-program"></a>`program`
 

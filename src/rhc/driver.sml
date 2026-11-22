@@ -178,6 +178,9 @@ struct
        --unfoldings at -O2 writes: an entry with them shares with none
        without *)
     @ (if !RhcOptions.unfoldings then [("sections", "unfoldings")] else [])
+    (* a generalised binding's tuple form (--selectors=generalised), which
+       changes a unit's Core: likewise *)
+    @ (if !HsDesugar.generalisedSelectors then [("selectors", "generalised")] else [])
 
   (* A module's header kept in the store: by the name it is read for, the
      way it is read and its text's hash, not by its file (ruling 67), so a

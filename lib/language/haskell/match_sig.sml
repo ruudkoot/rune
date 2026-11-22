@@ -64,8 +64,11 @@ sig
   val selector : string * Core.ty * (string * Core.ty) list * int -> HsDsCore.texp
 
   (* `marks (t, tupleTy, vs, body)` is `body` after each of the selectors
-     `vs` of the tuple `t` is marked one for the collector (sel_mark,
-     the VM's thunk_selector). *)
+     `vs` of the tuple `t` is marked one for the collector (sel_mark, the
+     VM's thunk_selector).
+
+     Only those `body` names are marked: one nothing names Mid drops,
+     unless a mark names it. *)
   val marks : string * Core.ty * (string * Core.ty) list * HsDsCore.texp -> HsDsCore.texp
 
   (* `markFields (a, t, fs, body)` is `body` after each selector of `fs`
@@ -73,7 +76,8 @@ sig
      `t`.
 
      Each of `fs` is the field's index and the selector's Core name and
-     type. *)
+     type. A selector nothing names is to be left out: Mid drops it, unless
+     a mark names it. *)
   val markFields : Core.atom * Core.ty * (int * string * Core.ty) list * HsDsCore.texp -> HsDsCore.texp
 
   (* `oneField p` is the constructor's Core name and the field's index where

@@ -6,7 +6,7 @@
 | --- | --- |
 | Signature | [`HS_DESUGAR`](../sig/HS_DESUGAR.md) |
 | Status | required |
-| Members | 14 |
+| Members | 15 |
 | Tests | not listed |
 | Source | [lib/language/haskell/desugar.sml](../../../../../lib/language/haskell/desugar.sml) |
 
@@ -26,6 +26,7 @@ What each means is on [`HS_DESUGAR`](../sig/HS_DESUGAR.md); the types are this s
 | type | [`learned`](../sig/HS_DESUGAR.md#type-learned) | *a type of its own* |
 | type | [`library`](../sig/HS_DESUGAR.md#type-library) | *a type of its own* |
 | type | [`module_`](../sig/HS_DESUGAR.md#type-module_) | `{ast : HsAst.module, id : string, library : bool}` |
+| val | [`generalisedSelectors`](../sig/HS_DESUGAR.md#val-generalisedselectors) | `bool ref` |
 | val | [`learnMore`](../sig/HS_DESUGAR.md#val-learnmore) | `learned * interface -> learned` |
 | val | [`learnedNone`](../sig/HS_DESUGAR.md#val-learnednone) | `Core.decl list -> learned` |
 | val | [`library`](../sig/HS_DESUGAR.md#val-library) | `{derived : (string * string * HsAst.decl list) list, entity : string * string * string -> string, evidence : HsEvidence.table, groups : string list list, infer : HsInfer.env, leaves : (string * string list) list, modules : module_ list, prelude : string * string -> string option, runtime : Core.decl list} -> library` |

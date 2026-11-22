@@ -5,7 +5,9 @@
 -- compiled code's: interpreted, at tier 1, at tier 2 and under --deopt-stress the program counts the same
 -- instructions at the default nursery (hs/selectors/count, Oracles.jitOneWith). And bindings of one variable of a
 -- pair a variable holds, (_, qo) = q and ~(_, us) matched against u, each its field's selector of the pair; and a
--- pattern binding of the top level, (lows, highs), whose selectors are CAFs that capture the pair's.
+-- pattern binding of the top level, (lows, highs), whose selectors are CAFs that capture the pair's; and a pattern
+-- binding one of whose variables nothing names, which is not marked, so that its selector is not made; and a
+-- recursive group, whose selectors take the tuple's suspension itself, not its cell.
 module Main (main) where
 
 pairs :: Int -> [(Int, Int)]
@@ -22,6 +24,10 @@ fields :: String -> [String]
 fields s = let (a, rest) = break (== ',') s in a : case rest of { [] -> []; (_ : r) -> fields r }
 
 (lows, highs) = span (< 7000) [1 .. 9000 :: Int]
+
+firsts :: Int -> Int -> Int
+firsts 0 acc = acc
+firsts k acc = let (a, _b) = properFraction (fromIntegral k / 4 :: Double) in acc `seq` firsts (k - 1) (acc + a)
 
 main :: IO ()
 main = do
@@ -43,3 +49,6 @@ main = do
   case u of
     ~(_, us) -> print (sum (fst u), sum us)
   print (sum lows, length highs)
+  print (firsts 20000 0)
+  let (ys, m, k) = ([1 .. 3000 * m], 1 :: Int, length "abcdef")
+  print (sum ys, k)
