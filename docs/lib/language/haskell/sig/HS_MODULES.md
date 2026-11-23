@@ -62,7 +62,7 @@ sig
   type <a href="#type-solved">solved</a> = {<a href="#fld-solved.exports">exports</a> : entity list HsStringMap.map, <a href="#fld-solved.scopes">scopes</a> : scope HsStringMap.map,
                  <a href="#fld-solved.errors">errors</a> : (HsSource.span * string) list}
   val <a href="#val-solve">solve</a> : {<a href="#fld-solve.group">group</a> : unit_ list, <a href="#fld-solve.exportsof">exportsOf</a> : string -&gt; entity list, <a href="#fld-solve.defof">defOf</a> : string -&gt; def option,
-               <a href="#fld-solve.universe">universe</a> : entity list, <a href="#fld-solve.fixpoint">fixpoint</a> : fixpoint} -&gt; solved
+               <a href="#fld-solve.universe">universe</a> : unit -&gt; entity list, <a href="#fld-solve.fixpoint">fixpoint</a> : fixpoint} -&gt; solved
 end
 </pre>
 
@@ -248,7 +248,7 @@ identity, and the errors of the group's export and import lists.
 
 ```sml
 val solve : {group : unit_ list, exportsOf : string -> entity list, defOf : string -> def option,
-             universe : entity list, fixpoint : fixpoint} -> solved
+             universe : unit -> entity list, fixpoint : fixpoint} -> solved
 ```
 
 `solve {group, exportsOf, defOf, universe, fixpoint}` solves the
@@ -257,8 +257,9 @@ exports and the scopes of the strongly connected group of modules
 
 `exportsOf id` gives the exports of a module outside the group,
 solved before it, `defOf` gives the definition of every entity of the
-program, by [`key`](#val-key), and `universe` is every entity of the program,
-from which the greatest fixpoint starts. The errors are
+program, by [`key`](#val-key), and `universe` gives every entity of the program,
+from which the greatest fixpoint starts: it is asked for there alone,
+so that the least fixpoint does not pay for it. The errors are
 those of chapter 5: an export of what is not in scope, of a module
 that is not imported, two entities exported under one name, an import
 of what a module does not export.
@@ -268,7 +269,7 @@ of what a module does not export.
 | <a name="fld-solve.group"></a>`group` | `unit_ list` |  |
 | <a name="fld-solve.exportsof"></a>`exportsOf` | `string -> entity list` |  |
 | <a name="fld-solve.defof"></a>`defOf` | `string -> def option` |  |
-| <a name="fld-solve.universe"></a>`universe` | `entity list` |  |
+| <a name="fld-solve.universe"></a>`universe` | `unit -> entity list` |  |
 | <a name="fld-solve.fixpoint"></a>`fixpoint` | `fixpoint` |  |
 
 ---

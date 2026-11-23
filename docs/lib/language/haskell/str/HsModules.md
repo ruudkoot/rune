@@ -35,7 +35,7 @@ What each means is on [`HS_MODULES`](../sig/HS_MODULES.md); the types are this s
 | val | [`lookup`](../sig/HS_MODULES.md#val-lookup) | `scope * space * string * string -> entity list` |
 | val | [`moduleName`](../sig/HS_MODULES.md#val-modulename) | `string -> string` |
 | val | [`scopeKey`](../sig/HS_MODULES.md#val-scopekey) | `space * string * string -> string` |
-| val | [`solve`](../sig/HS_MODULES.md#val-solve) | `{defOf : string -> def option, exportsOf : string -> entity list, fixpoint : fixpoint, group : unit_ list, universe : entity list} -> solved` |
+| val | [`solve`](../sig/HS_MODULES.md#val-solve) | `{defOf : string -> def option, exportsOf : string -> entity list, fixpoint : fixpoint, group : unit_ list, universe : unit -> entity list} -> solved` |
 
 ---
 

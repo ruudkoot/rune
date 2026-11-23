@@ -154,9 +154,10 @@ struct
     let
       val defTable = #defs s
       fun defOf k = M.find (defTable, k)
-      (* every entity, which the greatest fixpoint of exports starts from
-         (Mo.solve) and the least reads nothing of *)
-      val universe = case fixpoint of Mo.Greatest => List.concat (List.rev (#universe s)) | Mo.Least => []
+      (* every entity, which the greatest fixpoint of exports starts from:
+         Mo.solve asks for it there alone, so that the least pays nothing
+         for it and the fixpoint is chosen in one place *)
+      fun universe () = List.concat (List.rev (#universe s))
       val fixTable = #fixities s
       fun isLibrary (span : HsSource.span) = getOpt (M.find (#library s, #file span), false)
       val exports = ref (#exports s)
