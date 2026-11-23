@@ -2966,8 +2966,8 @@
     {
      "kind": "val",
      "name": "solve",
-     "spec": "val solve : {group : unit_ list, exportsOf : string -> entity list, defOf : string -> def option,\n             universe : entity list, fixpoint : fixpoint} -> solved",
-     "doc": "`solve {group, exportsOf, defOf, universe, fixpoint}` solves the\nexports and the scopes of the strongly connected group of modules\n`group`.\n\n`exportsOf id` gives the exports of a module outside the group,\nsolved before it, `defOf` gives the definition of every entity of the\nprogram, by `key`, and `universe` is every entity of the program,\nfrom which the greatest fixpoint starts. The errors are\nthose of chapter 5: an export of what is not in scope, of a module\nthat is not imported, two entities exported under one name, an import\nof what a module does not export.\n\n",
+     "spec": "val solve : {group : unit_ list, exportsOf : string -> entity list, defOf : string -> def option,\n             universe : unit -> entity list, fixpoint : fixpoint} -> solved",
+     "doc": "`solve {group, exportsOf, defOf, universe, fixpoint}` solves the\nexports and the scopes of the strongly connected group of modules\n`group`.\n\n`exportsOf id` gives the exports of a module outside the group,\nsolved before it, `defOf` gives the definition of every entity of the\nprogram, by `key`, and `universe` gives every entity of the program,\nfrom which the greatest fixpoint starts: it is asked for there alone,\nso that the least fixpoint does not pay for it. The errors are\nthose of chapter 5: an export of what is not in scope, of a module\nthat is not imported, two entities exported under one name, an import\nof what a module does not export.\n\n",
      "page": "sig/HS_MODULES.md#val-solve"
     }
    ]

@@ -87,11 +87,12 @@ sig
 
      `exportsOf id` gives the exports of a module outside the group,
      solved before it, `defOf` gives the definition of every entity of the
-     program, by `key`, and `universe` is every entity of the program,
-     from which the greatest fixpoint starts. The errors are
+     program, by `key`, and `universe` gives every entity of the program,
+     from which the greatest fixpoint starts: it is asked for there alone,
+     so that the least fixpoint does not pay for it. The errors are
      those of chapter 5: an export of what is not in scope, of a module
      that is not imported, two entities exported under one name, an import
      of what a module does not export. *)
   val solve : {group : unit_ list, exportsOf : string -> entity list, defOf : string -> def option,
-               universe : entity list, fixpoint : fixpoint} -> solved
+               universe : unit -> entity list, fixpoint : fixpoint} -> solved
 end

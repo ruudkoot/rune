@@ -125,7 +125,7 @@ struct
   fun itemsOf (s : entity M.map) = List.map #2 (M.listItems s)
   fun sameSet (a : entity M.map, b : entity M.map) = List.map #1 (M.listItems a) = List.map #1 (M.listItems b)
 
-  fun solve {group : unit_ list, exportsOf, defOf : string -> def option, universe : entity list, fixpoint} : solved =
+  fun solve {group : unit_ list, exportsOf, defOf : string -> def option, universe : unit -> entity list, fixpoint} : solved =
     let
       val errors : (HsSource.span * string) list ref = ref []
       val reporting = ref false
@@ -307,7 +307,7 @@ struct
         case fixpoint of
           Least => List.foldl (fn (u : unit_, s) => M.insert (s, #id u, M.empty)) M.empty group
         | Greatest =>
-            let val everything = setOf universe
+            let val everything = setOf (universe ())
             in List.foldl (fn (u : unit_, s) => M.insert (s, #id u, everything)) M.empty group end
 
       fun round state =
