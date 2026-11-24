@@ -1,29 +1,38 @@
 # Roadmap: Haskell 2010 for rhc, its extensions, and how rhc tracks language settings
 
-**rhc gains a second edition, Haskell 2010, chosen per program by `--language`, with each module's language a record
-of features that every stage reads and every unit key carries. The 2010 Report makes 18 changes, not the 4 its preface
-lists: 13 to the language, the rest to the libraries, the Prelude, the text and its numbering; none but the FFI
-touches anything below Core. Its library is 30 modules, 26 of them prose without code. Its foreign function interface
-is required and needs three small changes of Rune and one large one, on which the owner decides. Beyond 2010's own
-six, 66 more of GHC's 148 LANGUAGE names are recommended, 72 in all: none needs OutsideIn(X), and those that touch
-types fit the Haskell 98 checker extended by a deferred store of class constraints, as prototypes of tiers T1, T2,
-T4a and T5 showed (T3 and T8 were not prototyped). 98 mode stays Haskell 98: it takes one alignment, `genericLength`'s
-type (D13a); three recommended options touch it at its edges (D2: a file naming `Haskell2010` is read as 2010; D6:
-`--print` keeps header pragmas; D8: `--names=greatest` stops reaching the library, one pinned test going from 958 to
-955 pairs); and M18 fixes two checker defects. Each needs the owner's word.** Nothing here is decided; the owner
-decides at G0.
+**The owner decided this roadmap on 2026-11-24. rhc gains a second edition, Haskell 2010, chosen per program by
+`--language`, with each module's language a record of features that every stage reads and every unit key carries. The
+2010 Report makes 18 changes, not the 4 its preface lists: 13 to the language, the rest to the libraries, the Prelude,
+the text and its numbering; of the language's, none but the FFI touches anything below Core. Pattern guards' tests feed
+Sestoft's trees at `-O2`, held to the plain translation by a differential test (D14). The library is 30 modules, 26 of
+them prose without code, in `share/rhc/haskell2010` beside a runtime layer that 98's library shares (D25); `isSpace` and
+the 2010 lexer read Unicode's White_Space (D26). The foreign function interface is required: Rune takes three small
+changes for it and a large one, raw addresses for `Ptr` (D27, D29); the FFI runs on Core's interpreter as well as
+compiled (D33); and a callback outside a foreign call is refused as a recorded deviation (D31). `Int` wraps modulo 2^63
+in both modes, over new wrapping `int` primitives in Rune with `int` bit primitives beside them, and cheap eagerness may
+speculate its arithmetic (D21, D22). Beyond 2010's own six, 66 more of GHC's 148 LANGUAGE names are taken, 72 in all:
+none needs OutsideIn(X), and those that touch types fit the Haskell 98 checker extended by a deferred store of class
+constraints, as prototypes of tiers T1, T2, T4a and T5 showed (T3 and T8 were not prototyped); for T5, Mid gains rank-N
+types, a large change of Rune's IR (D37). CPP without `#include` joins the oracles' corpus once rhc has CPP (D40), and
+rhc's hints name a feature in 98 modules too (D11). D11, D14, D21, D22, D25, D26, D31, D33, D37 and D40 go against the
+recommendation, and each says what it changes. Six decisions change 98 mode, each by what its record says: D2, a file
+naming `Haskell2010` read as 2010; D6, `--print` keeping header pragmas; D8, `--names=greatest` no longer reaching the
+library, one pinned test going from 958 pairs to 955; D11, 98's refusals gaining the hint line; D13a, `genericLength`'s
+type; and D21, `Int` wrapping, every overflow test flipped. Six change Rune: D21's and D22's `int` primitives, D26's
+White_Space table, D27's three FFI changes, D29's address family and D37's rank-N types in Mid.**
 
 - **The 2010 language is front-end work.** Pattern guards, empty data declarations, DoAndIfThenElse, n+k removed,
   relaxed dependency analysis, `foreign` reserved, hierarchical names and the LANGUAGE pre-scan were prototyped in 350
   lines of code; nothing below the front end changed, and 98 mode stayed byte-identical over 591 programs, the run
   set and 633 refusals (E3). rhc's fixity resolution was already 2010's algorithm.
-- **The library is mostly prose.** The Prelude's code is 98's but for three renamed imports (E1); around it, 26 of 30
-  modules come without code, so rhc writes them, from 98's code where a module continues and from `base` 4.3, whose
-  documentation the chapters are, where the prose is thin (E9). About 4,660 lines of Haskell, half of them Foreign.*.
-  Two of the four printed modules do not compile as printed (*Found while writing*).
+- **The library is mostly prose.** The Prelude's code is 98's but for three renamed imports (E1, and in the Report's
+  sources: E1's second part); around it, 26 of 30 modules come without code, so rhc writes them, from 98's code where a
+  module continues and from `base` 4.3, whose documentation the chapters are, where the prose is thin (E9). About
+  4,660 lines of Haskell, half of them Foreign.*. Two of the four printed modules do not compile as printed (*Found
+  while writing*).
 - **The FFI** carries all four kinds of `ccall` import over Rune's libffi bridge, end to end, with the optimiser keeping
-  IO calls in order and pure imports lazy (E10). Rune is asked for three small changes and, for `Ptr` as an address, a
-  large one to its safety model (D29). `foreign export` needs an embedding API Rune lacks: it waits only on the owner's
+  IO calls in order and pure imports lazy (E10). Rune takes three small changes and, for `Ptr` as an address, a large
+  one to its safety model (D27, D29). `foreign export` needs an embedding API Rune lacks: it is left out by the owner's
   word, since leaving out a required feature is no ground for a departure (D28).
 - **One record of language settings** replaces the per-run refs and the hard-coded `haskell98`, with the library a
   descriptor per edition (E4). Its resolution mirrors GHC's, written as data and checked on 137 probes (132 agree; the
@@ -38,23 +47,64 @@ decides at G0.
   (OutsideIn), kinds, and meta-programming. Even so, every recommended extension admits 28.3% of Stackage's packages
   whole: this roadmap does not make Hackage compile (E7).
 - **98 mode and the 2010 text:** of 232 readings, deviations, overlay entries and rulings, two pass the brief's
-  test and one is recommended, `genericLength` (D13a); two more differ but would override 98's plain text, among them
-  `isUpper` of a caseless letter, the case that looked arbitrary and was rhc following 98's text (E2).
+  test and one is taken, `genericLength` (D13a); two more differ but would override 98's plain text, among them
+  `isUpper` of a caseless letter, the case that looked arbitrary and was rhc following 98's text (E2). R54, `Int`
+  overflow, is aligned by D21's decision, on the reading that chapter 18 narrows 6.4.
 
-**What the owner decides at G0.** All 44 decisions, of which these need a judgement rather than evidence: D2, D3, D6,
-D7 (C8), D8 (`--names=greatest` changes one pinned test), D13a-D13d (98 mode), D16 (a reading of 4.5.1), D21 (`Int`
-modulo 2^n in 2010 mode), D23 (the library's cycle), D27 (stdcall off Windows), D28 (`foreign export`), D29 (`Ptr`
-and Rune's safety model), D31 (callbacks outside a call), D32 (Foreign.C.Types' constructors), D33, D38 (98's errata
-in 2010's text); and, within D35 and D37, the fundep coverage regime and how T5 reaches Mid. Four recommended options
-change 98 mode: D2, D6, D8 and D13a; every option that would is said in bold where it is argued. Four findings about
-98 mode are the owner's too: two checker defects at the pin, and two readings with surprising results, R20's refusal
-of an unsigned `main = return ()` (in 2010 mode too) and R41's derived `Show` of records (*Found while writing*).
+**What the owner decided against the recommendation** (each decision's record says what it changes):
+- **D11 B:** hints that name a feature in 98 modules too: 98's refusals gain the hint line, its verdicts and bytecode
+  held (M5).
+- **D14 C:** at `-O2` a pattern guard's test feeds Sestoft's tree; A's translation stays the reference and what `-O0`
+  and `-O1` compile, and a differential test holds the two to the same output (M8).
+- **D21 C with B2, "also cheap eagerness":** `Int` wraps modulo 2^63 in both modes over wrapping `int` primitives in
+  Rune, which join cheap eagerness's whitelist; 98's overflow tests flip, and the 98 roadmap's D22 A is superseded
+  (M11).
+- **D22 B:** `int` bit primitives in Rune under Bits on Int (M14).
+- **D25 B:** the runtime layer, PreludeRuntime and PreludeEnum, in a third directory both libraries name; 98's bytes
+  held (M12).
+- **D26 (ii):** `isSpace` is Unicode's White_Space, from a table in `lib/unicode`, and the 2010 lexer's `uniWhite` with
+  it (M7, M13).
+- **D31 B:** a callback outside a call is refused as a deviation, on the ground "ambiguous" (M15).
+- **D33 (ii):** the FFI on Core's interpreter too, about 250 lines (M15, M16).
+- **D37 (b):** rank-N types in Mid, predicative, and no boxing in CoreToMid: a large Rune change, the first of M26.
+- **D40 B:** CPP without `#include` admitted to the oracles once M20 lands, 110 more candidates (M2, M20).
+
+As recommended, with what the owner added or the reading since refined: D12, with M20 examining what a Haskell CPP can
+share with `lib/language/c`; D35's (iii), which the owner's papers show needs more conditions (below); D41, whose T5
+specification for HsLint is Serrano et al. 2020's section 4, not the sources first named; and D13b, D23, D32 and D38,
+whose records take what the Report's sources show, as D14's does (E1's second part, `results/E1b/`; E11's second part,
+`results/E11b/`).
+
+**Open with the owner (2026-11-24):**
+1. **D26:** does the lexer's alignment with `isSpace` apply to 98 mode too? Recommended: 2010 mode only, as 98's
+   `isSpace` stays Latin-1 (D13d).
+2. **M18's two 98-mode checker defects,** the Rule 1 case and the signature-generality case: fix them in M18?
+   Recommended: yes; both are refusals 98's text requires, which HsLint already makes at level 2.
+3. **R20 and R41:** leave an unsigned `main = return ()` refused, and records' derived `Show` parenthesised, as they
+   are? Recommended: leave both; R41 is a re-reading of 98's text the owner may want to take later.
+4. **The Report's unpublished corrections.** Its sources hold three: 2a78309 (`0**y` "is 1 if y is 0", 2011), ea28a8e
+   (5.6.1's "Haskell 98" made "Haskell", 2012) and 554480a (rule (s)'s side condition deleted, 2018, on branch
+   `h2010`); and the PDF carries 14de79f (the FFI grammar's `->`). Recommended: read 2010's text with them, as
+   editors' corrections, D38's way with 98's errata; D13b's IEEE result at a negative y stays N10's reading.
+5. **D35's (iii) as the papers require it:** per class, dependencies with one left side merged where the paper's Def.
+   19 holds; coverage broken only for a dependency full after merging and under Terminating Weak Coverage; Consistency
+   and Bound Variable named conditions; overlap pragmas refused on a class with dependencies. The lead's reading of
+   (iii), for the owner to confirm.
+6. **Implementation:** may the lead push an integration branch `haskell2010` to origin after each merge, as for
+   haskell98? And the worktrees `.worktrees/h10-base`, `h10-f`, `h10-a`, `h10-v` and `h10-n` and the drafts' 1.2 GB
+   of Hackage downloads: keep them until implementation ends (recommended), or remove them now?
+7. **D21 with D25:** 98's `Int` operations sit in PreludeRuntime, the layer D25 shares, and D23's cycle of 9 moves IO
+   names into 2010's PreludeRuntime, which is part of the Prelude's unit. Recommended: split the shared layer where
+   the two editions differ (a common part, an edition's part each), so that M12 moves it with 98's bytes held and M11
+   then moves them on purpose; the alternative accepts that 98's snapshot moves in M12.
+8. **D21 with D22:** both add `int` primitives to Rune, and each addition moves the instruction set's fingerprint, so
+   every `.rbc` changes. Recommended: land them together, in M11, so the fingerprint moves once.
 
 **Where it departs from the brief** (*What the brief gets wrong*): the library is per program and an edition pragma
 sets one module's rules (D1, D2); the default flips at G3, on the 2010 Report's exit, not when the extensions are done
-(D3); `foreign export` may wait, by the owner's word (D28); GHC2021 and GHC2024 are not accepted as editions. D29,
-the owner's call on Rune's safety model, holds G2's FFI. A 2010 clause tier adds 19% to 44% to `make check`'s CPU
-base (D41).
+(D3); `foreign export` waits, by the owner's word (D28); GHC2021 and GHC2024 are not accepted as editions. D29's
+change to Rune's safety model, which the owner took, is on G2's path. The 2010 clause tier adds about 19% to `make
+check`'s CPU base, shared by clause id (D41).
 
 **In what order.** Tracks T (tests), M (modes) and H (98 mode's fixes) start at once; F (the 2010 front end), L (the
 library) and V (the FFI) after M4's record; X (extensions) after M5, never gating G2 or G3. G1 is a 2010 hello with a
@@ -63,21 +113,27 @@ pattern guard from the 2010 snapshot; G2 the 2010 Report's exit; G3 the default 
 **What is not established.** No Rune change was built. The library's 3,470 new lines and the production sizes of the
 tiers are estimates (E9, E12). The corpora barely use 2010's own changes (pattern guards in 5 of 1,279 accept
 candidates: E8), so the 2010 table needs clause programs of its own. The 98-mode identity checks met no LANGUAGE
-pragma (*Testing and conformance*). The final build of E12's tiers was not run over the corpus.
+pragma (*Testing and conformance*). The final build of E12's tiers was not run over the corpus. D35's (iii) is
+tightened by a reading of its paper's conditions that no prototype tested (D35's record). Rank-N types in Mid were not
+prototyped: E12's T5 ran through Mid only where the simplifier had removed the polymorphic binder (D37).
 
 It was written on 2026-11-17 and 2026-11-21 against `haskell98` at `75ed95861`, and its citations stay there; the
-other session's 24 later commits are in *Where we are*. It lives on branch `haskell2010`.
+other session's 24 later commits are in *Where we are*. The decisions were recorded on 2026-11-24, when the owner
+reported the haskell98 work complete and merged into master; implementation starts from the tree of its day (*The
+milestones*). It lives on branch `haskell2010`.
 
 What it rests on:
 - **The code:** rhc at the pin, read and prototyped (*Where we are*; E3, E4, E10, E12, E13).
 - **Both Reports, clause by clause:** 5,259 rows of 2010 mapped to 98's 3,901 (E1), and every 98 choice set against
   2010's text (E2).
 - **Thirteen experiments by twelve agents** (*The experiments*), among them five prototypes kept as patches, a census
-  of 148 names, 49,394 Stackage modules, three oracles beside GHC and a 2010 shim for it, and the literature.
+  of 148 names, 49,394 Stackage modules, three oracles beside GHC and a 2010 shim for it, and the literature; after
+  the decisions, the papers the owner supplied (E11's second part) and the Report's sources (E1's second part).
 
 ## Status
 
-Not decided. G0, the owner's decisions, is next. No milestone has started.
+Decided on 2026-11-24; G0 passed; no milestone started. The decisions are in the table at the head of *Decisions*,
+every one taken, and the questions they leave are above (*Open with the owner*).
 
 | Milestone | Track | Size | Rests on | Status |
 |---|---|---|---|---|
@@ -91,13 +147,13 @@ Not decided. G0, the owner's decisions, is next. No milestone has started.
 | M8. Pattern guards | F | S | D14 | not started |
 | M9. Relaxed dependency analysis | F | S | D16, D10, D7 | not started |
 | M10. Hierarchical names in 2010 | F | S | D18, D8 | not started |
-| M11. Defaulting per edition; `Int` in 2010 | F | S | D20, D21 | not started |
+| M11. Defaulting per edition; `Int` wrapping in both modes, cheap eagerness | F | S to M | D20, D21 | not started |
 | M12. The 2010 Prelude and the printed modules | L | L | D23, D24, D25 | not started |
 | M13. The nine continuing modules | L | L | D24, D26 | not started |
 | M14. Data.Bits, Data.Int, Data.Word, System.* | L | L | D22, D21 | not started |
 | M15. The FFI in Core, and Rune's three small changes | V | M | D27, D31, D32 | not started |
 | M16. Foreign.*, Ptr, finalizers, StablePtr | V | L to XL | D29, D30, D33 | not started |
-| M17. `foreign export` and HsFFI.h, if taken | V | M | D28 | not started |
+| M17. `foreign export` and HsFFI.h: not taken (D28) | V | M | D28 | not in this roadmap |
 | M18. 98 mode: `genericLength` and two checker defects | H | S | D13a | not started |
 | M19. Front-end and T0 extensions | X | L | D35, D36, D7 | not started |
 | M20. CPP | X | M to L | D12 | not started |
@@ -106,7 +162,7 @@ Not decided. G0, the owner's decisions, is next. No milestone has started.
 | M23. T2, FunctionalDependencies | X | M | D34, D35 | not started |
 | M24. T3 | X | M to L | D34, D9, D36 | not started |
 | M25. T4a, existentials | X | L | D34, D37 | not started |
-| M26. T5, RankNTypes | X | L | D34, D37 | not started |
+| M26. Rank-N types in Mid, then T5, RankNTypes | X | L to XL | D34, D37 | not started |
 | M27. T8 | X | S | D35, D36, D10 | not started |
 | M28. The default flip | D | S | D3 | not started |
 | M29. Retire | D | S | | not started |
@@ -128,7 +184,7 @@ Report's uncompilable code. "At the pin" means rhc at
   `(3,3.5,[2])`; HsLint refuses it at lint level 2 (`mr.rule1.constrained`). HsLint is right
   (`results/E3/defects/rule1-signed/`, observed). The checker's Rule 1 code is untouched by the 24 commits after the
   pin, so the defect is very likely on `haskell98`'s tip too [deduced]. Not fixed at the pin; M18 fixes it on the
-  owner's word.
+  owner's word, open since 2026-11-24 and recommended (*Open with the owner*, 2).
 - **The checker accepts a signature more general than a non-simple pattern binding gives.** `p :: a -> a` with
   `(p, q) = (not, 'x')` compiles and prints `(False,'x')` in both modes; HsLint refuses it at level 2
   (`dec.sig.toogeneral`), as GHC refuses it (`results/D16-probes/`, observed). The checker unifies such a variable with
@@ -143,12 +199,17 @@ Report's uncompilable code. "At the pin" means rhc at
   (`src/rhc/graph.sml:122-138`), and the numbering of the library's fresh names reads that list
   (`src/rhc/names.sml:117-130`). A hierarchical library (`Data/Char.hs`) needs it to recurse [deduced].
 
-**In the 2010 Report** (the text of 2010-07-20; no errata to it were ever published: E1)
+**In the 2010 Report** (the HTML of 2010-07-20, the sources' commit 15bff26, and T10, the PDF of 2010-11-17, which
+carries one commit more; no errata to it were ever published: E1. The paths of the Report's sources are under
+`/home/ruud/haskell/haskell-report/report/`, read for E1's second part, `results/E1b/defects.tsv`)
 - **The preface lists 4 changes from 98; the text makes 18** (E1, Delta1-Delta18; T10:1287-1294).
 - **`0**y` "is 1 if y is 1, and 0 otherwise"** (T10:6389-6390): a misprint for "y is 0"; for a negative y it
-  contradicts IEEE either way (D13b).
+  contradicts IEEE either way (D13b). Corrected in the sources by the editor, 2a78309 of 2011-04-15, and never
+  published (`basic.verb:942`).
 - **Rule (s) of 3.17.3 names a variable it never uses:** "where y is a new variable" (T10:3438-3447). Erwig and
-  Peyton Jones's original binds the fall-through once.
+  Peyton Jones's original binds the fall-through once; the editor's simplification of 2010 (bc94554) copies `e'`
+  instead and left the line behind. Deleted on the sources' branch `h2010` in 2018 (554480a, `exps.verb:1579`), never
+  published.
 - **Two of the four printed library modules do not compile as printed.** Data.Maybe defines and exports a `maybe`
   beside the Prelude's (T10:13431-13440): GHC 9.4.7 reports an ambiguous occurrence (`results/E9/probes/MaybeClash.hs`),
   and hiding the Prelude's breaks every user of Data.Maybe (`results/E9/probes/maybeprobe/`). Data.Ratio's `Show`
@@ -170,7 +231,13 @@ Report's uncompilable code. "At the pin" means rhc at
   `lex`'s `_`; 10.5 keeps `qvar` in an export where 5.2 says `var` (E1; D38).
 - **Chapter 8's grammar and lists are short:** `chname` admits no digit (`x86_64.h`); `Word` is missing from 8.4.2's
   basic foreign types; re-initialising after `hs_exit` is required (N1).
-- **A leftover "Haskell 98"** in 5.6.1 (T10:5532).
+- **A leftover "Haskell 98"** in 5.6.1 (T10:5532), fixed in the sources in 2012 (ea28a8e, `modules.verb:710`) and
+  never published.
+- **"imported with a a static address import"** in Foreign.Ptr's FunPtr (T10:15627; `libs/Foreign-Ptr.tex:121-122`),
+  at every commit of the sources.
+- **10.5's copy of the FFI grammar sets the grammar's production arrow between `fatype` and `ftype`** (T10:10194;
+  `syntax-iso.verb:504`), where the function arrow `->` is meant: the editor fixed 8.4.2's copy on 2010-11-17 (14de79f,
+  `ffi.verb:404`, in T10 alone, T10:6880) and never this one; the HTML prints the production arrow in both chapters.
 
 **In GHC** (9.14.1's source and documents; 9.4.7's behaviour)
 - **9.4.7 under `-XHaskell2010` refuses two valid programs that `bugs.rst` does not list:** `1_000` with a variable
@@ -228,7 +295,7 @@ Report's uncompilable code. "At the pin" means rhc at
   `IO t` is applied, so `m` in `Monad m => m ()` meets no default (R20's reading). A direct probe shows the refusal and
   the signed program accepted (`results/verify/V2/r20/run.out`); E12 met it in GHC's GivenOverlapping test with T2 on
   (`results/E12/ghc/run-T2-on.tsv`). 2010 mode inherits it, its 4.5.5 being 98's text: a reading for the owner in both
-  modes.
+  modes, open with the owner since 2026-11-24, recommended left as it is (*Open with the owner*, 3).
 
 ## The request
 
@@ -254,6 +321,69 @@ The owner answered three questions about the campaign on 2026-11-17, before any 
 - **How much of Hackage to read**: its index, and the latest source of each package in the current Stackage LTS
   snapshot.
 - **Whether to push this branch**: no.
+
+The owner decided on 2026-11-24, in this message:
+
+> - the haskell98 work has been completed and merged into master
+> - additional reference material left at:
+>   - /mnt/h/Rune/haskell2010 (the requested papers)
+>   - /home/ruud/haskell/haskell-report (git checkout of the haskell report repo you could not access)
+>   - /home/ruud/haskell/haskell-2010-revised-report (a work-in-progress version of a future revision to the haskell report. explicitly not part of this roadmap as it is not finalized)
+> - record my decisions as follows:
+>   - D1: A(i) (as recommended)
+>   - D2: B (as recommended)
+>   - D3: A(i) (as recommended)
+>   - D4: A (as recommended)
+>   - D5: A(i) (as recommended)
+>   - D6: A, (i), (a) and (1) (as recommended)
+>   - D7: A(i) (as recommended)
+>   - D8: A (as recommended)
+>   - D9: A (as recommended)
+>   - D10: A (as recommended)
+>   - D11: B
+>   - D12: A (as recommended). consider reusing lib/language/c
+>   - D13a: A (as recommended)
+>   - D13b: A (as recommended)
+>   - D13c: A (as recommended)
+>   - D13d: A (as recommended)
+>   - D14: C. consider using A as an oracle to test against.
+>   - D15: A (as recommended)
+>   - D16: A(i) (as recommended)
+>   - D17: A (as recommended)
+>   - D18: A (as recommended)
+>   - D19: A (as recommended)
+>   - D20: A (as recommended)
+>   - D21: wrapping ints in both haskell 98 and 2010, with wrapping int primitives in rune (C + B2). also cheap eagerness.
+>   - D22: B
+>   - D23: A (as recommended)
+>   - D24: A (as recommended)
+>   - D25: B
+>   - D26: A, with (ii), the prose's isAlphaNum and 18.0.0. For (ii) also align the lexer with isSpace.
+>   - D27: A, with (i) (as recommended)
+>   - D28: A (as recommended)
+>   - D29: A (as recommended)
+>   - D30: B and (i) (as recommended)
+>   - D31: B
+>   - D32: A, with (i) (as recommended)
+>   - D33: A, with (ii)
+>   - D34: A+ (as recommended)
+>   - D35: A, with (iii) (as recommended)
+>   - D36: A (as recommended)
+>   - D37: A (i) (b) (rank-N in Mid)
+>   - D38: as recommended
+>   - D39: A (as recommended)
+>   - D40: B
+>   - D41: A, with (i) (as recommended)
+> - let me know if anything else is needed before we start implementation of the roadmap
+
+The decisions are recorded in *Decisions*: in the table at its head, which gains the column "Decided", and in a last
+paragraph of each decision's section, "Decided (owner, 2026-11-24)", which says what a choice against the
+recommendation changes and where. The papers the owner supplied were read after the message, against D34, D35, D37
+and D41 (E11's second part, `results/E11b/`), and so were the Report's sources in `/home/ruud/haskell/haskell-report`,
+against the published text (E1's second part, `results/E1b/`); what they change is in the decisions they touch, in
+*What the 2010 Report says*, *What the literature says* and *References*. The work-in-progress revision of the Report
+at `/home/ruud/haskell/haskell-2010-revised-report` is, by the owner's word, not part of this roadmap: nothing here
+cites it. The questions the decisions leave open are at the head (*Open with the owner*).
 
 ## What the brief gets wrong, leaves open, or makes dangerous
 
@@ -310,12 +440,13 @@ it.
   judges 2010 programs only through a shim, and only on what the shim can reproduce: E8's shim (the Report's Prelude
   and 30 modules over GHC 9.4.7, with a defaulting plugin) agrees with the Report on 15 of 23 probes (one of them by
   reading) and departs on 8, each a stated limit (D39).
-- **W7. "the specification can be found at https://www.haskell.org/onlinereport/haskell2010/".** It is the edition
-  of 2010-07-20, and no errata to it were ever published; ten mistakes were reported on the haskell-prime list from
-  2010 to 2019 and none reached the text (E1). Eight of 98's eighteen errata are not absorbed into its identical text
-  (among them `enumFrom`'s `seq` and `lex`'s `_`), and its code chapters have defects of their own: Data.Maybe defines
-  a `maybe` that clashes with the Prelude's, Data.Ratio's `Show` instance is a parenthesis short, Data.Array's code is
-  headed `module Array (` (E1, E9). D38.
+- **W7. "the specification can be found at https://www.haskell.org/onlinereport/haskell2010/".** It is the edition of
+  2010-07-20, the sources' commit 15bff26, and no errata to it were ever published; ten mistakes were reported on the
+  haskell-prime list from 2010 to 2019 and none reached the published text, though the sources fixed three, never
+  published, and the PDF carries one later fix of its own (E1, and E1's second part: D38's record). Eight of 98's
+  eighteen errata are not absorbed into its identical text (among them `enumFrom`'s `seq` and `lex`'s `_`), and its code
+  chapters have defects of their own: Data.Maybe defines a `maybe` that clashes with the Prelude's, Data.Ratio's `Show`
+  instance is a parenthesis short, Data.Array's code is headed `module Array (` (E1, E9). D38.
 
 ### Contradictory
 
@@ -805,37 +936,55 @@ comes from E1 (`results/E1/`: `delta.md`, `readings2010.md`, `errata2010.md`, `p
 The brief's link, `https://www.haskell.org/onlinereport/haskell2010/`, serves the Report as generated on 2010-07-20.
 E1 fetched it on 2026-11-17 (`downloads/report2010/MANIFEST.tsv`): 51 HTML pages (the root URL serves `haskell.html`
 again: 52 files), every one carrying `<meta name="date" content="2010-07-20 13:11:00">`, with the style sheet and
-figures [measured]. The PDF in the 98 drafts (`haskell98/downloads/papers/haskell2010.pdf`) gives T10, 17,918 lines. The
-HTML loses none of the PDF's text: 91.7% of T10's 101,362 tokens are matched section by section
+figures [measured]. The PDF in the 98 drafts (`haskell98/downloads/papers/haskell2010.pdf`) gives T10, 17,918 lines.
+
+**The two are not quite one edition** (E1's second part, read in the Report's sources, the repository
+`/home/ruud/haskell/haskell-report`, after the decisions: `results/E1b/README.md` sections 1-2,
+`published-probe.tsv`, `repo-facts.txt`) [measured]. The HTML is the sources' commit 15bff26 (2010-07-20 12:11 UTC,
+the minute its pages' date gives under British Summer Time [inferred]): every one of the 23 commits from 2010-07-14 to
+15bff26 with a testable phrase is in it, and no later one is. The tag `h2010-final` (79f0a39, 2010-07-06) is 31
+commits earlier, 26 of them to the text. T10 is a build of 2010-11-17 ("Wed Nov 17 10:16:45 2010 GMT", by `pdfinfo`)
+that carries one later commit, 14de79f, which sets 8.4.2's `fatype -> ftype` with the function arrow where the HTML
+prints the grammar's production arrow (T10:6880); 10.5's copy of the rule keeps the production arrow in both
+(T10:10194). So "the text of 2010-07-20" is the HTML's; T10 differs from it by that one arrow, and the HTML from T10
+by its own typesetting losses ("iteratef": E10-1 below).
+
+The HTML loses none of the PDF's text: 91.7% of T10's 101,362 tokens are matched section by section
 (`results/E1/coverage.tsv`), and the low sections are tables and figures that pdftotext scrambles (3.17.3's rules, 6.4's
-class figure, 10.5's grammar), which E1 read by hand. Code is taken from the HTML, since pdftotext splits code columns
-(T10:8268 prints `= numericEnumFrom` on a line of its own).
+class figure, 10.5's grammar), which E1 read by hand. E1 took code from the HTML, since pdftotext splits code columns
+(T10:8268 prints `= numericEnumFrom` on a line of its own); the library transcribes it from the sources, which the
+HTML's whitespace differs from (`results/E1b/e1-compare.tsv`; M12).
 
 **No errata were ever published** (`results/E1/errata2010.md`) [read]:
 - The Report links no errata page. haskell.org's definition page links errata for Haskell 98 only. The wiki's
   "Haskell 2010 errata" page has no text (HTTP 404). The wiki's specification page asks that mistakes be sent to the
   haskell-prime list.
 - E1 searched the haskell-prime archive, 95 monthly archives from 2009 to 2021, and read the threads it found. They
-  hold ten reports of mistakes in the 2010 text. None reached the published Report. Some were fixed in the Report's
-  sources (darcs, later GitHub `haskell/haskell-report`), which E1 did not read, as they were outside its network
-  permission; their history would list every fix made after 2010.
+  hold ten reports of mistakes in the 2010 text. None reached the published Report. Three were fixed in the Report's
+  sources (darcs, later GitHub `haskell/haskell-report`), which E1 could not read; their history, read since (E1's
+  second part, `results/E1b/changes.tsv`), holds five commits after 15bff26 that change what a reader sees: 14de79f
+  (2010-11-17, the PDF only), 2a78309 (2011-04-15, `0**y`), a251b60 (2012-06-05, two index entries of n+k, the PDF's
+  index only), ea28a8e (2012-07-10, 5.6.1's "Haskell 98") and 554480a (2018-03-11, rule (s), on branch `h2010` only).
+  None but 14de79f was ever published.
 
 | # | Date | Where | The mistake | Fate | For rhc |
 |---|---|---|---|---|---|
-| E10-1 | 2010-11 | 20.4.3 | "iteratef", "repeatx", "replicaten x": spaces lost in the generated library chapters | Trac ticket; not published | None (a misprint, like 98's R52) |
-| E10-2 | 2010-11 | unknown | Trac #140, #141, "small fixes"; unreachable | "a few minor fixes" in darcs | Unknown |
-| E10-3 | 2011-04 | 6.4.3 | `0**y` "is 1 if y is 1": surely "y is 0" | No reply; text unchanged | N10 |
+| E10-1 | 2010-11 | 20.4.3 | "iteratef", "repeatx", "replicaten x": spaces lost in the generated library chapters | Trac ticket; the HTML's alone: the source and T10 have the spaces (`Data-List.tex:440`, T10:12844) | None (a misprint, like 98's R52) |
+| E10-2 | 2010-11 | unknown | Trac #140, #141, "small fixes"; unreachable | "a few minor fixes" in darcs; no commit names either ticket, and the only commits between the release and that remark, 14de79f and 19bd9cd, are two days older than the tickets | Unknown |
+| E10-3 | 2011-04 | 6.4.3 | `0**y` "is 1 if y is 1": surely "y is 0" | No reply on the list; fixed in the sources the next day (2a78309, 2011-04-15); not published | N10 |
 | E10-4 | 2011-06 | 4.4.3.2, 4.5.5 | "simple pattern binding" and "declaration group" disagree | Promised for a "Haskell 2012 Report" that never appeared | N19 |
-| E10-5 | 2012-08 | 5.6.1 | "These modules are not part of Haskell 98" (T10:5532), a leftover | Fixed in the sources; not published | None |
+| E10-5 | 2012-08 | 5.6.1 | "These modules are not part of Haskell 98" (T10:5532), a leftover | Fixed in the sources (ea28a8e, 2012-07-10); not published | None |
 | E10-6 | 2012-08 | 5.2 | `module M` in an export list: M is an import's alias, not necessarily a module's name | Agreed; not published | N14 |
 | E10-7 | 2014-08 | 4.4.2, 10.5 | `fixity [integer] ops` admits `infix 0x7` though the prose says a digit | A question; 98 has the same text (R25) | None new |
-| E10-8 | 2018-03 | 3.17.3 rule (s) | "where y is a new variable", though no y occurs | Merged into the GitHub sources; not published | N3 |
+| E10-8 | 2018-03 | 3.17.3 rule (s) | "where y is a new variable", though no y occurs | Merged into the GitHub sources, branch `h2010` only (554480a, merged by f63b2bd); not published | N3 |
 | E10-9 | 2018-03 | 4.4.3.2, 4.5.5 | "simple pattern binding" defined two ways: "What a mess!" | No fix | N19 |
 | E10-10 | 2019-12 | 3.17.2 | The newtype and data examples show no difference (both _\|_) | Referred elsewhere; no fix | None |
 
 **So D38's 98 choice, "the December 2002 text plus the published errata", has no 2010 counterpart.** The 2010 mode's
 text is the Report of 2010-07-20 as published; its reported mistakes are readings below, each with its ground. 98's own
-errata against the 2010 text are *98's errata in 2010*, below.
+errata against the 2010 text are *98's errata in 2010*, below. Whether the editors' three unpublished corrections, and
+14de79f's arrow, are read into 2010's text as 98's errata are into 98's is open with the owner (*Open with the owner*,
+4).
 
 ### What changed from 98
 
@@ -959,8 +1108,8 @@ erratum of December 2005, absorbed this way. rhc applies that erratum already (`
 
 **Δ11. `0**y`.** 98: "The value of x^0 or x^^0 is 1 for any x, including zero; 0**y is undefined." (T98:15328). 2010:
 "The value of x^0 or x^^0 is 1 for any x, including zero; 0**y is 1 if y is 1, and 0 otherwise." (T10:6389-6390;
-the HTML says the same). "y is 1" is a misprint for "y is 0", reported in April 2011 and never corrected (E10-3).
-D13b and N10.
+the HTML says the same). "y is 1" is a misprint for "y is 0", reported in April 2011 and corrected in the sources the
+next day, never published (E10-3; 2a78309). D13b and N10.
 
 **Δ12. The libraries.** In brief here; *The libraries* has them in full.
 - **30 module chapters, 686 exported names** (`results/E1/libraries.tsv`) [measured]. Four have code: Data.Array
@@ -1033,8 +1182,11 @@ lines dropped (`results/E1/prelude-diff.md`) [measured]:
 | All | 927 | 915 | 9 | 3 |
 
 The three are the imports, renamed for the hierarchy: `import Data.Ratio( Rational )` (T10:7543),
-`import qualified Data.Char(isSpace)` (T10:8422) and `import Data.Char(isSpace, isAlpha, ...)` (T10:8867). The nine
-spacing lines are 98's tabs written as spaces. The prose before the code changes only module names. **So every 98
+`import qualified Data.Char(isSpace)` (T10:8422) and `import Data.Char(isSpace, isAlpha, ...)` (T10:8867), four lines
+of the sources. The nine spacing lines are 98's tabs written as spaces by the HTML: in the Report's sources,
+`report/Prelude*.hs` at 15bff26, they are 98's lines byte for byte, and only the imports differ from rhc's 98 pristine
+(`results/E1b/e1-compare.tsv`, `diffs/rhc98-pristine-vs-2010-source.diff`). The prose before the code changes only
+module names. **So every 98
 reading of the Prelude's code carries over unchanged:** R39 (Enum Float), R42 (`showsPrec p = showFloat`, still at
 T10:9089-9093), R43 (`lex`), R46 (`getLine`), R47 (the code does not compile as printed), R51 (tuples).
 
@@ -1237,8 +1389,11 @@ rhc does the same in 98 mode, as deviations DV1 and DV8.
 
 - **Rule (s)** reads "case () of { () | g1, ..., gn -> e; _ -> e' } = case () of { () | g1 -> ... case () of { () | gn
   -> e; _ -> e' } ... _ -> e' } where y is a new variable" (T10:3436-3447; the HTML's ellipses and primes in ASCII): no
-  `y` occurs, and `e'` is copied n times. A copy from rule (c), reported in 2018 (E10-8). Copying `e'` keeps the
-  meaning; an implementation shares it as (c) does. A defect for *Found while writing*.
+  `y` occurs, and `e'` is copied n times. The copies are the editor's: Marlow's bc94554 (2010-05-04, "simplify the
+  pattern matching semantics") replaced the single binding of Diatchki's rules of 2007 by copies, as 98's rule (g)
+  has them, and left the side condition behind; reported in 2018 (E10-8), it was deleted on the sources' `h2010`
+  branch (554480a), never published (`results/E1b/README.md` section 2). Copying `e'` keeps the meaning; an
+  implementation shares it as (c) does. The side condition is a defect for *Found while writing*.
 - **Scope.** Guard bindings "are in scope in the following guards and the corresponding expression"
   (T10:2800-2801), and the `where` declarations "scope over all of the guards and expressions of the alternative"
   (T10:2771). So a `where` cannot name a pattern guard's variable. GHC: "Variable not in scope: y" [probe
@@ -1420,11 +1575,13 @@ The brief allows one kind of change to 98 mode, and asks that it be made plain:
 > haskell98 mode in line with haskell 2010 (reading the haskell 2010 report as clarifying what the haskell 98 should
 > have said, but be very explicit in the roadmap that you will be doing so, so i can review)
 
-**This roadmap recommends one such change: D13a, `genericLength`'s type in 98 mode's List.** One more passes the test
-and is recommended against (D13b); two would override 98's plain text and are recommended against (D13c, D13d). Three
-points that are not alignments are put to the owner because they would change 98 mode too if taken (R41, R21(c), R54).
-Of the alignments, everything else leaves 98 mode as it is; D2, D6, D8 and M18's two defect fixes change it otherwise
-(*Decisions*). Every item that would change what 98 mode does says so in bold where it is argued.
+**This roadmap recommended one such change: D13a, `genericLength`'s type in 98 mode's List, and the owner took it on
+2026-11-24.** One more passes the test and was declined, as recommended (D13b); two would override 98's plain text and
+were declined, as recommended (D13c, D13d). Three points that are not alignments were put to the owner because they
+would change 98 mode too if taken (R41, R21(c), R54). **The owner took R54's alignment** with D21's C: 98 mode's `Int`
+wraps (below). R41 stays open with the owner, recommended left as it is, and R21(c) keeps 98's grouping. Of the
+alignments, everything else leaves 98 mode as it is; D2, D6, D8, D11 and M18's two defect fixes, if taken, change it
+otherwise (*Decisions*). Every item that would change what 98 mode does says so in bold where it is argued.
 
 Source: E2 (`results/E2/alignment.tsv`, 232 rows, made and checked by `alignment.py`; the argument in
 `alignment.md`), on E1's account of the 2010 text (*What the 2010 Report says*). rhc's pins are cited against
@@ -1548,7 +1705,8 @@ costs one line and moves no verdict. The strongest argument against: the Report'
    `(0 ** 2, 0 ** 0, 0 ** (-1))` at Double and the like at Float, and expects `(0.0,1.0,Infinity)` twice; row
    `std.pow.undefined` (`tests/hs/conformance.tsv:1729`).
 3. **2010 says** "0**y is 1 if y is 1, and 0 otherwise." (T10:6389-6390), a misprint for "1 if y is 0", reported on
-   the haskell-prime list in April 2011 and never corrected (*What the 2010 Report says*, N10).
+   the haskell-prime list in April 2011 and corrected in the Report's sources the next day, never published
+   (2a78309: *What the 2010 Report says*, N10).
 
 **What changes if it is taken** [inferred from the test's text]:
 - **To the sentence as printed:** `0 ** 0` becomes 0 and a negative y gives 0, so both expected lines become
@@ -1635,6 +1793,8 @@ tests' text]:
   skipping of white space change on input above Latin-1.
 
 **Recommendation: no.** 2010 mode reads "Unicode space character" as Zs (D26), as GHC's `base` does (N7).
+**Decided (2026-11-24): no, as recommended.** D26 was decided otherwise for 2010 mode: White_Space, (ii), with its
+lexer aligned to it; whether 98 mode's lexer moves too is open with the owner (*Open with the owner*, 1).
 
 ### For the owner, though not alignments
 
@@ -1670,7 +1830,7 @@ every record shown at precedence 11.**
   cannot judge 98 here. **Recommendation:** keep 98's grouping in 98 mode; 2010 mode takes the change (D16).
 
 **R54, ruling 11, 98's D22: `Int` overflow.** **OPEN until D21; D21's option C is this alignment, and it changes 98
-mode.**
+mode. Taken: the owner decided D21 C with B2 on 2026-11-24.**
 - 6.4 leaves overflow undefined in both texts, "an implementation may choose error (_|_, semantically), a truncated
   value, or a special value" (T10:6239-6241), and rhc chose an error (98's D22; the 98 campaign's ruling 11,
   `impl/rulings.md:37`). That is a free choice in 98, so (1) and (2) hold.
@@ -1680,6 +1840,9 @@ mode.**
 - D21 decides which: A keeps checked `Int` everywhere, B wraps in 2010 mode only (recommended; 98 mode unchanged), C
   wraps in both. **C would change 98 mode:** every overflow test flips (`def.pick.first_overflow`, R81's and R93's
   rows: `tests/hs/readings.md:222-226`, `:288-291`), and ruling 11's compatibility layer for wrapping bit tricks goes.
+- **Decided:** C, with wrapping `int` primitives in Rune (B2) and cheap eagerness on them. R54 is aligned on the
+  narrowing reading: 98 mode's `Int` wraps modulo 2^63, its overflow tests flip and ruling 11's layer goes, and the 98
+  roadmap's D22 A is superseded in both modes (D21's record; M11).
 
 Smaller items where 2010 weakens or removes the ground of a 98 choice, with nothing to align [read]:
 - **R37, R95, rulings 57-58 (how a program ends).** Their ground, 98's chapter 23, is gone from 2010's System.Exit
@@ -1752,14 +1915,16 @@ by line. Its errors, each checked again against that report and the texts while 
 Correct as reported: R1 and R9 (SAME), R7's example, R12, R15, R23(b), R34(c) (CHANGE), and the three [memory] claims
 of the 98 drafts that are wrong against 2010 (R21(b), R45(g), R41).
 
-### What the owner is asked
+### What the owner was asked, and decided (2026-11-24)
 
-- **D13a:** align R48 in 98 mode. **This changes 98 mode** (one signature, one overlay entry, no verdict flips).
-- **D13b:** decline R45(b); record 6.4.3's misprint.
-- **D13c, D13d:** no; 98 mode keeps chapter 19's plain text (for R38, as the owner decided in 98's D38).
-- **R41:** whether to re-read 98's 10.4 for records. **Taking it changes 98 mode** on 98's own text.
-- **R21(c):** keep 98's grouping (recommended); aligning it **would change 98 mode**.
-- **R54:** settled by D21; its option C **changes 98 mode**.
+- **D13a:** align R48 in 98 mode. **Taken; this changes 98 mode** (one signature, one overlay entry, no verdict flips).
+- **D13b:** decline R45(b); record 6.4.3's misprint. Declined, as recommended.
+- **D13c, D13d:** no; 98 mode keeps chapter 19's plain text (for R38, as the owner decided in 98's D38). As
+  recommended.
+- **R41:** whether to re-read 98's 10.4 for records. **Taking it changes 98 mode** on 98's own text. Open with the
+  owner, recommended left as it is (*Open with the owner*, 3).
+- **R21(c):** keep 98's grouping (recommended); aligning it **would change 98 mode**. Kept: D16 is 2010's alone.
+- **R54:** settled by D21; its option C **changes 98 mode**. **Taken:** D21 is C with B2.
 
 Whatever the owner takes becomes track H: each item a change to `share/rhc/haskell98` or the checker, its overlay
 entry or reading, and its tests, with 98 mode's other output held byte for byte.
@@ -2142,7 +2307,10 @@ UndecidableInstances admits them and leaves termination to a depth bound. A libe
 conditions kept does not guarantee termination (GHC's own `Mul a b c => Mul a [b] [c]` meets both and loops: W13,
 `instances.rst:293-307`); Sulzmann et al.'s Terminating Weak Coverage, which also asks that a dependent argument be a
 variable where coverage is broken (Def. 14), is proven terminating with full dependencies, admits E12's mtl instances
-and refuses `Mul` (*Decisions*, D35); it was not built. **Use:** 383 packages, 86.4% of them naming
+and refuses `Mul` (*Decisions*, D35); it was not built. The owner took it (D35's (iii), 2026-11-24), and the papers read
+since show what it requires: dependencies with one left side merged per class, so that mtl's `MonadRWS` becomes full,
+coverage broken only for a full dependency, Consistency and Bound Variable named, and overlap refused on a class with
+dependencies, the lead's reading for the owner to confirm (D35's record). **Use:** 383 packages, 86.4% of them naming
 MultiParamTypeClasses too. **Changes:** none. **Test:** the gate; with every tier on, one error program is refused with
 another message (`cls.inst.ctx.vars`).
 
@@ -2166,22 +2334,24 @@ accepts more. **Test:** `forall.hs` against the Report, `stv.hs`, and the gate f
 added lines (505 of code), Core's share 133 code lines in 13 files; 1,000-1,500 in production, L. Refused by design: a
 context on a universal variable (T4b), existential pattern bindings, selectors and deriving. GHC's tests: 0 of 2
 should_compile accepted, T10856 by design and the other for want of existential record fields and NoImplicitPrelude in
-the prototype; 6 of 6 should_fail refused. Laeufer 1996's three rules are HsLint's specification (*What the literature
-says*). **Use:** 302 packages. **Changes:** only through the `forall` its implied ExplicitForAll reserves (E5's P18c).
-**Test:** the gate and `forall.hs`.
+the prototype; 6 of 6 should_fail refused. HsLint's specification is Laeufer and Odersky 1994's rules with their escape
+check, and Laeufer 1996's CONS and PAT, PAT in the `case` form of Odersky and Laeufer 1996 (*What the literature says*;
+D41's record). **Use:** 302 packages. **Changes:** only through the `forall` its implied ExplicitForAll reserves (E5's
+P18c). **Test:** the gate and `forall.hs`.
 
 **M26, T5 (1 name).** RankNTypes under simplified subsumption: a forall in `HsTypes.ty`, arguments checked against
 polytypes, annotations required, System F with no coercions. Its aliases Rank2Types and PolymorphicComponents follow it.
 **Size:** E12 450 added lines (394 of code), accepting 11 of GHC's 31 should_compile files and refusing 16 of 17
-should_fail. To cover GHC's tests it needs a forall in a result skolemised against a clause's further patterns,
-CoreToMid's boxing (above), polytypes through synonyms (LiberalTypeSynonyms) and contexts in nested types: 1,500-2,500
-in production, L, the largest of the four. It is XL only with DeepSubsumption or ImpredicativeTypes, which stay
-later. GHC's Haskell2010 edition turns DeepSubsumption on (`DynFlags.hs:1346`), so a GHC probe of T5 needs
-`-XNoDeepSubsumption` (*What the implementations do*). **Use:** 967 packages, 79.1% of them naming
-ScopedTypeVariables. **Changes:** only through ExplicitForAll. E12's switch reserved `forall` in every type and so
-accepted `ty.quant.noforall`; the milestone ties the keyword to ExplicitForAll (D36). **Test:** the gate and
-`forall.hs`, and a property the Haskell' page on rank N states: "Programs containing no foralls are typeable if and
-only if they are typeable in Haskell 98" (`HP/RankNTypes.txt:96`, as *What the literature says* cites it).
+should_fail. To cover GHC's tests it needs a forall in a result skolemised against a clause's further patterns, rank-N
+types in Mid, which the owner took over CoreToMid's boxing (D37's (b)), polytypes through synonyms (LiberalTypeSynonyms)
+and contexts in nested types: 1,500-2,500 in production, L, the largest of the four, of which the boxing's 200-400 is no
+longer needed, and Mid's change not sized. It is XL only with DeepSubsumption or ImpredicativeTypes, which stay later.
+GHC's Haskell2010 edition turns DeepSubsumption on (`DynFlags.hs:1346`), so a GHC probe of T5 needs
+`-XNoDeepSubsumption` (*What the implementations do*). **Use:** 967 packages, 79.1% of them naming ScopedTypeVariables.
+**Changes:** only through ExplicitForAll. E12's switch reserved `forall` in every type and so accepted
+`ty.quant.noforall`; the milestone ties the keyword to ExplicitForAll (D36). **Test:** the gate and `forall.hs`, and a
+property the Haskell' page on rank N states: "Programs containing no foralls are typeable if and only if they are
+typeable in Haskell 98" (`HP/RankNTypes.txt:96`, as *What the literature says* cites it).
 
 **M27, T8 (2 names).** NoMonomorphismRestriction and MonoLocalBinds. They change how a group is generalised,
 `implicitGroup` in the checker (`infer.sml:1336`), `tiImpls` in HsLint's inference (`hslint_infer.sml:811`) and the
@@ -2747,8 +2917,10 @@ tracking design*, item 3).
   (`\case`, a tuple section, `foreign import` in a 98 module), the lexer may read it whatever the setting and the
   parser refuses it with the hint; where it can (`a#b` with a user's `#`, `(# 1)`, `static = 1`, `[e|e<-xs]`: E5,
   P14a-P14i), the lexer follows the setting, and any hint is a guess on the parse error that follows [designed].
-- **In 98 mode** messages keep their bytes: tests/hs/errors pins 633 refusals (E4). The hints are for modules under
-  2010, unless the owner re-pins 98's messages (D11).
+- **In 98 mode** messages kept their bytes in the design: tests/hs/errors pins 633 refusals (E4). The owner took
+  hints in 98 modules too (D11's B, 2026-11-24): a 98 refusal a feature would accept gains the hint line, naming `-X`
+  or the edition, never a pragma, since a 98 module reads only edition names (D6); its verdict and bytecode stay, and
+  M5 re-pins each such message by hand, at least 33 of the 633 (D11's record).
 - **Warnings.** rhc prints none at the pin: neither `src/rhc` nor `lib/language/haskell` has one [read: grep]. The
   design adds three, in 2010 modules only: a LANGUAGE pragma after the header, ignored ("Misplaced LANGUAGE pragma",
   GHC's `-Wmisplaced-pragmas`, `Header.hs:312-322`; P10a); an OPTIONS_GHC flag rhc ignores; a deprecated name
@@ -3179,7 +3351,7 @@ have one estimate each, and none was built.
 | G32 | variadic C functions, "deprecated in portable code" (8.5.1) | nothing: a Haskell type cannot say variadic | - | D27 |
 | G33 | the marshallability rule (8.4.2) | the structural check (prototyped), visibility from scope, HsLint's own reading | checker 73 (prototype), visibility ~40, HsLint ~80 | D32 |
 | G34 | a newtype's representation across modules | nothing beyond G33: interfaces hold hidden constructors | - | D32 |
-| G35 | the FFI on rhc's Core interpreter (`bin/rhc Main.hs`, `docs/rhc.md:19`) | CoreInterp over RuneForeign's public API, callbacks re-entering CoreInterp | rhc ~250 | D32 |
+| G35 | the FFI on rhc's Core interpreter (`bin/rhc Main.hs`, `docs/rhc.md:19`) | CoreInterp over RuneForeign's public API, callbacks re-entering CoreInterp | rhc ~250 | D33 (`gaps.tsv`: D32) |
 | G36 | `nullPtr` and `nullFunPtr` are `NULL` both ways (8.7) | `nullPtr` the identity 0; a null result is no identity (`runtime/foreign.c:687-711`) | - | D29 |
 
 **None with a workaround: 3 rows.**
@@ -3237,7 +3409,8 @@ E10 measured what G13's options turn on (`Gaps.hs`, `FarPeek.hs`).
 
 ### What the decisions take from this
 
-The decisions are D27 to D33 in *Decisions*. Their shape:
+The decisions are D27 to D33 in *Decisions*. The owner took them on 2026-11-24, all as recommended but D31, taken as
+B, and D33, taken with (ii); their records say what that changes. Their shape:
 
 - **D27, conventions and kinds.**
   - **Recommended:** all four `ccall` kinds through a Core primitive family over `foreign` and `foreign_callback`, as
@@ -3269,9 +3442,9 @@ The decisions are D27 to D33 in *Decisions*. Their shape:
   - **Rune's contract stays:** during a call, on the owning thread, at most 64 deep, a limit documented as the
     implementation's.
   - **The trampoline is mandatory** (G09). The blackhole case needs nothing (G10).
-  - **Callbacks after the call returned, or from signals,** are refused silently (G11). The recommendation reads 8.4.3
+  - **Callbacks after the call returned, or from signals,** are refused silently (G11). The recommendation read 8.4.3
     so, with a test, since the text speaks only of callbacks a safe call allows before it returns (T10:6956-6961). The
-    owner may call it a deviation instead.
+    owner took it as a deviation instead (D31's B), on the ground "ambiguous", pinned by a test.
   - **Other threads** belong to the concurrent-runtime roadmap.
 - **D32, the FFI in Core.** The prototype's shape, with these changes:
   - an AST declaration form instead of the parser's rewrite;
@@ -3290,8 +3463,8 @@ The decisions are D27 to D33 in *Decisions*. Their shape:
   - **Allocation failure** gives `nullPtr`, as the text says, and C strings are Latin-1, as base 4.3 has them
     (*The libraries*).
   - **The cost of a call** is an optional Rune optimisation: typed scalar arguments without strings.
-  - **On the Core interpreter,** the owner picks: compiled only, documented (recommended), or about 250 lines over
-    RuneForeign's API (G35).
+  - **On the Core interpreter,** the owner picked: compiled only, documented (recommended), or about 250 lines over
+    RuneForeign's API (G35). The owner took the second (D33's (ii)): FFI programs run under `bin/rhc Main.hs` too.
 
 ## The libraries
 
@@ -3400,13 +3573,15 @@ Two details of the carry:
 
 ### The printed modules and their defects
 
-**The Prelude.** Chapter 9's code is 98's: of 927 non-blank lines 915 are identical, 9 differ in spacing, and 3
-differ, all module names in imports (E1, `results/E1/prelude-diff.md`). Against 98 with its errata, 2010 reverts both
-code errata: `enumFrom` and `enumFromThen` on Float and Double lose their `seq` (T10:8258-8292), and `lex` loses the
-leading underscore (T10:9036-9051). Whether rhc's overlay entries for them (`ov.prelude.enumfloat`,
+**The Prelude.** Chapter 9's code is 98's: of 927 non-blank lines 915 are identical, 9 differ in spacing, and 3 differ,
+all module names in imports (E1, `results/E1/prelude-diff.md`). The 9 are the HTML's: in the Report's sources,
+`report/Prelude*.hs` at 15bff26, only the three imports, four lines, differ from rhc's 98 pristine, and those sources
+are what M12 transcribes (E1's second part, `results/E1b/e1-compare.tsv`; D23's record). Against 98 with its errata,
+2010 reverts both code errata: `enumFrom` and `enumFromThen` on Float and Double lose their `seq` (T10:8258-8292), and
+`lex` loses the leading underscore (T10:9036-9051). Whether rhc's overlay entries for them (`ov.prelude.enumfloat`,
 `ov.preludetext.lex`) carry into 2010 mode is D38's (E1's N18). The other 98 overlay entries on the Prelude's four
 modules apply again, `interact`'s four names (T10:9274-9278) and the hidden numeric enumerations among them, but for
-`ov.prelude.int`, Int's checked arithmetic, which D21 may change in 2010 mode.
+`ov.prelude.int`, Int's checked arithmetic, which D21's decision makes wrapping in both modes.
 
 **The four library modules** (`results/E9/code2010/*.diff`, tokens common with 98's pristine code):
 - **Data.Complex** is 98's code but the module name and spacing (971 of 973 tokens). Its chapter's export list,
@@ -3500,6 +3675,9 @@ already computes, exposed as one more name of UnicodePrims, and every 2010 predi
 - the White_Space property, which adds U+0085, U+2028 and U+2029 (`/usr/share/unicode/PropList.txt:12-22`, version
   15.1.0 on this machine). `lib/unicode` has no White_Space table.
 
+The owner took White_Space (D26's (ii), 2026-11-24), with a table in `lib/unicode` and the 2010 lexer's `uniWhite`
+reading it too (M7, M13).
+
 **The version.** 2010 names none (T10:16864) and expects compilers "to make use of new versions of Unicode as they
 are made available" (T10:1542-1543). `base` 4.3's tables date from 2008 (`cbits/WCsubst.c:3`), GHC 9.4.7 answers as
 Unicode 14.0 (E1's N8), and `lib/unicode` is at 18.0.0 (`lib/unicode/code_point_data.sml:16`), as 98 mode is (98's
@@ -3533,6 +3711,10 @@ at 13 places in 8 files of `lib/language/haskell`]. An io-family primitive takes
 table: the errno constants need no search, since the VM already maps a name to its value; and `hSetEcho` and
 `hGetEcho` are better over `posix_tcgetattr`, which can report the current echo, than over `term_enter`, which saves
 and restores a whole mode.
+
+**What the decisions changed** (2026-11-24): bits, IntN and WordN need no Rune change, but the owner took `int` bit
+primitives in Rune for Bits on Int (D22's B) and wrapping `int` primitives for Int in both modes (D21's C with B2), so
+Int's bits and arithmetic go through them, not through `word`'s reinterpretation (M11, M14).
 
 Defaulting meets the new classes: 4.3.4's "defined in the Prelude or a standard library" (T10:4368) now covers
 MonadPlus, Bits, Ix and Storable (T10:11097, 11629, 12501, 15819), and Bits has Num as superclass, so
@@ -3633,7 +3815,8 @@ be one file, and it must grow for 2010 (IOErrorType, the new primitives, under 9
 does not use. D25's options: A copy everything (recommended: the brief asks for distinct directories, and 98's
 library has its roadmap behind it, closed at `75ed95861` (haskell98.md:8381), so a fix made twice should be rare
 [inferred]); B share the runtime layer, at the price of a third directory the descriptor names and a 98 snapshot that
-moves when 2010 adds to it; C 2010 as overlays on 98, which "distinct" rules out.
+moves when 2010 adds to it; C 2010 as overlays on 98, which "distinct" rules out. The owner took B (2026-11-24), with
+98's bytes held as a constraint on M12 (D25's record).
 
 ### The size
 
@@ -3699,9 +3882,11 @@ Conventions:
   **[abstract]** marks a source of which only the abstract was read, where it is used. **[inferred]** marks a step no
   source states. Source paths under `/home/ruud/haskell` are cited as in *What the implementations do*.
 
-Eight items could not be read (`results/E11/wanted.md`), first among them Läufer and Odersky 1994, the paper the
-Haskell' page on existentials cites. No finding below rests on them alone; substitutes are named where they matter, and
-*References* lists them for the owner.
+Seven of the eight items E11 could not read were supplied by the owner and read after the decisions, against D34,
+D35, D37 and D41 (E11's second part, `results/E11b/papers.md`): Läufer and Odersky 1994, Odersky and Läufer 1996,
+Jones's *Qualified Types*, Duck et al. 2004, Stuckey and Sulzmann 2005, Glynn et al. 2000 and chapters 7-8 of Perry's
+thesis. The eighth, the Haskell' committee's private list, remains unread, and no finding rests on it. What the seven
+change is marked below; none reverses a decision.
 
 ### Where the literature corrects the plan
 
@@ -3719,7 +3904,10 @@ records what changed and why. The strongest come first.
    class givens on existential (skolem) variables only, implication-free; and **T4b**, contexts on universal variables,
    `data T a = C a => K a` read as a local given and every GADT-style context, which goes with T6 [inferred]. OutsideIn
    §4.1 makes the same point of `MkSet :: Ord a => [a] -> Set a`, a context on a universal variable: "Older GHC type
-   inference implementations did not support" it, for want of implications (p. 25).
+   inference implementations did not support" it, for want of implications (p. 25). The owner's papers support the
+   split: none types a context on a universal variable, and Läufer and Odersky 1994 give the existential's shape, "In
+   our extension, we can do the same for existentially quantified type variables" (printed p. 1414; E11's second
+   part, finding 5).
 2. **Improvement from a given cannot be elaborated to System F (D34, D37).** The plan's T2 was "improvement, where the
    solver unifies". Karachalias and Schrijvers 2017: "due to the non-parametric semantics of functional dependencies, it
    is not possible to translate them to a statically-typed language like System F that features only parametric
@@ -3730,19 +3918,25 @@ records what changed and why. The strongest come first.
    Chakravarty et al. 2007, p. 3). Improvement from wanted constraints alone is unification and needs no evidence (Jones
    2000 §6.2). So T2 is sound on a System F Core provided improvement never equates types on the strength of a given,
    and such programs are refused, as GHC refuses them [inferred]. Full fundeps need FC: Karachalias and Schrijvers
-   translate them into type families and elaborate to System FC (p. 3).
+   translate them into type families and elaborate to System FC (p. 3). Stuckey and Sulzmann 2005 agree: where a given
+   does not reduce the wanted by simplification alone, "we simply cannot provide a 'compilation' scheme", and evidence
+   is built at run time (printed p. 1240), with compile-time evidence only where the wanteds simplify to the givens
+   (Lemma 9, printed p. 1242); Jones's book states improvement as a substitution with no evidence term (section 10.3,
+   printed p. 123) (E11's second part, finding 3).
 3. **Rank N stays in System F only under simplified subsumption (D35, D36, D37).** The plan's T5 was "nested forall,
    with bidirectional checking", with no word on subsumption. Peyton Jones, Vytiniotis, Weirich and Shields 2007 (PVWS)
    give "a conservative extension of Damas-Milner" (p. 4) whose translation to System F inserts coercions that "after
-   type erasure, are eta-expansions of the identity function" (p. 33); they come from the subsumption judgement with
-   deep skolemisation and the prenex conversion it rests on (§4.6.2, p. 22; Figure 11, p. 32). GHC proposal 287,
-   implemented in 9.0, removed covariance and contravariance of function types, deep skolemisation and deep
-   instantiation, because "all four change the semantics of Haskell, by performing eta-expansion, changing bottom into
-   non-bottom" (`GP/0287-simplify-subsumption.rst:17-24`). The cost was measured: of 457 compilable Stackage LTS 13.6
-   packages using RankNTypes, Rank2Types or ImpredicativeTypes, 399 needed no change, and the remaining changes were
-   almost all one eta-expansion each (Serrano et al. 2020, Appendix A, p. 30). So T5 under simplified subsumption
-   elaborates to plain System F with no coercion, and deep skolemisation would be a change of meaning in D36's sense
-   [inferred]. GHC's own `Haskell2010` edition still turns DeepSubsumption on (*What the implementations do*).
+   type erasure, are eta-expansions of the identity function" (p. 33); they come from the subsumption judgement, from
+   the function arrow's co- and contravariance, which Odersky and Läufer 1996 already had ("the standard contravariance
+   rule", printed p. 57, of Fig. 2's rule: E11's second part, finding 2), and from deep skolemisation and the prenex
+   conversion it rests on (§4.6.2, p. 22; Figure 11, p. 32). GHC proposal 287, implemented in 9.0, removed covariance
+   and contravariance of function types, deep skolemisation and deep instantiation, because "all four change the
+   semantics of Haskell, by performing eta-expansion, changing bottom into non-bottom"
+   (`GP/0287-simplify-subsumption.rst:17-24`). The cost was measured: of 457 compilable Stackage LTS 13.6 packages using
+   RankNTypes, Rank2Types or ImpredicativeTypes, 399 needed no change, and the remaining changes were almost all one
+   eta-expansion each (Serrano et al. 2020, Appendix A, p. 30). So T5 under simplified subsumption elaborates to plain
+   System F with no coercion, and deep skolemisation would be a change of meaning in D36's sense [inferred]. GHC's own
+   `Haskell2010` edition still turns DeepSubsumption on (*What the implementations do*).
 4. **Finalizers are C functions, and run before exit (D30).** The plan listed "finalizers or weak pointers" among Rune's
    gaps without saying which finalizers. The FFI Addendum: "Finalizers in Haskell cannot be safely realised without
    requiring support for concurrency" (Chakravarty 2003, p. 20, printed p. 14, a footnote citing Boehm), and "The only
@@ -3789,8 +3983,10 @@ records what changed and why. The strongest come first.
 8. **Rule (s) of the pattern-guard semantics has a dangling side condition (D14).** Erwig and Peyton Jones bind the
    fall-through expression once, in `case e' of { y -> ... _ -> y }` with `y` a new variable (p. 5). The Report's Figure
    3.3 (3.17.3) copies `e'` into each alternative but keeps "where y is a new variable", with no `y` in the rule, in the
-   PDF and the HTML alike. It is harmless to the meaning and a defect of the text (*Found while writing*). The desugarer
-   should bind `e'` once, as a join point, as rules (c) and (m) do [inferred].
+   PDF and the HTML alike. The copies are the editor's simplification of 2010 (bc94554), and the side condition its
+   leftover, deleted on the sources' `h2010` branch in 2018 and never published (E1's second part,
+   `results/E1b/README.md` section 2). It is harmless to the meaning and a defect of the text (*Found while writing*).
+   The desugarer should bind `e'` once, as a join point, as rules (c) and (m) do [inferred].
 
 ### Modes and tracking (D1-D12)
 
@@ -3976,13 +4172,20 @@ GHCs could not do the second, and GHC 9.0 dropped the third.
 
 **What HsLint can follow (D41).** Each type extension needs an independent specification, and the literature has short
 ones: Jones 2000 §6 for T2, three pages (coverage and consistency, §6.1; improvement, §6.2; ambiguity modulo the closure
-of determined variables, §6.3; generalisation over `T \ V+` only, §6.4; pp. 12-13); Läufer 1996 for T4a, three rules,
-CONS, TEST and PAT, the last for "pattern-matching let-expressions" (p. 17); PVWS 2007 for T5, which give "a complete
-implementation of Damas-Milner" and then "all the changes needed to make it work at higher rank" (p. 4), or Dunfield and
-Krishnaswami 2013, a declarative and an algorithmic system for "predicative System F", proved complete (p. 1). Neither
-T5 source has type classes. HsLint's second inference has no rigid variables today: it instantiates a signature with
-flexible variables, requantifies and compares (`lib/language/haskell/hslint_infer.sml:698-722`; E6, X2), so T3-T5 each
-cost it a skolem and an escape check.
+of determined variables, §6.3; generalisation over `T \ V+` only, §6.4; pp. 12-13); Läufer 1996 for T4a, its CONS rule,
+and PAT, its rule for "pattern-matching let-expressions" (p. 17), taken in the `case` form of Odersky and Läufer 1996's
+(AbsE) (printed p. 59), since its `let` form would accept the existential pattern bindings the checker refuses; TEST
+types ExML's `is K`, which Haskell does not have (E11's second part, finding 7). For T5 the source is Serrano et al.
+2020's section 4 (Figs. 2-4), "We simplify PTIAT by omitting the so called 'deep skolemisation' and instantiation, and
+covariance and contravariance in function arrows" (p. 6), without Quick Look and without rule ityarg's polytype type
+argument (E11's second part, finding 2; D41's record). PVWS 2007, which give "a complete implementation of Damas-Milner"
+and then "all the changes needed to make it work at higher rank" (p. 4), deep-skolemise in their code (`skolemise (Fun
+arg_ty res_ty) -- Rule PRFUN`, p. 55), and Dunfield and Krishnaswami 2013, a declarative and an algorithmic system for
+"predicative System F", proved complete (p. 1), subtype the arrow "with a contravariant twist" (Fig. 3, p. 2; the phrase
+p. 3): an HsLint that followed either would accept programs needing coercions the checker's Core lacks. None of the
+three T5 sources has type classes. HsLint's second inference has no rigid variables today: it instantiates a signature
+with flexible variables, requantifies and compares (`lib/language/haskell/hslint_infer.sml:698-722`; E6, X2), so T3-T5
+each cost it a skolem and an escape check.
 
 **Let should not be generalised.** Vytiniotis, Peyton Jones and Schrijvers 2010 list among the extensions that make
 local let-generalisation hard "functional dependencies (Jon00), GADTs ..., and type functions" (p. 1). Without local
@@ -4041,8 +4244,13 @@ constructor in a pattern binding declaration, except at the top level"; GHC does
 and "It is said that the translation to GHC's intermediate language is problematic"; no implementation derives instances
 for existential types (`HP/ExistentialQuantification.txt:126-138`). A lazy match must bind the type variable where no
 `case` forces the value, which a System F Core whose `AltCon` binds the variable cannot say; rhc should refuse it, as
-GHC does [inferred]. Läufer and Odersky 1994, the paper the page cites, was not read; Läufer's 1992 thesis and the 1992
-ML Workshop paper (abstracts) and Läufer 1996 stand in for it.
+GHC does [inferred]. That is rhc's choice from Core's shape, not a need of soundness: Läufer and Odersky 1994, the
+paper the page cites, read since, type a pattern-matching `let` of an existential and even generalise it (OPEN,
+printed p. 1416), and hold soundness "orthogonal to the issue of strictness" (printed p. 1427). The escape check is a
+need: Perry's rule for opening an existential has none, by design ([DES], printed p. 111), and Läufer and Odersky show
+such rules unsound with `type T = K of 'a; let f x = let K z = x in z; f (K 1) = f (K true)` (printed pp.
+1413-1414); their OPEN rule and algorithm check escape after the body's substitution (Fig. 4, printed p. 1423; Fig.
+6, printed p. 1425), as E12's level check does (E11's second part, findings 6 and 7).
 
 **T5.** PVWS 2007: "The inference algorithm is only a little more complicated than the Damas-Milner algorithm" (p. 4),
 and the system is predicative (§3.4, p. 10). The Haskell' page on rank N adds a test D36 can use: "Programs containing
@@ -4583,7 +4791,8 @@ chapters 39 and 40 (T10:16077-16162) keep only exitWith's, exitFailure's and exi
 
 **Result: errata and readings.** No errata to the 2010 Report were ever published (`errata2010.md`): the online
 Report is the edition generated on 2010-07-20, and the wiki's errata page does not exist. Ten reports of mistakes
-reached the haskell-prime list from 2010 to 2019 (E10-1 to E10-10 there); none was fixed in the published text.
+reached the haskell-prime list from 2010 to 2019 (E10-1 to E10-10 there); none was fixed in the published text,
+though the sources fixed three (E1b, below).
 `readings2010.md` holds 21 places where the 2010 text is wrong, contradictory, ambiguous or underspecified, each with
 a GHC probe where one helps:
 - N1, the FFI: `chname` has no digits (GHC accepts "x86_64.h"); nothing says when a pure import is called (GHC: lazy
@@ -4630,8 +4839,32 @@ unabsorbed errata, the code chapters' defects), so track F takes Δ2-Δ10 and Δ
   where a rule rewrites them; the README says they need checking against the 2010 prose.
 - Every probe of the library tests `base` 4.17, not the 2010 library.
 - The GitHub `haskell/haskell-report` history and the Trac tickets 140-142 were outside the network permission; the
-  sources' fixes after 2010 are known only from the list.
-- The PDF's provenance is not recorded.
+  sources' fixes after 2010 were known only from the list. The owner supplied the repository after the decisions,
+  and E1b read it (below); the Trac tickets remain unread.
+- The PDF's provenance was not recorded; E1b dates it (below).
+
+**After the decisions: E1's second part (E1b).** Agent Q, 2026-11-24, read the Report's sources in
+`/home/ruud/haskell/haskell-report` (read-only git, nothing built) against the published text (`results/E1b/README.md`;
+`changes.tsv`, `defects.tsv`, `published-probe.tsv`, `errata98-sources.tsv`, `e1-compare.tsv`, `pkg-compare.tsv`,
+`repo-facts.txt`; the scripts beside them). **Result** [measured unless marked]:
+1. **Which text.** The HTML is commit 15bff26 (2010-07-20 12:11 UTC): all 23 commits from 2010-07-14 to it with a
+   testable phrase are in it, and no later one (`published-probe.tsv`). T10 is a PDF made on 2010-11-17 that carries
+   one commit more, 14de79f, 8.4.2's `fatype -> ftype` (T10:6880); the tag `h2010-final` (79f0a39, 2010-07-06) lacks 31
+   commits of the HTML's [read].
+2. **After publication** five commits change what a reader sees (`changes.tsv`): 14de79f (in the PDF only), 2a78309
+   (`0**y` "is 1 if y is 0", 2011), a251b60 (two index entries, 2012), ea28a8e (5.6.1's "Haskell 98", 2012) and 554480a
+   (rule (s)'s side condition deleted, 2018, on branch `h2010` only); none but 14de79f was published. Rule (s)'s copies
+   of `e'` are the editor's simplification of 2010-05-04 (bc94554) [read].
+3. **The defects** of *Found while writing* are all in the source at 15bff26; two more are found, Foreign.Ptr's "a a"
+   and 10.5's arrow (`defects.tsv`, 36 checks). Foreign.C.Types' contradiction is a chapter generated on 2010-07-01
+   and never regenerated after the committee's text of 2010-07-14 (a479e15) [read].
+4. **The Prelude's sources** equal rhc's 98 pristine but for the three imports, four lines; E1's 9 "spacing only" lines
+   are its HTML extraction's (`e1-compare.tsv`). The four printed modules' code equals E9's `code2010` and the
+   haskell2010 package's `$code` in 20 of 20 comparisons (`pkg-compare.tsv`).
+5. **98's errata** never entered 98's sources; 2010's text lacks 8 of them by inheritance, not by a recorded choice
+   (`errata98-sources.tsv`) [read].
+
+The work-in-progress revision at `/home/ruud/haskell/haskell-2010-revised-report` was not used, by the owner's word.
 
 ### E2. 98's choices against 2010's text
 
@@ -5886,8 +6119,9 @@ what could not be read.
    relaxed Terminating Weak Coverage Condition (definition 14, p. 30); Hugs uses a depth limit.
 6. **Rank N elaborates to plain System F under GHC 9's simplified subsumption** (proposal 287:14-25). On Stackage, 399
    of 457 compilable higher-rank packages needed no change (the Quick Look paper, p. 30). PVWS 2007's coercions come
-   from deep skolemisation and its prenex conversion (W1 sharpened I's "only deep skolemisation"). MicroHs still deep
-   skolemises (`TypeCheck.hs:2863`, `:3283`).
+   from deep skolemisation and its prenex conversion (W1 sharpened I's "only deep skolemisation"), and also from the
+   function arrow's co- and contravariance, which Odersky and Laeufer 1996 already had (Fig. 2; E11b's finding 2,
+   below). MicroHs still deep skolemises (`TypeCheck.hs:2863`, `:3283`).
 7. **Chapter 12's names are GHC's because of a review.** Ian Lynagh asked whether anything supported the Haskell' names
    and whether RelaxedDependencyAnalysis should be RelaxedPolyRec (`ERR/haskell-prime-2010-May.txt:449-453`). Six of the
    ten Haskell' names are not GHC's; DoAndIfThenElse is (W1; I's report says seven).
@@ -5920,10 +6154,38 @@ what could not be read.
 **Not established.**
 - **No implementation was built or run.** Every claim about Hugs, UHC, jhc, MicroHs and nhc98 is from source and
   documentation; E8 ran some of them as oracles, not on type extensions.
-- **Unread:** Laeufer and Odersky 1994 (substitutes read) and Jones's *Qualified Types* book; `wanted.md` lists 8
-  items for the owner. Duck et al. 2004's text cannot be extracted (Type 3 fonts); the journal version was read.
+- **Unread then, read since:** Laeufer and Odersky 1994, Jones's *Qualified Types* book and the rest of the 8 items
+  `wanted.md` listed for the owner, Duck et al. 2004's among them (its Type 3 fonts kept its text from extraction).
+  The owner supplied seven, and they were read after the decisions (E11b, below); the eighth, the Haskell' committee's
+  private list, remains unread.
 - **Parts of papers.** Several were read only in the sections that bear on a decision (`refs.tsv`, how much was read).
 - **The census's paper keys** (E6) were not checked here.
+
+**After the decisions: E11's second part (E11b).** Agent P, 2026-11-24, read the seven papers the owner supplied at
+`/mnt/h/Rune/haskell2010` against the decisions D34 A+, D35 A (iii), D37 A (i) (b) and D41 A (i), with no network
+(`results/E11b/papers.md`, `refs-add.md`, `README.md`; the texts by `extract.sh` into
+`downloads/papers/owner2010/txt/`, with `MANIFEST.tsv`; rule figures read from page images in `results/E11b/img/`,
+since the scans' text garbles them). **Result** [read; consequences inferred where marked in `papers.md`]:
+1. **D35's (iii) needs more conditions than it states.** Sulzmann et al. 2007's Corollary 3 assumes every dependency
+   full (Def. 13, p. 28) and, in its Paterson conditions, no overlap (Def. 11, p. 21); mtl's `MonadRWS` has three
+   dependencies, none full, so (iii) read literally refuses its lifting instances. The paper's merge of dependencies
+   with one left side (Def. 18-21, pp. 34-37) makes them full (D35's record).
+2. **HsLint's T5 source is Serrano et al. 2020's section 4,** not PVWS 2007, Dunfield and Krishnaswami 2013 or
+   Odersky and Laeufer 1996, whose subsumption has the arrow's co- and contravariance (D41's record).
+3. **Improvement from a given:** Stuckey and Sulzmann 2005 give compile-time evidence only where the wanteds simplify
+   to the givens (Lemma 9, printed p. 1242); Jones's book states improvement with no evidence term (section 10.3,
+   printed p. 123). Both support D34.
+4. **The T4 split, the escape check and the refusal of existential pattern bindings stand:** no paper types a context
+   on a universal variable; Laeufer and Odersky 1994 show rules without the escape check unsound (printed pp.
+   1413-1414); and they type a pattern-matching `let` of an existential, so the refusal is rhc's choice from Core's
+   shape, not soundness.
+5. **Rank-N in Mid can be predicative:** Odersky and Laeufer 1996's decidability rests on monotypes in the range of
+   substitutions (printed p. 55) (D37's record).
+6. **No paper gives coherence for overlapping instances** with compile-time evidence and separate compilation, so M22's
+   overlap rule rests on GHC's.
+
+**Not established.** Stuckey and Sulzmann's appendix of proofs, Odersky and Laeufer 1996's section 4 (skimmed) and
+Perry's thesis outside chapters 7-8 were not read; the Qualified Types book's DOI was not checked against Crossref.
 
 ### E12. Where the Haskell 98 type system ends
 
@@ -6178,7 +6440,12 @@ otherwise and by how much. E3 and E4 held 98 mode byte-identical under their pro
 so a milestone that moves a 98 byte has a defect or a decision behind it. Those checks met no LANGUAGE pragma (the test
 directories have none and the run-set harness blanks them: W10), so M3 adds the 11 vendored files that carry pragmas,
 compiled unblanked under D6's 98 rule. Each extension that changes no valid program leaves the 2010 corpus's bytes
-unchanged when it is turned on (D36).
+unchanged when it is turned on (D36). **The decided exceptions** (2026-11-24) move 98 mode by what their records say and
+no more: D11's hints change 98's messages by the hint line only, its verdicts and bytecode not; D21's wrapping `Int`
+flips 98's overflow tests and moves the bytecode of its `Int` arithmetic, and its `-O2` bytes where cheap eagerness
+newly applies; D8 re-pins `hs/names/imp/greatest`; D13a changes `genericLength`'s type; D25's shared runtime layer moves
+no 98 byte, or M12 says by how much. The Rune changes the decisions take, D21's and D22's primitives, D26's table and
+D37's rank-N Mid, hold SML's bytes and budgets but for the fingerprint's word.
 
 **From the tree.** This roadmap was written against `haskell98` at `75ed95861`, and its citations stay there. The
 other session merged 24 commits after it (*Where we are*), 8134f92fe among them, the other session's build-cache
@@ -6190,8 +6457,9 @@ so.
 
 **One record of language settings per module, read by every stage; one library per program; the 2010 changes as
 features of that record, and every extension a feature too.** Everything below Core is unchanged by the 2010 language
-itself; the FFI and the fixed-width numbers add Core primitives over operations the VM already has, and the FFI asks
-three small changes of Rune (G02, G06, G07) and, for `Ptr`, D29's large one.
+itself; the FFI and the fixed-width numbers add Core primitives, the FFI over operations the VM already has with three
+small changes of Rune (G02, G06, G07) and, for `Ptr`, D29's large one. The owner's decisions add to Rune wrapping and
+bit `int` primitives (D21, D22), a White_Space table in `lib/unicode` (D26) and rank-N types in Mid (D37).
 
 ```text
 .hs, .lhs                       literate, Unicode; CPP if asked (D12)
@@ -6209,9 +6477,11 @@ Classes             A+: a deferred class store, improvement by unification (X)  
    |                                    HsLint: the same features, specified again       D41
 Desugaring          pattern guards by 3.17.3; FFI imports as Core primitives             D14, D32
    |  Core          System F; AltCon binders for T4a; a whole-dictionary Cast for GND    D37
-Core to Mid         Word, Word64, Int64 and FFI primitives over the VM's own              D22, D27
-   |  Mid, bytecode unchanged by 2010 itself; Rune's FFI: G02, G06, G07 (small), D29's Ptr
-Library             share/rhc/<edition>, a descriptor per edition; one snapshot layer     D1, D23-D26
+Core to Mid         Word, Word64, Int64 and FFI primitives; Int on wrapping int prims    D21, D22, D27
+   |  Mid: rank-N types for T5 (D37); bytecode: the int primitives (D21, D22), D29's Ptr;
+   |  Rune's FFI: G02, G06, G07 (small); the FFI on Core's interpreter too (D33)
+Library             share/rhc/<edition>, a descriptor per edition, a shared runtime layer;
+                    one snapshot layer                                                   D1, D23-D26
 ```
 
 ### Ownership
@@ -6222,8 +6492,9 @@ Library             share/rhc/<edition>, a descriptor per edition; one snapshot 
 | Lexer through Core to Mid | `lib/language/haskell` | this roadmap, freely; 98's paths byte-identical |
 | rhc's driver, store keys, the library descriptor | `src/rhc` | this roadmap, freely, on the tree of the day |
 | The 2010 Report's code and rhc's code for the codeless modules | `share/rhc/haskell2010`, with its `LICENSE` and provenance records | Report text plus a listed overlay (D23, D24) |
-| The 98 library | `share/rhc/haskell98` | untouched (D25), but for D13a's one signature if the owner takes it (M18) |
-| Mid, Low, bytecode, VM, collector, Rune's FFI | `lib/compiler`, `src/isa`, `runtime`, `lib/basis/rune_foreign*` | decisions only |
+| The 98 library | `share/rhc/haskell98` | its Report-derived files untouched but for D13a's one signature (M18) and the Int instance's overlay text under D21 (M11) |
+| The runtime layer both libraries share | PreludeRuntime and PreludeEnum, in a third directory both descriptors name (D25's B) | this roadmap, with 98's bytes held (M12) |
+| Mid, Low, bytecode, VM, collector, Rune's FFI, `lib/unicode` | `lib/compiler`, `src/isa`, `runtime`, `lib/basis/rune_foreign*`, `lib/unicode` | decisions only: D21, D22, D26, D27, D29, D37 |
 
 ### The contracts
 
@@ -6257,68 +6528,74 @@ native call returns (D31).
   untracked brief `docs/plans/concurrent-runtime/` in the main tree).
 - **Template Haskell and quasi-quotes.** Later, meta: they run code at compile time (E6), and the corpus filter keeps
   them away from every oracle until then (D40).
-- **`foreign export` and an embedding API** (D28), if the owner defers them.
-- **Haskell 98 untouched.** 98 mode's features are the empty set in the key, its library is frozen but for D13a, and
-  every 2010 feature is off in it unless a module names `Haskell2010` (D2).
+- **`foreign export` and an embedding API** (D28), which the owner deferred.
+- **Haskell 98 held.** 98 mode's features are the empty set in the key, its library is frozen but for D13a and D21's
+  `Int`, its runtime layer shared with 2010's at 98's bytes (D25), and every 2010 feature is off in it unless a module
+  names `Haskell2010` (D2); its messages gain D11's hint lines.
 
 ## Decisions
 
 Forty-one decisions, D13 split into four, so forty-four in all. Each states its question with the clauses and the code
 it turns on; then its options, graded, each with what it costs; the evidence; a recommendation with the strongest
-argument against it; and what would reopen it. Nothing here is decided: the owner decides at G0, and the roadmap
-then records each decision under its section as 98's did. Every change to Rune is graded on the 98 roadmap's scale:
+argument against it; and what would reopen it. The owner decided them on 2026-11-24 (*The request*): 34 as
+recommended, and ten otherwise, D11, D14, D21, D22, D25, D26, D31, D33, D37 and D40, in bold in the table. Each section
+ends with the decision, "Decided (owner, 2026-11-24)". Where the owner chose against the recommendation, the section's
+text stays as the evidence it was written on, and the decision gives the choice in the owner's words and what it
+changes, and where. Where the owner's papers or the Report's sources, read after the decisions (E11's and E1's second
+parts, `results/E11b/`, `results/E1b/`), refine a decision, its record says so; what the decisions leave open is at the
+head (*Open with the owner*). Every change to Rune is graded on the 98 roadmap's scale:
 **large**, optimal for Haskell; **medium**, good for both languages; **small**, Haskell can live with it; **none**, rhc
 works around it. An option marked **changes 98 mode** does; one not so marked leaves `--language=haskell98` as it is at
-`75ed95861`, held by M3. "The owner's call" marks a decision that needs a judgement rather than evidence: a reading
-of a text, a change to 98 mode, a departure from the brief, Rune's model, or a choice its section leaves to the owner.
-D34 to D41 are argued in *Decisions* (Extensions, Testing); the table gives them as the lead's rulings have them.
+`75ed95861`, held by M3. "The owner's call" marks a decision that needed a judgement rather than evidence: a reading
+of a text, a change to 98 mode, a departure from the brief, Rune's model, or a choice its section left to the owner.
+The columns Rune and Changes 98 mode are of the decided option.
 
-| | Decision | Group | Recommended | Rune | Changes 98 mode | The owner's call |
-|---|---|---|---|---|---|---|
-| D1 | What `--language` selects | Modes | per program: every module's base edition, the library `share/rhc/<edition>`, its snapshot; one layer for both | none | no | no |
-| D2 | Edition pragmas | Modes | accepted: an edition pragma sets its module's rules, the library stays the program's | none | yes: a file naming `Haskell2010` is read as 2010 (no test does) | yes |
-| D3 | The default flip | Modes | at G3, on G2 and the 98 harnesses pinned, never on track X; pinned by `RHC_LANGUAGE=haskell98` in `bin/rune-test`'s wrapper | none | no | yes |
-| D4 | Representation | Tracking | GHC 9.14.1's 148 names in a closed table onto rhc's features, many to one; one canonical set; the edition for messages only | none | no | no |
-| D5 | Resolution | Tracking | GHC's measured order: edition a base, ordered steps, eager implications, pragmas after the command line; GHC2021 and GHC2024 not accepted | none | no | no |
-| D6 | Header pragmas | Tracking | a pre-scan of the header after unlit; OPTIONS_GHC's `-X` read; in a 98 module only edition names; the printers print the pragmas | none | yes: `--print` of a file with header pragmas (no test has one) | yes |
-| D7 | Unknown, unsupported, combinations | Tracking | unknown and unsupported names errors, at the name; inert names accepted; rhc's own table: C1-C3 refused, an implied unsupported feature failing only its construct (C4); C8 inert | none | no | yes (C8) |
-| D8 | rhc's own options | Tracking | `--dotted-names`, `--cycle-default=scc`, `--names=greatest` as rhc features from the command line only; compile modes outside the record | none | yes: `--names=greatest` stops reaching the library (`hs/names/imp/greatest`, 958 pairs to 955) | yes |
-| D9 | Keys and interfaces | Tracking | each member's canonical set in its unit key, 98's own set as nothing; the base in the header's mode; the library in the configuration; HsIface gains fields only for track X's content, 98's interfaces unchanged | none | no | no |
-| D10 | Per module | Tracking | looked up by module: the checker by a binding's module, HsLint by module and by group; a cycle's own settings by agreement | none | no | no |
-| D11 | Diagnostics | Tracking | name the feature and how to turn it on, on a path that already fails; in 2010 modules | none | no | no |
-| D12 | CPP | Tracking | a subset in SML, off unless asked, lines kept by blanking; no `__GLASGOW_HASKELL__` | none | no | no |
-| D13a | `genericLength` (R48) | 98 alignment | align: `Num i => [b] -> i` | none | yes | yes |
-| D13b | `0 ** y` (R45(b)) | 98 alignment | decline; IEEE's `pow` in both modes; the misprint for *Found* | none | no | yes |
-| D13c | `isUpper`, `isAlpha` of a caseless letter (R38(a)) | 98 alignment | no: 98 mode keeps chapter 19 | none | no | yes |
-| D13d | `isSpace` beyond Latin-1 (R153(a)) | 98 alignment | no: 98 mode keeps the seven Latin-1 characters | none | no | yes |
-| D14 | Pattern guards | Front end | qualifiers in the AST; Erwig and Peyton Jones's translation, the fall-through bound once | none | no | no |
-| D15 | Empty data | Front end | a `Core.Data` with no constructors; condition 6 in both checkers | none | no | no |
-| D16 | Relaxed dependency analysis | Front end | 2010 only, in both checkers; (i) the edge to a signed variable of a pattern binding cut too | none | no | yes |
-| D17 | Small syntax | Front end | n+k off; DoAndIfThenElse in every block; `:` needs nothing | none | no | no |
-| D18 | Hierarchical names | Front end | on in 2010 for program and library; `--dotted-names` kept for 98 | none | no | no |
-| D19 | Chapter 12's pragmas | Front end | INLINE, NOINLINE, SPECIALIZE ignored, as in 98 | none | no | no |
-| D20 | Defaulting's standard classes | Front end | from the library descriptor's prefix | none | no | no |
-| D21 | `Int` under 2010 | Numbers | wraps in 2010 only, over the word primitives (B1); wrapping `int` primitives (B2) if measured | none (B1); small (B2) | no | yes |
-| D22 | IntN, WordN, Bits | Numbers | Core types over the VM's `word`, `word64`, `int64` | none | no | no |
-| D23 | The library's layout | Libraries | the printed modules literal; the cycle 9 | none | no | yes |
-| D24 | Sources and licences | Libraries | 98's code, the Report's code, `base` 4.3's portable branches; `base` 4.3 where the prose is thin | none | no | no |
-| D25 | Shared or copied | Libraries | a copy | none | no | no |
-| D26 | Unicode | Libraries | one category primitive, the predicates in Haskell; `isSpace` Zs and five controls; 18.0.0 | none | no | no |
-| D27 | Conventions, kinds of import | FFI | all four kinds through a Core primitive family; Rune's G02, G06, G07; stdcall refused where there is no ABI 1 | small | no | yes |
-| D28 | `foreign export`, HsFFI.h | FFI | not in this roadmap: a declared gap at G2 | none | no | yes |
-| D29 | `Ptr` | FFI | raw addresses for rhc's Core through a trusted primitive family | large | no | yes |
-| D30 | Finalizers, StablePtr | FFI | finalizers at `finalizeForeignPtr` and at exit; StablePtr a table in Haskell | none | no | no |
-| D31 | Callbacks | FFI | Rune's contract and rhc's trampoline; a callback outside a call refused, a reading of 8.4.3 | none | no | yes |
-| D32 | The FFI in Core | FFI | the prototype's lowering with an AST form; Foreign.C.Types exports its constructors | none | no | yes |
-| D33 | Foreign.\* | FFI | in Haskell over new Core primitives; compiled only | none | no | yes |
-| D34 | The checker | Extensions | A+: today's unifier with a deferred store of class constraints; no improvement from givens | none | no | no |
-| D35 | The recommended set | Extensions | the census's 72 `now` names, by tier and package weight, co-occurring groups together; fundeps under the Paterson conditions and Terminating Weak Coverage | none | no | yes: the fundep regime |
-| D36 | Meaning-changing extensions | Extensions | only when asked, each with its conservativity test | none | no | no |
-| D37 | Core's target | Extensions | System F through T5; binders in `AltCon`; a whole-dictionary Cast; T5 boxed in CoreToMid; FC with OutsideIn | none (boxing); large (rank-N in Mid) | no | yes: T4b stays T6's; boxing or rank-N in Mid |
-| D38 | The 2010 table | Testing | E1's 5,259 rows beside 98's, tests shared by clause id; 98's unabsorbed errata where the text is the same | none | no | yes |
-| D39 | Oracle policy | Testing | GHC 9.14.1's source the record; 9.4.7 with E8's shim; MicroHs for acceptance only | none | no | no |
-| D40 | Corpus and filter | Testing | E8's filter as built; Hackage compile-only | none | no | no |
-| D41 | Budget, HsLint parity | Testing | rows shared by clause id in `make check`, the rest nightly; HsLint budgeted at the checker's cost per type feature | none | no | no |
+| | Decision | Group | Recommended | Decided (2026-11-24) | Rune | Changes 98 mode | The owner's call |
+|---|---|---|---|---|---|---|---|
+| D1 | What `--language` selects | Modes | per program: every module's base edition, the library `share/rhc/<edition>`, its snapshot; one layer for both | A(i), as recommended | none | no | no |
+| D2 | Edition pragmas | Modes | accepted: an edition pragma sets its module's rules, the library stays the program's | B, as recommended | none | yes: a file naming `Haskell2010` is read as 2010 (no test does) | yes |
+| D3 | The default flip | Modes | at G3, on G2 and the 98 harnesses pinned, never on track X; pinned by `RHC_LANGUAGE=haskell98` in `bin/rune-test`'s wrapper | A(i), as recommended | none | no | yes |
+| D4 | Representation | Tracking | GHC 9.14.1's 148 names in a closed table onto rhc's features, many to one; one canonical set; the edition for messages only | A, as recommended | none | no | no |
+| D5 | Resolution | Tracking | GHC's measured order: edition a base, ordered steps, eager implications, pragmas after the command line; GHC2021 and GHC2024 not accepted | A(i), as recommended | none | no | no |
+| D6 | Header pragmas | Tracking | a pre-scan of the header after unlit; OPTIONS_GHC's `-X` read; in a 98 module only edition names; the printers print the pragmas | A, (i), (a) and (1), as recommended | none | yes: `--print` of a file with header pragmas (no test has one) | yes |
+| D7 | Unknown, unsupported, combinations | Tracking | unknown and unsupported names errors, at the name; inert names accepted; rhc's own table: C1-C3 refused, an implied unsupported feature failing only its construct (C4); C8 inert | A(i), as recommended | none | no | yes (C8) |
+| D8 | rhc's own options | Tracking | `--dotted-names`, `--cycle-default=scc`, `--names=greatest` as rhc features from the command line only; compile modes outside the record | A, as recommended | none | yes: `--names=greatest` stops reaching the library (`hs/names/imp/greatest`, 958 pairs to 955) | yes |
+| D9 | Keys and interfaces | Tracking | each member's canonical set in its unit key, 98's own set as nothing; the base in the header's mode; the library in the configuration; HsIface gains fields only for track X's content, 98's interfaces unchanged | A, as recommended | none | no | no |
+| D10 | Per module | Tracking | looked up by module: the checker by a binding's module, HsLint by module and by group; a cycle's own settings by agreement | A, as recommended | none | no | no |
+| D11 | Diagnostics | Tracking | name the feature and how to turn it on, on a path that already fails; in 2010 modules | **B: in 98 modules too** | none | **yes: 98's refusals gain the hint line, its verdicts and bytecode held** | no |
+| D12 | CPP | Tracking | a subset in SML, off unless asked, lines kept by blanking; no `__GLASGOW_HASKELL__` | A, as recommended; M20 examines reusing `lib/language/c` | none; small if M20 moves shared code under `lib/` | no | no |
+| D13a | `genericLength` (R48) | 98 alignment | align: `Num i => [b] -> i` | A, as recommended | none | yes | yes |
+| D13b | `0 ** y` (R45(b)) | 98 alignment | decline; IEEE's `pow` in both modes; the misprint for *Found* | A, as recommended | none | no | yes |
+| D13c | `isUpper`, `isAlpha` of a caseless letter (R38(a)) | 98 alignment | no: 98 mode keeps chapter 19 | A, as recommended | none | no | yes |
+| D13d | `isSpace` beyond Latin-1 (R153(a)) | 98 alignment | no: 98 mode keeps the seven Latin-1 characters | A, as recommended | none | no | yes |
+| D14 | Pattern guards | Front end | qualifiers in the AST; Erwig and Peyton Jones's translation, the fall-through bound once | **C: a pattern guard's test feeds the tree at `-O2`; A the reference, at `-O0` and `-O1`, and a differential test** | none | no | no |
+| D15 | Empty data | Front end | a `Core.Data` with no constructors; condition 6 in both checkers | A, as recommended | none | no | no |
+| D16 | Relaxed dependency analysis | Front end | 2010 only, in both checkers; (i) the edge to a signed variable of a pattern binding cut too | A(i), as recommended | none | no | yes |
+| D17 | Small syntax | Front end | n+k off; DoAndIfThenElse in every block; `:` needs nothing | A, as recommended | none | no | no |
+| D18 | Hierarchical names | Front end | on in 2010 for program and library; `--dotted-names` kept for 98 | A, as recommended | none | no | no |
+| D19 | Chapter 12's pragmas | Front end | INLINE, NOINLINE, SPECIALIZE ignored, as in 98 | A, as recommended | none | no | no |
+| D20 | Defaulting's standard classes | Front end | from the library descriptor's prefix | A, as recommended | none | no | no |
+| D21 | `Int` under 2010 | Numbers | wraps in 2010 only, over the word primitives (B1); wrapping `int` primitives (B2) if measured | **C with B2: `Int` wraps in both modes, over wrapping `int` primitives; those operations join cheap eagerness** | small | **yes: every overflow test flips; 98's D22 A superseded** | yes |
+| D22 | IntN, WordN, Bits | Numbers | Core types over the VM's `word`, `word64`, `int64` | **B: `int` bit primitives in Rune, with D21's** | small | no | no |
+| D23 | The library's layout | Libraries | the printed modules literal; the cycle 9 | A, as recommended | none | no | yes |
+| D24 | Sources and licences | Libraries | 98's code, the Report's code, `base` 4.3's portable branches; `base` 4.3 where the prose is thin | A, as recommended | none | no | no |
+| D25 | Shared or copied | Libraries | a copy | **B: the runtime layer shared, in a third directory; the rest copied** | none | no: 98's runtime layer moves, its bytes held (open for M12) | no |
+| D26 | Unicode | Libraries | one category primitive, the predicates in Haskell; `isSpace` Zs and five controls; 18.0.0 | **A with (ii): `isSpace` White_Space, and the 2010 lexer's `uniWhite` with it**; the prose's `isAlphaNum`; 18.0.0 | small | no (98's lexer open with the owner) | no |
+| D27 | Conventions, kinds of import | FFI | all four kinds through a Core primitive family; Rune's G02, G06, G07; stdcall refused where there is no ABI 1 | A, with (i), as recommended | small | no | yes |
+| D28 | `foreign export`, HsFFI.h | FFI | not in this roadmap: a declared gap at G2 | A, as recommended | none | no | yes |
+| D29 | `Ptr` | FFI | raw addresses for rhc's Core through a trusted primitive family | A, as recommended | large | no | yes |
+| D30 | Finalizers, StablePtr | FFI | finalizers at `finalizeForeignPtr` and at exit; StablePtr a table in Haskell | B and (i), as recommended | none | no | no |
+| D31 | Callbacks | FFI | Rune's contract and rhc's trampoline; a callback outside a call refused, a reading of 8.4.3 | **B: the refusal outside a call a deviation, ground "ambiguous"** | none | no | yes |
+| D32 | The FFI in Core | FFI | the prototype's lowering with an AST form; Foreign.C.Types exports its constructors | A, with (i), as recommended | none | no | yes |
+| D33 | Foreign.\* | FFI | in Haskell over new Core primitives; compiled only | **A with (ii): the FFI on Core's interpreter too** | none | no | yes |
+| D34 | The checker | Extensions | A+: today's unifier with a deferred store of class constraints; no improvement from givens | A+, as recommended | none | no | no |
+| D35 | The recommended set | Extensions | the census's 72 `now` names, by tier and package weight, co-occurring groups together; fundeps under the Paterson conditions and Terminating Weak Coverage | A, with (iii), as recommended; (iii) as the papers require it, for the owner to confirm | none | no | yes: the fundep regime |
+| D36 | Meaning-changing extensions | Extensions | only when asked, each with its conservativity test | A, as recommended | none | no | no |
+| D37 | Core's target | Extensions | System F through T5; binders in `AltCon`; a whole-dictionary Cast; T5 boxed in CoreToMid; FC with OutsideIn | **A (i) (b): rank-N types in Mid, no boxing**; T4b T6's | large | no | yes: T4b stays T6's; boxing or rank-N in Mid |
+| D38 | The 2010 table | Testing | E1's 5,259 rows beside 98's, tests shared by clause id; 98's unabsorbed errata where the text is the same | as recommended | none | no | yes |
+| D39 | Oracle policy | Testing | GHC 9.14.1's source the record; 9.4.7 with E8's shim; MicroHs for acceptance only | A, as recommended | none | no | no |
+| D40 | Corpus and filter | Testing | E8's filter as built; Hackage compile-only | **B: CPP without `#include` admitted to the oracles once M20 lands** | none | no | no |
+| D41 | Budget, HsLint parity | Testing | rows shared by clause id in `make check`, the rest nightly; HsLint budgeted at the checker's cost per type feature | A, with (i), as recommended; T5's HsLint after Serrano et al. 2020 section 4 | none | no | no |
 
 ### Modes
 
@@ -6371,6 +6648,9 @@ the snapshot is read only from the configurations a compile asks for, so (i)'s c
 **What would reopen it.** An install size that matters, which brings in (ii); a third edition (GHC2021), which adds a
 library or decides that an edition may share one.
 
+**Decided (owner, 2026-11-24).** A(i), as recommended: per program, the base edition every module starts from, the
+library's descriptor `share/rhc/<edition>` and its configurations in the snapshot; one layer for every language (M6).
+
 ### D2. Edition pragmas
 
 **Question.** What does `{-# LANGUAGE Haskell98 #-}` or `{-# LANGUAGE Haskell2010 #-}` in a module do, when the
@@ -6410,6 +6690,10 @@ describes; A is simpler to state. But A refuses programs GHC compiles, and B is 
 
 **What would reopen it.** The owner keeping 98 mode deaf to every pragma, which is A for 98 programs and B for 2010
 ones; a library that cannot serve the other edition's modules.
+
+**Decided (owner, 2026-11-24).** B, as recommended: an edition pragma sets its module's rules, and the library stays
+the program's. It changes 98 mode as B says, narrowly: a file of a 98 program that names `Haskell2010` is read under
+2010's rules (M6).
 
 ### D3. The default flip
 
@@ -6459,6 +6743,9 @@ test written later.
 **What would reopen it.** The owner reading "complete" as including track X, which is B; a harness that runs rhc
 outside `bin/rune-test` and so outside the wrapper.
 
+**Decided (owner, 2026-11-24).** A(i), as recommended: the flip at G3, which rests on G2 and on every 98 harness pinned
+to 98, by an `RHC_LANGUAGE` default that `bin/rune-test`'s wrapper sets to `haskell98` (M28).
+
 ### Tracking
 
 ### D4. Representation
@@ -6503,6 +6790,9 @@ GHC's, chapter 12 requires an error on an unknown one, and a name rhc has not cl
 
 **What would reopen it.** A file in a corpus that names a Haskell' proposal name (D); a GHC release that changes a
 name's meaning, which a table pinned to 9.14.1 does not follow.
+
+**Decided (owner, 2026-11-24).** A, as recommended: GHC 9.14.1's names at the surface, in a closed table onto rhc's
+features; the resolved set held canonically, the edition kept for messages (M4, M5).
 
 ### D5. Resolution
 
@@ -6561,6 +6851,9 @@ steps.
 
 **What would reopen it.** A probe of order on which the model and GHC part; the owner asking for GHC2021 as an
 edition, which needs T5, T6 and T7 first.
+
+**Decided (owner, 2026-11-24).** A(i), as recommended: GHC's measured semantics, E13's model the specification; GHC2021
+and GHC2024 known names that rhc does not support in this roadmap (M5).
 
 ### D6. Header pragmas
 
@@ -6641,6 +6934,12 @@ pragma it does not handle, and it is what holds 98 mode's output; D11's message 
 **What would reopen it.** The owner wanting extensions in 98 modules by pragma, which is (c) with its own conservativity
 tests; a corpus whose OPTIONS_GHC carries flags that change meaning beyond `-X`.
 
+**Decided (owner, 2026-11-24).** A, (i), (a) and (1), as recommended: the pre-scan of the header after unlit;
+OPTIONS_GHC's and OPTIONS' `-X` flags read as steps, any other flag ignored with a warning; in a 98 module only edition
+names read; `--print` and `--print-layout` print the header's pragmas in both modes. (1) changes 98 mode as it says:
+the printed form of a 98 file with header pragmas gains them (M5). Since a 98 module reads no extension name from its
+header, D11's hint in a 98 module names the command line's `-X`, not a pragma (D11).
+
 ### D7. Unknown and unsupported names, and combinations
 
 **Question.** What does rhc do with a name it does not know, one it knows and does not implement, one that changes
@@ -6714,6 +7013,10 @@ could honour, where (ii) would give 98's analysis to a module that asks; GHC's w
 **What would reopen it.** A combination rhc cannot support and the table misses, found by a test; GHC dropping a name
 rhc's table classifies.
 
+**Decided (owner, 2026-11-24).** A(i), as recommended: unknown and unsupported names errors at the name, inert names
+accepted, rhc's own combination table with C1-C3 refused and C4's policy; C8 by (i), `NoRelaxedPolyRec` inert in a
+2010 module with GHC's warning (M5, M9).
+
 ### D8. rhc's own options
 
 **Question.** Which of rhc's options are language, to be folded into the record, and which are modes of the compile?
@@ -6774,6 +7077,11 @@ exports can include a name no library module defines.
 
 **What would reopen it.** The owner keeping `--names=greatest` program-wide, which is C; a need for one of the three in
 one module of a 2010 program, which is B.
+
+**Decided (owner, 2026-11-24).** A, as recommended: `--dotted-names`, `--cycle-default=scc` and `--names=greatest` as
+rhc's features, set from the command line only, and the compile's modes outside the record. It changes 98 mode as the
+owner's item says: `--names=greatest` stops reaching the library, and `tests/hs/names/imp/greatest` is re-pinned from
+958 pairs to 955 (M4).
 
 ### D9. Keys and interfaces
 
@@ -6836,6 +7144,10 @@ holds the invariant, and a renamed feature rebuilds once.
 **What would reopen it.** A stage found reading the edition, which breaks the invariant and puts the edition in the
 key (C's half); E13's warm bytes differing from `--no-store`'s under an edit.
 
+**Decided (owner, 2026-11-24).** A, as recommended: each member's canonical set in its unit key, 98's own set keying as
+nothing; the base setting in the header's mode; the library in the configuration; HsIface fields only for track X's
+content, with 98's interfaces byte for byte as they are or the milestone saying by how much (M4, M22, M24).
+
 ### D10. Settings per module
 
 **Question.** How does each stage find a module's setting, when one recursive unit may hold modules with different
@@ -6881,6 +7193,9 @@ test per feature in a mixed cycle, in both checkers, catches the forgetting, and
 **What would reopen it.** A feature whose rule cannot be decided per binding, such as a cycle's names or default, which
 A already treats by agreement; a cost of the lookups in the checker's time.
 
+**Decided (owner, 2026-11-24).** A, as recommended: a lookup by module wherever a rule is tested, a cycle's own settings
+by agreement, and a mixed-cycle test per feature in both checkers (M4).
+
 ### D11. Diagnostics
 
 **Question.** When rhc refuses a construct a feature would allow, does it say so? At the pin rhc refuses in the
@@ -6919,6 +7234,15 @@ guard is the likeliest to need one, and two message styles live in one compiler;
 
 **What would reopen it.** The owner asking for hints in 98 mode, which is B; a hint that misleads, as GHC's `forall`
 one does, found by E5's 35 cases run on rhc.
+
+**Decided (owner, 2026-11-24).** B, not the recommended A: hints in 98 modules too. **This changes 98 mode:** a 98
+refusal that a feature would accept gains the hint line, which in a 98 module names `-X` or the edition, never a pragma,
+since D6's (a) reads only edition names there. How many of `tests/hs/errors`' 633 was not counted, at least 33 (the 27
+that E12's four tiers accept, `results/E12/identity/allon-errors/errors98.tsv`, and the 6 that E3's 2010 features
+accept, `results/E3/flips/attribution.tsv`), so each is re-pinned by hand in M5: the whole stderr that M3 compares
+moves, and a `.expected` only where the hint reaches the first line of what rhc says (`docs/testing.md:532-534`). The
+standing gate names it as a decided exception: 98's messages change by the hint line only, its verdicts and bytecode not
+(*Constraints*; *Testing and conformance*; *Gates*).
 
 ### D12. CPP
 
@@ -6973,6 +7297,15 @@ lost positions are worse.
 **What would reopen it.** The owner keeping rhc to the Report and its listed extensions, which is C; a need for
 macro expansion beyond A's subset in a corpus that matters; the owner's rule that generic code becomes a library under
 `lib/`, which would put the subset beside `lib/language/c` and make it a small Rune change.
+
+**Decided (owner, 2026-11-24).** A, as recommended, and "consider reusing lib/language/c". M20 starts by examining
+`lib/language/c`'s preprocessor, `CPreprocess` (`lib/language/c/preprocess{,_sig}.sml`) and `CConst`
+(`const{,_sig}.sml`), for what a Haskell CPP can share: at least `CConst` for the `#if` expressions; a directive engine
+shared over a Haskell-aware line reader, if the C lexer's reading of `//`, `/*` and `'` can be kept out of it
+(`lex.sml:72-73`, `:79-82`); and what is generic goes to a library of its own under `lib/`, by the owner's rule of
+2026-10-10 (*Constraints*). What moves there is a small Rune change, as the line above foresaw, and a row of *Every
+change to Rune*. A's subset and its rules stand: lines blanked, not dropped; `#include` confined to the program's
+directory; no `__GLASGOW_HASKELL__`.
 
 ### Haskell 98 alignment
 
@@ -7045,11 +7378,16 @@ verdict moved.
 **What would reopen it.** `errors/mr.ex.len.twotypes` failing its expected text after the change; a program that needs
 the Integral context to resolve a type, which no test has [inferred].
 
+**Decided (owner, 2026-11-24).** A, as recommended: List's `genericLength` becomes `(Num a) => [b] -> a` in 98 mode,
+`ov.list.genericlength` an applied entry of kind `reading` with ground D13a. **This changes 98 mode,** as A says:
+List's unit and its importers rebuild once, and no verdict moves (M18).
+
 ### D13b. `0 ** y` (R45(b))
 
 **Question.** Does 98 mode take 2010's sentence on `0 ** y`? The clause pair: 98's 6.4.3, "0**y is undefined."
 (T98:15328); 2010's, "0**y is 1 if y is 1, and 0 otherwise." (T10:6389-6390), a misprint for "1 if y is 0", reported
-on the haskell-prime list in April 2011 and never corrected (E1's N10, `results/E1/errata2010.md`). rhc took IEEE's
+on the haskell-prime list in April 2011 (E1's N10, `results/E1/errata2010.md`) and corrected in the Report's sources
+the next day, never published (2a78309: `results/E1b/changes.tsv`). rhc took IEEE's
 `pow`, where Rune's real is: 1 at y = 0, 0 for a positive y, an infinity for a negative y (R45,
 `tests/hs/readings.md:434-441`); Double's `(**)` is `double_pow` (`share/rhc/haskell98/Prelude.hs:781`), and Float's
 goes through it (`:707`). "Undefined" left the value free, so E2 files an ALIGN. **Taking it, under either reading of
@@ -7082,6 +7420,14 @@ implementation gives.
 
 **What would reopen it.** A published correction of 6.4.3; D38 giving 2010 mode the corrected sentence, after which the
 two modes differ at a negative y and C would make them agree.
+
+**Decided (owner, 2026-11-24).** A, as recommended: IEEE's `pow` in both modes, 98 mode unchanged. The Report's sources,
+read since (E1's second part, `results/E1b/README.md` section 2), make C's "sentence as meant" the editor's own text:
+Marlow's commit 2a78309 of 2011-04-15, "correction: 0**y is 1 if y is 0 (previously: 0**y is 1 if y is 1)", made the
+day after the report reached the haskell-prime list, and never published. That changes nothing here: the corrected
+sentence still gives 0 at a negative y where IEEE gives an infinity, so 2010 mode's answer there stays N10's reading.
+Whether 2010's text is read with the editors' unpublished corrections is open with the owner (*Open with the owner*,
+4).
 
 ### D13c. `isUpper` and `isAlpha` of a letter with no case (R38(a), with R153(b))
 
@@ -7137,6 +7483,8 @@ and of 98's D38, not as an alignment.
 
 **What would reopen it.** The owner reading chapter 19 against 2.2 as contradictory, which is B. 98's D38 named "a mode
 for Haskell 2010, which has its own text" among what would reopen it (haskell98.md:6738); this is that reopening.
+
+**Decided (owner, 2026-11-24).** A, as recommended: 98 mode keeps chapter 19, and 2010 mode follows Data.Char (D26).
 
 ### D13d. `isSpace` beyond Latin-1 (R153(a))
 
@@ -7194,7 +7542,8 @@ that would change 98 mode if taken; *Haskell 98 mode and the 2010 text* argues e
   [read]. **Re-reading it changes Haskell 98 mode,** and 2010 mode with it, on 98's own text, not 2010's: if a record
   construction, an `aexp`, is "an atomic expression", 10.4 says not to parenthesise it [inferred]. Then
   `lang/der.show.record.form_ghc`'s second expected line goes from `(S {h = 1})` to `S {h = 1}`, derived `Read` follows,
-  and row `der.show.record.prec` (`tests/hs/conformance.tsv:2737`) restates [inferred].
+  and row `der.show.record.prec` (`tests/hs/conformance.tsv:2737`) restates [inferred]. **Open with the owner
+  (2026-11-24),** recommended left as it is: a re-reading the owner may take later (*Open with the owner*, 3).
 - **R21(c) and ruling 55, signatures that cut dependency groups: a CHANGE.** 12.3 names RelaxedPolyRec among the
   extensions "integrated into this report" (T10:10997-11002), so 2010 mode takes it (D16) and it is not eligible.
   **Aligning it anyway would change Haskell 98 mode:** the six corpus programs ruling 55 refuses would be accepted, and
@@ -7207,7 +7556,13 @@ that would change 98 mode if taken; *Haskell 98 mode and the 2010 text* argues e
   parts hold, and R54 is an ALIGN. D21's option C is that alignment, and **it changes Haskell 98 mode:** every overflow
   test flips (`lang/def.pick.first_overflow`, R81's and R93's rows, `tests/hs/readings.md:222-226`, `:288-291`), and
   ruling 11's compatibility layer for wrapping bit tricks goes. D21 recommends B, wrapping in 2010 mode only, so 98 mode
-  stays checked under either reading.
+  stays checked under either reading. **Taken (owner, 2026-11-24):** D21 is decided C with B2, so this alignment is
+  made, on the narrowing reading: 98 mode's `Int` wraps modulo 2^63 as 2010 mode's does, its overflow tests flip and
+  ruling 11's layer goes (D21's record; M11).
+
+**Decided (owner, 2026-11-24).** A, as recommended: 98 mode keeps the seven Latin-1 white characters. 2010 mode takes
+D26's (ii), White_Space, with its lexer aligned to it; whether 98 mode's lexer moves too is open with the owner
+(*Open with the owner*, 1), recommended no, since 98's `isSpace` stays Latin-1 by this decision.
 
 ### Front end
 
@@ -7286,6 +7641,17 @@ meaning is the same, rule (c) shares through `y` itself, and B pays code size fo
 C; ViewPatterns in track X (D35), which wants C's machinery. 98 mode is unchanged under every option: pattern guards
 are a change of language, and 98's own reading of a guard, R65, is SAME in E2 (`results/E2/alignment.tsv`).
 
+**Decided (owner, 2026-11-24).** C, not the recommended A, and "consider using A as an oracle to test against". At `-O2`
+a pattern guard's test feeds the decision tree, as C argues, never running a qualifier before its clause's patterns
+matched or earlier than the Report's order would; A's translation stays the reference and is what `-O0` and `-O1`
+compile, as 98's D34 keeps the Report's order below `-O2` (haskell98.md:5245). A differential test compiles every
+pattern-guard program both ways and requires the same output, bottom or not, and mutants of the tree must fail it; M8
+grows by C's tree and the test, which D14 does not size. **A correction to B's text** (E1's second part,
+`results/E1b/README.md` section 2): rule (s)'s copies of `e'` are the editor's deliberate simplification (bc94554,
+2010-05-04, "simplify the pattern matching semantics"), and only the side condition "where y is a new variable" is the
+defect, deleted on the sources' `h2010` branch by 554480a (2018-03-11) and never published; B's "The copy is a defect of
+the text" reads otherwise, and the choice is untouched.
+
 ### D15. Empty data declarations
 
 **Question.** 4.2.1 allows `data [context =>] simpletype [= constrs] [deriving]` (T10:3860), a type "with zero or more
@@ -7326,6 +7692,9 @@ such a type has no constructor arm and takes its default (`lib/language/haskell/
 [read], and E3 ran both VMs at two levels; the native back end is the gap a conformance row closes.
 
 **What would reopen it.** A lowering fault on an empty type; EmptyDataDeriving (track X), which derives for one.
+
+**Decided (owner, 2026-11-24).** A, as recommended: a `Core.Data` with no constructors, condition 6 in both checkers
+(M7).
 
 ### D16. Relaxed dependency analysis
 
@@ -7396,6 +7765,10 @@ today. Against A there is none: it is the text.
 **What would reopen it.** The owner reading 98's 4.4.1 against 4.5.1 as contradictory, which brings in B; (i)'s rigid
 check proving larger than a few lines.
 
+**Decided (owner, 2026-11-24).** A(i), as recommended: in 2010 modules the edge to an explicitly typed binding is cut in
+both checkers, the edge to a signed variable of a non-simple pattern binding too, with that variable's binding checked
+rigidly against its signature (M9).
+
 ### D17. Small syntax
 
 **Question.** Three small changes of the grammar, each behind 2010 mode's setting: DoAndIfThenElse (E1's Δ5), n+k
@@ -7439,6 +7812,9 @@ change no prose states, and a VSEMI that should end a binding could be taken by 
 it, GHC agrees, and the tests above pin it.
 
 **What would reopen it.** A layout case where the absorbed semicolon parses a program differently from GHC.
+
+**Decided (owner, 2026-11-24).** A, as recommended: n+k off, DoAndIfThenElse in every layout block, `:` needing nothing
+(M7).
 
 ### D18. Hierarchical names
 
@@ -7486,6 +7862,9 @@ small, and the corpus's largest targets need it.
 
 **What would reopen it.** The owner retiring the corpus's dotted 98 programs, which brings in B.
 
+**Decided (owner, 2026-11-24).** A, as recommended: 2010 mode reads every module hierarchically, the program's and the
+library's; `--dotted-names` stays 98 mode's documented flag (M10).
+
 ### D19. Chapter 12's pragmas
 
 **Question.** What does rhc do with INLINE, NOINLINE and SPECIALIZE in 2010 mode? They are `decl`s (12.1, 12.2), as in
@@ -7518,6 +7897,9 @@ covers SPECIALIZE's common case.
 
 **What would reopen it.** A corpus program where an ignored INLINE or SPECIALIZE costs a measured share of `--count`.
 
+**Decided (owner, 2026-11-24).** A, as recommended: INLINE, NOINLINE and SPECIALIZE are trivia with no meaning, as in 98
+mode.
+
 ### D20. Defaulting's standard classes
 
 **Question.** 4.3.4 defaults a variable only if "all of these classes are defined in the Prelude or a standard
@@ -7545,6 +7927,9 @@ own, from the text.
 plain, and 98's D38 offers no ground to depart from it.
 
 **What would reopen it.** None foreseen: the library is the set, and A reads it.
+
+**Decided (owner, 2026-11-24).** A, as recommended: the standard classes by the prefix of the library's descriptor
+(M4, M11).
 
 ### Numbers
 
@@ -7608,6 +7993,22 @@ the default edition (D3); A keeps one `Int` in both modes and a deviation the fi
 **What would reopen it.** The owner reading chapter 18 as contradictory, which brings in A; a measurement of B1 on the
 corpus, which brings in B2; the owner aligning R54, which is C.
 
+**Decided (owner, 2026-11-24).** C with B2, not the recommended B: "wrapping ints in both haskell 98 and 2010, with
+wrapping int primitives in rune (C + B2). also cheap eagerness." `Int` wraps modulo 2^63, rhc's width, in both modes,
+over new wrapping `int` primitives in Rune, B2's small change (*Every change to Rune*), with B's list of operations,
+``minBound `quot` (-1)`` giving `minBound` by the text, and division by zero and the bounded `succ`, `pred` and `toEnum`
+keeping their errors. **This changes 98 mode:** every test that pins an overflow error flips (`def.pick.first`, R81's
+and R93's rows, and every other, counted in M11), ruling 11's compatibility layer goes, `docs/rhc.md:48`'s "overflow is
+an error, as 6.4 allows (D22)" changes, and the 98 roadmap's D22 A, the owner's of 2026-11-09 (haskell98.md:6283), is
+superseded in both modes, the 98 roadmap staying as written; on the narrowing reading this is R54's ALIGN (*Haskell 98
+mode and the 2010 text*), now taken. "Also cheap eagerness": a wrapping `+`, `-`, `*` or `negate` cannot raise, so they
+join core-cheap's whitelist (`lib/language/haskell/coresimplify_cheap.sml:50-61`, 98's D51 C), to win back what the 98
+roadmap recorded checked `Int` gave up, up to 16%, 1% and 8% of instructions on event, sched and tc by Faxén's figures,
+which assume a wrapping `Int` (haskell98.md:6277); M11 measures it on the 98 corpus and the 98 roadmap's lazy ports,
+instructions and suspensions made, on the register VM first. M11 carries all of it, its size grown by the primitives and
+the whitelist, and the standing gate names it: 98's overflow tests flip, and 98's bytecode moves where `Int` arithmetic,
+and at `-O2` cheap eagerness, reaches it.
+
 ### D22. IntN, WordN and Bits
 
 **Question.** What are Int8 to Int64, Word, Word8 to Word64 and the Bits instances at run time, and what do they need
@@ -7652,6 +8053,14 @@ D21, and a 63-bit Word that no other implementation has; B removes the first at 
 removes the second short of 98's rejected 64-bit Int (98's D22 D).
 
 **What would reopen it.** A measured cost of the reinterpretations (B); a program heavy in Integer bits (C).
+
+**Decided (owner, 2026-11-24).** B, not the recommended A: `int` bit primitives in Rune, small, beside D21's wrapping
+`int` primitives (B2), so that Bits on Int stands on them and needs no reinterpretation through `word`. B is the owner's
+word, not a measurement's, so its "only if measured" falls. IntN and WordN otherwise as A has them, since B's text names
+Int's bits alone: Word over `word`, Word64 over `word64`, Int64 over `word64` with `int64_*` for comparison and
+division, and Int8 to Int32 and Word8 to Word32 as Int narrowed after each operation, now over the wrapping primitives
+[inferred]. M14 changes accordingly, and *Every change to Rune* gains the rows; D21's and D22's primitives move the
+instruction set's fingerprint, once if they land together [inferred].
 
 ### Libraries
 
@@ -7709,6 +8118,15 @@ in every program's closure and in every Prelude rebuild. The layout is the owner
 **What would reopen it.** The joined checker meeting the 2010 cycle late, which brings in B as 98's D36's fallback
 did; the owner preferring 98's code unchanged (A14).
 
+**Decided (owner, 2026-11-24).** A, as recommended: the printed modules literal, each a pristine with a listed overlay,
+and the cycle 9. The Report's sources, read since (E1's second part, `results/E1b/README.md` section 4), say what M12
+transcribes: the Prelude's four modules from `report/Prelude*.hs` at commit 15bff26, the HTML's, and identical at the
+sources' head; they equal rhc's 98 pristine but for the three renamed imports, four lines
+(`results/E1b/diffs/rhc98-pristine-vs-2010-source.diff`); and the four printed modules from `report/libs/Data-*.tex`'s
+code, equal to E9's `code2010` and to the `haskell2010` package's `$code` in all 20 comparisons
+(`results/E1b/pkg-compare.tsv`). E1's "9 spacing-only lines" are the HTML extraction's (`results/E1b/e1-compare.tsv`).
+No source fix exists for any of the three overlay entries (`results/E1b/defects.tsv`).
+
 ### D24. Sources and licences
 
 **Question.** Where does the code of the 26 codeless modules come from, what is the source of truth where the prose
@@ -7746,6 +8164,10 @@ for names a few lines long. B saves the third licence only by writing that code 
 **What would reopen it.** Legal advice on the Report's notice or on what bytecode linking these libraries owes, open
 since 98's D37.
 
+**Decided (owner, 2026-11-24).** A, as recommended: 98's code for the nine continuing modules, the Report's code for the
+Prelude and the four printed modules, `base` 4.3's portable branches for the rest, and `base` 4.3 the source of truth
+where the prose is silent (M12-M16).
+
 ### D25. Shared with haskell98, or copied
 
 **Question.** The brief: "please store the haskell 2010 prelude under share/rhc/haskell2010 to keep it distinct from
@@ -7775,6 +8197,16 @@ differing by its path and the two one-entry configurations keeping their bytes u
 tests alone. B shares only the 852 runtime lines, and pays for it in 98's stability.
 
 **What would reopen it.** A run of fixes that must be made in both copies.
+
+**Decided (owner, 2026-11-24).** B, not the recommended A: the runtime layer, PreludeRuntime and PreludeEnum, lives in
+a third directory that both libraries' descriptors name; the Report-derived files are copied into
+`share/rhc/haskell2010`, as the brief asks. **A constraint for M12 and M4's descriptor, not a choice:** 98 mode's
+bytecode and its snapshot's entries stay as they were, so the shared layer's unit identities in 98 programs do not
+change, or the decision that moves them says by how much. How is open for M12. The layer is in the Prelude's unit,
+whose types it names (`share/rhc/haskell98/PreludeRuntime.hs:1-3`), and D23's cycle 9 moves `interact`'s and
+`getLine`'s IO names into 2010's PreludeRuntime, which 98's lacks; so either the layer is split by edition, or 98's
+grows and its snapshot moves, as B's own text says. D21's wrapping primitives move 98's `int_*` in any case, which is
+that decision's change, not this one's.
 
 ### D26. Unicode
 
@@ -7821,6 +8253,16 @@ so only characters past U+00FF pay the search [read].
 
 **What would reopen it.** A measured cost of the predicates in `read`-heavy programs, which brings in B; the owner
 reading "Unicode space character" as White_Space, which is (ii).
+
+**Decided (owner, 2026-11-24).** A with (ii), the prose's `isAlphaNum` and 18.0.0, not the recommended (i); and "For
+(ii) also align the lexer with isSpace". `isSpace` is Unicode's White_Space property, which adds U+0085, U+2028 and
+U+2029 to Zs and the five controls, from a White_Space table in `lib/unicode`: a small Rune change, as (ii) says
+(*Every change to Rune*). The lexer's `uniWhite` reads White_Space too, so lexer and `isSpace` agree; at the pin it
+reads Zs (`lib/language/haskell/char.sml:23-34`). That is in 2010 modules, in M7 with 2010's other lexical changes;
+whether 98 mode's lexer moves too is open with the owner (*Open with the owner*, 1), recommended no, since 98's
+`isSpace` stays Latin-1 (D13d). GHC's `base` answers false of the three (E1's probe `n07a_isspace`), so their tests are
+rhc's own, from the text. M13 carries `isSpace`. The sources add nothing: "any Unicode space character" is `base`'s
+documentation, imported with the chapter in 2010, and `uniWhite` is 98's text (`results/E1b/README.md` section 5).
 
 ### FFI
 
@@ -7901,6 +8343,12 @@ without them the chapter's own `errno` example and `dynamic` of a `wrapper` fail
 **What would reopen it.** G02's operation not reaching the program's symbols on some target, which brings in a symbol
 table at link time; programs in the corpus or the GHC FFI tests naming `stdcall` off Windows, which brings in (ii).
 
+**Decided (owner, 2026-11-24).** A, with (i), as recommended: all four kinds through a Core primitive family, with
+Rune's three small changes G02, G06 and G07; `stdcall` as ABI 1 where the target has it and refused at compile time
+elsewhere (M15). The grammar's `fatype -> ftype` is the function arrow: the HTML prints it as the grammar's production
+arrow in chapters 8 and 10, and T10 in chapter 10, a slip of typesetting the editor fixed in 8.4.2 alone, in 14de79f of
+2010-11-17 (E1's second part, `results/E1b/README.md` section 2; *Found while writing*).
+
 ### D28. `foreign export` and HsFFI.h
 
 **Question.** 8.4.4 lets a module make a Haskell value a C entity: `foreign export ccall "addInt" (+) :: Int -> Int ->
@@ -7951,6 +8399,10 @@ for mixed-language programs that the conformance tests and the corpus do not nee
 
 **What would reopen it.** The owner declining to leave a required feature out, which brings in B or C; a Rune roadmap
 that adds an embedding API for its own ends, which leaves rhc only the stubs.
+
+**Decided (owner, 2026-11-24).** A, as recommended, which is the owner's explicit word that A needed: `foreign export`
+and HsFFI.h are not in this roadmap, read and refused with D7's "not supported by rhc", their rows `Planned` at G2 and
+declared so. M17 is not taken.
 
 ### D29. `Ptr`
 
@@ -8011,6 +8463,9 @@ more lines in Rune, keeps a deviation, and still leaves pointers from C unchecke
 **What would reopen it.** The owner keeping Rune's rule whole, which brings in B and its IntPtr deviation; a Rune
 decision to give SML raw addresses too, which makes A Rune's own.
 
+**Decided (owner, 2026-11-24).** A, as recommended: raw addresses for Haskell's `Ptr`, through a trusted address-level
+primitive family for rhc's Core alone, a large change of Rune's safety model with its safety review (M16).
+
 ### D30. Finalizers and StablePtr
 
 **Question.** 29.1.1: a ForeignPtr's finalizer "will be executed after the last reference to the foreign object is
@@ -8059,6 +8514,9 @@ feature no Rune roadmap plans.
 
 **What would reopen it.** A program of the corpus or the tests running out of memory under B; a Rune roadmap that adds
 weak references, which makes A cheap.
+
+**Decided (owner, 2026-11-24).** B and (i), as recommended: each ForeignPtr's finalizers run at `finalizeForeignPtr`
+and at program exit; StablePtr a table of values in Haskell (M16).
 
 ### D31. Callbacks
 
@@ -8124,6 +8582,12 @@ visible, and C would make the VM re-entrant from arbitrary frames, which no Rune
 **What would reopen it.** The concurrent-runtime roadmap, which brings other threads; a program of the corpus or of
 GHC's FFI tests that needs a callback after its call returned (36 plain FFI candidates listed, none run or examined
 for callbacks: `results/E10/ghc-ffi-tests.txt`), which makes B's deviation or C a need.
+
+**Decided (owner, 2026-11-24).** B, not the recommended A. The behaviour is A's: Rune's contract, rhc's trampoline,
+callbacks during a call of the program on the owning thread, at most 64 deep, and a callback after its call returned
+or from a signal handler refused silently. The refusal outside a call is a deviation, not a reading: filed in the 2010
+table's deviations file with its ground, "ambiguous", as B gives it from E1's N1(h), the text being silent on a callback
+after the call that received it returned; and pinned by a test, `Later.hs`'s callbacks after the call, in M15.
 
 ### D32. The FFI in Core
 
@@ -8221,6 +8685,15 @@ contradiction's price on either side.
 **What would reopen it.** Mid-level units splitting a program's Mid, which moves the per-program state; a test of GHC's
 FFI suite that the structural check refuses wrongly.
 
+**Decided (owner, 2026-11-24).** A, with (i), as recommended: the prototype's lowering with E3's AST form, 8.4.2's rule
+in both checkers, and rhc's Foreign.C.Types exporting its constructors on D38's ground "contradictory" (M15, M16). The
+Report's sources support (i) (E1's second part, `results/E1b/README.md` section 3): chapter 28's export list was
+generated from `base` on 2010-06-29 and 07-01 (56b53be, 1dcaf12) and never generated again after a479e15 of 2010-07-14,
+"incorporate changes to the FFI spec identified by the H2010 committee", wrote 8.4.2's rule, while `ffi.verb:67-68`
+keeps the Addendum's opposite rule as a comment. So the contradiction is a stale generated chapter against the
+committee's later text. GHC's `base` followed the text in 2011: f2ef82ed10, "Export constructors for Foreign.C.Types
+and System.Posix.Types newtypes", part of trac #5529 [read: `/home/ruud/haskell/ghc`].
+
 ### D33. Foreign.\*
 
 **Question.** How are the Foreign modules of chapters 24 to 37 built, and over what? E9 sizes the 14 at about 2,496 new
@@ -8294,6 +8767,13 @@ text's own model, C types being the platform's, and the second a documented limi
 
 **What would reopen it.** A call's cost mattering to a corpus program, which brings in the Rune change; the owner
 wanting FFI programs under `bin/rhc Main.hs`, which is (ii).
+
+**Decided (owner, 2026-11-24).** A with (ii), not the recommended (i): Foreign.\* in Haskell over new Core primitives
+with typed peek and poke, as A has it; and the FFI on Core's interpreter too, CoreInterp's FFI over RuneForeign's
+public API, about 250 lines of rhc, callbacks re-entering CoreInterp, so that `bin/rhc Main.hs` runs a program that
+imports C. None in Rune, as (ii) says. It is the interpreter's own SML that calls RuneForeign, not Haskell code, so
+98's D26 A, no SML below Haskell, holds [inferred]. M15 carries the calls and callbacks on the interpreter and M16 the
+typed peek and poke there, and G2's FFI line runs on the interpreter too (*Gates*).
 
 ### Extensions
 
@@ -8408,6 +8888,17 @@ nothing measurable over T1-T5; that OutsideIn's implications extend a constraint
 **What would reopen it.** The OutsideIn roadmap scheduled before track X, which makes C its first milestone; a T1-T5
 feature found to need an implication; production sizes well past E12's agent's estimates (T1 group 1,600-2,400,
 RankNTypes 1,500-2,500).
+
+**Decided (owner, 2026-11-24).** A+, as recommended: today's unifier, a deferred store of class constraints solved at
+generalisation, improvement as unification repeated, and no improvement from a given (M22-M26). The owner's papers, read
+since (E11's second part, `results/E11b/papers.md`, findings 3, 8 and 9), support its shape. Jones's book carries the
+predicate set to `let` and generalises over it there (Fig. 3.3, printed p. 26; Cor. 3.23, printed p. 28), and states
+improvement as a substitution on the inferred predicates with no evidence term (section 10.3, printed p. 123). Stuckey
+and Sulzmann 2005 build evidence at compile time only where the wanteds simplify to the givens (Lemma 9, printed p.
+1242), and otherwise at run time, in an untyped target (printed p. 1240): A+'s refusal of improvement from a given. No
+paper gives coherence for overlapping instances with compile-time evidence and separate compilation (Jones's book,
+sections 5.4.1 and 7.1; Stuckey and Sulzmann, Thm. 15 and section 8.1), so M22's overlap rule rests on GHC's alone, and
+its tests are its specification.
 
 ### D35. The recommended set and its order
 
@@ -8536,6 +9027,29 @@ anything other than it does under GHC [inferred].
 which moves them up *What is cut first* (T5 is second there already); a corpus of mtl-style code that (iii) refuses,
 which brings in (ii).
 
+**Decided (owner, 2026-11-24).** A, with (iii), as recommended, and simplified subsumption for T5. What (iii) requires,
+by the owner's papers (E11's second part, `results/E11b/papers.md`, finding 1), is **the lead's reading of (iii), for
+the owner to confirm** (*Open with the owner*, 5). Sulzmann et al. 2007's Corollary 3 assumes that every dependency is
+full, its left side n-1 of a class's n parameters (Def. 13, p. 28), and its Paterson conditions, unlike GHC's
+(`ghc/docs/users_guide/exts/instances.rst:192-205`), include "The instance declarations must not overlap" (Def. 11,
+p. 21; the Basic Conditions too, Def. 5, p. 11). mtl's `MonadRWS r w s m | m -> r, m -> w, m -> s` has three
+dependencies, none full, and its lifting instances, `instance MonadRWS r w s m => MonadRWS r w s (ExceptT e m)` among
+them, break coverage (`ghc/libraries/mtl/Control/Monad/RWS/Class.hs:45-46`, `:62-64`), so (iii) read literally
+refuses them. The regime is therefore:
+- per class, dependencies with one left side are merged into one (Def. 18-21, Lemma 5, Example 24, pp. 34-37) where
+  Def. 19 holds, the instances' right-hand components sharing no variables: MonadRWS's become `m -> r w s`, which is
+  full, and its instances meet Def. 19 [inferred in `papers.md`];
+- an instance may break coverage only for a dependency that is full after merging, and only under Terminating Weak
+  Coverage (Def. 14, Cor. 3, p. 30);
+- Consistency (Def. 6) and Bound Variable (Def. 8) are named conditions, checked;
+- overlap pragmas on an instance of a class with dependencies are refused, with D7's "not supported by rhc" naming the
+  condition, since the paper's conditions exclude overlap.
+
+It refuses `Mul` as before. Every other mtl class with dependencies is full, and where a lifting instance breaks
+coverage its dependent argument is a variable (`papers.md`, grepped from mtl in GHC's tree). None of it argues for (ii).
+M23 carries it. Duck et al. 2004, the conference version, must not be cited for it: its Theorem 2 lacks the fullness
+condition, and the journal's Example 18 refutes it (`papers.md`, section 4).
+
 ### D36. Extensions that change the meaning of valid programs
 
 **Question.** 67 of the census's 148 names, when on, change the meaning or the acceptance of some valid Haskell 2010
@@ -8613,6 +9127,9 @@ GHC meets the second. The Report allows `forall` as a name, and rhc follows the 
 **What would reopen it.** An extension whose conservativity test or corpus identity fails, which reclassifies its
 census row (X2 classed LambdaCase "no" where X1 and X3 said yes: `results/E6/overlap.tsv`); the owner accepting an
 edition (GHC2021), which turns many of these on at once.
+
+**Decided (owner, 2026-11-24).** A, as recommended: each such name only when asked, by name, with its conservativity
+test; `forall` a keyword only under ExplicitForAll and what implies it (M19-M27).
 
 ### D37. The boundary with the OutsideIn roadmap, and Core's target
 
@@ -8693,6 +9210,20 @@ rhc refuses them until the OutsideIn roadmap gives them a principal type.
 **What would reopen it.** The OutsideIn roadmap, which takes T4b and brings FC; a measured cost of T5's boxes in a
 corpus program; another front end wanting rank-N in Mid, which makes (b) good for two languages.
 
+**Decided (owner, 2026-11-24).** A (i) (b): the boundary as A draws it, T4b T6's by (i), `AltConEx` binders and the
+whole-dictionary Cast as recommended, and rank-N types in Mid, (b), not the recommended (a). Mid takes a forall as a
+parameter's and a binder's type, through MidLint's rule (`lib/compiler/core/midlint.sml:204-222`) and what `Lower`,
+`Workers`, `flattenJoin` and a lifted function rely on (`docs/ir.md:706-709`), with no boxing in CoreToMid: a large Rune
+change, not sized, under the standing gate, SML's bytes and budgets unchanged. Mid stays predicative, a type variable
+never standing for a forall-type and a type application at monotypes only, as Odersky and Läufer 1996's decidability
+rests on "only types and not type schemes in the range of substitutions" (printed p. 55) and Serrano et al.'s base
+system instantiates at monotypes (E11's second part, `results/E11b/papers.md`, finding 10) [the design inferred]. M26
+begins with it, before T5 lands; *Every change to Rune* takes the row, *Risks* names it the first large change to Mid in
+this roadmap, and if T5 is cut, rank-N in Mid goes with it (*What is cut first*). The papers support the rest of A
+(findings 5 to 7): none types a context on a universal variable, the escape check is needed (Läufer and Odersky 1994,
+printed pp. 1413-1414), and refusing an existential pattern binding is rhc's choice from Core's shape, not a need of
+soundness.
+
 ### Testing
 
 ### D38. The 2010 conformance table
@@ -8702,7 +9233,8 @@ enforced with `clauses = 3901`, `errataCount = 18` and `readings = 54` and the d
 `errors` written in (`tests/runner/hsconformance.sml:48-58`). E1 built a 2010 table in the same row form
 (`results/E1/clauses2010.tsv`): 5,259 rows, 2,736 `same`, 912 `changed`, 1,358 `new` and 253 `removed-in-2010`, every
 one of 98's 3,901 ids in some row's `map98` (`clauses2010-counts.tsv`). No errata to the 2010 Report were published;
-ten mistakes were reported on the haskell-prime list, none fixed in the text (`results/E1/errata2010.md`). Rune: none.
+ten mistakes were reported on the haskell-prime list, none fixed in the published text (`results/E1/errata2010.md`;
+three were fixed in the sources, unpublished: this decision's record). Rune: none.
 98 mode is unchanged under every option: 98's table and programs stay as they are. *Testing and conformance* gives
 how the table lands; this decision is its shape and the readings that set what it takes as the text.
 
@@ -8768,6 +9300,19 @@ program in both modes is what makes that visible.
 consult (`errata2010.md`); the owner taking 2010 as printed (a)(ii); a shared program whose 2010 result differs for a
 reason no row names.
 
+**Decided (owner, 2026-11-24).** As recommended: A, with (a)(i), (b), (c), (d)(i), (e) and (f) (M1, M12, M14). The
+Report's sources, read since (E1's second part, `results/E1b/README.md` sections 1, 2 and 5), name the text exactly and
+answer what would reopen this. The HTML is the sources' commit 15bff26 of 2010-07-20, and T10 a build of 2010-11-17 that
+carries one later commit, 14de79f, 8.4.2's `fatype -> ftype` (*What the 2010 Report says*, *Which text*). "No errata
+were published" stands; but the sources hold three corrections never published, 2a78309 (`0**y` "is 1 if y is 0", 2011),
+ea28a8e (5.6.1's "Haskell 98" made "Haskell", 2012) and 554480a (rule (s)'s side condition deleted, 2018, on branch
+`h2010` only), and one that reached the PDF alone, 14de79f. Whether 2010's text is read with them, as editors'
+corrections, this decision's way with 98's errata, is open with the owner (*Open with the owner*, 4), recommended yes.
+The history bears on (a)(i) as well: 98's errata never entered 98's sources; the 2010 line forked from them at 1f5ca44
+(2005-12-13), the errata page with 13 of the 18 sat in its tree until 2007, and no commit mentions the errata 2010
+lacks, so the text lacks them by inheritance, not by a recorded choice (`results/E1b/errata98-sources.tsv`). That
+weakens the strongest argument against (a)(i) above.
+
 ### D39. Oracle policy
 
 **Question.** Who judges rhc's 2010 mode, and of what? The owner took for 98 GHC with the strict shim and Hugs `+98` as
@@ -8821,6 +9366,9 @@ line, so a disagreement outside them is a question with a clause behind its answ
 **What would reopen it.** A rebuilt shim that moves a limit probe; a verdict traced to the shim; a 9.14.1 binary
 installed for another reason.
 
+**Decided (owner, 2026-11-24).** A, as recommended: GHC 9.14.1's source the record, 9.4.7 with E8's shim for acceptance
+and output with its limits stated, MicroHs for acceptance only (M2).
+
 ### D40. The corpus and the filter for untrusted code
 
 **Question.** Which code feeds the 2010 oracles and tests, and how is code that would run at compile time kept from
@@ -8859,6 +9407,13 @@ B is the step for that day.
 
 **What would reopen it.** M20 landing, which brings in B; TemplateHaskell support in a later roadmap; a corpus whose
 licence or provenance a survey cannot settle, which stays outside the tree as 98's did.
+
+**Decided (owner, 2026-11-24).** B, not the recommended A: CPP without `#include` is admitted to the oracles once M20
+lands, 110 more candidates, 63 of nofib's 64 (`results/E8/filtered.tsv`, column `untrusted`, counted), with the option
+filter naming a cabal file's `-optP` flags too, as B requires. Until M20 lands the filter is A's as built, and
+TemplateHaskell, QuasiQuotes, `capi`, the OPTIONS the filter names and CPP with `#include` stay out for good. M2 builds
+the filter with its CPP rule a switch, and M20 turns it (*Testing and conformance*, *The corpora and the untrusted-code
+filter*).
 
 ### D41. The `make check` budget and HsLint parity
 
@@ -8932,6 +9487,18 @@ not yet write.
 **What would reopen it.** Run D's cost by family, which replaces the 86%; `--typecheck-only` missing a flip that only a
 run shows; a tier whose HsLint cost runs far past the checker's, which goes to *What is cut first* with its tier.
 
+**Decided (owner, 2026-11-24).** A, with (i), as recommended: the 2010 rows shared by clause id in `make check` and the
+rest nightly; parity per feature at level 2, HsLint budgeted at no less than the checker's cost per type feature. The
+owner's papers fix one source (E11's second part, `results/E11b/papers.md`, finding 2 and section (2)): **HsLint's T5
+specification is Serrano et al. 2020 section 4** (Figs. 2-4), without Quick Look (Fig. 5) and without rule ityarg's
+polytype type argument, which rhc's T3 refuses as well, having no ImpredicativeTypes. It is not PVWS 2007, Dunfield and
+Krishnaswami 2013 or Odersky and Läufer 1996, whose subsumption has the arrow's co- and contravariance, so an HsLint
+that followed them would accept programs that need coercions the checker's Core lacks (*What the literature says*). The
+other tiers: T1 after Jones's book, Fig. 3.3 and section 7.1, on Typing Haskell in Haskell; T2 after the JFP's CHR rules
+(Fig. 2, p. 13) with superclass propagation (Example 8, p. 14) and A+'s rule that no equality binds a skolem, a source
+apart from the checker's Jones 2000; T4a after Läufer and Odersky 1994's Figs. 2 and 4, with Läufer 1996's CONS, and PAT
+in the `case` form of Odersky and Läufer 1996's (AbsE) (printed p. 59).
+
 ## The milestones
 
 Each milestone is one commit or a few, and each commit leaves `make check` green. One that touches Rune (`runtime/`,
@@ -8943,14 +9510,13 @@ description and `make isa`, and one that needs the operating system goes behind 
 milestone passes the standing gate (*Gates*).
 
 A heading gives the track, the size and the order. **Why** says what the milestone is for. **What** says what lands, by
-file, and the decisions it carries out. **Starts from** names the prototype. **Rests on** names the decisions, and what
-changes if the owner decides otherwise. **Gate** appears where Rune changes. **Done when** is what a test shows; every
+file, and the decisions it carries out. **Starts from** names the prototype. **Rests on** names the decisions, as the
+owner took them on 2026-11-24. **Gate** appears where Rune changes. **Done when** is what a test shows; every
 milestone's list ends with M3's check, which is the standing gate's for 98 mode. **Size** gives the figure and the file
 it comes from. Paths under `tests/hs2010`, `share/rhc/haskell2010` and new files are proposals. Line numbers are of
-`75ed95861`, where the roadmap was written, and stay so. Implementation starts from the tree of its day: by
-2026-11-21 haskell98's tip was 24 commits on, and E4's patch rejects 12 of its 121 hunks there
-(`results/E4/other-session.md`), so each citation is checked on that tree before its milestone, and a citation of it
-says so.
+`75ed95861`, where the roadmap was written, and stay so. Implementation starts from the tree of its day: by 2026-11-21
+haskell98's tip was 24 commits on, and E4's patch rejects 12 of its 121 hunks there (`results/E4/other-session.md`), so
+each citation is checked on that tree before its milestone, and a citation of it says so.
 
 **A prototype is evidence, not code to land.** E3's spikes, E4's and E13's language record, E10's FFI and E12's
 tiers were written to answer questions: they sit behind stubs and switches (E3's `HsLexer.program2010`, E12's
@@ -8970,12 +9536,12 @@ without building them. Letters are E6's scale: S under 300 lines, M 300 to 1,000
 ### The order
 
 ```text
-G0   the owner's decisions; M1, M2 and M3 may start before it
+G0   the owner's decisions: passed on 2026-11-24
 
 at once, after G0, from the tree of the day
   T    M3 the 98 check, first    M1 the 2010 table    M2 oracles, corpora
   M    M4 record, descriptor, keys -> M5 pre-scan, errors, diagnostics
-  H    M18 98 mode: D13a, two checker defects (each on the owner's word)
+  H    M18 98 mode: D13a; two checker defects (open with the owner)
   F    after M4: M7 small syntax    M8 pattern guards    M9 relaxed groups    M10 hierarchical names
   L    after M4 and M10: M12 Prelude, printed modules -> M13 nine modules    M14 Bits, Int, Word, System.*
   M    after M12: M6 --language, edition pragmas, the 2010 snapshot
@@ -8998,10 +9564,9 @@ G2   the 2010 Report (M1 to M16)
        M27 T8, any time after M9
 ```
 
-**G0, and what may start before it.** The owner's decisions come first (*Gates*). M1, M2 and M3 rest on no owner's
-item but D38's N18 and N21, which edit rows of the table, not its shape, so they may start before G0 [inferred]. M3
-goes first of all: its check is what every later milestone shows, and tracks M and F should land nothing it has not
-measured (*Testing and conformance*).
+**G0 passed on 2026-11-24** (*Gates*): every decision is taken, and what the owner left open is at the head (*Open
+with the owner*); of it only M18's two defects hold a milestone's content. M3 goes first of all: its check is what
+every later milestone shows, and tracks M and F should land nothing it has not measured (*Testing and conformance*).
 
 **Track M before F and L.** E3's spikes ran under one stub ref, and E4 replaced every per-run ref with a lookup by
 module, binding or group (`results/E4/permodule/`). Each of track F's changes is a feature of M4's record
@@ -9018,8 +9583,8 @@ their headings.
 **The critical paths.**
 - **To G1:** M3, then M4, M10, M12 and M6. M5, M7 and M8 go beside M10 and M12 once M4 stands.
 - **To G2:** M4, M10, M12, M14 and M16, with M15 joining M16 after M7. The bulk is M16: about 2,500 lines of Haskell
-  (E9) and D29's change to Rune, which is the owner's call on Rune's model (*Gates*, G0). D29 is the decision that
-  most holds G2 [inferred]. M13 and M11 go beside M14.
+  (E9) and D29's change to Rune's model, which the owner took (*Gates*, G0), with its safety review. D29's change is
+  what most holds G2 [inferred]. M13 and M11 go beside M14.
 - **To G3:** G2, then M28, about 6 lines and a full 98 run (E4's `cost.md`). No extension is on it.
 
 **The rows.** No milestone works the 2010 table through on its own, as 98's M19 did. M1 lands the table with every row
@@ -9067,10 +9632,12 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
     the five rows of 98's chapter 23 (System) that E1 maps `changed` into 2010's chapters 39 and 40, with 98's
     statements, leave the table under D38's N21, their programs
     kept as rhc's documented choice.
-  - **What D38 settles, as rows:** 98's eight unabsorbed errata as readings on 2010's identical text (N18, if the
-    owner takes it); Ix for tuples up to 15 (N16, T10:12562); the code chapters' defects as overlay rows (N11, for
-    M12); the errata file empty, its count 0 (`results/E1/errata2010.md`). 98's deviations DV1 and DV8 (R1, R9) are
-    2010's text (D13), so the 2010 deviations file starts with 98's other six.
+  - **What D38 settles, as rows:** 98's eight unabsorbed errata as readings on 2010's identical text (N18, taken by
+    D38's (a)(i)); Ix for tuples up to 15 (N16, T10:12562); the code chapters' defects as overlay rows (N11, for
+    M12); the errata file empty, its count 0, since none was published (`results/E1/errata2010.md`). The editors'
+    three unpublished corrections and 14de79f's arrow are readings on their rows if the owner takes them (*Open with
+    the owner*, 4; `results/E1b/changes.tsv`). 98's deviations DV1 and DV8 (R1, R9) are 2010's text (D13), so the 2010
+    deviations file starts with 98's other six, and D31's refusal of a callback outside a call joins them (M15).
   - **`tests/runner/hsconformance.sml`:** a record per table (its file, row count, errata count, reading ids,
     directories) in place of the constants at `:44-58` (`clauses = 3901`, `errataCount = 18`, `readings = 54`,
     `dirs`); the five rules per table; a program's ids looked up in its own table.
@@ -9086,9 +9653,9 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
   - **D41's tiers:** in `make check`, the 2010 rows' programs, and each shared program under one edition with
     `--typecheck-only` under the other; the second edition's full run nightly.
 * **Starts from:** no patch. E1's table and counts, E3's flips.
-* **Rests on:** D38, D41. If the owner declines N18, the two code errata (`enumFrom`'s `seq`, `lex`'s `_`) need 2010
-  programs of their own. If every 2010 row gets its own program, the tier costs about 5,235 s of CPU instead of 2,259
-  s, +44% of the 11,879-s base instead of +19% (E4's rule on E1's counts: W8).
+* **Rests on:** D38, D41, both as recommended: N18's errata apply to 2010's identical text, so 98's pinning programs
+  serve both tables; the shared rows in `make check` and the rest nightly, about 2,259 s of CPU, +19% of the
+  11,879-s base (E4's rule on E1's counts: W8).
 * **Done when:**
   - the 2010 table loads in `make check`, every row accounted for (5,259 less the rows D38 removes, each named);
   - the 98 table's enforcement is unchanged: 3,901 rows, and `bin/rune-test list` names the same 98 jobs before and
@@ -9120,13 +9687,15 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
     kept from every compiler; `extcorpus.tsv`, 1,198 rows over 84 extensions, for track X (counted).
   - **The filter as built** (D40): TemplateHaskell, QuasiQuotes, CPP, capi, and OPTIONS naming a plugin, `-F` or
     `-optc`; ANN pragmas blanked in every copy; CPP lines found in literate files too. It runs before any compiler,
-    and again on any corpus re-pinned.
+    and again on any corpus re-pinned. **By D40's B** its CPP rule is a switch: CPP with `#include` stays out for good,
+    and CPP without it, 110 candidates, 63 of them nofib's (`results/E8/filtered.tsv`, counted), is admitted to the
+    oracles when M20 lands, the option filter naming a cabal file's `-optP` flags first.
   - **The run programs:** the 25 new 2010 ones (24 MicroHs tests and 1 GHC test, 0.78 s under `ghc -O0`: W8, counted on
     `run.tsv`) vendored after a licence survey, as 98's M3 did; the other 26 of E8's 51 under 1 s are 98's D56's or
     built over base only (*Testing and conformance*). Hackage stays compile-only and is never vendored.
   - The 51 shared programs that import a 98 module name stay 98-only (D38: the 2010 library offers no 98 names).
 * **Starts from:** no patch. `results/E8/`, `oracles/ghc2010/`, `oracles/README.md`.
-* **Rests on:** D39, D40. MicroHs judges acceptance only: it accepts 45 of the 57 testsuite files g10 refuses for
+* **Rests on:** D39, D40 (B). MicroHs judges acceptance only: it accepts 45 of the 57 testsuite files g10 refuses for
   language (`results/E8/summary.txt`).
 * **Done when:**
   - with no rhc, the harness reproduces E8's verdicts on the trees present (`results/E8/judged.tsv`), any difference a
@@ -9135,7 +9704,7 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
     constructors exported), is stated in the shim's README;
   - a missing oracle skips its job with how to build it;
   - nothing lands without a surveyed licence, and the filter refuses planted TemplateHaskell, `#include` and ANN files
-    before any oracle runs;
+    before any oracle runs, and a planted `-optP` flag with its CPP switch on;
   - M3's check holds.
 * **Size:** the shim as built, 36 modules, the 67-line plugin among them, 1,675 lines of Haskell (counted in
   `oracles/ghc2010/`); E8's lists as data; the harness about 250 lines [estimate; 98's M3 put the first harness at
@@ -9168,6 +9737,9 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
   - **Nightly,** a manifest in the tree: each 98 program's canonical Core (`--dump-after=desugar --canonical-core`,
     `docs/rhc.md:195`), the errors' messages and the views. Core is rhc's own output, so Rune's changes do not move it
     [inferred]; a commit that moves the manifest names its decision.
+  - **The decided exceptions,** which a change may move only by what its decision names, each listed in its commit:
+    D8's `hs/names/imp/greatest` (M4); D11's hint line in 98's refusals, stderr only (M5); D21's wrapping `Int`, 98's
+    overflow tests and the bytecode of its arithmetic (M11); D13a's `genericLength` (M18); D6's printed pragmas.
   - E3's six scripts (131 lines of shell) and E4's `dualrhc.sh` do not land (`tests/runner/migration.sml:2,10`).
 * **Starts from:** `results/E3/scripts/` (`sweep-lang.sh`, `compare.sh`, `corpus-run.sh`, `rhc-capture.sh`,
   `errors98.sh`, `views.sh`), `results/E4/lang_bytes.sh`, `dualrhc.sh`.
@@ -9203,7 +9775,8 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
     PreludeText, Ix, Ratio, PreludeBuiltin), the library's own language, its hidden modules, leaves and module list.
     Every hard-coded "haskell98" in code goes through it (E4 removed those at `src/rhc/library.sml:44`,
     `infer.sml:2010` and `hslint_env.sml:604` among others), so D20's standard classes come from the descriptor's
-    prefix. `rhc --library-modules` replaces `Makefile:822`'s list.
+    prefix. `rhc --library-modules` replaces `Makefile:822`'s list. By D25's B a descriptor also names the directory of
+    the runtime layer both libraries share, and 98's descriptor keeps its units' identities as they are (M12).
   - **rhc's own options (D8):** `--cycle-default=scc` and `--names=greatest` as per-cycle settings with an agreement
     check, which stops them forcing a whole compile (`src/rhc/syntax.sml:154`). The other options are compile modes and
     stay out of the record.
@@ -9211,9 +9784,9 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
   2026-11-21, 12 of E4's 121 hunks are rejected: `src/rhc/driver.sml` 4, `hslint.sml` 3, `src/rhc/graph.sml` 2,
   `hslint_env.sml`, `src/rhc/names.sml` and `src/rhc/syntax.sml` 1 each (`results/E4/other-session.md`). The other
   session's `("names", "dotted")` in `extraOf` and its `literate` in a member's id compose with the member's language.
-* **Rests on:** D4, D8, D9, D10. D8's owner item: folding `--names=greatest` makes the library immune to it, which
-  changes `tests/hs/names/imp/greatest` from 958 pairs to 955 (`results/E4/logs/suites6.log:2`); the alternative keeps
-  it a program-wide mode that goes whole, and the pinned dump stays.
+* **Rests on:** D4, D8, D9, D10, all as recommended; D25 (B) for the descriptor's shared layer. D8's A folds
+  `--names=greatest`, which makes the library immune to it and re-pins `tests/hs/names/imp/greatest` from 958 pairs to
+  955 (`results/E4/logs/suites6.log:2`).
 * **Done when:**
   - E4's per-module cases are tests, with the features in 2010 modules, since the prototype put them in 98 modules,
     which D6 reads for edition names only: n+k by edition and by `-X`, 4.5.1's example, a mixed program, a mixed
@@ -9224,7 +9797,7 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
   - two spellings of one set give one key;
   - the 98 snapshot's 68 entries and keys are equal to `75ed95861`'s, made at one `--share` and one Main path
     (`results/E4/snapshot-98-compare.txt`);
-  - M3's check holds, `hs/names/imp/greatest` apart if the owner takes D8's fold.
+  - M3's check holds, `hs/names/imp/greatest` apart, re-pinned to 955 pairs by D8.
 * **Size:** the prototype is +755 -224 in 36 files (E13's build 9), E4's +704 -224, of which 226 in the two new files
   (`git apply --numstat`). E4's tracked part by area: `src/rhc` +291 -136, HsLint +81 -39, the checker +25 -9, lexer
   and parser +24 -11, the simplifier +20 -13, the Makefile +12 -4 (E4's report; +470 -222 without `rhc.plan`,
@@ -9257,16 +9830,21 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
     differing on a cycle-wide setting), C3 (NoHierarchicalModules under a hierarchical library); C4 the policy that a
     recommended feature implying an unsupported one fails no setting, only the construct where written; accept C5 to
     C7, C9, C11, C12. C8 is M9's, C10 M20's.
-  - **Diagnostics (D11):** a refusal names the extension, with single, any-of and all-of hints as GHC gives them; a
-    token is lexed regardless of the setting only where it cannot occur in a valid program, and a hint given only on a
-    path that already fails. The three warnings above are rhc's first.
+  - **Diagnostics (D11's B):** a refusal names the extension, with single, any-of and all-of hints as GHC gives them,
+    in 2010 modules and in 98 modules alike; a token is lexed regardless of the setting only where it cannot occur in
+    a valid program, and a hint given only on a path that already fails. In a 98 module the hint names `-X` on the
+    command line or the edition, never a pragma, since D6 reads only edition names there. **This changes 98 mode's
+    messages by the hint line and nothing else:** each 98 refusal that gains one is re-pinned by hand, at least 33 of
+    `tests/hs/errors`' 633 (the 27 E12's tiers accept and the 6 E3's 2010 features accept: D11's record), listed in
+    the commit; the whole stderr M3 compares moves, and a `.expected` only where the hint reaches the first line. The
+    three warnings above are rhc's first, in 2010 modules only.
   - **Printers:** `--print` and `--print-layout` print the header pragmas; today only Exact mode prints trivia
     (`lib/language/haskell/print.sml:129-140`), so a printed 2010 module loses its language (E3's report; no result
     file: W8).
   - Chapter 12's INLINE, NOINLINE and SPECIALIZE stay as in 98 mode (D19).
 * **Starts from:** `patches/E3-07-pragma.patch` (`HsLexer.headerPragmas`), whose 98 rule is the design; E13's
   `HsLanguage.scan` and `pragmaAt` for positions; `results/E13/model.py`; E3's `pragmas/` census.
-* **Rests on:** D5, D6, D7, D11. E4's and E13's prototypes refuse an unknown name in a 98 module, against D6; the
+* **Rests on:** D5, D6, D7, D11 (B). E4's and E13's prototypes refuse an unknown name in a 98 module, against D6; the
   milestone follows D6.
 * **Done when:**
   - E13's 19 `:show language` captures and the 132 of E5's 137 probe outcomes it reproduces are tests of resolution
@@ -9278,7 +9856,10 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
   - an unknown name, an unsupported name and C1 to C3 are refused at the name's line and column, in compiles,
     `--whole`, the views and `.lhs` files;
   - a 2010 module printed by `--print` and by `--print-layout` and compiled again gives the same bytes;
-  - M3's check holds, the 11 vendored files included: no 98 stderr gains a warning.
+  - E5's 35 refusals (`results/E5/probes/diag-names.tsv`) give their hints in a 2010 module, and those that have a 98
+    counterpart give them in a 98 module, naming `-X`;
+  - M3's check holds, the 11 vendored files included: no 98 stderr gains a warning, and 98's stderr differs from the
+    parent's only by hint lines, each in the commit's list, with every verdict and every bytecode file the same.
 * **Size:** the pre-scan is 106 code lines in E3 (71 of them in `lexer.sml`; `results/E3/diffstat.tsv`) and about 67
   lines in E13's `language.sml` (counted). The 148 names and the implications are data. OPTIONS_GHC, the combination
   checks, the hints, the warnings and the printers were not built: about 400 to 600 lines in all [estimate].
@@ -9331,10 +9912,15 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
     lowers it. This node is D32's AST declaration form.
   - **`:` in ascSymbol** needs no change: the Dec 2005 erratum did it (E3: `--dump-tokens` of `colon.hs` gives the
     same tokens in both modes).
+  - **`uniWhite` as White_Space in 2010 modules** (D26's (ii), "also align the lexer with isSpace"): the lexer's class
+    of a white character above ASCII, today the general category Zs (`lib/language/haskell/char.sml:23-34`, read at
+    `lexer.sml:92`), becomes `lib/unicode`'s White_Space table, which adds U+0085, U+2028 and U+2029, so the lexer and
+    M13's `isSpace` agree. 98 modules keep Zs unless the owner says otherwise (*Open with the owner*, 1). The table
+    is M13's Rune change; whichever of M7 and M13 lands first adds it.
   - Δ7's and Δ10's rows need no code, since fixity resolution is already rhc's and R1 and R9 are 2010's text (D13);
     their programs are written here.
 * **Starts from:** `patches/E3-01-npk.patch`, `E3-02-doif.patch`, `E3-03-empty.patch`, `E3-06-foreign.patch`.
-* **Rests on:** D15, D17, D27 (the `foreign` keyword).
+* **Rests on:** D15, D17, D27 (the `foreign` keyword), D26 (the lexer's white space).
 * **Done when:**
   - the 17 of E3's 21 flips that belong to these features (n+k 10, DoAndIfThenElse 3, empty data 3, `foreign` 1:
     `results/E3/flips/attribution.tsv`) behave in 2010 mode as E3 measured, and M1 has split their rows;
@@ -9342,12 +9928,13 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
     interpreter and at `-O1` and `-O2` on both VMs (`results/E3/run-programs3/results.tsv`), `empty1`'s output being
     GHC's; `foreign98`'s `foreign` stays an identifier in 98 mode and prints 42;
   - each feature turned off and on by `-X` in each edition;
+  - U+0085, U+2028 and U+2029 separate tokens in a 2010 module, and in a 98 module stay as they are at the pin;
   - these features' rows of chapters 2 to 6, 10 and 11 leave `Planned`;
   - M3's check holds.
 * **Size:** 62 code lines in the spike: n+k 2, DoAndIfThenElse 3, empty data 13, `foreign` 44 (+80 -12;
   `results/E3/diffstat.tsv`). Production about 120 to 190 [estimate: F's 2 to 3 times].
 
-### M8. Pattern guards (F; S, 110 code lines in 12 files measured, about 220 to 330 [estimate]; after M4)
+### M8. Pattern guards: A's translation, then the guard's test in Sestoft's tree at `-O2`, held by a differential test (F; S to M, 110 code lines in 12 files measured for A, about 220 to 330 [estimate], C's tree not sized; after M4)
 
 * **Why:** 2010's guards are lists of qualifiers, `pat <- exp`, `let decls` and boolean (Δ3; 3.13, 3.17.3), and G1's
   hello uses one.
@@ -9357,27 +9944,38 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
   - **The parser:** 3.13's re-reading of a guard that took the alternative's arrow
     (`lib/language/haskell/parser.sml:1031-1046`) retries the whole qualifier list; a `let` qualifier closed by `,`,
     `=` or `->` closes by layout's parse-error(t), as the existing `block` does.
-  - **The desugarer:** Erwig and Peyton Jones's translation with the fall-through bound once, a join point (rule (c)'s
-    `y`), the last guard falling to the clause's own failure; rules (s) to (v) (T10:3440-3460). Rule (s)'s "where y is a
-    new variable" (T10:3447) names a `y` that does not occur, a defect of the text for *Found while writing this
-    roadmap*.
+  - **The desugarer, A first:** Erwig and Peyton Jones's translation with the fall-through bound once, a join point
+    (rule (c)'s `y`), the last guard falling to the clause's own failure; rules (s) to (v) (T10:3440-3460). Rule (s)'s
+    "where y is a new variable" (T10:3447) names a `y` that does not occur, a defect of the text for *Found while
+    writing this roadmap*, deleted in the sources' `h2010` branch in 2018 and never published; its copies of `e'` are
+    the editor's simplification, which A's single binding means the same as (D14's record). A is what `-O0` and `-O1`
+    compile, and the reference.
   - The checker, HsLint's inference and replay, both printers and the dump.
-  - **Sestoft's trees at `-O2`:** guards are opaque leaves; a guard never runs before the clause's patterns matched;
-    what the clause's patterns tested survives the fall-through. Feeding a pattern guard's own test to the tree is a
-    later optimisation.
+  - **Then C, the guard's test in Sestoft's tree at `-O2` (D14's C):** a pattern guard's test feeds the decision tree,
+    so a later clause does not test again what a failed pattern guard tested, as in E3's `h`
+    (`results/E3/sestoft/core.sestoft.txt`). A guard still never runs before the clause's patterns matched, and the
+    tree evaluates a guard's expression no earlier than the Report's order would; what the clause's patterns tested
+    survives the fall-through.
+  - **Then the oracle test (the owner's "use A as an oracle"):** every pattern-guard program compiled at `-O2` with C
+    and again with A's translation, the same stdout and the same bottom or not required, and mutants of C's tree that
+    the test must catch.
 * **Starts from:** `patches/E3-04-guards.patch`.
-* **Rests on:** D14.
+* **Rests on:** D14 (C, with A as its oracle).
 * **Done when:**
   - E3's `guards1`, `guards2` and `guards-sestoft` give GHC 9.4.7's output on the interpreter and at `-O1` and `-O2` on
     both VMs at `RUNE_LINT=2` (`results/E3/run-programs3/results.tsv`, `ghc/ghc.tsv`);
+  - at `-O2`, E3's `h` tests `Just` once where A tests it twice, by its Core and by `--count`;
+  - the differential test passes over every pattern-guard program of the 2010 table and the corpus, and catches each
+    of C's planted mutants;
   - 3.13's note example (`results/E3/programs/guards-note.hs`) is accepted, as the text allows, though GHC refuses it;
   - a sharing budget shows a fall-through evaluated once;
   - a module that says `{-# LANGUAGE Haskell98 #-}` refuses a pattern guard whatever the command line says (E3's
     `pragma3.hs`);
   - Δ3's 27 changed and new rows leave `Planned` (`results/E1/delta-rows-counts.tsv`);
   - M3's check holds.
-* **Size:** +136 -22, 110 code lines in 12 files: parser 44, desugarer 21, HsLint's inference 17, checker 16, renamer
-  4, dump 2, six files 1 each (`results/E3/diffstat.tsv`). Production about 220 to 330 [estimate: F's 2 to 3 times].
+* **Size:** A: +136 -22, 110 code lines in 12 files: parser 44, desugarer 21, HsLint's inference 17, checker 16,
+  renamer 4, dump 2, six files 1 each (`results/E3/diffstat.tsv`); production about 220 to 330 [estimate: F's 2 to 3
+  times]. C's tree integration and the differential test were not sized: D14 gives no figure.
 
 ### M9. Relaxed dependency analysis, with the rigid check of a signed pattern-binding variable (F; S, 41 code lines measured, the check not built; after M4)
 
@@ -9388,23 +9986,23 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
     HsLint's (`hslint_infer.sml:433-440`, its `succs`). THIH 11.6.3 is HsLint's specification: every explicit
     signature is assumed first (tiBindGroup), at the top level and in local declarations, and the rule is the group's,
     as M4 has it.
-  - **D16's reading, the owner's:** the text cuts the edge to a signed variable of a non-simple pattern binding too, and
-    the recommendation follows the text (E3's spike kept the edge). Then that variable's type comes from its signature,
+  - **D16's reading, (i), taken:** the text cuts the edge to a signed variable of a non-simple pattern binding too, and
+    rhc follows the text (E3's spike kept the edge). Then that variable's type comes from its signature,
     so its binding must be checked against it rigidly. At the pin the checker accepts `p :: a -> a; (p, q) = (not,
     'x')` in both modes and HsLint refuses it at level 2 (`results/D16-probes/rhc.out`). The check lands here for 2010
-    modules; M18 decides it for 98 modules. It is one code path, written by whichever lands first.
+    modules; for 98 modules it is M18's, open with the owner (*Open with the owner*, 2). It is one code path, written
+    by whichever lands first.
   - R21(b)'s check stays (4.5.2 keeps identical contexts, T10:4752), though no rhc program reaches it.
-  - **C8,** NoRelaxedPolyRec in a 2010 module, the owner's: rec inert with a warning, as GHC. E13's step for it was a 98
+  - **C8,** NoRelaxedPolyRec in a 2010 module, by D7's (i): inert with a warning, as GHC. E13's step for it was a 98
     module (W10), so its test is written here in a 2010 module.
 * **Starts from:** `patches/E3-05-relaxed.patch`; the group rule of `patches/E13-language-record-b9.patch`.
-* **Rests on:** D16, D10, D7. If the owner keeps the edge, PatCut stays refused and the rigid check serves only the
-  checker's agreement with HsLint.
+* **Rests on:** D16 (A(i)), D10, D7.
 * **Done when:**
   - ruling 55's programs: `tc196` and `tcfail071` (both copies of each) refused in 98 and accepted in 2010, `tcfail144`
     refused in both by its own `{-# LANGUAGE Haskell98 #-}` (`results/E3/r21/r21.tsv`);
   - E3's `relaxed1` to `relaxed3` behave as under GHC `-XHaskell2010` (`run-programs3/results.tsv`);
   - `results/D16-probes/`' PatCut and PatGen give the ruled answers at `RUNE_LINT=0` and `2` alike: PatGen refused by
-    the checker, not first by HsLint; PatCut accepted and printing GHC's `(('c',True),'c')` if the edge is cut;
+    the checker, not first by HsLint; PatCut accepted and printing GHC's `(('c',True),'c')`, the edge cut;
   - mixed-cycle tests in the checker and in HsLint (D10), and C8's test in a 2010 module;
   - `dec.gen.sig.identical_where` is split as M1 says, and Δ8's rows leave `Planned`;
   - M3's check holds.
@@ -9440,54 +10038,85 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
 * **Size:** +13 -6, 9 code lines for program modules (`results/E3/diffstat.tsv`). The library's side was not built:
   about 50 to 100 [estimate].
 
-### M11. Defaulting per edition; Int modulo 2^n in 2010 (F; S, under 100 [estimate]; after M4 and M12)
+### M11. Defaulting per edition; `Int` modulo 2^63 in both modes over wrapping `int` primitives, with cheap eagerness (F; S to M, under 100 lines of rhc [estimate] and Rune's wrapping primitives, not sized; after M4 and M12)
 
 * **Why:** 4.3.4 defaults only where "all of these classes are defined in the Prelude or a standard library"
   (T10:4368), and 2010's library adds Bits, with Num as superclass (T10:11629), and Storable (T10:15819), where 98's
   had RandomGen and Random (E9). Chapter 18 says of a list that names Int, "All arithmetic is performed modulo 2^n"
-  (T10:12381-12382), where 6.4 lets overflow be an error (T10:6239-6241).
+  (T10:12381-12382), where 6.4 lets overflow be an error (T10:6239-6241); D21's decision reads it as narrowing 6.4 and
+  takes it for both modes.
 * **What (D20, D21):**
   - **Defaulting:** the standard classes from the descriptor's prefix, which M4 put where the literals were
     (`infer.sml:2010`, `hslint_env.sml:604`); a class is numeric by its superclasses (`infer.sml:346-348`), so Bits
     counts. No list per edition.
-  - **Int under D21's B, the owner's call:** Int wraps in 2010 mode only, through the 2010 Prelude's Int instance (98's
-    `ov.prelude.int`, `share/rhc/haskell98/overlay.tsv:24`) over word primitives that never raise (`word_from_int`,
-    `word_add`, `word_to_int_x`: `src/isa/prims.sml:61-99`), which is B1. B2, wrapping `int` primitives, is a Rune
-    change taken only if the measured cost warrants it. Since Int's instance is the library's, a 98 module in a 2010
-    program meets wrapping Int (D2). `+`, `-`, `*`, `negate`, `abs` and `fromInteger` wrap; ``minBound `quot` (-1)``
-    follows the text, a reading the owner takes with D21; division by zero, and `succ`, `pred` and `toEnum` past the
-    bounds, keep their errors.
+  - **Rune, D21's B2:** wrapping `int` primitives, a line each in `src/isa/prims.sml` beside the checked ones, which
+    raise Overflow (`src/isa/prims.sml:26-41`), with C bodies, cases in `runtime/register/fastprim.h` and the JIT, and a
+    new instruction-set fingerprint.
+  - **`Int` wraps modulo 2^63 in both modes (D21's C):** the Prelude's Int instance over the wrapping primitives, in
+    2010's Prelude (M12) and in 98's, whose `int_*` are the runtime layer's
+    (`share/rhc/haskell98/PreludeRuntime.hs:85-91`, the comment at `:85`) and whose overlay entry `ov.prelude.int`
+    (`share/rhc/haskell98/overlay.tsv:24`) changes its text from D22's checked primitives to this decision. `+`, `-`,
+    `*`, `negate`, `abs` and `fromInteger` wrap; ``minBound `quot` (-1)`` and ``minBound `div` (-1)`` give `minBound`
+    and the remainders 0, by the text; division by zero, and `succ`, `pred` and `toEnum` past the bounds, keep their
+    errors. `docs/rhc.md:48`'s "overflow is an error, as 6.4 allows (D22)" is rewritten to say so, and the 98 roadmap's
+    D22 A stands superseded in both modes.
+  - **Cheap eagerness (the owner's "also cheap eagerness"):** the wrapping `add`, `sub`, `mul` and `neg` of `int` join
+    core-cheap's whitelist of primitives that cannot raise (`lib/language/haskell/coresimplify_cheap.sml:50-61`; 98's
+    D51 C), and `quot`, `rem`, `div` and `mod` stay off it, since they raise on 0.
+  - **98's tests:** every test that pins an overflow error flips, `lang/def.pick.first_overflow` and R81's and R93's
+    rows among them (`tests/hs/readings.md:222-226`, `:288-291`), and ruling 11's compatibility layer for wrapping bit
+    tricks goes; each is counted and listed in the commit. The corpus's `hash` stays a compatibility function over
+    Integer, since GHC wraps at 64 bits.
   - E1's N6: a left shift of a negative value by the width gives 0, a reading on the ground "wrong".
-* **Starts from:** no patch. M4's descriptor; 98's D22 measurement.
-* **Rests on:** D20, D21. Under D21's A Int stays checked and a deviation is recorded; under C 98's overflow tests flip.
+* **Starts from:** no patch. M4's descriptor; 98's D22 measurement of wrapping through `word` (haskell98.md:6262).
+* **Rests on:** D20, D21 (C with B2, and cheap eagerness).
+* **Gate:** the new primitives go through `src/isa/prims.sml` and `make isa`, move the instruction set's fingerprint
+  once, which every `.rbc` and image carries, and run `runtime/register`'s sanitiser, stress and portability rules
+  (`AGENTS.md:75-77`, `:186-191`); `make bootstrap` and `make perf-check` show SML's bytes and budgets unmoved but for
+  the fingerprint's word. 98 mode moves by what D21 names: its overflow tests, the bytecode of `Int` arithmetic, and
+  its `-O2` bytes where cheap eagerness newly applies, each stated in the commit.
 * **Done when:**
   - `print (shiftL 1 3 .|. 1)` defaults to Integer and prints 9, once M14 has Data.Bits (GHC refuses it as ambiguous:
     E1's probe `n09a_default_bits`); a `(Num a, Storable a)` variable defaults to Double once M16 has Storable;
   - `default ()` and `default (Int, Float)` behave as 4.3.4 says (E8's probes `p01` and `p06` as tests);
-  - R81's and R93's rows are 2010 rows of their own: `2^70 :: Int` prints 0 [inferred];
-  - the cost of an add loop is measured by `--count` at tier 2 and recorded in D21 (98's D22 measured +7 machine
-    instructions an add, 19.07 to 26.07: haskell98.md:6262);
-  - M3's check holds: 98's Int unchanged.
-* **Size:** under 100 lines [estimate]: a few at the two defaulting sites, which M4 mostly does, and the 2010
-  Prelude's Int instance.
+  - R81's and R93's rows give the wrapped answer in both tables: `2^70 :: Int` prints 0 [inferred];
+  - ``minBound `quot` (-1)`` is `minBound` and ``maxBound + 1 == minBound``, in both modes, on the Core interpreter and
+    on both VMs;
+  - cheap eagerness measured on the 98 corpus and on the 98 roadmap's lazy ports (haskell98.md:72), instructions and
+    suspensions made, with and without the wrapping primitives on the whitelist, on the register VM first, and recorded
+    in D21; the cost of an add loop recorded beside 98's D22 figure for wrapping through `word`, +7 machine instructions
+    an add, 19.07 to 26.07 (haskell98.md:6262);
+  - M3's check holds but for D21's list.
+* **Size:** rhc under 100 lines [estimate]: a few at the two defaulting sites, which M4 mostly does, the Int instances
+  and the whitelist. Rune's primitives, a line each and their cases in C, `fastprim.h` and the JIT, not sized (98's D22
+  C, haskell98.md:6263).
 
 ### M12. The 2010 Prelude and the printed modules (L; L, about 2,330 lines of Haskell carried or printed and about 55 new [E9], three overlay entries; after M4 and M10)
 
 * **Why:** the brief: the 2010 library under `share/rhc/haskell2010`, distinct from 98's. The Prelude's code is 98's but
-  for three import names (E1: 915 of 927 non-blank lines identical, 9 differing in spacing only;
-  `results/E1/prelude-diff.md`), and four modules print code: Data.Array, Data.Complex, Data.Maybe, Data.Ratio (E9).
+  for three import names, four lines, in the Report's sources (`results/E1b/diffs/rhc98-pristine-vs-2010-source.diff`;
+  E1's 9 lines "differing in spacing only", `results/E1/prelude-diff.md`, are its HTML extraction's:
+  `results/E1b/e1-compare.tsv`), and four modules print code: Data.Array, Data.Complex, Data.Maybe, Data.Ratio (E9).
 * **What (D23, D24, D25):**
   - **`share/rhc/haskell2010/`:** Prelude, PreludeList, PreludeText and PreludeIO in the Report's layout, as 98's D36
-    did, from the 2010 printed code (E1's extraction from the HTML, `results/E1/prelude/prelude2010/`); Data.Array,
-    Data.Complex, Data.Maybe and Data.Ratio from their printed code (`results/E9/code2010/`; the haskell2010 package's
-    `$code` agrees with E1's HTML token for token: W2). A copy, not shared with 98's (D25's A); PreludeRuntime and
-    PreludeEnum copied and grown.
+    did, transcribed from the Report's sources, `report/Prelude*.hs` at commit 15bff26, the HTML's, identical at the
+    sources' head and kept as `results/E1b/prelude2010-src/`, not from E1's extraction of the HTML, whose whitespace
+    differs (tabs, trailing blanks and blank lines: `results/E1b/e1-compare.tsv`); Data.Array, Data.Complex,
+    Data.Maybe and Data.Ratio from their code in `report/libs/Data-*.tex`, equal to E9's `results/E9/code2010/` and to
+    the haskell2010 package's `$code` in all 20 comparisons (`results/E1b/pkg-compare.tsv`). The Report-derived files
+    are a copy, as the brief asks.
+  - **The runtime layer shared (D25's B):** PreludeRuntime and PreludeEnum, 852 lines, move to a third directory that
+    both descriptors name (M4), and grow for 2010 (IOErrorType, the new primitives, the IO names below). **The
+    constraint:** 98 mode's bytecode and its snapshot's entries stay as they were, so the layer's unit identities in
+    98 programs do not change, or this milestone says by how much. How is this milestone's first question, open: the
+    layer is in the Prelude's unit, whose types it names (`share/rhc/haskell98/PreludeRuntime.hs:1-3`), and 2010's
+    grows where 98's must not, so the layer is split by edition or 98's snapshot moves (D25's record).
   - **A pristine and an overlay,** as 98's (`share/rhc/haskell98/overlay.tsv`), with entries for the text's three
     defects: Data.Maybe's second `maybe` (T10:13431-13440), fixed by 98's re-export of the Prelude's, since hiding it
     breaks every user of Data.Maybe (W2's probe, `results/E9/probes/maybeprobe`); Data.Ratio's missing parenthesis in
     its Show instance (T10:13723-13730); and the header `module Array (` (T10:11476). Data.Complex's `Complex(:+)` is
-    in the synopsis only; its code has `Complex((:+))` (W8). 98's two unabsorbed Prelude code errata are overlay
-    entries too if D38's N18 holds.
+    in the synopsis only; its code has `Complex((:+))` (W8). No source fix exists for any of the three
+    (`results/E1b/defects.tsv`). 98's two unabsorbed Prelude code errata are overlay entries too, by D38's N18.
   - **The cycle (D23):** at least the 7 modules the printed imports join (Prelude, PreludeList, PreludeText, PreludeIO,
     Data.Char, Numeric, Data.Ratio: `results/E9/layout-graphs.txt`). Rec 9: Char's and Numeric's Array tables
     dropped, and `interact`'s and `getLine`'s names (BufferMode, `hSetBuffering`, `stdin`, `stdout`, `hGetLine`) moved
@@ -9497,9 +10126,10 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
     `share/rhc/haskell2010/LICENSE` holds the 2010 notice, 98's, and base's BSD text.
   - The descriptor's 2010 record (M4) names the roles; `elidedData` goes now that empty data exists (D15); D21's Int
     instance lands here as M11 sets it.
-* **Starts from:** no patch. E1's `prelude/` and `libs/code2010/`; E9's `code2010/`, `layout.md`, `layout-graphs.txt`,
-  `provenance.tsv`.
-* **Rests on:** D23, D24, D25. Under D25's B the runtime layer, 852 lines, is shared and both libraries move with it.
+* **Starts from:** no patch. `results/E1b/prelude2010-src/` and `code2010-src/`; E9's `code2010/`, `layout.md`,
+  `layout-graphs.txt`, `provenance.tsv`. E1's `prelude/` and `libs/code2010/` are the same code with their whitespace
+  changed, and E1's `libs/code2010` keeps Haddock's one leading space on every line (`results/E1b/e1-compare.tsv`).
+* **Rests on:** D23, D24, D25 (B: the runtime layer shared, 98's bytes held).
 * **Done when:**
   - a token comparison of `share/rhc/haskell2010` against its pristine, as 98's `DocChecks.signatures`
     (`tests/runner/docchecks.sml:203-254`), finds nothing outside the overlay, by module;
@@ -9507,7 +10137,8 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
   - the Prelude's and the four modules' exports equal T10's (E9's `exports.tsv`), table-driven;
   - G1's check passes, with M6 and M8;
   - the 195 changed and new rows of chapters 9, 14, 17, 21 and 22 leave `Planned`;
-  - M3's check holds: `share/rhc/haskell98` is untouched.
+  - M3's check holds: `share/rhc/haskell98`'s Report-derived files are untouched, and its runtime layer, moved to the
+    shared directory, leaves 98's bytecode and snapshot entries as they were, or the commit says by how much.
 * **Size:** Haskell, almost all copied: the Prelude family's 1,530 code lines (Prelude 716, PreludeList 176,
   PreludeText 563, PreludeIO 60, PreludeEnum 15) and PreludeRuntime's 556 carried, with about 55 new
   (`results/E9/layout.md:106-107`); the four printed modules' 236 lines of the Report's code and 12 of 98's overlay
@@ -9525,19 +10156,26 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
     `subsequences` in base's order, which only their examples fix (T10:12707, 12712).
   - **Data.Char (D26):** one category primitive, rhc's `rtCategory` (`lib/language/haskell/coreruntime.sml:547`), and
     2010's predicates in Haskell over `generalCategory`: `isUpper` Lu or Lt (T10:11844); `isAlpha` every letter
-    (T10:11848; 98's `isAlpha c = isUpper c || isLower c`, `share/rhc/haskell98/Char.hs:42`, already gives every
-    letter, but its definition must change: W2); `isSpace` Zs and the five controls (base's reading of T10:11833);
-    `isAlphaNum` letters and numbers, by the prose (T10:11851), over base's marks. GeneralCategory's 30 constructors
-    in lib/unicode's order (`lib/unicode/code_point_sig.sml:34-64`); `toTitle` from one new table, which lib/unicode
-    has (`code_point_sig.sml:137-141`); the Unicode version lib/unicode's, implementation-defined.
+    (T10:11848; 98's `isAlpha c = isUpper c || isLower c`, `share/rhc/haskell98/Char.hs:42`, already gives every letter,
+    but its definition must change: W2); `isSpace` Unicode's White_Space property, by D26's (ii), which adds U+0085,
+    U+2028 and U+2029 to Zs and the five controls, base's reading of T10:11833; `isAlphaNum` letters and numbers, by the
+    prose (T10:11851), over base's marks. GeneralCategory's 30 constructors in lib/unicode's order
+    (`lib/unicode/code_point_sig.sml:34-64`); `toTitle` from one new table, which lib/unicode has
+    (`code_point_sig.sml:137-141`); the Unicode version lib/unicode's, implementation-defined.
+  - **Rune, D26's (ii):** a White_Space table in `lib/unicode`, which has none (*The libraries*), generated as its other
+    tables are, from PropList at 18.0.0, with its signature [inferred]; M7's lexer reads it too, and whichever of M7 and
+    M13 lands first adds it.
   - **Data.Ix:** instances for tuples up to 15 (T10:12562, N16), though the printed list stops at 5 (T10:12553).
   - The names whose code needs primitives rhc lacks are M14's.
 * **Starts from:** no patch. `results/E9/delta98.tsv`, `sharing.tsv`, `newdefs.tsv`, `modules.md`.
-* **Rests on:** D24, D26. White_Space instead of Zs would add U+0085, U+2028 and U+2029 to `isSpace` (W2).
+* **Rests on:** D24, D26 (A with (ii)).
+* **Gate:** the table is a change to `lib/unicode`, which the compiler shares: `make bootstrap` and `make check-cross`
+  show the compiler's bytes unmoved, or the commit says by how much [inferred: a new file the compiler does not read].
 * **Done when:**
   - the nine compile into the 2010 snapshot and their exports equal T10's (`results/E9/exports/`);
-  - Data.Char's predicates are tested over every code point against `generalCategory`, `isSpace` against the Report's
-    sentence;
+  - Data.Char's predicates are tested over every code point against `generalCategory`, and `isSpace` against
+    White_Space: true of U+0085, U+2028 and U+2029, where GHC's `base` answers false (E1's probe `n07a_isspace`), so
+    these are rhc's own tests, from the text;
   - Ix holds at a 15-tuple;
   - the changed and new rows of chapters 13, 16, 19, 20 and 38 to 42 (930, most of them renames) leave `Planned`, but
     for M14's names;
@@ -9547,16 +10185,19 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
   (Control.Monad 16, Data.Char 94, Data.List 33), from `results/E9/modules.tsv`'s `est_reuse98` and `est_new`, summed.
   The `toTitle` table is a few lines of CoreRuntime [inferred].
 
-### M14. New modules over new Core types: Data.Bits, Data.Int, Data.Word; System.IO, System.IO.Error, System.Exit, System.Environment additions (L; L, about 830 lines of Haskell [E9] and 150 to 300 of SML [E9, inferred]; after M12)
+### M14. New modules over new Core types: Data.Bits, Data.Int, Data.Word; System.IO, System.IO.Error, System.Exit, System.Environment additions; Rune's `int` bit primitives (L; L, about 830 lines of Haskell [E9], 150 to 300 of SML [E9, inferred], and Rune's primitives, not sized; after M12)
 
 * **Why:** Data.Bits, Data.Int and Data.Word are new in 2010, and System.IO, System.IO.Error and System.Exit gain names
   that reach the operating system.
-* **What (D22):**
-  - **Core types and primitives, in rhc only:** Word over the VM's 63-bit word, with its bit operations and the
+* **What (D22's B):**
+  - **Rune: `int` bit primitives,** as `word` has them (`word_andb` to `word_lsr`) [inferred], beside M11's wrapping
+    `int` primitives, so that Bits on Int stands on them with no reinterpretation through `word`; their arithmetic right
+    shift is the one `word` lacks (only `word64_asr`, `src/isa/prims.sml:752`).
+  - **Core types and primitives in rhc:** Word over the VM's 63-bit word, with its bit operations and the
     reinterpreting `word_from_int` and `word_to_int_x` (`src/isa/prims.sml:61-99`); Word64 over word64, and Int64 over
     word64 with int64's checked operations for comparison and division (`prims.sml:682-771`); Int8 to Int32 and Word8
-    to Word32 over Int with narrowing; shifts at or past the width guarded in Haskell (T10:12388-12389, with M11's
-    reading). In CorePrim, CoreToMid, CoreInterp and CoreLint.
+    to Word32 over Int with narrowing, over the wrapping primitives; shifts at or past the width guarded in Haskell
+    (T10:12388-12389, with M11's reading). In CorePrim, CoreToMid, CoreInterp and CoreLint.
   - **Data.Bits,** with Num as superclass (T10:11629) and base's default methods, which the text does not give
     (T10:11633). Integer's bits in base 4.3's portable Haskell, since the VM's are GMP's and fatal without it
     (`runtime/intinf.c:569-576`).
@@ -9570,12 +10211,17 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
     values; System.Exit's `exitSuccess`. How a program ends keeps 98's chapter 23 behaviour, implementation-defined and
     documented (N21), and what `ExitFailure 0` does is a recorded choice.
 * **Starts from:** no patch. `results/E9/modules.md` (*Primitives*), `sources.tsv`; E10's `progs/Wide.hs`.
-* **Rests on:** D22; D21 for ``minBound `quot` (-1)``.
+* **Rests on:** D22 (B); D21 for ``minBound `quot` (-1)`` and the wrapping primitives.
+* **Gate:** as M11's: the primitives through `src/isa/prims.sml` and `make isa`, the fingerprint moved once (once for
+  M11's and these together, if they land together [inferred]), `runtime/register`'s rules, and SML's bytes and
+  budgets unmoved but for the fingerprint's word.
 * **Done when:**
   - E10's `Wide.hs` prints 2^64-1 for a Word64 result, where the prototype's Int overflowed
     (`results/E10/out/Wide.*`);
   - each IntN and WordN wraps at its width, and shifts at and past the width give 0 or -1, on the Core interpreter and
     on both VMs;
+  - Bits on Int compiles to the new `int` primitives, with no `word_from_int` or `word_to_int_x` around them, by its
+    Mid, and `--count` of a bit loop is recorded against the reinterpreting form;
   - Integer's bits agree with a reference on random values, on a VM built without GMP too;
   - E8's `L12_bits_num` holds, and M11's Bits defaulting test passes;
   - the 200 changed and new rows of chapters 15, 18 and 23 leave `Planned`, and the rows of System.*'s new names;
@@ -9583,13 +10229,14 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
 * **Size:** Haskell: Data.Int about 280, Data.Word about 370 and Data.Bits about 90 (E9's estimate, on Hugs's 281 and
   370 code lines; the Hugs files alone are 268 and 359: W2), and about 87 for System.*'s additions
   (`results/E9/modules.tsv`). SML about 150 to 300 over CorePrim, CoreToMid, CoreInterp and CoreLint [inferred, E9].
+  Rune's bit primitives not sized: D22's B gives no figure.
 
-### M15. The FFI in Core: declarations, marshallability with visibility, the four imports over Rune's `foreign`; Rune's G02, G06, G07 (V; M, 643 lines of SML measured in E10's prototype, about 800 to 900 with D32's changes [estimate], and Rune's C about 45 with tests about 70 for G06 and G07, G02's not sized [E10's estimates]; after M7)
+### M15. The FFI in Core: declarations, marshallability with visibility, the four imports over Rune's `foreign`, on the VMs and on Core's interpreter; Rune's G02, G06, G07 (V; M to L, 643 lines of SML measured in E10's prototype, about 800 to 900 with D32's changes and about 250 for the interpreter [estimates], and Rune's C about 45 with tests about 70 for G06 and G07, G02's not sized [E10's estimates]; after M7)
 
 * **Why:** chapter 8 is part of 2010 (Δ1): "Any implementation of the Haskell FFI must at least implement the C calling
   convention denoted by ccall" (T10:6828-6829), with its static, `&`, `dynamic` and `wrapper` imports. E10 ran all four
   end to end over Rune's libffi bridge.
-* **What (D27, D31, D32):**
+* **What (D27, D31, D32, D33):**
   - **Declarations:** M7's `DForeign` node through the renamer (which binds the variable), the checker and HsLint, in
     place of the prototype's parser rewrite to `primForeign`, which a landing would have to thread through about 8
     files that match every declaration form and about 4 more (`results/E10/gaps.tsv`, G01).
@@ -9608,10 +10255,11 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
   - **The trampoline (D31), mandatory:** a callback catches every exception, `<<loop>>` included, keeps it and returns
     the failure value, and the call raises it after native return, since the VM trusts a callback never to raise
     (`runtime/runtime.c:268, 300`; `runtime/callback.c:44`). Callbacks during a call, on the owning thread, at most 64
-    deep. Callbacks after the call returned or from a signal are refused silently, recorded as a reading of 8.4.3 with
-    a test (T10:6956-6961; the word "during" is not in the text: W4); the owner may call it a deviation.
+    deep. Callbacks after the call returned or from a signal are refused silently: **a deviation, by D31's B,** filed
+    in the 2010 table's deviations file on the ground "ambiguous" (E1's N1(h): the text is silent on a callback after
+    the call that received it returned; T10:6956-6961, where the word "during" is not: W4), and pinned by a test.
   - **Conventions:** `ccall`; `stdcall` as ABI 1 where the target has it, x86 Windows, and refused at compile time
-    elsewhere (D27's (i), the owner's pick; about 10 lines, G26); `safe` and `unsafe` read and ignored. A header name
+    elsewhere (D27's (i), taken; about 10 lines, G26); `safe` and `unsafe` read and ignored. A header name
     ending in `.h` is taken as written (D27, E1's N1(b)).
   - **Rune (D27):** G02, the program's own namespace (`dlopen(NULL)` or `RTLD_DEFAULT` on POSIX, the loaded modules on
     Windows, ENOSYS in the none layer; C about 30), with rhc options naming libraries (about 40); G06, `region()`
@@ -9619,12 +10267,12 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
     (`runtime/foreign.c:301-305`; C about 5, tests about 30); G07, `dynamic` of a POINTER or CALLBACK identity, not
     only a SYMBOL (`foreign.c:347-351`; C about 10, tests about 40). G09, `vm_raise` stopping at a callback's scope,
     is optional hardening (C about 15).
-  - **The Core interpreter:** compiled only, documented (D33's rec); G35 would be about 250 lines over RuneForeign's
-    API.
+  - **The Core interpreter (D33's (ii)):** CoreInterp's FFI over RuneForeign's public API (G35), about 250 lines of
+    rhc, callbacks re-entering CoreInterp, so that `bin/rhc Main.hs` runs a program that imports C; the prototype's
+    primitives raise an IOError there today (`noInterp` in the patch). M16 adds Foreign.*'s primitives to it.
   - Ptr and FunPtr land here as types, for the tests; Foreign.Ptr's operations are M16's.
 * **Starts from:** `patches/E10-ffi-prototype.patch`; `results/E10/progs/`.
-* **Rests on:** D27, D31, D32. D29 changes nothing here. Under D27's (ii) `stdcall` is read as `ccall` off Windows
-  with a warning, as GHC does.
+* **Rests on:** D27 (A with (i)), D31 (B), D32 (A with (i)), D33 ((ii)). D29 changes nothing here.
 * **Gate:** G02, G06 and G07 change Rune's C (`runtime/foreign.c` and the `sys` layers): every layer answers
   (`AGENTS.md:69-73`); the FFI's suites run on the portability targets (`make test-ffi-portability`, `Makefile:2866`)
   and in the Windows builds (`docs/ffi/runtime.md:34-41`). No primitive or instruction is added, since the operations
@@ -9632,8 +10280,9 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
   the one primitive]; `make bootstrap` and `make perf-check` show it.
 * **Done when:**
   - E10's 11 programs of `matrix.tsv` give one stdout at `-O0`, `-O1`, `-O2` and on the stack target, and a second
-    run the same (41 runs), in units mode as whole; `Opt.hs` gives one stdout in its seven configurations (md5
-    `5c70abe1`): IO calls in order, pure imports lazy and strict in their arguments;
+    run the same (41 runs), in units mode as whole; on Core's interpreter, under `bin/rhc Main.hs`, they give the same
+    stdout, those that need Foreign.*'s typed peek and poke once M16 lands; `Opt.hs` gives one stdout in its seven
+    configurations (md5 `5c70abe1`): IO calls in order, pure imports lazy and strict in their arguments;
   - `Loop.hs` gives `<<loop>>`, and `Nested.hs`, `Boom.hs`, `Catch.hs` and `Escape.hs`'s 70 exceptions behave as E10
     measured, the wrapper in another unit too (`out/TwoUnits70.units.*`);
   - `Gaps.hs`'s three failures pass: a `dynamic` call of a wrapper's FunPtr, `optind` and `&errno` read, a static
@@ -9641,7 +10290,7 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
   - `Marshal.hs`'s four refusals and two acceptances hold, `Visible.hs` is refused, and imports over Bool, Float and
     Char run (none of E10's programs has them, and its desugarer has no Bool: W4);
   - `stdcall` off Windows is refused with "not supported by rhc"; `Later.hs`'s callbacks after the call are refused,
-    by a test;
+    by a test that names the deviation's row;
   - a `--count` budget holds a call's cost against E10's marginal figures: 146.6 VM instructions, 344 bytes and 19
     objects over Haskell's own `abs` (`results/E10/out/units.log:36-42`; W4's recount);
   - chapter 8's 54 changed and new rows leave `Planned`, 8.4.4's `foreign export` and 8.7's HsFFI.h pinned as
@@ -9651,10 +10300,10 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
 * **Size:** rhc: the prototype's 643 lines of SML (desugarer 326, the family 218, checker 73, parser 25, `coreprim.sml`
   1; `git apply --numstat`; its other 203 lines are the Foreign sliver and build files), less the parser rewrite,
   plus visibility about 40, HsLint about 80, errno about 30, `stdcall` about 10 and the AST form's walkers: about 800
-  to 900 [estimate]. Rune: C about 45, tests about 70 for G06 and G07, G02's not sized (`results/E10/gaps.tsv`, G02,
-  G06, G07 [estimates]).
+  to 900 [estimate]; and the interpreter's FFI about 250 (G35 [E10's estimate]). Rune: C about 45, tests about 70 for
+  G06 and G07, G02's not sized (`results/E10/gaps.tsv`, G02, G06, G07 [estimates]).
 
-### M16. Foreign.* (14 modules); Ptr per D29; finalizers at exit; StablePtr (V; L to XL, about 2,500 lines of Haskell [E9] and Rune's C about 200 (A) to 330 (B) by D29's option [E10's estimates]; after M14 and M15)
+### M16. Foreign.* (14 modules); Ptr as a raw address (D29's A); finalizers at exit; StablePtr (V; L to XL, about 2,500 lines of Haskell [E9], Rune's C about 200 and SML about 100 [E10's estimates]; after M14 and M15)
 
 * **Why:** chapters 24 to 37 are the FFI's library, 14 modules with no code in the Report (E9), 277 exported names
   among them (`results/E9/modules.tsv`). Chapter 8's own examples need Ptr, Storable and the C types.
@@ -9663,14 +10312,10 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
     Foreign.Marshal and its Alloc, Array, Error and Utils, Foreign.Ptr, Foreign.StablePtr and Foreign.Storable, in
     Haskell over new Core primitives, with no SML below Haskell (98's D26 A), from base 4.3's portable branches
     (BSD-3) with Hugs as calibration (D24).
-  - **Ptr, D29, the owner's call.** A (rec): a raw address through a trusted address-level primitive family for rhc's
-    Core only, a change of Rune's rule that native addresses stay outside the SML heap
-    (`docs/plans/runeffi.md:465-467`): C about 200, SML about 100 and a safety review (G13). It makes Eq, Ord,
-    `minusPtr`, `alignPtr`, IntPtr, Storable of pointers and callbacks' pointer arguments exact (G14 to G17 follow
-    from it). B: identity plus offset in rhc, about five new operations (G13 names order, difference, alignment
-    offset, a view before its parent's start, a canonical identity), canonical identities (G16: 1,000 `getenv` calls
-    leave 1,000 live identities, measured), Storable of pointers (G15) and persistent callback pointers (G17);
-    `ptrToIntPtr` is then a deviation (G14).
+  - **Ptr, D29's A, taken:** a raw address through a trusted address-level primitive family for rhc's Core only, a
+    change of Rune's rule that native addresses stay outside the SML heap (`docs/plans/runeffi.md:465-467`): C about
+    200, SML about 100 and a safety review (G13). It makes Eq, Ord, `minusPtr`, `alignPtr`, IntPtr, Storable of
+    pointers and callbacks' pointer arguments exact (G14 to G17 follow from it).
   - **Memory:** rhc's `malloc` and `free` are C's, since Rune's registry-owned allocate freed by C and then by Haskell
     is a double free that glibc aborts, exit 134 (G19, measured); `alloca` over allocate and release, `realloc` as C's
     (G20); allocation failure gives `nullPtr`, by the text (T10:15125; base raises an IOError).
@@ -9687,39 +10332,39 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
   - **ForeignPtr (D30's B):** finalizers run at `finalizeForeignPtr` and at program exit, which the text allows ("There
     is no guarantee of promptness", T10:14966-14967): about 60 library lines and an exit hook in rhc's runtime of about
     20 (G21). GC-driven finalization is deferred.
-  - **StablePtr:** a table in Haskell, about 40 lines; `castStablePtrToPtr` trivial under A, about 20 lines of C in Rune
-    under B (G22; W2).
+  - **StablePtr:** a table in Haskell, about 40 lines; `castStablePtrToPtr` trivial under D29's A (G22; W2).
+  - **On Core's interpreter (D33's (ii)):** the typed peek and poke, the address family and the C types' primitives in
+    CoreInterp too, over RuneForeign's public API, as M15's calls are.
   - What a peek of a 63-bit Int or Word does with 64 stored bits is a choice recorded here (E9's open question 5).
 * **Starts from:** E10's sliver `share/rhc/haskell98/Foreign.hs` (200 lines, the prototype's), `results/E9/modules.md`
   (*Primitives*), `results/E10/gaps.tsv`; `progs/FarPeek.hs`, `progs/Gaps.hs`.
-* **Rests on:** D29, D30, D33. Under D29's B, G13's operations and G15 to G17 are Rune's, and `ptrToIntPtr` is a
-  recorded deviation.
-* **Gate:** a new primitive family (D29's A, or StablePtr's under either) goes through `src/isa/prims.sml` and `make
-  isa`, with its C in `runtime/` and every `sys` layer (`AGENTS.md:65-74`), and moves the instruction set's
-  fingerprint, which every `.rbc` and image carries (`AGENTS.md:75-77`): bytes move once, by that word, and the
-  milestone says so. SML programs' budgets stay put (`make perf-check`). D29's safety review is the owner's.
+* **Rests on:** D29 (A), D30 (B and (i)), D33 (A with (ii)).
+* **Gate:** D29's primitive family goes through `src/isa/prims.sml` and `make isa`, with its C in `runtime/` and every
+  `sys` layer (`AGENTS.md:65-74`), and moves the instruction set's fingerprint, which every `.rbc` and image carries
+  (`AGENTS.md:75-77`): bytes move once, by that word, and the milestone says so. SML programs' budgets stay put (`make
+  perf-check`). D29's safety review is the owner's.
 * **Done when:**
   - the 14 modules' exports equal T10's (`results/E9/exports/`), table-driven;
   - chapter 8's examples compile and run: `strlen` with its CSize result (T10:6936-6937), `sin` over CDouble
     (T10:6945-6946), the `errno` import (T10:7103);
-  - `Gaps.hs`'s pointer cases under D29's answer: order, difference, alignment, a pointer peeked from memory (argv);
-    under B, no growth of live identities over 1,000 `getenv` calls;
+  - `Gaps.hs`'s pointer cases as raw addresses: order, difference, alignment, a pointer peeked from memory (argv);
   - `FarPeek.hs`'s read 1 GB past a C pointer stays C's undefined behaviour, documented (status 139, measured);
   - finalizers run at `finalizeForeignPtr` and at exit, once each; a StablePtr round-trips through C;
+  - chapter 8's examples and the Foreign.* tests give the same stdout on Core's interpreter as compiled;
   - Foreign.C.Types' sizes and signedness are checked per profile on x86-64 and, under `make test-ffi-portability`, on
     Linux x86, AArch64 and PowerPC64;
   - the 767 changed and new rows of chapters 24 to 37 leave `Planned`;
   - M3's check holds; 98 mode has no Foreign module.
 * **Size:** Haskell about 2,500 lines (E9: 2,496 new over the 14, Foreign.C.Types 1,100 of them written out, or about
   120 if the library may derive newtype instances: `results/E9/estimate-totals.txt`, which says "15 modules" where
-  there are 14: W2). rhc's SML for the primitives not sized. Rune's C under A about 200 and SML about 100; under B
-  about 150, with G15's 60 and SML 20, G16's 80, G17's 20 and `castStablePtrToPtr`'s 20, and tests
-  (`results/E10/gaps.tsv` [estimates]).
+  there are 14: W2). rhc's SML for the primitives not sized, on the interpreter as compiled. Rune's C about 200 and
+  SML about 100, and tests (`results/E10/gaps.tsv`, G13 A [estimates]).
 
-### M17. `foreign export` and HsFFI.h, x86-64 first: only if the owner takes D28's B (V; M, about 600 and tests [E10's estimate]; after G2)
+### M17. `foreign export` and HsFFI.h, x86-64 first: not taken, by D28's A (V; M, about 600 and tests [E10's estimate]; after G2)
 
 * **Why:** 8.4.4's `foreign export` and 8.7's HsFFI.h are required. Leaving them out is none of D38's grounds, so G2
-  records them as `Planned` only on the owner's explicit word (D28's A). This milestone is D28's B.
+  records them as `Planned` only on the owner's explicit word, which the owner gave on 2026-11-24 (D28's A). This
+  milestone is D28's B, kept as the record of what taking them would cost; it is not in this roadmap.
 * **What:** a C-callable stub per export from runeopt's native builds, entering the VM and linked with the program's C
   (G24); a librune embedding API (start, stop, arguments, collect) and a header with Tables 8.2 and 8.3's types and
   limits and 8.7's functions (G25). x86-64 only at first: runeopt has no acceptance on the portability targets
@@ -9733,11 +10378,12 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
   elsewhere; M3's check holds.
 * **Size:** runeopt and the runtime about 600 lines and tests (`results/E10/gaps.tsv`, G24 and G25 [estimates]).
 
-### M18. 98 mode: D13a (genericLength); the Rule 1 defect; the signature-generality defect (H; S, a signature, an overlay row and two checks [estimate]; at once, each on the owner's word)
+### M18. 98 mode: D13a (genericLength); the Rule 1 defect; the signature-generality defect (H; S, a signature, an overlay row and two checks [estimate]; at once; the defects open with the owner)
 
 * **Why:** the brief allows bringing 98 mode in line with 2010 where the 98 Report was ambiguous, stated explicitly
-  for the owner's review. D13a is the one alignment this roadmap recommends. Two checker defects were found at the
-  pin, in each of which HsLint is right.
+  for the owner's review. D13a is the one such alignment, taken on 2026-11-24 (D21's, R54, is M11's). Two checker
+  defects were found at the pin, in each of which HsLint is right; whether M18 fixes them is open with the owner,
+  recommended yes, since both are refusals 98's text requires (*Open with the owner*, 2).
 * **What:**
   - **D13a (R48):** `genericLength :: Num i => [b] -> i` in 98 mode too. 98 contradicts itself (4.5.5 and its example
     need Num; chapter 17's prose and code say Integral); rhc took Integral (`share/rhc/haskell98/List.hs:185`, with
@@ -9752,8 +10398,8 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
     it, as HsLint does at level 2 and GHC does in both modes. The check is M9's, the same code path in both modes.
   - Not here: R20's consequence, an unsigned `main = return ()` refused in 98 mode (E12), a reading left to the owner.
 * **Starts from:** E3's `defects/rule1-signed/`, `results/D16-probes/`.
-* **Rests on:** D13a, and the owner's word on each defect (*Found while writing this roadmap*). Declined, a defect
-  stays, and its test is HsLint's refusal at level 2.
+* **Rests on:** D13a (A), and the owner's word on each defect, still open (*Found while writing this roadmap*; *Open
+  with the owner*, 2). Declined, a defect stays, and its test is HsLint's refusal at level 2.
 * **Done when:**
   - `genericLength` at a Fractional type is accepted in 98 mode (4.5.5's `len2 = (2*len1) :: Rational`), and no 98
     test changes its verdict (D13a);
@@ -9786,10 +10432,16 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
 * **Size:** 39 names, 31 S and 8 M on E6's scale (`results/E6/census.tsv`, `schema.md:23`), none prototyped
   [estimate]. The only measured rate for a front-end feature is E3's: 2 to 110 code lines each.
 
-### M20. CPP, a subset in SML (X; M to L, about 1,000 [inferred]; after M5)
+### M20. CPP, a subset in SML, with what `lib/language/c` can share; CPP without `#include` to the oracles (X; M to L, about 1,000 [inferred]; after M5)
 
 * **Why:** CPP is on in 46.6% of Stackage's packages and 18.6% of its files, the most used name, but only 1,123 files
   (2.3%) need it and nothing else (E7); E8's filter loses 64 of nofib 2025's 170 programs to it (D40).
+* **First, what `lib/language/c` can give (the owner's "consider reusing lib/language/c", D12's record):** its
+  preprocessor, `CPreprocess` (`lib/language/c/preprocess{,_sig}.sml`), and `CConst` (`const{,_sig}.sml`) examined for
+  what a Haskell CPP can share: at least `CConst` for the `#if` expressions; a directive engine shared over a
+  Haskell-aware line reader, if the C lexer's `//`, `/*` and `'` can be kept out of it (`lex.sml:72-73`, `:79-82`).
+  What is generic goes to a library of its own under `lib/` (the owner's rule of 2026-10-10), a small Rune change
+  under the standing gate and a row of *Every change to Rune*; what is Haskell's stays in `lib/language/haskell`.
 * **What (D12's A):** off unless asked; conditionals (`#if`, `#ifdef`, `#ifndef`, `#elif`, `#else`, `#endif`) with
   integer expressions and `defined()`, `lib/language/c`'s `CConst` serving the directive line's expression
   (`lib/language/c/const_sig.sml:4-25`; W9), since that library's lexer cannot read Haskell; object- and function-like
@@ -9798,15 +10450,20 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
   takes 122 lines to 82: E3's `cpp/lines.tsv`). rhc defines no `__GLASGOW_HASKELL__`, and `MIN_VERSION_x(...)` is false
   for every package rhc lacks, a decision of its own here. The header is read again after CPP, as GHC does
   (`ghc/compiler/GHC/Driver/Pipeline.hs:711-735`), the first read's warnings dropped (E13's model fix); C10, CPP in a
-  literate file, after unlit. Where the subset lives is the owner's rule on generic code under `lib/` (D12).
+  literate file, after unlit.
+  - **Then the oracles' corpus (D40's B):** with CPP landed, M2's filter turns its CPP switch, and the 110 candidates
+    that use CPP without `#include`, 63 of nofib 2025's 64 (`results/E8/filtered.tsv`), go to the oracles, the option
+    filter naming a cabal file's `-optP` flags first; `#include` keeps a file out for good.
 * **Starts from:** E3's `cpp/` (census, 16 samples, `probe.tsv`, `lines.tsv`).
-* **Rests on:** D12. Its fallback is C, a refusal, as 12.3's error.
+* **Rests on:** D12 (A, with `lib/language/c` examined), D40 (B). Its fallback is C, a refusal, as 12.3's error.
 * **Done when:** E3's 16 samples give `ghc -cpp -E`'s text with every line at its own number, but for the 2 (s10, s15)
   whose `__GLASGOW_HASKELL__` tests change the text, which differ by design (`results/E3/cpp/probe.tsv`); E5's P13b and
   P13c are tests; a planted `#include` outside the program's directory is refused; nofib's filtered programs that use
-  conditionals only compile [inferred]; M3's check holds (CPP in a 98 module is not read).
+  conditionals only compile [inferred]; the 110 admitted candidates are judged by the oracles, each difference a line
+  of the oracle file; what is shared with `lib/language/c` passes that library's tests unchanged; M3's check holds
+  (CPP in a 98 module is not read).
 * **Size:** about 1,000 lines [inferred: cpphs is 1,100 lines of Haskell, 1,318 with its parser library,
-  `results/E11/cpphs-wc.txt`, via D12], less what `CConst` serves.
+  `results/E11/cpphs-wc.txt`, via D12], less what `lib/language/c` serves.
 
 ### M21. Deriving: StandaloneDeriving, DeriveFunctor, DerivingStrategies, DeriveAnyClass, EmptyDataDeriving; GND and DerivingVia (a whole-dictionary Cast); DefaultSignatures (X; L, 8 names, 4 S and 4 M by E6, none prototyped; after M5, GND, DerivingVia and DefaultSignatures after M22)
 
@@ -9878,16 +10535,25 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
   closure and between pairs of wanteds, superclasses included (Jones 2000, 6.2), in the checker and again in HsLint;
   ambiguity judged modulo the dependencies (6.3); determined variables not generalised (6.4); consistency checked
   pairwise; the dependencies in a field of the class declaration, not E12's side table (about 26 mechanical edits).
-  Improvement from a given is refused: Karachalias and Schrijvers's example, which GHC refuses too. **Coverage, the
-  owner's (D35):** Jones's condition by default; under UndecidableInstances the recommendation is the Paterson
-  conditions kept plus Sulzmann et al.'s Terminating Weak Coverage, which admits mtl and refuses GHC's looping `Mul`
-  (not built), over GHC's depth bound alone.
+  Improvement from a given is refused: Karachalias and Schrijvers's example, which GHC refuses too. **Coverage (D35's
+  (iii), decided):** Jones's condition by default; under UndecidableInstances the Paterson conditions kept and
+  Sulzmann et al.'s Terminating Weak Coverage, which refuses GHC's looping `Mul`, over GHC's depth bound alone; not
+  built. **What (iii) requires, the lead's reading for the owner to confirm** (D35's record; *Open with the owner*,
+  5): per class, dependencies with one left side merged into one where the paper's Def. 19 holds, so that mtl's
+  `MonadRWS r w s m | m -> r, m -> w, m -> s` becomes `m -> r w s`, full, and its lifting instances are admitted; an
+  instance may break coverage only for a dependency full after merging, and only under Terminating Weak Coverage;
+  Consistency and Bound Variable checked as named conditions; an overlap pragma on an instance of a class with
+  dependencies refused, since the paper's conditions exclude overlap (Sulzmann et al. 2007, Def. 5, 6, 8, 11, 13,
+  14, 18-21, Cor. 3). HsLint states the same declaration checks from the same paper.
 * **Starts from:** `patches/E12-T2.patch`.
 * **Rests on:** D34, D35.
 * **Done when:** E12's T2 programs, `programs/t2/mtl.hs` among them, give GHC's output; GHC's tests: E12's 27 of 32
   should_compile and 16 of 16 should_fail at least, the 3 that need empty data passing in 2010 mode and the 1 that needs
-  overlap after M22; GivenOverlapping recorded under R20's reading; `cls.inst.ctx.vars`'s new message pinned; M3's
-  check holds.
+  overlap after M22 (T3108, whose overlapping instances are of classes without dependencies, so the regime allows
+  them: `results/E12/ghc/categories.tsv`; read in GHC's testsuite); mtl's classes with dependencies,
+  MonadRWS and its lifting instances among them, accepted, and `Mul` and an overlapping instance of a class with
+  dependencies refused, each naming its condition; GivenOverlapping recorded under R20's reading;
+  `cls.inst.ctx.vars`'s new message pinned; M3's check holds.
 * **Size:** 512 added lines, 446 of code: checker 285, HsLint 126 (`results/E12/areas.tsv`); 800 to 1,200 in production
   [N, inferred].
 
@@ -9901,6 +10567,8 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
   `schemeOf`'s order (`infer.sml:578-601`), since it is Core's binder order and 98's bytes must hold. The order enters
   the interface (D9), as M22's class and instance extras do. `forall` is a keyword in types only under
   ExplicitForAll and what implies it (D36): E12's T5 switch reserved it everywhere and so accepted `ty.quant.noforall`.
+  A visible type argument is a monotype: a polytype argument is impredicative instantiation, which rhc does not have
+  (Serrano et al. 2020's rule ityarg, which D41's record leaves out of HsLint's T5 too).
 * **Starts from:** no patch. X2's notes (`results/E6/X2-notes.md`), X1's `forall.hs` and `stv.hs`.
 * **Rests on:** D34, D9, D36.
 * **Done when:** each name's programs; `forall.hs` judged against the Report, not GHC, which reserves `forall` in every
@@ -9930,31 +10598,50 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
 * **Size:** 586 added lines, 505 of code, Core's share 133 code lines in 13 files (`results/E12/areas.tsv`); about
   1,000 to 1,500 in production [N, inferred].
 
-### M26. T5: RankNTypes with simplified subsumption (X; L, 450 added and 394 code lines measured, about 1,500 to 2,500 [estimate] with CoreToMid's boxing; after M24)
+### M26. Rank-N types in Mid, then T5: RankNTypes with simplified subsumption (X; L, and XL with Mid: 450 added and 394 code lines measured, about 1,500 to 2,500 [estimate], of which CoreToMid's boxing, about 200 to 400, is no longer needed; rank-N in Mid, a large Rune change, not sized; after M24)
 
 * **Why:** RankNTypes is in 967 packages (`results/E6/census.tsv`). Every census name at T5 or below, whatever its
   recommendation, would admit at most 42.6% of whole packages, a ceiling and not a set; the recommended set admits
-  28.3% (`results/E7/tier-needs.tsv`).
-* **What (D34, D37):** a forall in `HsTypes.ty` through unification, zonking, generalisation, printing, interfaces and
-  desugaring; an argument whose parameter is a polytype checked against it, its variables rigid, desugared to type and
-  dictionary lambdas, System F with no coercions; simplified subsumption only, annotations required; a binding to an
-  impredicative type refused. Beyond the prototype, for GHC's tests: a forall in a result skolemised against a clause's
-  further patterns (10 of the 20 failing should_compile tests need it), polytypes through synonyms, contexts in nested
-  types, patterns on polytypes. **Mid is in scope:** MidLint allows a polymorphic type only as a field or a tuple
-  component (`lib/compiler/core/midlint.sml:213, 222`), so E12's `rank2.hs` failed at `-O0` and `-O1` with "the type of
-  v4357 is polymorphic, ... other than as a field" and ran at `-O2` only because the simplifier removed the binder
-  (`results/E12/programs-rhc/results.tsv:66-67`). CoreToMid boxes a polytype value in a one-field datatype, as
-  dictionaries are (D37's rec); rank-N in Mid instead is a Rune change and a decision. HsLint the same, with its own
-  forall and escape checks.
-* **Starts from:** `patches/E12-T5.patch`.
-* **Rests on:** D34, D37. A probe of GHC needs `-XNoDeepSubsumption`, since its Haskell2010 edition turns
+  28.3% (`results/E7/tier-needs.tsv`). Mid cannot carry T5 today: MidLint allows a polymorphic type only as a field
+  or a tuple component (`lib/compiler/core/midlint.sml:213, 222`), so E12's `rank2.hs` failed at `-O0` and `-O1` with
+  "the type of v4357 is polymorphic, ... other than as a field" and ran at `-O2` only because the simplifier removed
+  the binder (`results/E12/programs-rhc/results.tsv:66-67`). The owner took rank-N types in Mid for it, D37's (b),
+  over boxing in CoreToMid.
+* **What (D34, D37):**
+  - **First, rank-N types in Mid (D37's (b)), before T5 lands:** Mid takes a forall as a parameter's and a binder's
+    type. MidLint's rule (`lib/compiler/core/midlint.sml:204-222`) admits it there, and what relies on "a parameter's
+    type is no forall", `Workers`, `flattenJoin`, a lifted function and `Lower` (`docs/ir.md:706-709`), learns it;
+    CoreToMid writes a Core `TForall` as a Mid forall where it stands, as it does today (`coretomid.sml:421`). Mid
+    stays predicative: a type variable never stands for a forall-type, and a type application is at monotypes only,
+    which MidLint checks (D37's record, from Odersky and Läufer 1996 and Serrano et al. 2020) [the design inferred].
+    No boxing in CoreToMid. SML has no rank-N types, so its Mid does not change [inferred].
+  - **Then T5:** a forall in `HsTypes.ty` through unification, zonking, generalisation, printing, interfaces and
+    desugaring; an argument whose parameter is a polytype checked against it, its variables rigid, desugared to type
+    and dictionary lambdas, System F with no coercions; simplified subsumption only, annotations required; a binding to
+    an impredicative type refused. Beyond the prototype, for GHC's tests: a forall in a result skolemised against a
+    clause's further patterns (10 of the 20 failing should_compile tests need it), polytypes through synonyms,
+    contexts in nested types, patterns on polytypes. HsLint the same, with its own forall and escape checks, after
+    Serrano et al. 2020's section 4 without Quick Look (D41's record).
+* **Starts from:** `patches/E12-T5.patch`; no patch for Mid.
+* **Rests on:** D34, D37 (A (i) (b)). A probe of GHC needs `-XNoDeepSubsumption`, since its Haskell2010 edition turns
   DeepSubsumption on (*The extensions*).
-* **Done when:** `rank2.hs` at `-O0`, `-O1`, `-O2` and on the interpreter; GHC's should_compile for T5 well past E12's
-  11 of 31, and 17 of 17 should_fail, T18455's SPECIALISE instance pragma refused; a program with no forall types as
-  in 2010 ("Programs containing no foralls are typeable if and only if they are typeable in Haskell 98", as *The
-  extensions* cites it), by the 2010 corpus's bytes; M3's check holds.
-* **Size:** 450 added lines, 394 of code (`results/E12/areas.tsv`); about 1,500 to 2,500 in production, of which
-  CoreToMid's boxing about 200 to 400 [N, inferred]. The largest of the four tiers (D35).
+* **Gate:** Mid is Rune's IR, shared with SML: the change passes `make bootstrap` and `make check-cross`, and the 98
+  roadmap's test that the edited compiler on the sources before the edit gives that tree's `bin/rune.rbc`
+  (haskell98.md:7862-7867); `make perf-check`'s SML budgets stay put. It is the first large change to Mid in this
+  roadmap (*Risks*).
+* **Done when:**
+  - Mid with a forall as a parameter's and a binder's type passes MidLint at level 2 and runs on both VMs and their
+    tiers, and MidLint refuses a type application at a forall-type;
+  - `rank2.hs` at `-O0`, `-O1`, `-O2` and on the interpreter, its polymorphic binder kept, with no box in its Mid;
+  - GHC's should_compile for T5 well past E12's 11 of 31, and 17 of 17 should_fail, T18455's SPECIALISE instance
+    pragma refused;
+  - a program with no forall types as in 2010 ("Programs containing no foralls are typeable if and only if they are
+    typeable in Haskell 98", as *The extensions* cites it), by the 2010 corpus's bytes;
+  - SML's bytes and budgets unmoved; M3's check holds.
+* **Size:** T5 450 added lines, 394 of code (`results/E12/areas.tsv`); about 1,500 to 2,500 in production [N, inferred],
+  of which CoreToMid's boxing, about 200 to 400, is no longer needed. Rank-N types in Mid not sized, as D37's (b) is
+  not. The largest of the four tiers (D35), and track X's one large change to Rune. If T5 is cut, rank-N in Mid goes
+  with it (*What is cut first*).
 
 ### M27. T8: NoMonomorphismRestriction, MonoLocalBinds (X; S, 2 names sized S by E6, not prototyped; any time after M9)
 
@@ -10000,26 +10687,23 @@ below T6, whatever its recommendation, at most 42.6%, through T6 59.2%, T7 85.2%
 
 ## Gates
 
-**G0: the owner's decisions.** Not passed. The owner decides D1 to D41 (*Decisions*). The items that are the owner's
-call, with the milestone each holds:
-- D2 and D6, which change 98 mode at its edges (M6, M5); D3, the flip's timing against the brief (M28);
-- D8, folding `--names=greatest` and the 958-to-955 change it brings (M4);
-- D13a, and the two checker defects of *Found while writing this roadmap* (M18); D13b to D13d, recommended no;
-- D16's reading of a signed variable of a non-simple pattern binding, and D7's C8 (M9);
-- D21, Int under 2010, with ``minBound `quot` (-1)`` and the shift reading (M11);
-- D23, the library's cycle (M12);
-- D27's pick for `stdcall`, and D31's callbacks outside a call as a reading or a deviation (M15);
-- D28, `foreign export` left `Planned` at G2 by the owner's explicit word, or M17 (M17);
-- D29, Ptr, a change of Rune's model under A (M16);
-- D32's Foreign.C.Types constructors and D33's compiled-only FFI (M15, M16);
-- D35, the regime of fundeps under UndecidableInstances (M23);
-- D37's T4b and boxing or rank-N in Mid (M25, M26);
-- D38's N18 (98's unabsorbed errata on 2010's identical text) and N21 (how a program ends) (M1, M12, M14);
-- for the owner with no milestone unless taken: R41 and R87's re-reading of derived Show of records, and R20's
-  consequence in 98 mode.
+**G0: the owner's decisions.** Passed on 2026-11-24 (*The request*): every decision D1 to D41 is taken and recorded
+in its section and in the table at the head of *Decisions*, and no milestone's **Rests on** names an item still open
+but M18's two defects. What the owner decided against the recommendation, with the milestone each changes:
+- D11's B, hints in 98 modules too (M5);
+- D14's C, the guard's test in the tree at `-O2`, A the oracle (M8);
+- D21's C with B2, `Int` wrapping in both modes over Rune's wrapping primitives, and cheap eagerness on them (M11);
+- D22's B, `int` bit primitives in Rune (M14);
+- D25's B, the runtime layer shared (M4, M12);
+- D26's (ii), White_Space for `isSpace` and the 2010 lexer (M7, M13);
+- D31's B, the refusal of a callback outside a call a deviation (M15);
+- D33's (ii), the FFI on Core's interpreter (M15, M16);
+- D37's (b), rank-N types in Mid (M26);
+- D40's B, CPP without `#include` to the oracles once M20 lands (M2, M20).
 
-*Exit:* every row of the decisions table records the owner's word and its date, and no milestone's **Rests on** names
-an item still open. M1, M2 and M3 may start before it.
+Open with the owner (the head's list): whether 98 mode's lexer follows D26 (M7); M18's two defects; R20 and R41;
+reading 2010's text with the editors' unpublished corrections (M1); D35's (iii) as the papers require it (M23); and
+how implementation proceeds (a pushed integration branch, the worktrees and downloads kept).
 
 **G1: hello.** A 2010 program with a pattern guard, from the 2010 snapshot, on the Core interpreter and on the VM, with
 98 mode byte-identical. It needs M4 to M8, M10 and M12 (M10 for the library's hierarchical modules: *The order*). The
@@ -10048,7 +10732,7 @@ G1 says nothing of conformance.
 
 | Exit | Check |
 |---|---|
-| Every normative clause has a test or a pinned deviation | `hs2010/conformance`: the table's enforcement over `tests/hs2010/conformance.tsv` with no row `Planned`; 8.4.4 and 8.7 `Planned` only by D28's word, and declared so |
+| Every normative clause has a test or a pinned deviation | `hs2010/conformance`: the table's enforcement over `tests/hs2010/conformance.tsv` with no row `Planned`; 8.4.4 and 8.7 `Planned` by D28's word, and declared so; D31's deviation pinned |
 | Every shared program right in both modes | the `hs2010` suites over `tests/hs/{lang,errors,accept}` under `--language=haskell2010` and over `tests/hs2010/{lang,errors,accept}`: every program to its `.expected` |
 | The judges' disagreements explained | `hs-oracles` nightly over E8's 2010 sets with g10, gbase, MicroHs, Hugs and nhc98: each difference a line of `tests/hs/oracles.txt`, g10's nine limits among them |
 | The corpus | E8's 1,279 accept rows compile under 2010 rhc or each is a line with its reason (the 51 programs with 98 names 98-only); its 882 reject rows are refused; Hackage's 355 components that g10 accepts compile, nightly, never run |
@@ -10056,7 +10740,7 @@ G1 says nothing of conformance.
 | The library's diff from the Report empty but for its overlay | the token comparison of `share/rhc/haskell2010` against its pristine; the export table of E9's 620 items and 686 names over 30 modules |
 | HsLint, CoreLint and MidLint clean at level 2 | every `hs2010` suite under `RUNE_LINT=2` |
 | rhc's mutants caught | `make test-rhc-mutants`, 98's mutants and 2010's (*Testing and conformance*): no `UNCAUGHT` |
-| The FFI on every platform Rune's FFI runs on | chapter 8's and Foreign.*'s tests natively on x86-64, under `make test-ffi-portability` on Linux x86, AArch64 and PowerPC64 (`Makefile:2866`), and in the Windows builds (`docs/ffi/runtime.md:34-41`), `stdcall` through ABI 1 on 32-bit Windows |
+| The FFI on every platform Rune's FFI runs on, and on Core's interpreter | chapter 8's and Foreign.*'s tests natively on x86-64, under `make test-ffi-portability` on Linux x86, AArch64 and PowerPC64 (`Makefile:2866`), and in the Windows builds (`docs/ffi/runtime.md:34-41`), `stdcall` through ABI 1 on 32-bit Windows; the same tests under `bin/rhc Main.hs` on Core's interpreter (D33's (ii)) |
 | All of it on both bytecodes, every tier and gc-stress | the nightly ways |
 | 98 mode unmoved | the standing gate's checks below |
 
@@ -10083,13 +10767,17 @@ a decision says otherwise, and that decision says by how much.
   both targets at `-O1` and `-O2`, the run set through its harness, `tests/hs/errors` and `tests/hs/accept` with all of
   stderr, the four views, the 98 snapshot's entries and keys, and the 11 vendored files with pragmas compiled
   unblanked. Nightly, the manifest of canonical Core, messages and views. What may move is only what a decision names:
-  M18's D13a and, on the owner's word, its two defects; M4's `hs/names/imp/greatest` under D8.
+  M18's D13a and, on the owner's word, its two defects; M4's `hs/names/imp/greatest` under D8; M5's hint lines in
+  98's refusals under D11, by the hint line only, with every verdict and bytecode file held; M11's wrapping `Int` under
+  D21, 98's overflow tests and the bytecode of its `Int` arithmetic, and its `-O2` bytes where cheap eagerness newly
+  applies; and D6's printed pragmas. D25's move of the runtime layer moves no 98 byte, or M12 says by how much.
 - **Budgets:** `make perf-check`'s SML budgets and `tests/hs/perf`'s ratio budgets; none is re-based to let a change of
   this roadmap pass unless a decision gives the figure.
-- **SML's bytes:** a change to Rune (M15, M16, M17) passes `make bootstrap` and `make check-cross`, and, where it means
-  to leave the compiler's output alone, the 98 roadmap's test: the edited compiler on the sources before the edit gives
-  that tree's `bin/rune.rbc` (haskell98.md:7862-7867). A new primitive moves the instruction set's fingerprint once, by
-  one word, which M16 states.
+- **SML's bytes:** a change to Rune (M11's and M14's `int` primitives, M13's White_Space table, M15's G02, G06 and
+  G07, M16's address family, M20's shared CPP code if any, M26's rank-N Mid) passes `make bootstrap` and `make
+  check-cross`, and, where it means to leave the compiler's output alone, the 98 roadmap's test: the edited compiler on
+  the sources before the edit gives that tree's `bin/rune.rbc` (haskell98.md:7862-7867). A new primitive moves the
+  instruction set's fingerprint once, by one word, which its milestone states (M11, M14, M16).
 - **Extensions:** one that changes no valid 2010 program leaves the 2010 corpus's bytes unchanged when it is turned on;
   one that does is off unless asked, with its conservativity test (D36). *Testing and conformance* gives both tests.
 
@@ -10169,14 +10857,15 @@ whose 2010 result differs is a failure until it is split or its row corrected. T
 `same` for chapters 1 to 11, which rested on the text alone.
 
 **Errata and readings.** No errata to the 2010 Report were ever published; ten mistakes were reported on the
-haskell-prime list from 2010 to 2019, none fixed in the text (E1, `errata2010.md`). So the 2010 errata file is empty
-and its count 0. Three questions D38 settles become rows:
+haskell-prime list from 2010 to 2019, none fixed in the published text (E1, `errata2010.md`), though the Report's
+sources hold unpublished corrections of three of them (`0**y`, 5.6.1's "Haskell 98" and rule (s): E1's second part,
+`results/E1b/changes.tsv`). So the 2010 errata file is empty and its count 0; whether those corrections are readings on
+their rows is open with the owner (*Open with the owner*, 4). Three questions D38 settles become rows:
 - **98's unabsorbed errata (N18).** Eight of 98's 18 errata are not in 2010's text, which is otherwise 98's; they name
-  12 rows of the 98 table (`tests/hs/errata.tsv`). Under D38's recommendation each applies to 2010's identical text,
-  as a reading on the "wrong" ground, and 98's pinning programs serve both tables unchanged. If the owner declines,
-  the two code errata change behaviour (`enumFrom` on Float and Double strict or lazy; `lex "_foo"` one lexeme or two)
-  and need 2010 programs of their own. GHC's base takes the printed code's reading for the first and the erratum's
-  for the second (E1, probes `n18a`, `n18b`), so it judges neither choice.
+  12 rows of the 98 table (`tests/hs/errata.tsv`). By D38's (a)(i), decided, each applies to 2010's identical text,
+  as a reading on the "wrong" ground, and 98's pinning programs serve both tables unchanged. GHC's base takes the
+  printed code's reading for `enumFrom` and the erratum's for `lex` (E1, probes `n18a`, `n18b`), so it judges
+  neither.
 - **The code chapters' defects (N11)** are overlay entries of `share/rhc/haskell2010/overlay.tsv`, held by the 2010
   library's overlay job as 98's are: Data.Ratio's missing parenthesis, the header `module Array (`, and Data.Maybe's
   second `maybe` (D23; *The libraries*). Data.Complex's `Complex(:+)` is in the chapter's synopsis, not its code,
@@ -10186,11 +10875,13 @@ and its count 0. Three questions D38 settles become rows:
   98's statements under System.Exit and System.Environment (`lib.r.systemexit.term.error`, `.term.ioerror`,
   `.term.normal`, `lib.r.systemenvironment.exitwith.close`, `.term.loop`), while chapter 40 keeps only
   `exitWith`, `exitFailure` and `exitSuccess` (T10:16108-16160). Under D38's recommendation (98's behaviour kept,
-  implementation-defined, documented) they leave the table: their programs stay, as rhc's documented choice, outside
-  it as the sharing budgets are (haskell98.md:8135).
+  implementation-defined, documented; decided) they leave the table: their programs stay, as rhc's documented
+  choice, outside it as the sharing budgets are (haskell98.md:8135).
 
 Readings 2010 settles: R1 and R9, whose deviations (DV1, DV8) become the text (E2), so the 2010 deviations file starts
-with 98's other six, each on a `same` row (counted), plus what D21 and the Foreign.C.Types ruling under D33 add.
+with 98's other six, each on a `same` row (counted), plus D31's refusal of a callback outside a call, on the ground
+"ambiguous" (D31's B), and what the Foreign.C.Types ruling under D32 and D33 adds. D21's wrapping `Int` adds none: on
+the reading D21 takes it is the text.
 
 **The generator.** As 98's: the table lands as data, and `build_clauses2010.py` does not land
 (`tests/runner/migration.sml:2,10`); a regeneration would be a `tools/generate` command in SML (haskell98.md:8000).
@@ -10252,7 +10943,10 @@ in 22, empty data in 14, DoAndIfThenElse in 46 and hierarchical imports in 284 (
 **The filter** runs before any compiler and lands as data, not code: `filtered.tsv` records the 167 candidates kept
 from every compiler, 5% of all, and why: CPP 129 (19 with `#include`), TemplateHaskell 30, QuasiQuotes 4 (3 rows
 name both), `capi` 3, OPTIONS naming a plugin, `-F` or `-optc` 4 (recounted); ANN pragmas are blanked in every copy
-compiled. It costs nofib 38% (64 of 170), all CPP, which D12 would recover. The filter protects the oracles and the
+compiled. It costs nofib 38% (64 of 170), all CPP, which D12 recovers: by D40's B, decided, CPP without `#include`
+(110 of the 129 CPP candidates, 63 of nofib's 64: `filtered.tsv`, column `untrusted`, counted) is admitted to the
+oracles once M20 lands, the option filter naming a cabal file's `-optP` flags first, and CPP with `#include` stays out
+for good. The filter protects the oracles and the
 machine: GHC runs a splice or an annotation at compile time. rhc runs no code at compile time (TemplateHaskell and
 QuasiQuotes are known and not supported, D7); its one reach into the file system would be CPP's `#include`, which D12
 confines to the program's own directory. Two files were caught only after the filter learnt to see CPP lines in literate
@@ -10314,10 +11008,13 @@ otherwise, and that decision says by how much. As the 98 roadmap's gate does for
   own output, so Rune's changes do not move it, where they move every bytecode [inferred]; a commit that moves the
   manifest names its decision. The register and stack bytes stay the per-change check's.
 - **What may move:** only what a decision names: M18's D13a (`genericLength`) and, if the owner takes them, the two
-  checker defects of *Found while writing*; and E4's one intended change, `hs/names/imp/greatest`, whose dump goes
-  from 958 pairs to 955 once the library is immune to `--names=greatest` (`results/E4/logs/suites6.log:2`), which
-  needs the owner's word. The pre-scan reads only edition names in a 98 module (D6), and a file that names
-  `Haskell2010` is read as 2010; no test or run-set program names it (E3).
+  checker defects of *Found while writing*; E4's one intended change, `hs/names/imp/greatest`, whose dump goes from
+  958 pairs to 955 once the library is immune to `--names=greatest` (`results/E4/logs/suites6.log:2`), by D8; D11's
+  hint lines in 98's refusals, the messages only, every verdict and bytecode file held, at least 33 of the 633
+  re-pinned by hand in M5 (D11's record); and D21's wrapping `Int`: 98's overflow tests flip, the bytecode of its `Int`
+  arithmetic moves once with the new primitives, and its `-O2` bytes where cheap eagerness newly applies (M11). D25's
+  shared runtime layer moves no 98 byte, or M12 says by how much. The pre-scan reads only edition names in a 98 module
+  (D6), and a file that names `Haskell2010` is read as 2010; no test or run-set program names it (E3).
 - **M3 builds it** at once, before tracks M and F land anything, so that their first change is measured.
 
 ### Conservativity (D36, M19-M27)
@@ -10421,8 +11118,9 @@ So, with D6:
    combination's message, and every pair of supported features it does not refuse resolves and compiles a small
    module with both on. With the 72 names recommended now that is 2,556 pairs, resolution alone for most
    [inferred].
-4. **Diagnostics (D11).** E5's 35 refusals under `-XHaskell2010` (`probes/diag-names.tsv`): GHC names the extension in
-   26; rhc's test is all 35, the 9 lexer-level ones included.
+4. **Diagnostics (D11's B).** E5's 35 refusals under `-XHaskell2010` (`probes/diag-names.tsv`): GHC names the extension
+   in 26; rhc's test is all 35, the 9 lexer-level ones included, in 2010 modules, and in 98 modules where the refused
+   construct is a 98 refusal, its hint naming `-X` or the edition, never a pragma (D6's (a)).
 5. **Keys (D9).** E3's `--dotted-names` reproducer (`results/E3/dotted/repro.sh`: a unit made without the flag taken
    by a compile with it) generalised: for each feature that changes how a text is read, compile with it off into a
    store and then on against that store; the unit must not be taken. Two spellings of one set (an alias such as
@@ -10494,9 +11192,9 @@ seen by the tree test; a setting missing from the unit key, seen by tracking tes
 | Gate | Check |
 |---|---|
 | G1 | A 2010 hello with a pattern guard from the 2010 snapshot, on the Core interpreter and the VM, with identical output (98's interpreter-against-VM comparison); the per-change 98 check over all four sets |
-| G2 | No row of the 2010 table `Planned`; every shared program run in both modes; g10's disagreements each a line of the oracle file; the 2010 corpus's run programs right; the 2010 pristine's diff empty but for its overlay; HsLint, CoreLint and MidLint clean at level 2 on every 2010 suite; 2010's mutants caught; the FFI on every platform Rune's FFI runs on, on both bytecodes, every tier and gc-stress |
+| G2 | No row of the 2010 table `Planned`; every shared program run in both modes; g10's disagreements each a line of the oracle file; the 2010 corpus's run programs right; the 2010 pristine's diff empty but for its overlay; HsLint, CoreLint and MidLint clean at level 2 on every 2010 suite; 2010's mutants caught; the FFI on every platform Rune's FFI runs on, on both bytecodes, every tier and gc-stress, and on Core's interpreter (D33's (ii)) |
 | G3 | Every 98 harness pinned (D3), its jobs unchanged by the flip; the 98 table green under the pin |
-| Standing | 98 mode's manifest unmoved but by a decision; every extension's conservativity test green |
+| Standing | 98 mode's manifest unmoved but by a decision (D8, D11's hint lines, D13a, D21's wrapping `Int`); every extension's conservativity test green |
 
 Track X gates neither G2 nor G3; its features carry their conservativity and HsLint tests into each milestone.
 
@@ -10504,29 +11202,34 @@ Track X gates neither G2 nor G3; its features carry their conservativity and HsL
 
 The brief's rule for the 98 roadmap stands: no silent change to Rune. The 2010 language itself changes nothing below
 Core: pattern guards, empty data, the relaxed analysis and the rest are front-end work (E3: nothing below the front end
-changed, measured on both VMs), and Word, Word64, Int64 and the bit operations lower to primitives the VM already has
-(D22, E9). What Rune is asked for comes from the FFI, and one optional item from CPP. Sizes are E10's estimates
-(`results/E10/gaps.tsv`), none built.
+changed, measured on both VMs), and Word, Word64 and Int64 lower to primitives the VM already has (D22, E9). What Rune
+takes comes from the FFI and from the owner's decisions of 2026-11-24: wrapping and bit `int` primitives for `Int`
+(D21, D22), a White_Space table (D26) and rank-N types in Mid (D37); and possibly a library shared with
+`lib/language/c` for CPP (D12). The FFI's sizes are E10's estimates (`results/E10/gaps.tsv`); none was built.
 
 | Change | Where | Grade | Size [estimate] | Decision | Needed for |
 |---|---|---|---|---|---|
 | Resolve a C name in the program's own namespace (`dlopen(NULL)`/`RTLD_DEFAULT`; Windows: the loaded modules) | `runtime/`, `sys` layers | small | C ~30 | D27 (G02) | a static import with no library named |
 | Read and write a C variable an `&` import names | `runtime/foreign.c` | small | C ~5, tests ~30 | D27 (G06) | `&errno`-style imports |
 | Call any FunPtr, not only a SYMBOL identity | `runtime/foreign.c` | small | C ~10, tests ~40 | D27 (G07) | `dynamic` of a `wrapper`'s or a C-returned pointer |
-| `castStablePtrToPtr` as a POINTER identity of an integer | `runtime/foreign.c` | small | C ~20 | D30 (G22), only under D29 B | StablePtr under D29 B (under A, D30's table in Haskell needs none) |
-| Ptr as a raw address, through a trusted address-level primitive family for rhc's Core only | `runtime/foreign.c`, `src/isa` | **large** (a change of Rune's safety model, `docs/plans/runeffi.md:465-467`) under D29 A; medium (identities plus offsets, canonical identities) under B | A: C ~200, SML ~100 and a safety review | D29 (G13-G17) | plusPtr, minusPtr, alignPtr, Ord, ptrToIntPtr, Storable of pointers |
+| Ptr as a raw address, through a trusted address-level primitive family for rhc's Core only | `runtime/foreign.c`, `src/isa` | **large** (a change of Rune's safety model, `docs/plans/runeffi.md:465-467`), D29's A, taken | C ~200, SML ~100 and a safety review | D29 (G13-G17) | plusPtr, minusPtr, alignPtr, Ord, ptrToIntPtr, Storable of pointers |
+| `castStablePtrToPtr` as a POINTER identity of an integer | `runtime/foreign.c` | small | C ~20 | D30 (G22), only under D29 B | not needed: D29's A was taken, and D30's table in Haskell needs none |
 | A callback scope that `vm_raise` stops at | `runtime/runtime.c`, `callback.c` | small, optional | C ~15 and a test | D31 (G09) | hardening only: rhc's trampoline already keeps exceptions out of C frames |
-| `foreign export` and an embedding API (HsFFI.h's `hs_init`, `hs_exit`) | `runeopt`, the runtime | **large** | ~600 and tests; x86-64 first | D28 (G24, G25) | only if the owner takes it |
+| `foreign export` and an embedding API (HsFFI.h's `hs_init`, `hs_exit`) | `runeopt`, the runtime | **large** | ~600 and tests; x86-64 first | D28 (G24, G25) | not taken: D28's A leaves it out (M17) |
 | Typed scalar arguments to `foreign`, without strings | `runtime/foreign.c`, `lib/basis` | small, optional | not sized | D33 | the ~147 VM instructions a call costs over Haskell's own (E10) |
-| Rank-N types in Mid (a polymorphic type outside fields; `lib/compiler/core/midlint.sml:213, 222`) | Mid, MidLint, Lower | **large**: Mid is Rune's IR | not sized | D37 | only if the owner prefers it to boxing a polytype in CoreToMid (~200-400 lines, rhc's) |
-| CPP's `#if` expressions through `lib/language/c`'s `CConst` | `lib/language/c` | none to small (a reuse, not a change) | not sized | D12 | if D12 takes the SML subset |
+| Wrapping `int` primitives beside the checked ones: add, sub, mul, neg and abs, quot and div at `minBound` by -1, and Integer's conversion to Int [inferred from D21's list] | `src/isa/prims.sml`, C bodies, `runtime/register/fastprim.h`, the JIT; a new fingerprint | small | a line each, not sized (98's D22 C) | D21 (C with B2) | `Int` modulo 2^63 in both modes, and cheap eagerness on it (M11) |
+| `int` bit primitives | `src/isa/prims.sml`, C bodies, `fastprim.h`, the JIT | small | not sized | D22 (B) | Bits on Int with no reinterpretation through `word` (M14) |
+| A White_Space table | `lib/unicode`, generated | small | not sized | D26 ((ii)) | `isSpace` and the 2010 lexer's `uniWhite` (M7, M13) |
+| Rank-N types in Mid (a forall as a parameter's and a binder's type, predicative; `lib/compiler/core/midlint.sml:204-222`) | Mid, MidLint, `Workers`, `flattenJoin`, lifting, Lower | **large**: Mid is Rune's IR | not sized | D37 ((b), taken over boxing) | T5 (M26), before RankNTypes lands |
+| CPP's `#if` expressions through `lib/language/c`'s `CConst`, and whatever else a Haskell CPP can share, as a library under `lib/` | `lib/language/c`, a new library under `lib/` | none to small | not sized | D12 (with the owner's "consider reusing lib/language/c") | M20, as far as its examination finds a share |
 
-What it does **not** ask, under the recommendations: no change to Mid, Low, the collector or images; the instruction
-set gains only D29's primitive family, moving its fingerprint once (M16); no
-finalizer or weak reference in the VM (D30 runs C finalizers at `finalizeForeignPtr` and at exit, as the 2010 text
-allows, T10:14966-14967); no threads (D31 keeps callbacks on the owning thread). Core's own changes (type binders in
-`AltCon` for T4a, a whole-dictionary Cast for GND, kind variables later) are rhc's, not Rune's (D37). The standing
-gate applies to every row: SML's bytes and budgets hold unless the row's decision says by how much.
+What it does **not** ask, under the decisions: no change to Low, the collector or images; Mid changes only by D37's
+rank-N types; the instruction set gains D21's and D22's `int` primitives and D29's primitive family, each moving its
+fingerprint once (M11, M14, M16); no finalizer or weak reference in the VM (D30 runs C finalizers at
+`finalizeForeignPtr` and at exit, as the 2010 text allows, T10:14966-14967); no threads (D31 keeps callbacks on the
+owning thread). Core's own changes (type binders in `AltCon` for T4a, a whole-dictionary Cast for GND, kind variables
+later) are rhc's, not Rune's (D37). The standing gate applies to every row: SML's bytes and budgets hold unless the
+row's decision says by how much.
 
 ## Risks
 
@@ -10536,7 +11239,14 @@ gate applies to every row: SML's bytes and budgets hold unless the row's decisio
   alone: nine files of `src/rhc`, +402 -124); E4's prototype rejects 12 of its 121 hunks on the tip. Every milestone is
   written on the tree of its day.
 - **98 bytes.** The standing check met no LANGUAGE pragma (*Testing and conformance*); the one 98 path the pre-scan
-  changes needs the 11 vendored files compiled unblanked (M3).
+  changes needs the 11 vendored files compiled unblanked (M3). Three decisions move 98's output on purpose, D11's hint
+  lines, D21's wrapping `Int` and D8's re-pinned test, and D25 shares 98's runtime layer with 2010's: each moves only
+  what its record names, and a change that moves more has a defect behind it.
+- **The first large change to Mid** in this roadmap: rank-N types for T5 (D37's (b)), in Rune's IR, which SML shares.
+  Its gate is the 98 roadmap's test of SML's bytes, and it lands before T5, so a T5 that fails leaves Mid changed for
+  nothing unless both are cut together (*What is cut first*).
+- **98's D22 superseded.** The 98 roadmap decided checked `Int` (98's D22 A); D21 reverses it in both modes, so the 98
+  roadmap's text and `docs/rhc.md:48` no longer describe rhc, and the 98 roadmap stays as written.
 - **HsLint's double cost.** Every typing feature is specified twice; E4's RelaxedPolyRec cost HsLint four changes to
   the checker's one, and E13 found a per-group rule only a mixed cycle exposed. A tier that lands in the checker
   without HsLint fails level 2.
@@ -10553,14 +11263,14 @@ gate applies to every row: SML's bytes and budgets hold unless the row's decisio
   question, never an answer (D39).
 - **Untrusted code.** The corpus filter keeps TH, quasi-quotes and CPP includes away from every compiler (D40); a new
   corpus goes through it first.
-- **Budget.** A 2010 clause tier adds 2,259 to 5,235 s of CPU to `make check`'s 11,879 s base (E4's rule on E1's
-  counts); shared by clause id, with the rest nightly, is the recommendation (D41).
+- **Budget.** The 2010 clause tier adds about 2,259 s of CPU to `make check`'s 11,879 s base, shared by clause id with
+  the rest nightly (D41, decided; E4's rule on E1's counts).
 
 ## What is cut first
 
 In this order, each cut leaving the rest whole:
-1. `foreign export` and HsFFI.h (M17), if the owner has not already deferred it (D28).
-2. T5, RankNTypes (M26).
+1. `foreign export` and HsFFI.h (M17): already out, by D28's A.
+2. T5, RankNTypes (M26), and rank-N types in Mid with it, which only T5 needs (D37's (b)).
 3. T2, FunctionalDependencies (M23): mtl needs it, but nothing in the 2010 Report does.
 4. T4a, existentials (M25).
 5. CPP (M20): D12's fallback is chapter 12's error.
@@ -10570,8 +11280,8 @@ In this order, each cut leaving the rest whole:
 9. The lexer- and renamer-only extensions (M19) last of track X: they are cheap and widely used (E7).
 
 **Never cut:** the 2010 Report itself, M1-M16, which is G2: every clause Supported or pinned, the 30 modules, the FFI's
-required parts but `foreign export` (D28); 98 mode byte-identical (M3); HsLint at level 2 on everything the checker
-accepts; the clause table.
+required parts but `foreign export` (D28), on the interpreter too (D33); 98 mode byte-identical but for what its
+decisions name (M3); HsLint at level 2 on everything the checker accepts; the clause table.
 
 ## Measuring
 
@@ -10590,9 +11300,17 @@ other compilers, and what is left open.
 
 **The texts.**
 - The Haskell 2010 Language Report, ed. Simon Marlow, 2010: https://www.haskell.org/onlinereport/haskell2010/ (the
-  HTML of 2010-07-20, fetched 2026-11-17 into the drafts' `downloads/report2010/`; the PDF,
-  https://www.haskell.org/definition/haskell2010.pdf, as text in the 98 campaign's
-  `downloads/papers/txt/haskell2010.txt`, cited as T10:line). No errata to it were published (E1).
+  HTML of 2010-07-20, fetched 2026-11-17 into the drafts' `downloads/report2010/`, which is the sources' commit 15bff26
+  of 2010-07-20 12:11 UTC; the PDF, https://www.haskell.org/definition/haskell2010.pdf, as text in the 98 campaign's
+  `downloads/papers/txt/haskell2010.txt`, cited as T10:line, a build of 2010-11-17 that carries one commit more,
+  14de79f, 8.4.2's `fatype -> ftype`; the tag `h2010-final`, 79f0a39 of 2010-07-06, predates both: E1's second part,
+  `results/E1b/README.md`). No errata to it were published (E1); the sources hold three corrections never published
+  (E1b).
+- The Report's sources: the repository github.com/haskell/haskell-report, the owner's clone at
+  `/home/ruud/haskell/haskell-report` (`master` f6a7d73, `origin/h2010` f63b2bd, `origin/add-nix` 9ea661a, tags
+  `h2010-final` and `h98-revised-from-cvs`), read with read-only git commands (`results/E1b/repo-facts.txt`). The
+  work-in-progress Haskell 2010 Revised Language Report at `/home/ruud/haskell/haskell-2010-revised-report` is not
+  part of this roadmap, by the owner's word, and was not used.
 - The Haskell 98 Language and Libraries, the Revised Report, ed. Simon Peyton Jones, December 2002, with its 18
   published errata, as rhc reads it (`share/rhc/haskell98/errata.tsv`); as text, `report98.txt`, cited as T98:line.
 - The 98 roadmap: `docs/plans/language/haskell98.md` at `75ed95861`, cited as haskell98.md:line.
@@ -10618,7 +11336,10 @@ The sources E11 read, as far as *What the literature says* and *What the impleme
 `results/E11/refs.tsv` keys it. Each DOI is in `results/E11/dois.tsv` or, for a paper the 98 campaign fetched, in its
 `results/E15/dois.tsv`, checked against Crossref, unless the entry says otherwise; "no DOI" means none was found and
 the text itself was read. Each entry ends in its status: **Full**, **Sections** (which), **Abstract**, or **Not read**.
-"p. N" in the text is the page of the local PDF; local copies are in `refs.tsv`.
+"p. N" in the text is the page of the local PDF; local copies are in `refs.tsv`. The seven papers the owner supplied,
+read after the decisions for E11's second part, have the entries of `results/E11b/refs-add.md`, their local copies
+under the drafts' `downloads/papers/owner2010/` (`MANIFEST.tsv`: bytes, sha256, page offsets); in *What the
+literature says* their pages are printed pages, said so.
 
 - Augustsson. MicroHs: a small compiler for Haskell. Haskell Symposium 2024. doi:10.1145/3677999.3678280. Sections 1-3.
   Key `augustsson24`
@@ -10636,8 +11357,12 @@ the text itself was read. Each entry ends in its status: **Full**, **Sections** 
   `dijkstra07`
 - Dijkstra, Fokker, Swierstra. The architecture of the Utrecht Haskell compiler. Haskell Symposium 2009.
   doi:10.1145/1596638.1596650. Section 1. Key `dijkstra09`
+- Duck, Peyton Jones, Stuckey, Sulzmann. Sound and decidable type inference for functional dependencies. ESOP 2004,
+  LNCS 2986, 49-63. doi:10.1007/978-3-540-24725-8_5. Full, the owner's Springer copy (its text extracts cleanly,
+  unlike the copy E11 fetched). The conference version of Sulzmann et al. 2007; its Theorem 2 lacks the fullness
+  condition the journal version adds, and is not to be cited. Key `duck04`
 - Dunfield, Krishnaswami. Complete and easy bidirectional typechecking for higher-rank polymorphism. ICFP 2013.
-  doi:10.1145/2500365.2500582. Sections: abstract, 1. Key `dunfield13`
+  doi:10.1145/2500365.2500582. Sections: abstract, 1-2 (the subtyping of Figure 3). Key `dunfield13`
 - Eisenberg, Breitner, Peyton Jones. Type variables in patterns. Haskell Symposium 2018. doi:10.1145/3242744.3242753.
   Sections 1-2. Key `eisenberg18`
 - Eisenberg, Weirich, Ahmed. Visible type application. ESOP 2016. doi:10.1007/978-3-662-49498-1_10. Sections 1-3 and
@@ -10646,6 +11371,8 @@ the text itself was read. Each entry ends in its status: **Full**, **Sections** 
   doi:10.1016/s1571-0661(05)80540-7, found by a Crossref title search. Full. Key `erwig01`
 - Finne, Leijen, Meijer, Peyton Jones. Calling hell from heaven and heaven from hell. ICFP 1999.
   doi:10.1145/317636.317790. Sections 2-3. Key `finne99`
+- Glynn, Stuckey, Sulzmann. Type classes and constraint handling rules. Workshop on Rule-Based Constraint Reasoning
+  and Programming, 2000; arXiv:cs/0006034 (no DOI). Full. Key `glynn00`
 - GHC Steering Committee. GHC2021, GHC proposal 380. 2021.
   https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0380-ghc2021.rst (no DOI). Sections: lines
   1-60. Key `ghc2021`
@@ -10658,6 +11385,9 @@ the text itself was read. Each entry ends in its status: **Full**, **Sections** 
   doi:10.1145/1238844.1238856. Sections 6.5-6.7, 12.7. Key `hudak07`
 - Jones. A theory of qualified types. ESOP 1992, LNCS 582. doi:10.1007/3-540-55253-7_17. Sections; the 98 campaign's
   file `jones94.pdf` is this paper, not the 1994 book. Key `jones92esop`
+- Jones. Qualified Types: Theory and Practice. Cambridge University Press, 1994 (D.Phil. thesis, Oxford, 1992).
+  doi:10.1017/cbo9780511663086 (as `results/E11/wanted.md` gives it; not checked against Crossref). Sections: 3.1-3.4,
+  5.4.1, 5.8, 6.1-6.2, 7.1, 10.3, from a scan. Key `jones94book`
 - Jones. Simplifying and improving qualified types. FPCA 1995. doi:10.1145/224164.224198. Abstract and section 1. Key
   `jones95simp`
 - Jones. First-class polymorphism with type inference. POPL 1997. doi:10.1145/263699.263765. Section 1, and the
@@ -10671,12 +11401,12 @@ the text itself was read. Each entry ends in its status: **Full**, **Sections** 
   functional dependencies! Haskell Symposium 2017. doi:10.1145/3122955.3122966. Sections 1-2. Key `karachalias17`
 - Läufer. Polymorphic type inference and abstract data types. PhD thesis, New York University, 1992 (no DOI). Sections:
   abstract, contents. Key `laufer92thesis`
-- Läufer. Type classes with existential types. JFP 6(3), 1996. doi:10.1017/S0956796800001817. Sections 1-4. Key
-  `laufer96`
+- Läufer. Type classes with existential types. JFP 6(3), 1996. doi:10.1017/S0956796800001817. Sections 1-4, 5 (the
+  PAT rule and its monomorphism, p. 502) and 8 (on Perry, pp. 512-513). Key `laufer96`
 - Läufer, Odersky. An extension of ML with first-class abstract types. ACM SIGPLAN Workshop on ML and its Applications,
   1992 (no DOI found). Abstract. Key `laufer92ml`
-- Läufer, Odersky. Polymorphic type inference and abstract data types. TOPLAS 16(5), 1994. doi:10.1145/186025.186031.
-  Not read: no open copy (below). Key `laufer94`
+- Läufer, Odersky. Polymorphic type inference and abstract data types. TOPLAS 16(5), 1994, 1411-1430.
+  doi:10.1145/186025.186031. Full, from a scan; Figures 2-6 from page images. Key `laufer94`
 - Lewis, Shields, Meijer, Launchbury. Implicit parameters: dynamic scoping with static types. POPL 2000.
   doi:10.1145/325694.325708. Sections 1, 5-6, from a scan. Key `lewis00`
 - Lynagh, Marlow, Allbery et al. The haskell-prime archive of May 2010: the review of the draft Report and the proposal
@@ -10697,8 +11427,15 @@ the text itself was read. Each entry ends in its status: **Full**, **Sections** 
   E1; in E11 the preface, 3.13, 3.17, 4.5, 8, 12 and 24-37. Key `haskell2010`
 - Morris, Jones. Instance chains: type class programming without overlapping instances. ICFP 2010.
   doi:10.1145/1863543.1863596. Abstract. Key `morris10`
+- Odersky, Läufer. Putting type annotations to work. POPL 1996, 54-67. doi:10.1145/237721.237729 (Crossref:
+  `results/E11/dois2.tsv`). Sections 1-3 and 5-7, from a scan, Figures 1-3 and 5 from page images; section 4 skimmed.
+  The system PVWS start from; its subsumption has the arrow's co- and contravariance, which proposal 287 removed. Key
+  `odersky96`
 - Odersky, Sulzmann, Wehr. Type inference with constrained types. TAPOS 5(1), 1999.
   doi:10.1002/(sici)1096-9942(199901/03)5:1<35::aid-tapo4>3.0.co;2-4. Abstract. Key `odersky99`
+- Perry. The implementation of practical functional programming languages. PhD thesis, Imperial College, University
+  of London, 1991 (no DOI; the scan is undated, and Läufer and Odersky 1994 and Läufer 1996 cite it as 1990).
+  Sections: chapters 7 and 8 (printed pp. 99-143), the abstract and contents. Key `perry91`
 - Peyton Jones. Tackling the awkward squad: monadic input/output, concurrency, exceptions, and foreign-language calls
   in Haskell. Engineering theories of software construction, Marktoberdorf 2000, 2001 (no DOI). Section 6. Key
   `awkward01`
@@ -10713,11 +11450,15 @@ the text itself was read. Each entry ends in its status: **Full**, **Sections** 
 - Peyton Jones, Vytiniotis, Weirich, Washburn. Simple unification-based type inference for GADTs. ICFP 2006.
   doi:10.1145/1159803.1159811. Abstract. Key `pvww06`
 - Serrano, Hage, Peyton Jones, Vytiniotis. A quick look at impredicativity. PACMPL 4 (ICFP), 2020.
-  doi:10.1145/3408971. Sections 5.8, 7 and Appendix A. Key `serrano20`
+  doi:10.1145/3408971. Sections 4, 5.8, 7 and Appendix A; section 4 (Figures 2-4) is the base system without deep
+  skolemisation or arrow co/contravariance, which T5 and HsLint follow. Key `serrano20`
+- Stuckey, Sulzmann. A theory of overloading. TOPLAS 27(6), 2005, 1216-1269. doi:10.1145/1108970.1108974 (Crossref:
+  `results/E11/dois2.tsv`). Sections 1, 4-8; the appendix not read. Key `stuckey05`
 - Sulzmann, Chakravarty, Peyton Jones, Donnelly. System F with type equality coercions. TLDI 2007.
   doi:10.1145/1190315.1190324. Section 1, and the fundep example on p. 3. Key `sulzmann07`
 - Sulzmann, Duck, Peyton Jones, Stuckey. Understanding functional dependencies via constraint handling rules. JFP
-  17(1), 2007. doi:10.1017/S0956796806006137. Sections 1, 4-6, 8. Key `sulzmann07chr`
+  17(1), 2007. doi:10.1017/S0956796806006137. Sections 1, 4-6, 8; section 6.3 (multi-range dependencies) is cited by
+  D35's (iii). Key `sulzmann07chr`
 - Vytiniotis, Peyton Jones, Schrijvers. Let should not be generalised. TLDI 2010. doi:10.1145/1708016.1708023.
   Sections 1, 4. Key `letgen10`
 - Vytiniotis, Peyton Jones, Schrijvers, Sulzmann. OutsideIn(X): modular type inference with local assumptions. JFP
@@ -10740,22 +11481,8 @@ the text itself was read. Each entry ends in its status: **Full**, **Sections** 
 - UHC `f2b94a90`
 - Helium `5928bff4`, version 1.9
 
-**Papers for the owner** (`results/E11/wanted.md`, for `/mnt/h/Rune/haskell2010`). No finding rests on them alone:
-- Läufer, Odersky 1994, above: the typing of existentials the Haskell' page cites (D34's T4a, D37, D41). Read instead:
-  Läufer 1992, Läufer and Odersky 1992, Läufer 1996.
-- Odersky, Läufer. Putting type annotations to work. POPL 1996. doi:10.1145/237721.237729 (Crossref:
-  `results/E11/dois2.tsv`). The system PVWS start from. Read instead: PVWS 2007, sections 3-4.
-- Jones. Qualified Types: Theory and Practice. CUP, 1994. doi:10.1017/cbo9780511663086. Read instead: Jones 1992, 1995
-  and 2000.
-- Duck, Peyton Jones, Stuckey, Sulzmann. Sound and decidable type inference for functional dependencies. ESOP 2004.
-  doi:10.1007/978-3-540-24725-8_5. Fetched, but its text cannot be extracted (Type 3 fonts); Sulzmann et al. 2007 is
-  the journal version.
-- Stuckey, Sulzmann. A theory of overloading. TOPLAS 27(6), 2005. doi:10.1145/1108970.1108974 (Crossref:
-  `dois2.tsv`). Nothing read instead.
-- Glynn, Stuckey, Sulzmann. Type classes and constraint handling rules. Workshop on Rule-Based Constraint Reasoning and
-  Programming, 2000 (no DOI known). Read instead: Sulzmann et al. 2007.
-- Perry. The implementation of practical functional programming languages. PhD thesis, Imperial College, 1991 (no
-  DOI). Read instead: Läufer 1996.
+**Papers for the owner** (`results/E11/wanted.md`): the owner supplied the papers on 2026-11-24 (E11's second part,
+`results/E11b/`; their entries are above); one item remains:
 - The Haskell' committee's private list, haskell-prime-private, 2006-2010: the reasons for the reset of July 2009 and
   the final list of November 2009 may be there. Read instead: the public archive and the wiki.
 
