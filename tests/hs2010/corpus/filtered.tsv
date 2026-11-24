@@ -1,0 +1,168 @@
+id	set	expect	untrusted	ext
+ghc/codeGen/should_run/cas_int.hs	ghc-h2010	run	CPP	BlockArguments,CPP,Haskell2010,MagicHash,NondecreasingIndentation,ScopedTypeVariables,UnboxedTuples
+ghc/driver/implicit-dyn-too/QuasiExpr.hs	ghc-h2010	aux	TemplateHaskell	Haskell2010,TemplateHaskell
+ghc/driver/implicit-dyn-too/QuasiQuote.hs	ghc-h2010	aux	QuasiQuotes,TemplateHaskell	Haskell2010,QuasiQuotes,TemplateHaskell
+ghc/rename/should_compile/T23240.hs	ghc-h2010	compile	TemplateHaskell	DisambiguateRecordFields,Haskell2010,TemplateHaskell
+ghc/rename/should_compile/T23240_aux.hs	ghc-h2010	aux	TemplateHaskell	Haskell2010,TemplateHaskell
+ghc/safeHaskell/flags/Flags01.hs	ghc-h2010	compile	CPP	CPP,Haskell2010,Safe
+ghc/safeHaskell/safeInfered/UnsafeInfered02.hs	ghc-h2010	fail	TemplateHaskell	Haskell2010,Safe,TemplateHaskell
+ghc/safeHaskell/safeInfered/UnsafeInfered12.hs	ghc-h2010	fail	TemplateHaskell	Haskell2010,TemplateHaskell
+ghc/safeHaskell/safeInfered/UnsafeWarn02.hs	ghc-h2010	compile	TemplateHaskell	Haskell2010,TemplateHaskell
+ghc/safeHaskell/safeLanguage/SafeLang01.hs	ghc-h2010	compile	TemplateHaskell	Haskell2010,Safe,TemplateHaskell
+ghc/safeHaskell/safeLanguage/SafeLang12.hs	ghc-h2010	fail	TemplateHaskell	Haskell2010,Safe,TemplateHaskell
+ghc/safeHaskell/safeLanguage/SafeLang12_B.hs	ghc-h2010	aux	TemplateHaskell	Haskell2010,Safe,TemplateHaskell
+ghc/safeHaskell/safeLanguage/SafeLang16.hs	ghc-h2010	compile	TemplateHaskell	Haskell2010,Safe,TemplateHaskell
+ghc/safeHaskell/safeLanguage/SafeLang18.hs	ghc-h2010	compile	CPP	CPP,Haskell2010,Safe
+ghc/tcplugins/TcPlugin_Rewrite.hs	ghc-h2010	compile	option:-fplugin	DataKinds,Haskell2010,MultiParamTypeClasses,ScopedTypeVariables,StandaloneKindSignatures,TypeFamilies,TypeOperators
+ghc/tcplugins/TcPlugin_TyFam.hs	ghc-h2010	compile	option:-fplugin	DataKinds,GADTs,Haskell2010,MultiParamTypeClasses,ScopedTypeVariables,StandaloneKindSignatures,TypeFamilies
+ghc/th/T10811.hs	ghc-h2010	compile	TemplateHaskell	Haskell2010,TemplateHaskell,TypeFamilies
+ghc/th/T10820.hs	ghc-h2010	run	TemplateHaskell	Haskell2010,LiberalTypeSynonyms,MagicHash,RankNTypes,TemplateHaskell
+ghc/th/T11721_TH.hs	ghc-h2010	compile	TemplateHaskell	GADTs,Haskell2010,ScopedTypeVariables,TemplateHaskell
+ghc/th/T12411.hs	ghc-h2010	fail	TemplateHaskell	Haskell2010,TemplateHaskell
+ghc/th/T16133.hs	ghc-h2010	fail	TemplateHaskell	Haskell2010,PolyKinds,TemplateHaskell
+ghc/th/T18388.hs	ghc-h2010	compile	TemplateHaskell	DerivingVia,FlexibleInstances,Haskell2010,MultiParamTypeClasses,ScopedTypeVariables,StandaloneDeriving,TemplateHaskell,TypeApplications
+ghc/th/T23954.hs	ghc-h2010	run	TemplateHaskell	Haskell2010,RoleAnnotations,TemplateHaskell,TypeOperators
+ghc/th/T23962.hs	ghc-h2010	run	TemplateHaskell	Haskell2010,KindSignatures,StarIsType,TemplateHaskell
+ghc/th/T23968.hs	ghc-h2010	run	TemplateHaskell	Haskell2010,TemplateHaskell,TypeFamilies,TypeOperators
+ghc/th/T23971.hs	ghc-h2010	run	TemplateHaskell	Haskell2010,MultiParamTypeClasses,TemplateHaskell,TypeOperators
+ghc/th/T23986.hs	ghc-h2010	run	TemplateHaskell	DeriveAnyClass,Haskell2010,MultiParamTypeClasses,QuantifiedConstraints,TemplateHaskell
+ghc/th/T24111.hs	ghc-h2010	run	TemplateHaskell	Haskell2010,PatternSynonyms,TemplateHaskell,ViewPatterns
+ghc/th/T24997.hs	ghc-h2010	run	TemplateHaskell	Haskell2010,TemplateHaskell,UnboxedSums
+ghc/th/T25256.hs	ghc-h2010	run	TemplateHaskell	Haskell2010,ScopedTypeVariables,TemplateHaskell
+ghc/th/TH_Roles4.hs	ghc-h2010	compile	TemplateHaskell	Haskell2010,TemplateHaskell
+h98/ghc/typecheck/should_compile/tc190	h98-corpus	extension	CPP	CPP,KindSignatures
+h98/ghc/typecheck/should_compile/tc192	h98-corpus	extension	CPP	Arrows,CPP,TypeOperators
+h98/hse/PatternSplice.hs	h98-corpus	extension	TemplateHaskell	TemplateHaskell
+h98/hse/QQType.hs	h98-corpus	extension	QuasiQuotes,TemplateHaskell	FlexibleInstances,QuasiQuotes,TemplateHaskell
+h98/hse/THTypes.hs	h98-corpus	extension	QuasiQuotes,TemplateHaskell	FlexibleInstances,QuasiQuotes,TemplateHaskell
+h98/hse/brackets.hs	h98-corpus	illegal-in-h98	TemplateHaskell	Arrows,TemplateHaskell,UnicodeSyntax
+h98/jhc/1_typecheck/2_pass/ghc/uncat/tc190.hs	h98-corpus	extension	CPP	-cpp,-fglasgow-exts
+h98/nofib/gc/hash	h98-corpus	extension	CPP	CPP,NoImplicitPrelude,Trustworthy
+h98/nofib/real/mkhprog	h98-corpus	extension	CPP	CPP
+h98acc/conformance98/hmake	h98-accept	compile	CPP	
+h98acc/ghc/parser/should_compile/read039	h98-accept	compile	CPP	CPP,ForeignFunctionInterface
+h98acc/hse/CStyleLinePragmas.hs	h98-accept	fail	CPP	
+h98acc/hse/QuasiQuoteQual2.hs	h98-accept	compile	QuasiQuotes	QuasiQuotes
+h98acc/jhc/0_parse/2_pass/ghc/read039.hs	h98-accept	compile	CPP	CPP,ForeignFunctionInterface
+h98acc/jhc/2_language/CPP.hs	h98-accept	run	CPP	
+h98acc/jhc/8_shootout/BinaryTrees.hs	h98-accept	run	option:-optc-O3	-fglasgow-exts
+h98acc/nhcnofib/real/infer	h98-accept	run	CPP	
+h98acc/nhcnofib/spectral/calendar	h98-accept	run	CPP	
+h98acc/nhcnofib/spectral/cryptarithm1	h98-accept	run	CPP#include	
+h98acc/nhcnofib/spectral/hartel/nucleic2	h98-accept	run	CPP#include	
+h98acc/nhcnofib/spectral/knights	h98-accept	run	CPP	
+h98acc/nofib/gc/happy	h98-accept	run	CPP	
+h98acc/nofib/imaginary/bernouilli	h98-accept	run	CPP	CPP
+h98acc/nofib/imaginary/digits-of-e1	h98-accept	run	CPP	CPP
+h98acc/nofib/imaginary/digits-of-e2	h98-accept	run	CPP	CPP
+h98acc/nofib/imaginary/gen_regexps	h98-accept	run	CPP	CPP
+h98acc/nofib/real/anna	h98-accept	run	CPP	CPP
+h98acc/nofib/real/bspt	h98-accept	run	CPP	CPP
+h98acc/nofib/real/compress	h98-accept	run	CPP	CPP
+h98acc/nofib/real/fem	h98-accept	run	CPP	CPP
+h98acc/nofib/real/fluid	h98-accept	run	CPP	CPP
+h98acc/nofib/real/fulsom	h98-accept	run	CPP	CPP
+h98acc/nofib/real/gamteb	h98-accept	run	CPP	CPP
+h98acc/nofib/real/gg	h98-accept	run	CPP	CPP
+h98acc/nofib/real/grep	h98-accept	run	CPP	CPP
+h98acc/nofib/real/hidden	h98-accept	run	CPP	CPP
+h98acc/nofib/real/hpg	h98-accept	run	CPP	CPP
+h98acc/nofib/real/infer	h98-accept	run	CPP	CPP
+h98acc/nofib/real/lift	h98-accept	run	CPP	CPP
+h98acc/nofib/real/linear	h98-accept	run	CPP	CPP
+h98acc/nofib/real/parser	h98-accept	run	CPP	CPP
+h98acc/nofib/real/pic	h98-accept	run	CPP	CPP
+h98acc/nofib/real/prolog	h98-accept	run	CPP	CPP
+h98acc/nofib/real/reptile	h98-accept	run	CPP	CPP
+h98acc/nofib/real/rsa	h98-accept	run	CPP	CPP
+h98acc/nofib/real/symalg	h98-accept	run	CPP	CPP
+h98acc/nofib/real/veritas	h98-accept	run	CPP	CPP
+h98acc/nofib/spectral/calendar	h98-accept	run	CPP	
+h98acc/nofib/spectral/cryptarithm1	h98-accept	run	CPP#include	
+h98acc/nofib/spectral/hartel/comp_lab_zift	h98-accept	run	CPP#include	
+h98acc/nofib/spectral/hartel/event	h98-accept	run	CPP#include	
+h98acc/nofib/spectral/hartel/fft	h98-accept	run	CPP#include	
+h98acc/nofib/spectral/hartel/genfft	h98-accept	run	CPP#include	
+h98acc/nofib/spectral/hartel/ida	h98-accept	run	CPP#include	
+h98acc/nofib/spectral/hartel/listcompr	h98-accept	run	CPP#include	
+h98acc/nofib/spectral/hartel/listcopy	h98-accept	run	CPP#include	
+h98acc/nofib/spectral/hartel/nucleic2	h98-accept	run	CPP#include	
+h98acc/nofib/spectral/hartel/parstof	h98-accept	run	CPP#include	
+h98acc/nofib/spectral/hartel/sched	h98-accept	run	CPP#include	
+h98acc/nofib/spectral/hartel/solid	h98-accept	run	CPP#include	
+h98acc/nofib/spectral/hartel/transform	h98-accept	run	CPP#include	
+h98acc/nofib/spectral/hartel/typecheck	h98-accept	run	CPP#include	
+h98acc/nofib/spectral/hartel/wang	h98-accept	run	CPP#include	
+h98acc/nofib/spectral/hartel/wave4main	h98-accept	run	CPP#include	
+h98acc/nofib/spectral/knights	h98-accept	run	CPP	
+h98acc/nofib/spectral/sorting	h98-accept	run	CPP	CPP
+hackage/doctest-driver-gen-0.3.0.8/library	hackage	compile	option:-F	
+hackage/graphula-2.1.3.0/test-suite:readme	hackage	compile	CPP	
+mhs/tests/Cpp.hs	mhs-tests	run	CPP	CPP
+mhs/tests/ForeignC.hs	mhs-tests	none	capi	
+mhs/tests/Info.hs	mhs-tests	none	capi	
+mhs/tests/PipeNonBlockIO.hs	mhs-tests	run	capi	
+nofib/gc/happy	nofib-2025	none	CPP	CPP,FlexibleContexts,NondecreasingIndentation
+nofib/gc/hash	nofib-2025	run	CPP	CPP,NoImplicitPrelude,Trustworthy
+nofib/imaginary/bernouilli	nofib-2025	run	CPP	CPP
+nofib/imaginary/digits-of-e1	nofib-2025	run	CPP	CPP
+nofib/imaginary/digits-of-e2	nofib-2025	run	CPP	CPP
+nofib/imaginary/gen_regexps	nofib-2025	run	CPP	CPP
+nofib/parallel/OLD/NESL	nofib-2025	none	CPP	
+nofib/parallel/OLD/bom	nofib-2025	none	CPP	
+nofib/parallel/OLD/soda7	nofib-2025	run	CPP	
+nofib/parallel/blackscholes	nofib-2025	run	CPP	CPP,RecordWildCards
+nofib/parallel/dcbm	nofib-2025	none	CPP	
+nofib/parallel/gray	nofib-2025	run	CPP	BangPatterns,CPP
+nofib/parallel/linsolv	nofib-2025	run	CPP	
+nofib/parallel/mandel	nofib-2025	run	CPP	BangPatterns,CPP
+nofib/parallel/matmult	nofib-2025	run	CPP	-cpp,BangPatterns
+nofib/parallel/minimax	nofib-2025	run	CPP	BangPatterns,CPP
+nofib/parallel/nbody	nofib-2025	run	CPP	BangPatterns,CPP,MagicHash,UnboxedTuples
+nofib/parallel/prsa	nofib-2025	run	CPP	BangPatterns,CPP
+nofib/parallel/ray	nofib-2025	run	CPP	BangPatterns,CPP
+nofib/parallel/transclos	nofib-2025	run	CPP	BangPatterns,CPP,FlexibleInstances
+nofib/parallel/warshall	nofib-2025	none	CPP	-cpp
+nofib/real/anna	nofib-2025	run	CPP	CPP
+nofib/real/ben-raytrace	nofib-2025	run	CPP	BangPatterns,CPP,FlexibleContexts,FlexibleInstances,GeneralizedNewtypeDeriving,MagicHash,MultiParamTypeClasses,NamedFieldPuns,PatternSynonyms,RankNTypes,RecordWildCards,ScopedTypeVariables,TypeInType,TypeSynonymInstances,UnboxedTuples,UndecidableInstances
+nofib/real/bspt	nofib-2025	run	CPP	CPP
+nofib/real/compress	nofib-2025	run	CPP	CPP
+nofib/real/compress2	nofib-2025	run	CPP	CPP,MagicHash
+nofib/real/fem	nofib-2025	none	CPP	CPP
+nofib/real/fluid	nofib-2025	none	CPP	CPP
+nofib/real/fulsom	nofib-2025	run	CPP	CPP
+nofib/real/gamteb	nofib-2025	run	CPP	CPP
+nofib/real/gg	nofib-2025	run	CPP	CPP
+nofib/real/grep	nofib-2025	run	CPP	CPP
+nofib/real/hidden	nofib-2025	none	CPP	CPP
+nofib/real/hpg	nofib-2025	run	CPP	CPP
+nofib/real/infer	nofib-2025	run	CPP	CPP
+nofib/real/lift	nofib-2025	run	CPP	CPP
+nofib/real/linear	nofib-2025	run	CPP	CPP
+nofib/real/parser	nofib-2025	run	CPP	CPP
+nofib/real/pic	nofib-2025	none	CPP	CPP
+nofib/real/prolog	nofib-2025	run	CPP	CPP
+nofib/real/reptile	nofib-2025	run	CPP	CPP
+nofib/real/rsa	nofib-2025	run	CPP	CPP
+nofib/real/symalg	nofib-2025	run	CPP	CPP
+nofib/real/veritas	nofib-2025	run	CPP	CPP
+nofib/spectral/calendar	nofib-2025	run	CPP	CPP
+nofib/spectral/cryptarithm1	nofib-2025	run	CPP#include	
+nofib/spectral/hartel/comp_lab_zift	nofib-2025	run	CPP	CPP,MagicHash
+nofib/spectral/hartel/event	nofib-2025	run	CPP	CPP,MagicHash
+nofib/spectral/hartel/fft	nofib-2025	run	CPP	CPP,MagicHash
+nofib/spectral/hartel/genfft	nofib-2025	run	CPP	CPP,MagicHash
+nofib/spectral/hartel/ida	nofib-2025	run	CPP	CPP,MagicHash
+nofib/spectral/hartel/listcompr	nofib-2025	run	CPP	CPP,MagicHash
+nofib/spectral/hartel/listcopy	nofib-2025	run	CPP	CPP,MagicHash
+nofib/spectral/hartel/nucleic2	nofib-2025	none	CPP	CPP,MagicHash
+nofib/spectral/hartel/parstof	nofib-2025	run	CPP	CPP,MagicHash
+nofib/spectral/hartel/sched	nofib-2025	run	CPP	CPP,MagicHash
+nofib/spectral/hartel/solid	nofib-2025	run	CPP	CPP,MagicHash
+nofib/spectral/hartel/transform	nofib-2025	run	CPP	CPP,MagicHash
+nofib/spectral/hartel/typecheck	nofib-2025	run	CPP	CPP,MagicHash
+nofib/spectral/hartel/wang	nofib-2025	run	CPP	CPP,MagicHash
+nofib/spectral/hartel/wave4main	nofib-2025	run	CPP	CPP,MagicHash
+nofib/spectral/knights	nofib-2025	run	CPP	CPP
+nofib/spectral/mandel2	nofib-2025	none	CPP	CPP
+nofib/spectral/sorting	nofib-2025	run	CPP	CPP
