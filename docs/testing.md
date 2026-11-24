@@ -910,6 +910,22 @@ then a bottom by `writeFile`, `appendFile` and `hPutStr` under each buffering
 mode: it ends with the bottom's error, and the file holds exactly `"abc"`
 (after what `appendFile`'s held), on both.
 
+**rhc's library of Haskell 2010** (`share/rhc/haskell2010`, the haskell2010
+roadmap's M12 and M13: the code the 2010 Report prints, the Prelude's four
+modules and Data.Array, Data.Complex, Data.Maybe and Data.Ratio, as its
+sources give it in `pristine/`, with rhc's overlay applied; D23, D24, D38).
+The same file's jobs `hs2010/library/*` hold it as `hs/library/*` hold
+98's, the hierarchy's directories (`Data/Array.hs`) included: `overlay`,
+each module against `pristine/`, every line where they differ an applied
+entry of `overlay.tsv`, every module the Report prints no code for a row of
+`provenance.tsv` (where its code comes from: 98's library, `base` 4.3 or
+rhc), whose rows name modules of the directory with a known licence, and
+every correction a ground of `overlay.tsv` names a row of `corrections.tsv`
+(the four corrections of the Report's sources the owner had the text read
+with, and 98's errata), each applied one naming its entry; and `pristine`,
+the transcription byte for byte as `pristine/MANIFEST.tsv` records it. No
+compile reads the directory yet.
+
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants
 with rhc in Rune's place: a mutant is exact edits of a file of `rhc.plan`,
