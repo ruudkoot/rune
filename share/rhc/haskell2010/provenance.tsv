@@ -1,0 +1,15 @@
+# Where the code of each module the Haskell 2010 Report prints no code for comes from (D23 and D24 of
+# docs/plans/language/haskell2010.md, the haskell2010 roadmap). 26 of the Report's 30 library chapters are an export
+# list, signatures and prose, generated from GHC's base of 2010, with no code; no overlay can stand against a text that
+# does not exist, so each such module of this directory has rows here in place of a pristine. Its code is rhc's library
+# of Haskell 98 where a 98 module continues (Control.Monad, Data.Char, Data.Ix, Data.List, Numeric and the System
+# modules), with 2010's changes; base 4.3's portable code for the names 98 has no code for; and rhc's own code where
+# neither serves. base 4.3 is the reading of the prose where the prose says nothing, and the Report is where it says
+# what base does not do (D24). A module of this directory with no pristine has a row here, and a row's file is a
+# module of this directory (hs2010/library/overlay).
+# Columns: module; file; source (98:FILE, a file of share/rhc/haskell98, the Haskell 98 Report's code with that
+# library's overlay; base-4.3.1.0:PATH:LINES, a file of base's 4.3.1.0 package; rhc, written for rhc); licence (the
+# notice the code is under besides the Haskell 2010 Report's, which every module here is, carrying its chapter's
+# export list and signatures: report98, the Haskell 98 Report's; base, base's licence; none, for rhc's own; LICENSE
+# has their texts); what (the names or definitions the source gives); change (what was changed from it, and why).
+module	file	source	licence	what	change

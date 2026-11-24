@@ -29,14 +29,33 @@
    - hs/library/bottomwrite: a string with a bottom in it, written by
      writeFile, appendFile or hPutStr under each buffering mode, leaves
      exactly the characters before the bottom in the file, on Core's
-     interpreter and on the VM (BottomWrite.hs). *)
+     interpreter and on the VM (BottomWrite.hs).
+
+   rhc's library of Haskell 2010, share/rhc/haskell2010 (the haskell2010
+   roadmap's M12 and M13; D23, D24, D38), the same way:
+
+   - hs2010/library/overlay: as hs/library/overlay, each module against
+     the Report's code as printed, the hierarchy's directories (Data/Array.hs)
+     included; a module the Report prints no code for has a row of
+     provenance.tsv instead, whose rows are well formed and name modules of
+     the directory; and each correction a ground of overlay.tsv names is a
+     row of corrections.tsv, each one applied there an applied entry.
+   - hs2010/library/pristine: as hs/library/pristine, pristine/ is what
+     its MANIFEST.tsv says, byte for byte, by SHA-256. *)
 structure HsLibrary =
 struct
   open Sh
 
   fun fail s = say ("FAIL " ^ s ^ "\n")
 
-  val share = "share/rhc/haskell98"
+  (* a library of rhc's: where it is, the name its jobs print, and whether
+     its modules without the Report's text are named by provenance.tsv and
+     its overlay's grounds by corrections.tsv (2010's) or neither (98's,
+     whose files of rhc's own are an entry's `new:`) *)
+  type library = {share : string, name : string, records : bool}
+
+  val haskell98 : library = {share = "share/rhc/haskell98", name = "hs/library", records = false}
+  val haskell2010 : library = {share = "share/rhc/haskell2010", name = "hs2010/library", records = true}
 
   (* the lines of a text, the empty ones too, so that a line's number is
      its place *)
@@ -155,27 +174,28 @@ struct
 
   (* ---- overlay.tsv ---- *)
 
-  type entry = {id : string, lines : string, kind : string, status : string}
+  type entry = {id : string, lines : string, kind : string, ground : string, status : string}
 
   val kinds = ["erratum", "reading", "unresolved", "builtin", "elided", "primitive", "instances", "representation",
                "option", "nochange"]
   val statuses = ["applied", "listed", "open", "none"]
 
-  fun entries () : entry list =
+  fun entries (lib : library) : entry list =
     let
-      val rows = List.filter (fn l => not (String.isPrefix "#" l)) (lines (read (fromRoot (share ^ "/overlay.tsv"))))
+      val job = #name lib ^ "/overlay: "
+      val rows = List.filter (fn l => not (String.isPrefix "#" l)) (lines (read (fromRoot (#share lib ^ "/overlay.tsv"))))
     in
       case rows of
-        [] => (fail "hs/library/overlay: overlay.tsv has no rows"; [])
+        [] => (fail (job ^ "overlay.tsv has no rows"); [])
       | header :: body =>
           List.mapPartial
             (fn row =>
                case String.fields (fn c => c = #"\t") row of
-                 [id, _, _, ls, kind, _, status, _] =>
-                   (if List.exists (fn k => k = kind) kinds then () else fail ("hs/library/overlay: " ^ id ^ ": kind " ^ kind);
-                    if List.exists (fn s => s = status) statuses then () else fail ("hs/library/overlay: " ^ id ^ ": status " ^ status);
-                    SOME {id = id, lines = ls, kind = kind, status = status})
-               | fs => (fail ("hs/library/overlay: a row of " ^ Int.toString (length fs) ^ " columns, not 8: " ^ row); NONE))
+                 [id, _, _, ls, kind, ground, status, _] =>
+                   (if List.exists (fn k => k = kind) kinds then () else fail (job ^ id ^ ": kind " ^ kind);
+                    if List.exists (fn s => s = status) statuses then () else fail (job ^ id ^ ": status " ^ status);
+                    SOME {id = id, lines = ls, kind = kind, ground = ground, status = status})
+               | fs => (fail (job ^ "a row of " ^ Int.toString (length fs) ^ " columns, not 8: " ^ row); NONE))
             body
     end
 
@@ -191,7 +211,7 @@ struct
 
   (* what an entry's column lines names: lines of files of pristine/, and
      files of rhc's own (`new:`) *)
-  fun places (e : entry) : ((string * int) list * string list) =
+  fun places (job : string) (e : entry) : ((string * int) list * string list) =
     List.foldl
       (fn (part, (ls, news)) =>
          if String.isPrefix "new:" part then (ls, String.extract (part, 4, NONE) :: news)
@@ -203,9 +223,9 @@ struct
                                case List.mapPartial Int.fromString (splitOn "-" r) of
                                  [a] => [(file, a)]
                                | [a, b] => List.tabulate (b - a + 1, fn k => (file, a + k))
-                               | _ => (fail ("hs/library/overlay: " ^ #id e ^ ": a range " ^ r); []))
+                               | _ => (fail (job ^ #id e ^ ": a range " ^ r); []))
                      (splitOn "," ranges)) @ ls, news)
-           | _ => (fail ("hs/library/overlay: " ^ #id e ^ ": lines " ^ part); (ls, news)))
+           | _ => (fail (job ^ #id e ^ ": lines " ^ part); (ls, news)))
       ([], []) (if #lines e = "" then [] else splitOn "; " (#lines e))
 
   (* ---- the longest common subsequence of two lists of token lines ---- *)
@@ -269,16 +289,109 @@ struct
 
   (* ---- the jobs ---- *)
 
-  fun moduleFiles () =
-    List.filter (fn f => String.isSuffix ".hs" f) (sort (Sh.entries (fromRoot share)))
-
-  fun overlay () =
+  (* the .hs files of a directory and of its subdirectories but pristine/,
+     each by its path in it, sorted *)
+  fun hsFiles dir =
     let
-      val es = entries ()
+      fun walk rel =
+        let val path = if rel = "" then dir else dir ^ "/" ^ rel
+        in
+          List.concat
+            (List.map (fn n =>
+                         let val r = if rel = "" then n else rel ^ "/" ^ n
+                         in
+                           if isDir (path ^ "/" ^ n) then (if rel = "" andalso n = "pristine" then [] else walk r)
+                           else if String.isSuffix ".hs" n then [r] else []
+                         end)
+               (Sh.entries path))
+        end
+    in
+      sort (walk "")
+    end
+
+  (* the library's modules, by their files' paths in it *)
+  fun moduleFiles (lib : library) = hsFiles (fromRoot (#share lib))
+
+  (* the rows of a table of the library's, its header and its comments
+     dropped, each as its fields *)
+  fun table (lib : library) (file, columns) : string list list =
+    let
+      val job = #name lib ^ "/overlay: "
+      val rows = List.filter (fn l => not (String.isPrefix "#" l)) (lines (read (fromRoot (#share lib ^ "/" ^ file))))
+    in
+      case rows of
+        [] => (fail (job ^ file ^ " has no header"); [])
+      | header :: body =>
+          (if length (String.fields (fn c => c = #"\t") header) = columns then ()
+           else fail (job ^ file ^ "'s header has not " ^ Int.toString columns ^ " columns");
+           List.mapPartial
+             (fn row =>
+                let val fs = String.fields (fn c => c = #"\t") row
+                in
+                  if length fs = columns then SOME fs
+                  else (fail (job ^ file ^ ": a row of " ^ Int.toString (length fs) ^ " columns, not " ^
+                              Int.toString columns ^ ": " ^ row); NONE)
+                end)
+             body)
+    end
+
+  (* provenance.tsv's files, each a module of the library, its rows well
+     formed: what names a module the Report prints no code for *)
+  fun provenance (lib : library) : string list =
+    let
+      val job = #name lib ^ "/overlay: "
+      val modules = moduleFiles lib
+      val rows = table lib ("provenance.tsv", 6)
+      fun fileOf m = String.map (fn #"." => #"/" | c => c) m ^ ".hs"
+      fun one [m, file, source, licence, _, _] =
+            (if file = fileOf m then () else fail (job ^ "provenance.tsv: module " ^ m ^ " is not the file " ^ file);
+             if List.exists (fn f => f = file) modules then ()
+             else fail (job ^ "provenance.tsv: " ^ file ^ " is no module of " ^ #share lib);
+             if List.exists (fn l => l = licence) ["report98", "base", "none"] then ()
+             else fail (job ^ "provenance.tsv: " ^ file ^ ": licence " ^ licence);
+             if String.isPrefix "98:" source orelse String.isPrefix "base-4.3.1.0:" source orelse source = "rhc" then ()
+             else fail (job ^ "provenance.tsv: " ^ file ^ ": source " ^ source);
+             file)
+        | one _ = ""
+    in
+      List.map one rows
+    end
+
+  (* corrections.tsv against overlay.tsv: each correction a ground names is
+     a row, and each row applied here names an applied entry in its where *)
+  fun corrections (lib : library) (es : entry list) =
+    let
+      val job = #name lib ^ "/overlay: "
+      val rows = table lib ("corrections.tsv", 9)
+      val ids = List.map hd rows
+      fun isCorrection g = String.isPrefix "c." g orelse String.isPrefix "e." g
+      val () =
+        List.app (fn (e : entry) =>
+                    List.app (fn g => if not (isCorrection g) orelse List.exists (fn i => i = g) ids then ()
+                                      else fail (job ^ #id e ^ ": its ground " ^ g ^ " is no row of corrections.tsv"))
+                      (splitOn "; " (#ground e)))
+          es
+      fun one [id, _, _, _, _, _, _, here, where_] =
+            if here <> "applied" then ()
+            else if List.exists (fn (e : entry) => #status e = "applied" andalso String.isSubstring ("(overlay " ^ #id e ^ ")") where_) es
+            then ()
+            else fail (job ^ "corrections.tsv: " ^ id ^ " is applied, and its where names no applied entry as (overlay ID)")
+        | one _ = ()
+    in
+      List.app one rows
+    end
+
+  fun overlay (lib : library) () =
+    let
+      val share = #share lib
+      val job = #name lib ^ "/overlay: "
+      val es = entries lib
       val applied = List.filter (fn e => #status e = "applied") es
-      val placed = List.map (fn e => (e, places e)) es
+      val placed = List.map (fn e => (e, places job e)) es
       val covered = List.concat (List.map (fn (e, (ls, _)) => if #status e = "applied" then ls else []) placed)
       val news = List.concat (List.map (fn (e, (_, ns)) => if #status e = "applied" then ns else []) placed)
+      val provenanced = if #records lib then provenance lib else []
+      val () = if #records lib then corrections lib es else ()
       fun isCovered p = List.exists (fn q => q = p) covered
       (* each place an entry names is a line of its file *)
       val () =
@@ -286,11 +399,11 @@ struct
                     (List.app (fn (f, l) =>
                                  let val count = length (allLines (read (fromRoot (share ^ "/pristine/" ^ f))))
                                  in if l >= 1 andalso l <= count then ()
-                                    else fail ("hs/library/overlay: " ^ #id e ^ ": " ^ f ^ ":" ^ Int.toString l ^
+                                    else fail (job ^ #id e ^ ": " ^ f ^ ":" ^ Int.toString l ^
                                                " is no line of pristine/" ^ f)
                                  end) ls;
                      List.app (fn f => if exists (fromRoot (share ^ "/" ^ f)) then ()
-                                       else fail ("hs/library/overlay: " ^ #id e ^ ": no file " ^ f)) ns))
+                                       else fail (job ^ #id e ^ ": no file " ^ f)) ns))
           placed
       fun baseOf m =
         if m = "IO.hs" then tokenLines ("synopsis/IO.hs", read (fromRoot (share ^ "/pristine/synopsis/IO.hs")))
@@ -299,22 +412,24 @@ struct
       val counts = ref (0, 0)
       fun one m =
         if not (exists (fromRoot (share ^ "/pristine/" ^ m))) then
-          (if List.exists (fn f => f = m) news then ()
-           else fail ("hs/library/overlay: " ^ m ^ ": the Report has no text of it, and no entry names it new"))
+          (if List.exists (fn f => f = m) news orelse List.exists (fn f => f = m) provenanced then ()
+           else if #records lib then
+             fail (job ^ m ^ ": the Report has no text of it, and no entry names it new nor provenance.tsv names it")
+           else fail (job ^ m ^ ": the Report has no text of it, and no entry names it new"))
         else
           let
             val found = changes (baseOf m, tokenLines (m, read (fromRoot (share ^ "/" ^ m))))
             val uncovered = List.filter (fn ps => not (List.exists isCovered ps) andalso not (null ps)) found
             val () = counts := (#1 (!counts) + 1, #2 (!counts) + length found)
           in
-            List.app (fn ps => fail ("hs/library/overlay: " ^ m ^ " differs from the Report at " ^
+            List.app (fn ps => fail (job ^ m ^ " differs from the Report at " ^
                                      String.concatWith " or " (List.map (fn (f, l) => f ^ ":" ^ Int.toString l) ps) ^
                                      ", which no applied entry of overlay.tsv names"))
               uncovered
           end
-      val () = List.app one (moduleFiles ())
+      val () = List.app one (moduleFiles lib)
     in
-      say ("hs/library/overlay: " ^ Int.toString (#1 (!counts)) ^ " modules against the Report's text, " ^
+      say (job ^ Int.toString (#1 (!counts)) ^ " modules against the Report's text, " ^
            Int.toString (#2 (!counts)) ^ " changed places, " ^ Int.toString (length applied) ^ " entries applied of " ^
            Int.toString (length es) ^ "\n")
     end
@@ -322,27 +437,28 @@ struct
   fun binary file =
     let val s = BinIO.openIn file in Byte.bytesToString (BinIO.inputAll s) before BinIO.closeIn s end
 
-  fun pristine () =
+  fun pristine (lib : library) () =
     let
+      val share = #share lib
+      val job = #name lib ^ "/pristine: "
       val rows = List.filter (fn l => not (String.isPrefix "#" l)) (lines (read (fromRoot (share ^ "/pristine/MANIFEST.tsv"))))
       val files = List.mapPartial (fn row => case String.fields (fn c => c = #"\t") row of
                                                 file :: _ :: _ :: _ :: _ :: count :: sha :: _ =>
                                                   if file = "file" then NONE else SOME (file, count, sha)
-                                              | _ => (fail ("hs/library/pristine: a row of MANIFEST.tsv: " ^ row); NONE)) rows
+                                              | _ => (fail (job ^ "a row of MANIFEST.tsv: " ^ row); NONE)) rows
       fun one (file, count, sha) =
         let val path = fromRoot (share ^ "/pristine/" ^ file)
             val bytes = binary path
         in
           if Hex.fromBytes (Sha256.digest bytes) = sha then ()
-          else fail ("hs/library/pristine: " ^ file ^ " is not the Report's text that MANIFEST.tsv records (sha256)")
+          else fail (job ^ file ^ " is not the Report's text that MANIFEST.tsv records (sha256)")
         end
       val listed = List.map #1 files
-      val onDisk = List.map (fn f => f) (List.filter (String.isSuffix ".hs") (Sh.entries (fromRoot (share ^ "/pristine"))))
-                   @ List.map (fn f => "synopsis/" ^ f) (List.filter (String.isSuffix ".hs") (Sh.entries (fromRoot (share ^ "/pristine/synopsis"))))
+      val onDisk = hsFiles (fromRoot (share ^ "/pristine"))
     in
       List.app one files;
-      List.app (fn f => if List.exists (fn g => g = f) listed then () else fail ("hs/library/pristine: " ^ f ^ " is in no row of MANIFEST.tsv")) onDisk;
-      say ("hs/library/pristine: " ^ Int.toString (length files) ^ " files as MANIFEST.tsv records them\n")
+      List.app (fn f => if List.exists (fn g => g = f) listed then () else fail (job ^ f ^ " is in no row of MANIFEST.tsv")) onDisk;
+      say (job ^ Int.toString (length files) ^ " files as MANIFEST.tsv records them\n")
     end
 
   (* the Report's 20 modules *)
@@ -377,7 +493,7 @@ struct
       val got = List.filter ofReport (lines (read dump))
       val table = List.filter (fn l => not (String.isPrefix "#" l)) (lines (read (fromRoot "tests/hs/library/report.names")))
       val changes = List.filter (fn l => not (String.isPrefix "#" l)) (lines (read (fromRoot "tests/hs/library/overlay.names")))
-      val ids = List.map #id (entries ())
+      val ids = List.map #id (entries haskell98)
       fun parse l =
         case String.fields (fn c => c = #"\t") l of
           sign :: rest =>
@@ -516,18 +632,25 @@ struct
                 "covers:src/rhc/*", "covers:lib/language/haskell/*"]
 
   fun tree () =
-    Test.describe "hs/library"
-      [tagged (["check", "hs", "quick"] @ covers)
-         (Test.describe ""
-            [job ("overlay", "hs-library-overlay"), job ("pristine", "hs-library-pristine"),
-             job ("report", "hs-library-report"), job ("compile", "hs-library-compile"),
-             job ("exitzero", "hs-library-exitzero"), job ("devicefull", "hs-library-devicefull"),
-             job ("bottomwrite", "hs-library-bottomwrite")])]
+    Test.describe ""
+      [Test.describe "hs/library"
+         [tagged (["check", "hs", "quick"] @ covers)
+            (Test.describe ""
+               [job ("overlay", "hs-library-overlay"), job ("pristine", "hs-library-pristine"),
+                job ("report", "hs-library-report"), job ("compile", "hs-library-compile"),
+                job ("exitzero", "hs-library-exitzero"), job ("devicefull", "hs-library-devicefull"),
+                job ("bottomwrite", "hs-library-bottomwrite")])],
+       Test.describe "hs2010/library"
+         [tagged ["check", "hs", "quick", "covers:share/rhc/*", "covers:tests/runner/hslibrary.sml"]
+            (Test.describe ""
+               [job ("overlay", "hs2010-library-overlay"), job ("pristine", "hs2010-library-pristine")])]]
 
   fun command args =
     case args of
-      ["hs-library-overlay"] => SOME overlay
-    | ["hs-library-pristine"] => SOME pristine
+      ["hs-library-overlay"] => SOME (overlay haskell98)
+    | ["hs-library-pristine"] => SOME (pristine haskell98)
+    | ["hs2010-library-overlay"] => SOME (overlay haskell2010)
+    | ["hs2010-library-pristine"] => SOME (pristine haskell2010)
     | ["hs-library-report"] => SOME report
     | ["hs-library-compile"] => SOME compile
     | ["hs-library-exitzero"] => SOME exitzero

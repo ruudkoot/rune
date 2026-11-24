@@ -273,6 +273,16 @@ reading, a section of the Report or a decision of the roadmap (D37).
 the modules chapter 8 keeps to the Prelude, `PreludeList`, `PreludeText`
 and `PreludeIO`, nor rhc's own.
 
+`share/rhc/haskell2010` is the Haskell 2010 Report's library as the
+haskell2010 roadmap builds it ([plans/language/haskell2010.md](plans/language/haskell2010.md),
+M12 and M13), which no compile reads yet. It is laid out as 98's: the code
+the Report prints, the Prelude's four modules and `Data.Array`,
+`Data.Complex`, `Data.Maybe` and `Data.Ratio`, is in `pristine/` as the
+Report's sources give it, and every place where rhc's differs is an entry
+of `overlay.tsv`; `corrections.tsv` lists the corrections of the text it is
+read with, the sources' own and 98's errata; and `provenance.tsv` says where
+the code of each module the Report prints none for comes from.
+
 ## Where rhc departs from the Report
 
 rhc follows the text, the Report with its errata, unless the text is wrong,
