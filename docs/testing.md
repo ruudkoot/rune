@@ -1269,6 +1269,21 @@ the three programs of `tests/hs/lang` E3 found using one; a `LANGUAGE` or
 forbids), by the pragmas of two vendored files. rhc built so from the
 sources unedited must move none of those items.
 
+**The manifest** (nightly; the roadmap's M3, its standing part). `tests/hs/manifest.tsv` holds a line an item of
+what this tree's rhc says in 98 mode: each program of `tests/hs/lang` and `accept`'s canonical Core
+(`--desugar-only --dump-after=desugar --canonical-core`, `core/DIR/NAME`; of a module of `accept` that is no
+Main, six of them, its refusal), each refusal of `tests/hs/errors`
+(`errors/NAME`) and each of the four views of each file of `lang` and `accept` (`views/DIR/FILE/VIEW`), by its
+status and the hashes of its standard output and error (SHA-256, 16 hex digits, the tree's root read as `<root>`).
+The texts themselves, 180 MB of Core alone, are not kept (the lead's ruling of 2026-11-25). Core is rhc's own, so
+a change to Rune moves none of it [inferred]. `hs-standing/manifest/K-of-8` fails an item whose line is no longer
+the manifest's, naming the parts that moved and the commit that last wrote the manifest, so that `make check-hs98
+OLD=THAT` shows the texts; `hs-standing/manifest/@stale` fails a line that names no item. A commit that moves an
+item by a decision writes the manifest again, `make hs-manifest` (the shards, then `bin/rune-test hs-standing
+manifest-write`, which joins their lines), and names the decision. `hs-standing/manifest/@faults` holds the job to
+its work: rhc built with the mutant HM01 (a match's clauses tried last first) moves items of Core, and this tree's
+rhc none.
+
 ### Haskell 2010's table and suites
 
 The haskell2010 roadmap's second table (its M1 and D38; `tests/runner/hsconformance.sml`, `tests/runner/hslang.sml`):

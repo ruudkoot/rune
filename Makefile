@@ -292,7 +292,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: check-docs-generated test-mutants test-compiler-mutants test-cache-mutants test-rhc-mutants check-hs98 test-cache-random isa check-isa codecs check-codecs test-ir check-levels check-units test-incremental test-layers test-deps test-dynamic test-build test-install test-dist check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall dist test-int64 test-laws-hosts
+.PHONY: check-docs-generated test-mutants test-compiler-mutants test-cache-mutants test-rhc-mutants check-hs98 hs-manifest test-cache-random isa check-isa codecs check-codecs test-ir check-levels check-units test-incremental test-layers test-deps test-dynamic test-build test-install test-dist check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall dist test-int64 test-laws-hosts
 
 all: vm boot runedoc runeopt runeffi basis-cache
 
@@ -2319,6 +2319,13 @@ test-rhc-mutants: $(RUNE) vm bin/rune-test bin/rhc
 check-hs98: $(RUNE) vm bin/rune-test bin/rhc
 	@test -n "$(OLD)" || { echo "usage: make check-hs98 OLD=TREE-OR-COMMIT [NEW=TREE-OR-COMMIT] [EXPECT=FILE]" >&2; exit 2; }
 	RUNE_HS_OLD='$(OLD)' $(if $(NEW),RUNE_HS_NEW='$(NEW)') $(if $(EXPECT),RUNE_HS_EXPECT='$(EXPECT)') $(RUNE_TEST) --tier check-hs98
+
+# 98 mode's manifest (tests/hs/manifest.tsv; docs/testing.md, 98 mode held): what this
+# tree's rhc says of each item, its hashes, written again for a commit that moves one by a
+# decision: the nightly shards, whose failures say what moved, then the join of their lines.
+hs-manifest: bin/rune-test bin/rhc
+	-RUNE_HS_STANDING_OUT=$(CURDIR)/tests/out/hs-manifest $(RUNE_TEST) 'hs-standing/manifest/*-of-*'
+	RUNE_HS_STANDING_OUT=$(CURDIR)/tests/out/hs-manifest bin/rune-test hs-standing manifest-write
 
 # Those of the cache alone (tests/runner/cachemutantlist.sml; docs/testing.md, The
 # checks of the cache), each against the checks that must see it: minutes
