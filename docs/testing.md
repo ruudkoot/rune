@@ -1291,10 +1291,10 @@ The table also holds each row against 98's (`hs2010/conformance/table`): its del
 its 98 rows is one of 98's, a `same` row is the 98 row of its id, and every row of 98's is some row's `map98` or
 one of a row that left. Its programs are those of `tests/hs2010/{lang,accept,errors}`, paths `lang/NAME`, and the
 programs of `tests/hs/{lang,accept,errors}` it shares, paths `hs/lang/NAME`: a program of `tests/hs` serves the
-2010 table when every row it names is a row of 2010's that its text keeps (not `removed-in-2010`), and
-`tests/hs2010/unshared.tsv` does not name it; a line there says why a program stays 98's (one that 2010 refuses
-elsewhere, or no longer reaches its clause), and fails where its program names a row 2010 does not keep, which
-shares it already. So E3's 21 programs that 2010 flips are all 98's: 19 name a row 2010 changes or removes, and two
+2010 table when every row it names is a row of 2010's that its text keeps (not `removed-in-2010`), it imports no
+module of 98's library that 2010's renames or drops (all but Numeric: D38's (e)), and `tests/hs2010/unshared.tsv`
+does not name it; a line there says why a program stays 98's (one that 2010 refuses elsewhere, or no longer reaches
+its clause), and fails where its program would not be shared anyway. So E3's 21 programs that 2010 flips are all 98's: 19 name a row 2010 changes or removes, and two
 are named there, beside `errors/dec.gen.sig.identical`, which 2010 refuses for another clause. `hs2010/conformance/faults` plants each of the five rules' breaches in a private tree as 98's
 faults do, and those of a table beside 98's: a delta of no kind, a row from no row of 98's, a 98 row unmapped, a
 `same` row from another, a row that left back in it, a shared program of a row of another class, and stale and
@@ -1308,6 +1308,25 @@ runs nightly, since `make check` runs them in 98 mode (D41). Every job of both i
 give it a 2010 Prelude (M4 gave it the flag; the probe's answer is kept in `tests/out/hs2010-probe` while
 `bin/rhc.rbc` and `share/rhc/haskell2010` are as they were), and then while every row it names is `Planned` in the
 2010 table, as every row is until its program has run under 2010.
+
+**The generator** (`tools/generate/hs2010.sml`; `bin/rune-generate hs2010-programs --out DIR [--root ROOT]`). A 98
+program that imports a module of 98's library, or names a row that 2010 keeps under a renamed module (812 of the
+table's 905 changed rows: List's under Data.List and the like), is written again for `tests/hs2010`. Its imports
+are rewritten by the table's import map, the notes `rename A -> B` of its `how` column: `import A (xs)` becomes
+`import B as A (xs)`, so that the program's names, qualified or not, stay what they were; IO and System, which two
+notes each split, become an import of each of their 2010 modules, a list or a hiding list parted by what each
+exports by the table's rows `module M exports x`, side by side on the declaration's line, so that no later line of
+the program moves; CPUTime, Directory, Locale, Random and Time, which 2010 drops, leave the program out. Its rows
+become 2010's: the row of the same id where 2010 keeps it, else the renamed row that comes from it; a reading it
+pins stays where a row it names carries it, and `deviation` goes. Its siblings are copied with its path made the
+one it would have. A program that names a row 2010 removes, or changes beyond a rename, is left out, for its 2010
+program is written by hand; `DIR/skipped.tsv` says why of each, and `DIR/generated.tsv` what was written. Over this
+tree it writes 238 programs and leaves out 65. Its output runs only once the 2010 library has the modules (the
+roadmap's M12 and M13), so none of it lands yet; `hs2010/generate/tree` holds what it writes over this tree to the
+2010 table's rules where it would land, with no import left of a module 2010 renames or drops, and
+`hs2010/generate/faults` holds it to planted programs: a multi-line import list, a qualified import with an alias, a
+literate module, a split import with a list, with a hiding list and qualified, a dropped module, a removed row, a
+row changed beyond a rename, a name no 2010 module exports, and a program that needs nothing of 2010.
 
 ## rhc's Core
 
