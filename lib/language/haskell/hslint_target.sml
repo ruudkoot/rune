@@ -61,7 +61,7 @@ struct
   (* a type of the library with no constructor, or with the one `PrimT`
      of no field, is Core's own *)
   fun primitive (id : T.id) =
-    String.isPrefix "haskell98:" (#qual id)
+    HsLibraryNames.isLibrary (!E.names, #qual id)
     andalso (case M.find (!E.tydefs, T.idKey id) of
                SOME (E.Data {cons = [], ...}) => true
              | SOME (E.Data {cons = [k], ...}) =>

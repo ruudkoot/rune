@@ -1,0 +1,2 @@
+./B.hs:7:1: error: the signatures of `p` and `q`, one declaration group, have contexts that differ, which 4.5.2 requires to be identical up to renaming (R21)
+status 1

@@ -41,12 +41,20 @@ sig
   (* Where Rule 2 closes and which `default` holds in a cycle (D30). *)
   datatype cycleDefault = PerModule | PerGroup
 
-  (* A module of a unit: its identity, its renamed and resolved tree, and
-     whether it is the library's. *)
-  type module_ = {id : string, ast : HsAst.module, library : bool}
+  (* A module of a unit: its identity, its renamed and resolved tree,
+     whether it is the library's, and its language.
 
-  (* `check {env, unit, cycleDefault, prelude, fixity, evidence}` checks
-     the modules of `unit`, recording into `evidence`.
+     Each of its bindings is checked under its language (HsLanguage; the
+     haskell2010 roadmap's D10). *)
+  type module_ = {id : string, ast : HsAst.module, library : bool, language : HsLanguage.t}
+
+  (* `check {env, unit, cycleDefault, prelude, fixity, evidence,
+     standard}` checks the modules of `unit`, recording into `evidence`.
+
+     Each binding is checked under its module's language: under
+     RelaxedPolyRec (2010's 4.5.1) a use of a variable with a signature
+     makes no dependency of the binding that uses it. `cycleDefault` is the
+     unit's, on which a cycle's modules agree.
 
      It gives the environment with the unit's types, constructors,
      classes, instances and values, the errors, and the derived
@@ -56,10 +64,13 @@ sig
      the key of the entity the Prelude exports under `name`, `"t"` for a
      type or class and `"v"` for a value, for what the Report's
      translations name: `Bool`, `Char`, `Integer`, `Double`, `Num`,
-     `Fractional`, `Eq`, `Ord`, `Enum`, `Integral`, `Monad`. *)
+     `Fractional`, `Eq`, `Ord`, `Enum`, `Integral`, `Monad`. `standard key`
+     is whether the class of `key` is a standard class, one the Prelude
+     or a standard library defines (4.3.4): the program's library's
+     (the haskell2010 roadmap's D20). *)
   val check : {env : env, unit : module_ list, cycleDefault : cycleDefault,
                prelude : string * string -> string option, fixity : string -> (HsAst.fixity * int) option,
-               evidence : HsEvidence.table}
+               evidence : HsEvidence.table, standard : string -> bool}
               -> {env : env, errors : (HsSource.span * string) list, derived : (string * string * HsAst.decl list) list}
 
   (* `renumber n` makes the checker's next fresh variables, and HsTypes',

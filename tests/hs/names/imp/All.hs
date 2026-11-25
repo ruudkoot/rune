@@ -1,7 +1,8 @@
 -- E16's fixture imp (results/E16/tests/imp): T1 re-exports the Prelude's
 -- names through a qualified import, T2 and T3 import it, and the whole
 -- library is read, as E16 read it: 690 pairs at the least fixpoint, 693 at
--- the greatest, where the Prelude's map circulates.
+-- the greatest, where the Prelude's map circulates, when --names=greatest
+-- reached the library's cycle, which the haskell2010 roadmap's D8 ended.
 module All () where
 
 import T2

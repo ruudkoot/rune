@@ -11,7 +11,7 @@ struct
 
   datatype cycleDefault = PerModule | PerGroup
 
-  type module_ = {id : string, ast : A.module, library : bool}
+  type module_ = {id : string, ast : A.module, library : bool, language : HsLanguage.t}
 
   (* a constructor: its type, its fields by position ("" for none) *)
   type coninfo = {tycon : string, arity : int, fields : string list, strict : bool list}
@@ -145,6 +145,10 @@ struct
   val preludeKey : (string * string -> string option) ref = ref (fn _ => NONE)
   val cycle : cycleDefault ref = ref PerModule
   val unitModules : string list ref = ref []
+  (* the language of each module of the unit: a binding is checked under
+     its own module's *)
+  val languages : HsLanguage.t M.map ref = ref M.empty
+  fun languageOf h = getOpt (M.find (!languages, h), HsLanguage.ofEdition HsLanguage.Haskell98)
   val defaultsOf : (T.ty list * bool) M.map ref = ref M.empty   (* a module's default list, and whether written *)
   val fixityOfKey : (string -> (A.fixity * int) option) ref = ref (fn _ => NONE)
   val crossFixings : (string * string * HsSource.span * int) list ref = ref []   (* home, fixing module, where, variable *)
@@ -1216,9 +1220,20 @@ struct
           !out
         end
       val keys = List.map bkey bs
+      (* under RelaxedPolyRec (2010's 4.5.1), by the language of the
+         binding's module, a use of an explicitly typed binding makes no
+         dependency *)
+      fun relaxed b = HsLanguage.has (languageOf (bhome b), HsLanguage.RelaxedPolyRec)
       fun deps k =
         case M.find (byKey, k) of
-          SOME b => List.mapPartial (fn v => Option.map bkey (M.find (byKey, v))) (freeVars b)
+          SOME b =>
+            let val r = relaxed b
+            in
+              List.mapPartial (fn v => case M.find (byKey, v) of
+                                         SOME b' => if r andalso explicit b' then NONE else SOME (bkey b')
+                                       | NONE => NONE)
+                (freeVars b)
+            end
         | NONE => []
       (* R21(b): the signatures of one declaration group, made by binding
          alone, have contexts identical up to renaming *)
@@ -2025,12 +2040,13 @@ struct
     | T.TAp (a, b) => T.TAp (ground a, ground b)
     | t' => t'
 
-  fun check {env, unit, cycleDefault, prelude = pre, fixity, evidence} =
+  fun check {env, unit, cycleDefault, prelude = pre, fixity, evidence, standard = std} =
     let
       val () = (errors := []; said := []; monoOwners := []; argOf := ""; curBinding := ""; level := 0; wanted := []; givens := []; rigidLevels := M.empty; pendingRecords := [];
                 genv := env; preludeKey := pre; cycle := cycleDefault; unitModules := List.map #id unit; defaultsOf := M.empty;
                 crossFixings := []; locals := M.empty; unitValues := M.empty; fixityOfKey := fixity;
-                standard := (fn cls => String.isPrefix "thaskell98:" cls))
+                standard := std;
+                languages := List.foldl (fn (m : module_, t) => M.insert (t, #id m, #language m)) M.empty unit)
       val decls = List.concat (List.map declsOf unit)
       (* kinds, then the type constructors, classes, constructors *)
       val typeDecls = List.filter (fn (_, A.D (_, x)) => case x of A.DData _ => true | A.DNewtype _ => true | A.DType _ => true

@@ -142,11 +142,12 @@ struct
 
   (* ---- fromInteger and fromRational at the Prelude's instances ---- *)
 
-  val prelude = "haskell98:Prelude."
+  (* the program's library's Prelude, as its entities' keys begin *)
+  fun prelude () = CoreSimplifyBase.libraryEntity (#prelude, "")
 
   (* the Prelude's instance of class cls at the Prelude's type t, as
      desugaring names it (HsDsEnv.dfunName) *)
-  fun instanceOf (cls, t) = "%inst:" ^ prelude ^ cls ^ "@" ^ prelude ^ t
+  fun instanceOf (cls, t) = "%inst:" ^ prelude () ^ cls ^ "@" ^ prelude () ^ t
 
   (* `literal (f, ty, dict, arg)` is the literal `f @ty dict arg` gives,
      where f is the Prelude's fromInteger or fromRational, dict the Prelude's
@@ -154,14 +155,14 @@ struct
      two, known as `ratio` gives it *)
   fun literal (f : string, dict : string, arg : atom, ratio : string -> (IntInf.int * IntInf.int) option) : exp option =
     let
-      val double = f = prelude ^ "fromInteger" andalso dict = instanceOf ("Num", "Double")
-                   orelse f = prelude ^ "fromRational" andalso dict = instanceOf ("Fractional", "Double")
-      val float = f = prelude ^ "fromInteger" andalso dict = instanceOf ("Num", "Float")
-                  orelse f = prelude ^ "fromRational" andalso dict = instanceOf ("Fractional", "Float")
+      val double = f = prelude () ^ "fromInteger" andalso dict = instanceOf ("Num", "Double")
+                   orelse f = prelude () ^ "fromRational" andalso dict = instanceOf ("Fractional", "Double")
+      val float = f = prelude () ^ "fromInteger" andalso dict = instanceOf ("Num", "Float")
+                  orelse f = prelude () ^ "fromRational" andalso dict = instanceOf ("Fractional", "Float")
       val value =
         if not (double orelse float) then NONE
         else
-          case (f = prelude ^ "fromInteger", arg) of
+          case (f = prelude () ^ "fromInteger", arg) of
             (true, Lit (LInteger n)) => if bits n <= (if double then 53 else 24) then SOME (decimal n ^ ".0") else NONE
           | (false, Var r) => (case ratio r of SOME (n, d) => exactText (n, d) | NONE => NONE)
           | _ => NONE

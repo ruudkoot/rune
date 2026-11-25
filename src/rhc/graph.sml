@@ -12,17 +12,26 @@
    the library's, and a program's `Prelude` is the one its modules
    import. Every module but one named Prelude imports the Prelude unless
    it imports it itself (5.6.1); the Prelude does not import itself (D29). A
-   program cannot import the modules RhcLibrary hides (D36). With
-   `dotted`, a module `A.B` is the file A/B.hs (D35). *)
+   program cannot import the modules RhcLibrary hides (D36). A module
+   whose language has HierarchicalModules (--dotted-names, D35; Haskell
+   2010) finds the module `A.B` it imports in the file A/B.hs.
+
+   Each module has a language (HsLanguage; the haskell2010 roadmap's D4 to
+   D10): the library's is its descriptor's, whatever the program's; a
+   program's is the setting of the command line with its header's
+   LANGUAGE pragmas after it (HsHeader, read from its text before it is
+   lexed), and it decides how the module is lexed and parsed, where the
+   modules it imports are looked for, and how it is checked. *)
 structure RhcGraph =
 struct
   structure A = HsAst
   structure M = HsStringMap
 
   (* A module as read: its identity, its name, its file, whether it is
-     the library's, its tree, and its imports with the identity of each
-     module they name, the implicit import of the Prelude among them. *)
-  type node = {id : string, name : string, file : string, library : bool, ast : A.module,
+     the library's, its language, its tree, and its imports with the
+     identity of each module they name, the implicit import of the Prelude
+     among them. *)
+  type node = {id : string, name : string, file : string, library : bool, language : HsLanguage.t, ast : A.module,
                imports : (A.import * string) list}
 
   (* A diagnostic, and whether it is of a module of the library. *)
@@ -123,24 +132,39 @@ struct
       go (sorted, [], [])
     end
 
-  (* the files of the library's modules, by module name *)
+  (* whether a module of the language `t` reads and finds dotted names *)
+  fun hierarchical t = HsLanguage.has (t, HsLanguage.HierarchicalModules)
+
+  (* `keyed (what, k)` is a way of reading, `what`, with a language's
+     text `k` after it where there is one *)
+  fun keyed (what, k) = if k = "" then what else what ^ " " ^ k
+
+  (* the files of the library's modules, by module name: its sources'
+     (RhcLibrary.sources), a module's first file the one, all in order of
+     their names, wherever each is *)
   fun libraryFiles () : (string * string) list =
-    case RhcLibrary.dir () of
-      NONE => []
-    | SOME d =>
+    let
+      fun inDir ((d, takes), acc) =
         let
           val s = OS.FileSys.openDir d
+          fun add (base, f, acc) =
+            if not (takes base) orelse List.exists (fn (m, _) => m = base) acc then acc
+            else (base, OS.Path.concat (d, f)) :: acc
           fun loop acc =
             case OS.FileSys.readDir s of
               NONE => acc
             | SOME f =>
                 (case OS.Path.splitBaseExt f of
-                   {base, ext = SOME "hs"} => loop ((base, OS.Path.concat (d, f)) :: acc)
-                 | {base, ext = SOME "lhs"} => loop ((base, OS.Path.concat (d, f)) :: acc)
+                   {base, ext = SOME "hs"} => loop (add (base, f, acc))
+                 | {base, ext = SOME "lhs"} => loop (add (base, f, acc))
                  | _ => loop acc)
         in
-          sortBy #1 (loop []) before OS.FileSys.closeDir s
+          loop acc before OS.FileSys.closeDir s
         end
+        handle OS.SysErr _ => acc
+    in
+      sortBy #1 (List.foldl inDir [] (RhcLibrary.sources ()))
+    end
 
   (* f's value, made once and where it is first asked for *)
   fun once (f : unit -> 'a) : unit -> 'a =
@@ -153,16 +177,19 @@ struct
      one not): a function of the module's text and how it is read, which a
      reader may keep, so that a module whose unit is taken is never parsed
      (M21's warm path) *)
-  type header = {name : string, at : HsSource.span, imports : (string * HsSource.span) list}
+  type header = {name : string, at : HsSource.span, imports : (string * HsSource.span) list, pragmas : HsHeader.name list}
 
-  fun headerOf (ast as A.Module (_, {imports, ...}) : A.module) : header =
+  (* and the names its LANGUAGE pragmas write (HsHeader), from which its
+     language is resolved again where its header is kept *)
+  fun headerOf (ast as A.Module (_, {imports, ...}) : A.module, pragmas : HsHeader.name list) : header =
     {name = moduleName ast, at = headerSpan ast,
-     imports = List.map (fn A.Import ({span, ...}, {module = m, ...}) => (nameOf m, span)) imports}
+     imports = List.map (fn A.Import ({span, ...}, {module = m, ...}) => (nameOf m, span)) imports, pragmas = pragmas}
 
-  (* How a module's text is read (its `mode`: the library's, normalised; a
-     program's; a program's with `dotted`), and what a reader gives of a
-     module: its text's hash, given the text where it asks for it, and the
-     header it keeps of a text by its hash, if it keeps one *)
+  (* How a module's text is read (its `mode`: the library's, normalised,
+     under its language; a program's, under the setting of the command
+     line; either literate), and what a reader gives of a module: its
+     text's hash, given the text where it asks for it, and the header it
+     keeps of a text by its hash, if it keeps one *)
   (* What a module's reading asks of a reader: its text's hash, and the
      header kept of a text, by the name it is read for (an import's, or ""
      for a file rhc is given), the way it is read and the text's hash, not
@@ -180,23 +207,24 @@ struct
      its text's hash (the reader's), the identities its imports name, its
      node, its tree parsed where the node is first asked for, and whether
      it has been. *)
-  type found = {id : string, file : string, library : bool, hash : string, imports : string list, node : unit -> node,
-                parsed : unit -> bool}
+  type found = {id : string, file : string, library : bool, language : HsLanguage.t, hash : string, imports : string list,
+                node : unit -> node, parsed : unit -> bool}
 
   (* The program's modules as found, by group, dependencies first, and the
      diagnostics of finding them. *)
   type plan = {groups : found list list, roots : string list, diags : diag list}
 
-  (* `scan {roots, dotted, known, library, reader}` finds the program whose
+  (* `scan {roots, setting, known, library, reader}` finds the program whose
      files are `roots`, the first of them beside the program's other
      modules, or with `library` every module of the library and no
      program, each module's imports from the header `reader` keeps of its
      text, its tree parsed only where it keeps none or where the module's
-     node is asked for. A module whose identity `known` has is not read
+     node is asked for; a program's module under `setting` and its own
+     header's pragmas. A module whose identity `known` has is not read
      again: it is in no group of this graph, its group taken before.
 
-     Raises: `HsSource.Error` for a file that does not lex or parse, which
-     stops rhc. *)
+     Raises: `HsSource.Error` for a file that does not lex or parse, or
+     whose header asks for a language rhc does not have, which stops rhc. *)
   (* each module read so far, the library's in a saved world among them:
      the modules its imports name, the Prelude's implicit one with them *)
   val importsOf : string list M.map ref = ref M.empty
@@ -226,7 +254,7 @@ struct
            closures := M.insert (!closures, m ^ "\t" ^ n, b); b
          end)
 
-  fun scan {roots : string list, dotted : bool, known : node M.map, library : bool, reader : reader} : plan =
+  fun scan {roots : string list, setting : HsLanguage.setting, known : node M.map, library : bool, reader : reader} : plan =
     let
       val founds : found M.map ref = ref M.empty
       val order : string list ref = ref []
@@ -234,43 +262,68 @@ struct
       val progDir = case roots of r :: _ => (case OS.Path.dir r of "" => "." | d => d) | [] => "."
       fun diag (library, span, msg) = diags := {span = span, msg = msg, library = library} :: !diags
 
-      fun parse (file, library, raw) =
+      fun parse (file, library, language, raw) =
         let
           val bytes = if library then RhcLibrary.normalise raw else raw
           val () = texts := M.insert (!texts, file, HsSource.text {file = file, bytes = bytes})
-          val opts : HsParser.options = {lexer = {hierarchical = dotted andalso not library}, annotations = HsParser.Full}
+          val opts : HsParser.options = {lexer = {language = language}, annotations = HsParser.Full}
           val ast = HsParser.parseFile (opts, file, bytes)
         in
           if library then RhcLibrary.primitives (ast, RhcLibrary.mentionsElided bytes) else withHeader ast
         end
 
       (* a module's file read: its header, the reader's or its tree's, its
-         text's hash, and its tree, parsed where first asked for *)
-      fun read (file, library, name) : header * string * (unit -> A.module) * bool ref =
+         text's hash, its tree, parsed where first asked for, and its
+         language: the library's, or the setting's with its header's
+         pragmas, which the header keeps, so that a module whose header is
+         kept is not read for them *)
+      fun read (file, library, name) : header * string * (unit -> A.module) * bool ref * HsLanguage.t =
         let
           val text = once (fn () => readBytes file)
           (* a literate file's text is another program than the same text
-             read plain (build-cache-issues.md, issue 27) *)
-          val mode = (if library then "library" else if dotted then "dotted" else "program")
+             read plain (build-cache-issues.md, issue 27); and a program's
+             is read under the command line's setting, its pragmas being
+             of its text *)
+          val mode = (if library then keyed ("library", HsLanguage.key (RhcLibrary.language ()))
+                      else keyed ("program", HsLanguage.settingKey setting))
                      ^ (if HsLiterate.isLiterate file then " literate" else "")
           val hash = #hash reader {file = file, mode = mode, text = text}
           val parsed = ref false
-          val tree = once (fn () => (parsed := true; parse (file, library, text ())))
+          val kept = #header reader {file = file, name = name, mode = mode, hash = hash}
+          (* the program text, a literate file's unlit; one that does not
+             unlit has no pragmas, so that its parse says where *)
+          fun program () = if HsLiterate.isLiterate file then HsLiterate.unlit (file, text ()) else text ()
+          val pragmas =
+            case kept of
+              SOME h => #pragmas h
+            | NONE => if library then [] else (HsHeader.languages (program ()) handle HsSource.Error _ => [])
+          val language =
+            if library then RhcLibrary.language ()
+            else
+              HsLanguage.ofHeader (setting, pragmas)
+              handle HsLanguage.Refused (at, msg) =>
+                (texts := M.insert (!texts, file, HsSource.text {file = file, bytes = text ()});
+                 raise HsSource.Error ({file = file, start = at, stop = at}, msg))
+          val tree = once (fn () => (parsed := true; parse (file, library, language, text ())))
           val header =
-            case #header reader {file = file, name = name, mode = mode, hash = hash} of
+            case kept of
               SOME h => h
             | NONE =>
-                let val h = headerOf (tree ())
+                let val h = headerOf (tree (), pragmas)
                 in #keep reader ({file = file, name = name, mode = mode, hash = hash}, h); h end
         in
-          (header, hash, tree, parsed)
+          (header, hash, tree, parsed, language)
         end
 
-      (* the identity and the file of the module an import names *)
-      fun target (fromLibrary, mn, span) : (string * string option) option =
+      (* the identity and the file of the module an import names, where
+         the language of the module that imports it looks *)
+      fun target (fromLibrary, language, mn, span) : (string * string option) option =
         let
           fun library () =
-            case Option.mapPartial (fn d => fileIn (d, mn, false)) (RhcLibrary.dir ()) of
+            case List.foldl (fn (_, SOME f) => SOME f
+                              | ((d, takes), NONE) =>
+                                  if takes mn then fileIn (d, mn, hierarchical (RhcLibrary.language ())) else NONE)
+                   NONE (RhcLibrary.sources ()) of
               SOME f => SOME (RhcLibrary.identity mn, SOME f)
             | NONE => if RhcLibrary.isLeaf mn then SOME (RhcLibrary.identity mn, NONE) else NONE
           fun hidden () =
@@ -281,14 +334,14 @@ struct
           fun missing () =
             (diag (fromLibrary, span,
                    "no module `" ^ mn ^ "`: no file " ^ mn ^ ".hs or " ^ mn ^ ".lhs in " ^ progDir ^
-                   (case RhcLibrary.dir () of
-                      SOME _ => ", and the library has none"
-                    | NONE => ", and rhc is not given its library (--share DIR)"));
+                   (case RhcLibrary.sources () of
+                      _ :: _ => ", and the library has none"
+                    | [] => ", and rhc is not given its library (--share DIR)"));
              NONE)
         in
           if fromLibrary then (case library () of SOME t => SOME t | NONE => missing ())
           else
-            case fileIn (progDir, mn, dotted) of
+            case fileIn (progDir, mn, hierarchical language) of
               SOME f => SOME (mn, SOME f)
             | NONE =>
                 case library () of
@@ -303,7 +356,7 @@ struct
         if M.member (!founds, id) orelse M.member (known, id) then ()
         else add (id, file, library, expected, read (file, library, getOpt (expected, "")))
 
-      and add (id, file, library, expected, ({name, at, imports = explicit}, hash, tree, parsed)) =
+      and add (id, file, library, expected, ({name, at, imports = explicit, ...} : header, hash, tree, parsed, language)) =
         let
           val () =
             case expected of
@@ -314,7 +367,7 @@ struct
             | NONE => ()
           val implicit = not (name = "Prelude" orelse List.exists (fn (m, _) => m = "Prelude") explicit)
           val all = if implicit then explicit @ [("Prelude", implicitAt)] else explicit
-          val targets = List.map (fn (m, span) => target (library, m, span)) all
+          val targets = List.map (fn (m, span) => target (library, language, m, span)) all
           (* the node, its imports the tree's, each with its target *)
           fun node () =
             let
@@ -324,10 +377,10 @@ struct
                 ListPair.foldrEq (fn (i, SOME (t, _), acc) => (i, t) :: acc | (_, NONE, acc) => acc) [] (withPrelude, targets)
                 handle ListPair.UnequalLengths => raise Fail ("RhcGraph: the header kept of " ^ file ^ " is not its tree's")
             in
-              {id = id, name = name, file = file, library = library, ast = ast, imports = imports}
+              {id = id, name = name, file = file, library = library, language = language, ast = ast, imports = imports}
             end
-          val f = {id = id, file = file, library = library, hash = hash, imports = List.mapPartial (Option.map #1) targets,
-                   node = once node, parsed = fn () => !parsed}
+          val f = {id = id, file = file, library = library, language = language, hash = hash,
+                   imports = List.mapPartial (Option.map #1) targets, node = once node, parsed = fn () => !parsed}
         in
           founds := M.insert (!founds, id, f);
           (* its imports, beside every module's read before, for `reaches` *)
@@ -336,7 +389,7 @@ struct
           order := id :: !order;
           List.app
             (fn ((m, _), SOME (t, SOME file)) =>
-                  visit (t, file, library orelse String.isPrefix (RhcLibrary.name ^ ":") t, SOME m)
+                  visit (t, file, library orelse RhcLibrary.isLibrary t, SOME m)
               | _ => ())
             (ListPair.zip (all, targets))
         end
@@ -349,7 +402,7 @@ struct
         List.map
           (fn file =>
              let
-               val r as ({name = id, ...}, _, _, _) = read (file, false, "")
+               val r as ({name = id, ...}, _, _, _, _) = read (file, false, "")
              in
                if M.member (!founds, id) then () else add (id, file, false, NONE, r);
                id
@@ -401,22 +454,22 @@ struct
        diags = List.rev (!diags)}
     end
 
-  (* `loadFrom {roots, dotted, known, library}` reads the program whose
+  (* `loadFrom {roots, setting, known, library}` reads the program whose
      files are `roots`, the first of them beside the program's other
      modules, or with `library` every module of the library and no
      program: `scan`'s, every module parsed as it is found.
 
      Raises: `HsSource.Error` for a file that does not lex or parse, which
      stops rhc. *)
-  fun loadFrom {roots : string list, dotted : bool, known : node M.map, library : bool} : graph =
-    let val {groups, roots, diags} = scan {roots = roots, dotted = dotted, known = known, library = library, reader = parsing}
+  fun loadFrom {roots : string list, setting : HsLanguage.setting, known : node M.map, library : bool} : graph =
+    let val {groups, roots, diags} = scan {roots = roots, setting = setting, known = known, library = library, reader = parsing}
     in {groups = List.map (List.map (fn (f : found) => #node f ())) groups, roots = roots, diags = diags} end
 
-  (* `load {roots, dotted}` reads the program whose files are `roots`, the
+  (* `load {roots, setting}` reads the program whose files are `roots`, the
      first of them beside the program's other modules, and the modules of
      the library it imports.
 
      Raises: `HsSource.Error` for a file that does not lex or parse, which
      stops rhc. *)
-  fun load {roots, dotted} = loadFrom {roots = roots, dotted = dotted, known = M.empty, library = false}
+  fun load {roots, setting} = loadFrom {roots = roots, setting = setting, known = M.empty, library = false}
 end

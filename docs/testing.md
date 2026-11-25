@@ -910,6 +910,22 @@ then a bottom by `writeFile`, `appendFile` and `hPutStr` under each buffering
 mode: it ends with the bottom's error, and the file holds exactly `"abc"`
 (after what `appendFile`'s held), on both.
 
+**rhc's library of Haskell 2010** (`share/rhc/haskell2010`, the haskell2010
+roadmap's M12 and M13: the code the 2010 Report prints, the Prelude's four
+modules and Data.Array, Data.Complex, Data.Maybe and Data.Ratio, as its
+sources give it in `pristine/`, with rhc's overlay applied; D23, D24, D38).
+The same file's jobs `hs2010/library/*` hold it as `hs/library/*` hold
+98's, the hierarchy's directories (`Data/Array.hs`) included: `overlay`,
+each module against `pristine/`, every line where they differ an applied
+entry of `overlay.tsv`, every module the Report prints no code for a row of
+`provenance.tsv` (where its code comes from: 98's library, `base` 4.3 or
+rhc), whose rows name modules of the directory with a known licence, and
+every correction a ground of `overlay.tsv` names a row of `corrections.tsv`
+(the four corrections of the Report's sources the owner had the text read
+with, and 98's errata), each applied one naming its entry; and `pristine`,
+the transcription byte for byte as `pristine/MANIFEST.tsv` records it. No
+compile reads the directory yet.
+
 **rhc's mutants** (D55; `tests/runner/hsmutants.sml`, the list in
 `tests/runner/hsmutantlist.sml`). The machinery of the compiler's mutants
 with rhc in Rune's place: a mutant is exact edits of a file of `rhc.plan`,
@@ -935,7 +951,10 @@ Core's interpreter and Core's text reader, these last seen by `hs/core`'s
 jobs; HK01 to HK05 the checker, seen by `hs/hslint`'s; HD01 to HD03
 deriving; HM01 to HM03 desugaring, seen by `hs/desugar`'s; HU01 to HU29
 the holes of rhc's units, seen by `hs/units/holes` (*rhc in units*); HW01 and
-HW02 strictness, its workers and wrappers, seen at -O2. F's parser
+HW02 strictness, its workers and wrappers, seen at -O2; HG01 and HG02 a
+module's language, its header read past the 98 rule and a unit's key
+without its members' languages, seen by `hs/language`'s (*A module's
+language*). F's parser
 mutants (`tests/runner/hssyntax.sml`) are the in-process kind.
 
 **rhc's metamorphic relations** (D55; `tests/runner/hsmeta.sml`). Pairs of
@@ -1512,6 +1531,35 @@ a copy of its declaration, the units joined (`CoreUnits.join`) and run; an
 import no unit defines, a type two units declare apart and an import at
 another type than its definition's, each refused; an import printed and
 read back, in a unit checked alone (`--typecheck-only`).
+
+## A module's language
+
+rhc's record of each module's edition and features (the haskell2010
+roadmap's M4; [rhc.md](rhc.md), *A module's language*) has the family
+`hs/language/*` (`tests/runner/hslanguage.sml`, tier `check`).
+`hs/language/cases/NAME` runs each case of `tests/hs/language/cases`, a
+directory with the program and `cmd`, the arguments of `bin/rhc`, a unit at
+a time into a store of its own and `--whole`, at level 2: what it prints,
+standard output, then standard error, then `status N`, is the case's
+`expected` (written again with `--accept`), and the two ways print the
+same. The cases are E4's per-module ones with the features in modules of
+Haskell 2010, since a module of 98 reads only the editions its header
+names: n+k patterns by the edition, by pragma and by `-X`; 4.5.1's example
+refused in 98 and accepted under 2010 or `-XRelaxedPolyRec`; a 98 program
+with a module of 2010; one cycle whose modules differ on RelaxedPolyRec,
+only the 98 module's bindings refused; a literate file's pragma, and one in
+its commentary; an unknown name in a module of 2010, at the name, and in
+one of 98, unread; the header's shapes; and dotted imports by edition and
+by `--dotted-names`. `hs/language/edits/PROGRAM` is E13's edit test:
+ten programs edited step by step, a pragma added, dropped or changed, an
+edition by pragma, an ordinary edit, the command line changed, each step
+compiled against a store kept from step to step and with `--no-store`, at
+level 2: the same bytecode, or the same refusal; the program's units the
+warm compile makes are those the step names, the edited module's and no
+importer whose reads give what they gave; and the library's units are
+taken from the snapshot at every step. Two spellings of one set share a
+unit, and a feature turned on against a store made with it off is refused
+as without the store.
 
 ## The three oracles
 

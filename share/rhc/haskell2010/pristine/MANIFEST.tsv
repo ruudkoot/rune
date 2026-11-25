@@ -1,0 +1,18 @@
+# The pristine transcription: the Haskell code of the Haskell 2010 Report's Prelude and of the library modules it
+# prints code for, taken from the Report's sources, github.com/haskell/haskell-report, at commit
+# 15bff260ba78a27aae140ced0dedea4bc094cd33 (2010-07-20 12:11:30 UTC), the commit the online Report of 2010-07-20 was
+# made from. The Prelude's four modules are the sources' report/<module>.hs, byte for byte; each of the four library
+# modules is the code block of its chapter's Specification section in report/libs/<Module>.tex, each line without the
+# one leading space every line of it has there, nothing else changed (the code the haskell2010 package's $code
+# comments hold too). Never edit these files: they are what overlay.tsv is held to.
+# Columns: file, module, section (the 2010 Report's), source (its path at the commit, and for a chapter the lines of
+# the code block), blob (git's id of that path at the commit), lines, sha256 (the file).
+file	module	section	source	blob	lines	sha256
+Prelude.hs	Prelude	9	report/Prelude.hs	bb87b3c2b897f976d51e5a543d56781bfd0ca1db	591	15f9e81646d1ca5d8e7a47827ccfc117de5628a4c00294a148c681e59bdb56cf
+PreludeList.hs	PreludeList	9.1	report/PreludeList.hs	5870807fe8bcdcd482535f8f526d6a4dfb11d698	305	74708ea7fce640257c24ab3c5a2e0370eca2960ca3e4f5ad984769236aa9b02d
+PreludeText.hs	PreludeText	9.2	report/PreludeText.hs	e7f2b503af534d67f9811a90edb0999ac3dcc923	209	13e733eb9374a575e6db24444d6aea9a2eac0f58add2174395b4aa68d9dbe89a
+PreludeIO.hs	PreludeIO	9.3	report/PreludeIO.hs	f0c8f0891837c5b4e2d4c1dde0c71f29f972d209	78	224029a9018a48065e584ea5e8de18e0eacc6e02347bd51b7105d69c07d1b868
+Data/Array.hs	Data.Array	14.6	report/libs/Data-Array.tex:240-324	c0b1c9bd04f18d3fad8c62842003ce7646263b06	85	74dd9821c13cb04f2006057789151c386f73e195479a0dacc95fdff7a2558d37
+Data/Complex.hs	Data.Complex	17.4	report/libs/Data-Complex.tex:112-205	836026726572d62549683bbe38994abc30fd3c86	94	445efbd6b14b47bf34b6a198414e5a64328df0cec84b42effa39537a4258b7ca
+Data/Maybe.hs	Data.Maybe	21.2	report/libs/Data-Maybe.tex:128-167	0316feccf25322eb6ffec37a3ac48c022d2b62bb	40	a09e6b80d1b64b6d5edadb84931aa3ef068fd04d9ed1c6131483725a0cc79d15
+Data/Ratio.hs	Data.Ratio	22.1	report/libs/Data-Ratio.tex:88-184	80ca07520a3cc95227774376840e8ca9463fe254	97	082a76cf92ebda4227c6fee9e41ae50e81b8c0061d2644dde2c2a9be244dd43b

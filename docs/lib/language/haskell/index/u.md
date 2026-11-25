@@ -15,7 +15,7 @@
 - `unitFrom` (val): [HS_DESUGAR](../sig/HS_DESUGAR.md#val-unitfrom)
 - `unitTy` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-unitty)
 - `unitVal` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-unitval)
-- `Unknown` (con): [HS_CHAR](../sig/HS_CHAR.md#con-unknown)
+- `Unknown` (con): [HS_CHAR](../sig/HS_CHAR.md#con-unknown), [HS_LANGUAGE](../sig/HS_LANGUAGE.md#con-unknown)
 - `Unlifted` (con): [CORE](../sig/CORE.md#con-unlifted)
 - `unlit` (val): [HS_LITERATE](../sig/HS_LITERATE.md#val-unlit)
 - `unresolved` (val): [CORE_UNITS](../sig/CORE_UNITS.md#val-unresolved)

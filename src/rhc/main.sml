@@ -443,13 +443,17 @@ struct
      and compile, after those --layer names in units *)
   val snapshot : string option ref = ref NONE
 
-  (* --share DIR, where rhc's library is, and --snapshot DIR, which the
-     wrapper bin/rhc gives *)
+  (* --share DIR, where rhc's libraries are, and --snapshot DIR, which the
+     wrapper bin/rhc gives; and --language=EDITION, which selects the
+     library DIR/EDITION (the haskell2010 roadmap's D1), the last one given,
+     and which RhcSyntax reads as the edition every module starts from *)
   fun share args =
     case args of
       "--share" :: d :: rest => (RhcLibrary.share := SOME d; share rest)
     | "--snapshot" :: d :: rest => (snapshot := SOME d; share rest)
     | ["--share"] => raise RhcOptions.Usage "--share takes a directory"
+    | "--language=haskell98" :: rest => (RhcLibrary.select HsLanguage.Haskell98; "--language=haskell98" :: share rest)
+    | "--language=haskell2010" :: rest => (RhcLibrary.select HsLanguage.Haskell2010; "--language=haskell2010" :: share rest)
     | a :: rest => a :: share rest
     | [] => []
 
@@ -468,6 +472,11 @@ struct
       val args = whole (share args)
       val () = RhcSyntax.layers := (case !snapshot of SOME d => [d] | NONE => [])
     in
+    (* the modules a program may import of the library --language selects,
+       which make's snapshot imports *)
+    if List.filter (fn a => not (String.isPrefix "--language=" a)) args = ["--library-modules"] then
+      (List.app (fn m => print (m ^ "\n")) (RhcLibrary.modules ()); 0)
+    else
     case args of
       ["--identity"] => (print (Config.identity ^ "\n"); 0)
       (* the store DIR with the configurations of rhc's own identity alone:

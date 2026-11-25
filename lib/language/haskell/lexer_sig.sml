@@ -29,14 +29,14 @@
    Area: Languages *)
 signature HS_LEXER =
 sig
-  (* How to read: whether dotted module names are read.
+  (* How to read: the language of the module read (HsLanguage).
 
-     `hierarchical` reads a dotted module name, such as Data.List, as one
-     qualifier, which Haskell 98's `modid` is not (the roadmap's D35,
-     refused by default). *)
-  type options = {hierarchical : bool}
+     The lexer tests its HierarchicalModules: a dotted module name, such as
+     Data.List, read as one qualifier, which Haskell 98's `modid` is not
+     (the haskell98 roadmap's D35, Haskell 2010's 5.1). *)
+  type options = {language : HsLanguage.t}
 
-  (* Haskell 98's: no dotted module names. *)
+  (* Haskell 98's. *)
   val defaults : options
 
   (* `tokens (options, file, text)` is the tokens of the program text

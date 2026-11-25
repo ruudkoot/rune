@@ -248,12 +248,12 @@ struct
      ("slot", "a class's dictionary holds its methods in its declaration's order, a slot each (D31's layout)"),
      ("scc", "a group across a cycle's modules has one context, and is defaulted where its predicates arose (D30)")]
 
-  (* `replay {modules, records, env, derived, cycleDefault, fault}` holds
+  (* `replay {modules, records, env, derived, fault}` holds
      the records to the rules, the derived instances' methods' (`derived`,
      as HsDerive made them) as a user's; the classes and instances are
      HsLintClasses' as the second inference left them. *)
   fun replay {modules : E.module list, groups : E.module list list, records : V.table, env : HsInfer.env,
-              derived : (string * string * A.decl list) list, cycleDefault : bool, fault = f} =
+              derived : (string * string * A.decl list) list, fault = f} =
     let
       val () = fault := f
       val src : source = {names = ref M.empty, lits = ref M.empty, binders = ref M.empty, decls = ref [],
@@ -542,14 +542,15 @@ struct
                            (supers, wantedSupers)
                      end
                  | ("default", V.Defaulted {module_, ...}) =>
-                     if cycleDefault then ()
-                     else
                        let
                          val home = List.find (fn {ast = A.Module ({span = s, ...}, _), ...} : E.module => #file s = #file span)
                                       modules
                        in
                          case home of
-                           SOME {id, library = false, ...} =>
+                           (* a module with CycleDefaultScc takes its cycle's
+                              default (D30's --cycle-default=scc) *)
+                           SOME {id, library = false, language, ...} =>
+                             if HsLanguage.has (language, HsLanguage.CycleDefaultScc) then () else
                              let val module_ = if faulty "scc" then module_ ^ "Fault" else module_
                              in
                              if id = module_ orelse HsModules.moduleName id = module_ then ()
@@ -604,7 +605,9 @@ struct
                         end)
                      (List.concat (List.map HsLintInfer.bound g))
                end)
-            (HsLintInfer.groupsOf (HsLintInfer.bindsOf decls))
+            (HsLintInfer.groupsOf (HsLintInfer.bindsOf decls,
+                                   fn _ => HsLanguage.has (E.languageOf mid, HsLanguage.RelaxedPolyRec),
+                                   fn k => List.exists (fn s => T.idKey s = k) signed))
         end
       (* [scc]: a group across the modules of a cycle shares one context *)
       fun sccGroups (g : E.module list) =
@@ -641,7 +644,15 @@ struct
                        | [] => ()
                      end
                  end)
-              (HsLintInfer.groupsOf (HsLintInfer.bindsOf tops))
+              (let
+                 val signed = List.concat (List.map (fn A.D (_, A.DSig (vs, _, _)) => List.map nameOf vs | _ => []) tops)
+                 fun relaxed b =
+                   case HsLintInfer.bound b of
+                     id :: _ => HsLanguage.has (E.languageOf (#qual id), HsLanguage.RelaxedPolyRec)
+                   | [] => false
+               in
+                 HsLintInfer.groupsOf (HsLintInfer.bindsOf tops, relaxed, fn k => List.exists (fn s => T.idKey s = k) signed)
+               end)
           end
       (* [method]: an instance's methods at their types there *)
       fun methods (span, cls : string, body) =

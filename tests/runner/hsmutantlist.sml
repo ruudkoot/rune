@@ -151,7 +151,7 @@ struct
           "case List.find (fn (k, v) => false) usages of",
           [holes ^ "h1-name", holes ^ "h2-default"]),
      rhc ("HU04", "units", "H4: a unit's key without its members' texts, the default declaration's among them",
-          "driver.sml", "then \" literate\" else \"\"), #hash f))", "then \" literate\" else \"\"), \"\"))", [holes ^ "h2-default"]),
+          "driver.sml", "(memberId f, #hash f)", "(memberId f, \"\")", [holes ^ "h2-default"]),
      one ("HU05", "units", "H5: an instance's fingerprint without its context: a context moved from one variable to another, " ^
                    "naming the same classes, is not seen, and a derived instance keeps the old one",
           "modiface.sml", "context (#ctx i) ^ (if #derived i", "\"\" ^ (if #derived i", [holes ^ "h5-context"]),
@@ -160,7 +160,7 @@ struct
      one ("HU07", "units", "H7: `module M` in an export list reads none of M's exports: a module that re-exports one stays as it was",
           "modules.sml", "then HsUsage.read (HsUsage.Exports target)", "then ()", [holes ^ "h7-reexport"]),
      rhc ("HU08", "units", "H8: a cycle's key over its first member alone",
-          "driver.sml", "#hash f))\n                    found)", "#hash f))\n                    [hd found])", [holes ^ "h8-cycle"]),
+          "driver.sml", "(memberId f, #hash f)) found)", "(memberId f, #hash f)) [hd found])", [holes ^ "h8-cycle"]),
      rhc ("HU09", "units", "H9: the Prelude's names the translations ask for are no reads",
           "names.sml", "HsUsage.read (HsUsage.Standard {space = space, name = name});", "();",
           ["hs/iface/usages/reads"]),
@@ -186,8 +186,8 @@ struct
           "h = \"\" orelse !reaches (h, #home i)", [holes ^ "instance-chain", holes ^ "instance-chain-refused"]),
      rhc ("HU14", "units", "H8: a unit's key without whether its member is literate: the same text read literate takes the " ^
                    "plain reading's entry (build-cache-issues.md, issue 27)",
-          "driver.sml", "(#id f ^ (if HsLiterate.isLiterate (#file f) then \" literate\" else \"\"), #hash f)",
-          "(#id f, #hash f)", [holes ^ "literate"]),
+          "driver.sml", "G.keyed (#id f ^ (if HsLiterate.isLiterate (#file f) then \" literate\" else \"\"), ",
+          "G.keyed (#id f, ", [holes ^ "literate"]),
      rhc ("HU15", "units", "a module's header kept without whether its text is literate: the same text read literate takes " ^
                    "the plain reading's name and imports (build-cache-issues.md, issue 27)",
           "graph.sml", "^ (if HsLiterate.isLiterate file then \" literate\" else \"\")", "^ \"\"", [holes ^ "literate"]),
@@ -227,8 +227,9 @@ struct
           "library's among them, which has two of some names (primAppendFile, PreludeBuiltin's and PreludeRuntime's), and " ^
           "is refused (5.2); every cycle accepted exports the same at both, so its scopes are what its imports' exports " ^
           "make them, as at the least",
-          "driver.sml", "val twoPhase = case fixpoint of HsModules.Least => true | HsModules.Greatest => false",
-          "val twoPhase = case fixpoint of HsModules.Least => true | HsModules.Greatest => true",
+          "driver.sml",
+          "not (List.exists (fn (f : G.found) => HsLanguage.has (#language f, HsLanguage.GreatestFixpointNames)) found)",
+          "true",
           []),
      rhc ("HU22", "units", "B: the digest of the units before asked before the lint's level: an entry checked at level 0 " ^
                    "taken by a compile at level 2",
@@ -255,7 +256,7 @@ struct
           "equivalent: the digest of the units before without the fixpoint of a cycle's exports. Not seen by any program, as " ^
           "HU21: a unit accepted at both fixpoints has the same exports and scopes at each",
           "driver.sml",
-          "val namesSetting = \"names \" ^ (case fixpoint of HsModules.Least => \"least\" | HsModules.Greatest => \"greatest\")",
+          "val namesSetting = \"names \" ^ (if greatestNames then \"greatest\" else \"least\")",
           "val namesSetting = \"names\"",
           []),
      one ("HU26", "units", "a value's type in its unit's interface as the checker numbered its variables, not named by " ^
@@ -274,5 +275,13 @@ struct
      rhc ("HU29", "units", "an instance read without the module that declares it: one moved to a module the reading " ^
                    "module's imports do not reach, the same, leaves the unit taken (issue 41)",
           "iface.sml", "id ^ \" in \" ^ home ^ \"=\" ^ getOpt (fingerprint id, \"?\")", "id ^ \"=\" ^ getOpt (fingerprint id, \"?\")",
-          [holes ^ "instance-moved"])]
+          [holes ^ "instance-moved"]),
+     (* a module's language (the haskell2010 roadmap's M4; tests/hs/language) *)
+     one ("HG01", "language", "the 98 rule dropped: a module of Haskell 98 reads every name of its header, and refuses one " ^
+                   "rhc does not know, which it must leave unread (the haskell2010 roadmap's D6)",
+          "language.sml", "val header = if e = Haskell98 then [] else List.foldl one [] names",
+          "val header = List.foldl one [] names", ["hs/language/cases/npk-98rule"]),
+     rhc ("HG02", "units", "a unit's key without its members' languages: a unit made under one setting is taken under " ^
+                   "another of the same texts (the haskell2010 roadmap's D9)",
+          "driver.sml", ", HsLanguage.key (#language f))", ", \"\")", ["hs/language/edits/p09-cmdline"])]
 end

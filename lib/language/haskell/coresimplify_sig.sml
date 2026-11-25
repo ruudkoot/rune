@@ -39,8 +39,10 @@ sig
 
      `spend` is asked before each rewrite (Pass.spend, so that --fuel stops
      them); with `whole` a value main does not reach may go. `cheap` is
-     rhc's default, which --no-cheap-eagerness turns off. *)
-  type options = {spend : unit -> bool, whole : bool, eta : eta, cheap : bool}
+     rhc's default, which --no-cheap-eagerness turns off. `library` is the
+     names of the program's library, whose Prelude's and Ratio's entities
+     the simplifier knows. *)
+  type options = {spend : unit -> bool, whole : bool, eta : eta, cheap : bool, library : HsLibraryNames.t}
 
   (* `passes ()` is each pass, by its name for --dump-after, in the order
      they run: core-simplify, core-specialise, core-eta, core-strict,

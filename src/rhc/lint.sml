@@ -40,7 +40,7 @@ struct
       val byId = List.foldl (fn ((n : G.node, m), acc) => HsStringMap.insert (acc, #id n, m)) HsStringMap.empty (#modules r)
       fun one (n : G.node) =
         case HsStringMap.find (byId, #id n) of
-          SOME m => SOME {id = #id n, ast = m, library = #library n}
+          SOME m => SOME {id = #id n, ast = m, library = #library n, language = #language n}
         | NONE => NONE
     in
       List.map (List.mapPartial one) (#groups g)
@@ -64,8 +64,8 @@ struct
       SOME lc => #file span ^ ":" ^ lc
     | NONE => if #file span = "" then "(no place)" else #file span
 
-  fun infer (g, r, cycleDefault) =
-    HsLint.infer {groups = groups (g, r), main = mainOf g, cycleDefault = cycleDefault}
+  fun infer (g, r) =
+    HsLint.infer {groups = groups (g, r), main = mainOf g, names = RhcLibrary.names ()}
 
   (* --hslint-claims=FILE: a record's claims to hold the inference to, in
      the dump's form, until the checker's evidence records are its claims
@@ -88,12 +88,12 @@ struct
      reads the first claim RULE checks corrupted. A program compiled
      against bin/rhc's snapshot is checked a unit at a time, the library's
      inference its units' parts (RhcDriver, ruling 67) *)
-  fun check (g : G.graph, r : RhcNames.result, cycleDefault : bool) =
+  fun check (g : G.graph, r : RhcNames.result) =
     Pass.checkAt ("hslint", 2)
       (fn () =>
          let
            val {target, ...} =
-             HsLint.check {groups = groups (g, r), main = mainOf g, cycleDefault = cycleDefault,
+             HsLint.check {groups = groups (g, r), main = mainOf g, names = RhcLibrary.names (),
                            records = Option.map (fn env => {table = #evidence r, env = env, derived = #derived r}) (#types r),
                            claims = Option.map (HsLint.claims o readFile) (!claims),
                            where_ = fn sp => getOpt (lineColumn sp, "0:0"), fault = fault (), library = NONE}
@@ -126,8 +126,8 @@ struct
     (List.app (fn (r, what) => print (r ^ "\t" ^ what ^ "\n")) (HsLint.rules @ HsLint.replayRules @ HsLint.targetRules); OS.Process.success)
 
   (* --dump-hslint *)
-  fun dump (g : G.graph, r : RhcNames.result, cycleDefault : bool, library : bool) : OS.Process.status =
-    (print (HsLint.dump (infer (g, r, cycleDefault), fn sp => getOpt (lineColumn sp, "0:0"), library));
+  fun dump (g : G.graph, r : RhcNames.result, library : bool) : OS.Process.status =
+    (print (HsLint.dump (infer (g, r), fn sp => getOpt (lineColumn sp, "0:0"), library));
      OS.Process.success)
     handle HsLint.Refused (span, msg) => (print ("REFUSED " ^ place span ^ ": " ^ msg ^ "\n"); OS.Process.failure)
 end

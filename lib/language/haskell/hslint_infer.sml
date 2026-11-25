@@ -434,12 +434,18 @@ struct
   fun fvBind (Fun {clauses, ...}) = List.foldl (fn ((_, r), acc) => fvRhs (r, acc)) [] clauses
     | fvBind (Pat {rhs, ...}) = fvRhs (rhs, [])
 
-  (* the declaration groups of a list of bindings, dependencies first *)
-  fun groupsOf (bs : bind list) : bind list list =
+  (* the declaration groups of a list of bindings, dependencies first;
+     under RelaxedPolyRec (2010's 4.5.1), as `relaxed b` says of a
+     binding's module, a use of a variable `signed` says has a signature
+     makes no dependency *)
+  fun groupsOf (bs : bind list, relaxed : bind -> bool, signed : string -> bool) : bind list list =
     let
       val v = Vector.fromList bs
       val owner = Vector.foldli (fn (i, b, m) => List.foldl (fn (id, m) => M.insert (m, T.idKey id, i)) m (bound b)) M.empty v
-      val succs = Vector.map (fn b => List.mapPartial (fn k => M.find (owner, k)) (fvBind b)) v
+      val succs =
+        Vector.map (fn b => let val r = relaxed b
+                            in List.mapPartial (fn k => if r andalso signed k then NONE else M.find (owner, k)) (fvBind b) end)
+          v
     in
       List.map (List.map (fn i => Vector.sub (v, i))) (HsLintScc.groups (Vector.length v, fn i => Vector.sub (succs, i)))
     end
@@ -890,8 +896,13 @@ struct
         | go (env, group :: rest) =
             let val (ds, schemes, _) = tiGroup (env, group, sigs)
             in push ds; go (extend (env, List.map (fn (id, sc, _) => (T.idKey id, sc)) schemes), rest) end
+      (* under RelaxedPolyRec, by the module inferred, every signature in
+         scope from the start, as Typing Haskell in Haskell's tiBindGroup
+         has its explicitly typed bindings' *)
+      val relaxed = HsLanguage.has (E.languageOf (!current), HsLanguage.RelaxedPolyRec)
+      val env0 = if relaxed then extend (env, M.foldl (fn (k, (sc, _), acc) => (k, sc) :: acc) [] sigs) else env
     in
-      go (env, groupsOf (bindsOf decls))
+      go (env0, groupsOf (bindsOf decls, fn _ => relaxed, fn k => M.member (sigs, k)))
     end
 
   (* ---- the top level of a group of modules (11.6.4) ---- *)
@@ -912,31 +923,32 @@ struct
       T.quantify (vs, qual)
     end
 
-  (* `modules {group, main, cycleDefault, derived}`: a strongly connected
+  (* `modules {group, main, derived}`: a strongly connected
      group of modules (tiProgram): the declaration groups of its top level
      in their order, then its classes' default methods and its instances'
      methods, explicitly typed bindings both, a derived instance's made as
      the tree a user would write (`derived`: its module, its identity
      `CLS@TYCON` and its methods; D54) as any instance's, at the head and
      the least context this inference derived, the type of `main`, and
-     Rule 2 *)
-  fun modules {group : E.module list, main : string option, cycleDefault : bool,
-               derived : (string * string * A.decl list) list} =
+     Rule 2, each module's or, where its modules have CycleDefaultScc, the
+     group's (D30's --cycle-default=scc) *)
+  fun modules {group : E.module list, main : string option, derived : (string * string * A.decl list) list} =
     let
+      val cycleDefault = List.all (fn {language, ...} : E.module => HsLanguage.has (language, HsLanguage.CycleDefaultScc)) group
       (* 5.4: an instance in scope where the inference is, by the imports
          of the module it infers (R26) *)
       val () = C.inScope := (fn i => !current = "" orelse E.reaches (!current, E.moduleOfInst i))
       val mods = Vector.fromList group
       (* the bindings of the top level, each with its module *)
       val tagged =
-        List.concat (List.map (fn {id, ast = A.Module (_, {decls, ...}), library} =>
+        List.concat (List.map (fn {id, ast = A.Module (_, {decls, ...}), library, ...} : E.module =>
                                  List.map (fn b => (b, id, library)) (bindsOf decls)) group)
       val sigs =
         List.foldl (fn ({ast = A.Module (_, {decls, ...}), ...} : E.module, m) =>
                       M.foldl (fn (k, v, m) => M.insert (m, k, v)) m (sigsOf decls))
           M.empty group
       val byFile =
-        List.foldl (fn ({id, ast = A.Module ({span, ...}, _), library}, m) => M.insert (m, #file span, (id, library)))
+        List.foldl (fn ({id, ast = A.Module ({span, ...}, _), library, ...} : E.module, m) => M.insert (m, #file span, (id, library)))
           M.empty group
       (* a binding's module: its binders' (a name of the top level is its
          entity, qualified by its module), or its file's *)
@@ -962,7 +974,26 @@ struct
                                                                     restricted = restricted, span = bindSpan (hd bs)})
                                     schemes
         end
-      val () = List.app group' (groupsOf (List.map #1 tagged))
+      (* under RelaxedPolyRec, where any module of the group has it, every
+         signed binding's signature in scope from the start, as Typing
+         Haskell in Haskell's tiBindGroup has its explicitly typed
+         bindings': a relaxed module's binding may use a signed binding of
+         a module that is not relaxed, which its own group types after it
+         (the haskell2010 roadmap's E13: a cycle of a relaxed module and a
+         98 one) *)
+      val anyRelaxed = List.exists (fn {language, ...} : E.module => HsLanguage.has (language, HsLanguage.RelaxedPolyRec)) group
+      val () =
+        if not anyRelaxed then ()
+        else
+          List.app (fn (b, _, _) =>
+                      List.app (fn id => case M.find (sigs, T.idKey id) of
+                                           SOME (sc, _) => tops := M.insert (!tops, T.idKey id, sc)
+                                         | NONE => ())
+                        (bound b))
+            tagged
+      val () = List.app group' (groupsOf (List.map #1 tagged,
+                                          fn b => HsLanguage.has (E.languageOf (#1 (whose b)), HsLanguage.RelaxedPolyRec),
+                                          fn k => M.member (sigs, k)))
       fun libraryOf mid = Vector.exists (fn {id, library, ...} => id = mid andalso library) mods
       fun inGroup mid = Vector.exists (fn {id, ...} => id = mid) mods
       (* class defaults and instance methods: explicitly typed bindings *)

@@ -1,0 +1,38 @@
+# The corrections rhc reads the Haskell 2010 Report with, and what this library does with each (D38 of
+# docs/plans/language/haskell2010.md, the haskell2010 roadmap, with the owner's answer of 2026-11-24). No errata to
+# the 2010 Report were ever published. Its sources (github.com/haskell/haskell-report) hold five commits after the
+# text of 2010-07-20 (15bff26, which pristine/ is taken from) that change what a reader sees: the owner had 2010's
+# text read with the four that change the text, as 98's errata are read into 98's; the fifth changes the printed
+# index alone. And 98's eighteen published errata, where 2010's text is 98's word for word and lacks them, are read
+# into it too (D38 (a)(i), N18). A correction that changes the Report's code is applied in the modules of this
+# directory and is an entry of overlay.tsv; every other one is about prose, the grammar or an index, and the column
+# where says what rhc does with it. The 2010 conformance table (the roadmap's M1) holds each one's rows.
+# Columns: id; date; source (the sources' commit, or 98's errata page,
+# https://www.haskell.org/definition/haskell98-revised-bugs.html); section (the 2010 Report's); correction, in short;
+# kind (code, prose, grammar, index); in2010 (whether the published text has it: html and pdf, pdf only, no; for
+# 98's errata, absorbed, absorbed in effect, not absorbed, moot, not applicable); here (applied: an entry of
+# overlay.tsv; carried: in 98's code that a module of this directory carries, provenance.tsv; none); where.
+id	date	source	section	correction	kind	in2010	here	where
+c.2010.11.fatype	Nov 2010	14de79f	8.4.2	The foreign type's arrow, ftype -> fatype -> ftype, is the function arrow, typeset as the grammar's production arrow before (10.5's copy of the rule is never changed)	grammar	pdf only	none	rhc's parser, whose foreign types take the token ->
+c.2011.04.zeropow	Apr 2011	2a78309	6.4.3	0**y is 1 if y is 0, and 0 otherwise, not "if y is 1"	prose	no	none	Floating's (**) at Float and Double is IEEE's pow (ov.prelude.float, ov.prelude.double), as 98's (D13b): 0 ** 0 is 1, 0 ** y is 0 for y > 0, and at a negative y an infinity, a deviation from the corrected sentence on the ground wrong (D13b, D38)
+c.2012.06.npkindex	Jun 2012	a251b60	index	Two index entries to the removed n+k pattern deleted	index	no	none	nothing to do: the index holds no code
+c.2012.07.haskell98	Jul 2012	ea28a8e	5.6.1	The Prelude's helper modules "are not part of Haskell", not "of Haskell 98"	prose	no	none	nothing to do in the code: PreludeList, PreludeText and PreludeIO cannot be imported by a program
+c.2018.03.rules	Mar 2018	554480a	3.17.3	Rule (s) of Figure 3.3 without its side condition "where y is a new variable", which names a y the rule never uses	prose	no	none	rhc's translation of pattern guards (D14)
+e.2005.12.comment	Dec 2005	98's errata	2.2	The production of an end-of-line comment admits --: although it is a varsym	grammar	absorbed	none	nothing to do: 2010's comment production, : being an ascSymbol, has it
+e.2004.07.fieldorder	Jul 2004	98's errata	3.17.2, case 6	Labelled fields are matched in the order they are named in the pattern's field list	prose	not absorbed	none	rhc's translation of patterns, as 98's (N17)
+e.2005.01.matchwording	Jan 2005	98's errata	3.17.2, case 6	"Matching a constructor pattern using labeled fields": a wording	prose	not absorbed	none	nothing to do
+e.2008.03.nplusk	Mar 2008	98's errata	3.17.2, case 8	n+k: the x of "succeeds if x >= k" should be v	prose	moot	none	nothing to do: 2010 has no n+k pattern
+e.2004.07.fixitytable	Jul 2004	98's errata	4.4.2	Table 4.1 lacks =<<, infixr 1	prose	not absorbed	none	nothing to do: Prelude.hs declares infixr 1 =<<
+e.2003.05.enumstrict	May 2003	98's errata	6.3.4; 9	The enumFrom family on Float and Double is strict in all its arguments, and the code's enumFrom and enumFromThen are not: a seq is added to the instances for Float and Double	code	not absorbed	applied	Prelude.hs, instance Enum Float and instance Enum Double: enumFrom, enumFromThen (overlay ov.prelude.enumfloat)
+e.2003.06.properfraction	Jun 2003	98's errata	6.4.6	properFraction x is (n,f) with n zero or of x's sign and f zero or of x's sign: the old wording fails at zero	prose	not absorbed	none	a test's expectation
+e.2008.02.doexample	Feb 2008	98's errata	7.2	The example of do notation shows its prompt late, being buffered	prose	not absorbed	none	a test's expectation
+e.2003.02.lex	Feb 2003	98's errata	9.2	lex: an identifier may start with an underscore: isIdInit c = isAlpha c || c == '_' in the third guard, and '_' out of isSingle	code	not absorbed	applied	PreludeText.hs, lex (overlay ov.preludetext.lex)
+e.2004.09.exportvar	Sep 2004	98's errata	10.5	In the third production of export, the qvar in parentheses after qtycls is var, as in 5.2	grammar	not absorbed	none	rhc's parser
+e.2005.08.approxrational	Aug 2005	98's errata	22	approxRational returns the simplest rational within the closed interval	prose	absorbed in effect	none	nothing to do in the code, which the erratum describes
+e.2003.03.ixlaw	Mar 2003	98's errata	19	The Ix law is map (index (l,u)) (range (l,u)) == [0 .. rangeSize (l,u) - 1]	prose	absorbed	none	a test of the law; 2010 prints it with a stray parenthesis
+e.2008.09.generic	Sep 2008	98's errata	20	genericTake, genericDrop and genericSplitAt treat a negative number as 0, as take, drop and splitAt do	code	absorbed in effect	carried	Data.List, from 98's List.hs, which has the erratum's code (98's ov.list.generic); 2010's prose says "an overloaded version of take"
+e.2003.03.chartypo	Mar 2003	98's errata	16	"converts the to the character it encodes" lacks "string"	prose	absorbed	none	nothing to do: 2010 rewrites the sentence
+e.2006.11.closetypo	Nov 2006	98's errata	41	"doing so not an error" lacks "is"	prose	absorbed	none	nothing to do
+e.2003.07.index	Jul 2003	98's errata	index	The online index gives no type for either, and a wrong one for print	index	not applicable	none	nothing to do: 2010's index is its own
+e.2006.10.breakindex	Oct 2006	98's errata	index	The online index's example of break is wrong	index	not applicable	none	nothing to do: 2010's index is its own
+e.2005.06.printedindex	Jun 2005	98's errata	index	The printed index has no entry for the keywords, nor for where	index	not applicable	none	nothing to do: 2010's index is its own

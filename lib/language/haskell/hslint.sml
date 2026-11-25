@@ -3,7 +3,7 @@ structure HsLint :> HS_LINT =
 struct
   structure T = HsLintTypes
 
-  type module = {id : string, ast : HsAst.module, library : bool}
+  type module = {id : string, ast : HsAst.module, library : bool, language : HsLanguage.t}
   type binding = {module : string, name : string, scheme : string, signed : bool, restricted : bool,
                   span : HsSource.span}
   type default = {module : string, span : HsSource.span, preds : string, choice : string, ruleTwo : bool}
@@ -30,10 +30,10 @@ struct
   (* the second inference, its state kept for the report and replay: from
      nothing, or after `library`, whose groups of modules it does not infer
      again; the groups it inferred *)
-  fun run {groups : module list list, main, cycleDefault, derived, library} : module list list =
+  fun run {groups : module list list, main, derived, library} : module list list =
     let
       fun infer gs =
-        List.app (fn g => HsLintInfer.modules {group = g, main = main, cycleDefault = cycleDefault, derived = derived}) gs
+        List.app (fn g => HsLintInfer.modules {group = g, main = main, derived = derived}) gs
     in
       case library of
         NONE =>
@@ -127,8 +127,9 @@ struct
        classes = List.rev classes}
     end
 
-  fun infer {groups, main, cycleDefault} : report =
-    (ignore (run {groups = groups, main = main, cycleDefault = cycleDefault, derived = [], library = NONE});
+  fun infer {groups, main, names} : report =
+    (HsLintEnv.names := names;
+     ignore (run {groups = groups, main = main, derived = [], library = NONE});
      report NONE before clear ())
     handle T.Refuse (span, msg) => (clear (); raise Refused (span, msg))
          | e => (clear (); raise e)
@@ -136,7 +137,7 @@ struct
   val claims = HsLintClaims.read
   val rules = HsLintClaims.rules
 
-  fun library m = String.isPrefix "haskell98:" m
+  fun library m = HsLibraryNames.isLibrary (!HsLintEnv.names, m)
 
   (* the classes of a name, numeric and standard where any or all are *)
   fun named (cs : class_ list) =
@@ -182,11 +183,12 @@ struct
      those records held to the inference as claims, then the claims given;
      what the target check reads, kept; and, where every module is the
      library's, the inference of them for a saved world *)
-  fun check {groups : module list list, main, cycleDefault, records, claims, where_, fault, library}
+  fun check {groups : module list list, main, names, records, claims, where_, fault, library}
             : {report : report, target : target, part : library} =
     let
+      val () = HsLintEnv.names := names
       val derived = case records of SOME {derived, ...} => derived | NONE => []
-      val inferred = run {groups = groups, main = main, cycleDefault = cycleDefault, derived = derived, library = library}
+      val inferred = run {groups = groups, main = main, derived = derived, library = library}
       val modules = List.concat inferred
       fun mine m = List.exists (fn {id, ...} : module => id = m) modules
       val files = List.map (fn {ast = HsAst.Module ({span, ...}, _), ...} : module => #file span) modules
@@ -210,7 +212,7 @@ struct
         case records of
           SOME {table, env, derived} =>
             (HsLintReplay.replay {modules = modules, groups = inferred, records = table, env = env, derived = derived,
-                                  cycleDefault = cycleDefault, fault = fault}
+                                  fault = fault}
              handle T.Refuse (span, msg) => raise Refused (span, msg);
              compareWith (r, classesNamed, HsLintReplay.claimsOf {modules = modules, records = table, derived = derived},
                           where_, fault))
@@ -265,8 +267,8 @@ struct
 
   fun dump ({bindings, defaults, kinds, derived, ...} : report, where_, library) =
     let
-      fun shown m = library orelse not (String.isPrefix "haskell98:" m)
-      fun lib m = String.isPrefix "haskell98:" m
+      fun lib m = HsLibraryNames.isLibrary (!HsLintEnv.names, m)
+      fun shown m = library orelse not (lib m)
       val ks =
         List.mapPartial (fn {module, name, kind} =>
                            if shown module andalso not (lib module)

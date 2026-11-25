@@ -12,6 +12,12 @@ files
   token.sml
   literate_sig.sml
   literate.sml
+  language_sig.sml
+  language.sml
+  library_names_sig.sml
+  library_names.sml
+  header_sig.sml
+  header.sml
   lexer_sig.sml
   lexer.sml
   layout_sig.sml
