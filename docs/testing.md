@@ -1151,6 +1151,88 @@ held to the meaning of the Report's top-to-bottom rules (`tr.case.obligation`).
 `hs-generated FIRST COUNT` runs a range, and `hs-generated-orders FIRST
 COUNT` the same with Sestoft's trees.
 
+### 98 mode held
+
+The haskell2010 roadmap's standing check (its M3, *Holding 98 mode
+byte-identical*; `tests/runner/hsstanding.sml`): one rhc against another,
+both in Haskell 98 mode, on the same inputs. The suites above hold what a
+98 program prints; this holds what rhc makes of it too, its bytecode, its
+messages and its views, so that a change that moves 98 mode's code is seen
+where no output moves. It is each change's, not `make check`'s:
+
+    make check-hs98 OLD=TREE-OR-COMMIT [NEW=TREE-OR-COMMIT] [EXPECT=FILE] [JOBS=3]
+
+runs the tier `check-hs98` (`bin/rune-test run --tier check-hs98` with
+`RUNE_HS_OLD`, `RUNE_HS_NEW` and `RUNE_HS_EXPECT` set). A side is a tree, a
+directory whose `bin/rhc.rbc`, `bin/runevm` and `share/rhc` are taken as
+they stand (so make `bin/rhc` there first), or else a commit, anything git
+names one by (`HEAD~1`, `haskell2010`, a hash), whose rhc this tree's
+`bin/rune` builds from the commit's own sources as make builds
+`bin/rhc.rbc`, to run on this tree's VM; it is kept in
+`build/hs-standing/COMMIT` for the next check. NEW is this tree where it is
+not given, and `RUNE_HS_VM` puts both sides on one VM. So a change in the
+working tree is held to the commit it is made on by `make check-hs98
+OLD=HEAD`, a commit to its parent by `OLD=HEAD~1`, and a merge to the branch
+it was made from by `OLD=haskell2010`.
+
+`hs-standing/@prepare` copies each side, its VM, `rhc.rbc` and library,
+into `OUT/old` and `OUT/new` (`OUT` is `RUNE_HS_STANDING_OUT`, or
+`hs-standing` in the run's directory), and makes each its snapshot there as
+make makes `bin/rhc.layer`, from the modules its own Makefile names. Each
+side's rhc then runs as `bin/rhc` runs it, cold (`RHC_STORE` empty), at
+`RUNE_LINT=2`, from this tree's root, on this tree's programs. An item is
+one run of rhc on both sides, and it differs by the parts that do:
+`status`, `stdout`, `stderr` (each side's own directory read as one),
+`bytes`, or `fingerprint` where two bytecode files differ in the
+instruction set's fingerprint alone ([bytecode.md](bytecode.md)). The sets,
+each a family of jobs:
+
+| Set | Jobs | Items |
+|---|---|---|
+| `lang` | `hs-standing/lang/K-of-24` | each program of `tests/hs/lang` compiled as `hs/compile` compiles it, to register and stack bytecode, at `-O1` (the default) and `-O2`: `lang/NAME/TARGET-LEVEL` |
+| `run-set` | `hs-standing/run-set/K-of-8` | the 188 of D56's run set through their own harness (`HsCorpusRun.runWith`: its preparation, its tries, its targets), compiled and run in no way: each bytecode it makes, `run-set/ID/TARGET`, and its compiles' logs, `run-set/ID/logs` (`status` where the tries made differ) |
+| `errors`, `accept` | `hs-standing/errors/K-of-4`, `accept/K-of-2` | each program of `tests/hs/errors` compiled as `hs/errors` compiles it, and of `tests/hs/accept` checked as `hs/accept` checks it: `errors/NAME`, `accept/NAME` |
+| `views` | `hs-standing/views/K-of-6` | `--dump-ast`, `--print`, `--print-layout` and `--print-exact` of each file of `tests/hs/lang` and `tests/hs/accept`: `views/DIR/FILE/VIEW` |
+| `snapshot` | `hs-standing/snapshot` | the snapshots' configurations, paired by their settings but rhc's identity and the fingerprint, entry by entry, key and bytes (`entries`), their settings (`settings`, or `fingerprint`), and one on one side alone (`config`); not `units/`, a memo of the sources' times |
+| `pragmas` | `hs-standing/pragmas` | each vendored file of the corpus whose `LANGUAGE` or `OPTIONS` pragmas the corpus's copy blanks (`HsSource.blankPragmas`; 11 files), in a program of the run set that holds it, prepared as the harness prepares it but with its pragmas as written (`HsCorpus.keepPragmas`), in each try the harness makes: the file checked and its program compiled to both targets, old against new (`pragmas/FILE/TRY/KIND`), and on each side against the copy with them blanked (`.../blanked-SIDE`), which D6's rule holds it to: a 98 module reads no name of a pragma but an edition's |
+
+A difference fails its job unless a line of the file `EXPECT`
+(`RUNE_HS_EXPECT`) explains it. A line is
+
+    DECISION | ITEM-GLOB | PARTS | reason
+
+DECISION one of the roadmap's decided exceptions (`D6`, `D8`, `D11`, `D13a`,
+`D21`, `D22`, `D26`, `D29`, and `M18` for the two checker defects of the
+owner's answer 2), ITEM-GLOB a glob of *Expectations* over the items, and
+PARTS those the line lets move, by commas, or `*`. Each decision may move
+only its own parts at all: D11 `stderr` alone, its hint line, never a
+verdict or a byte; D6 `stdout` alone, the printed pragmas; D22 and D29 the
+`fingerprint` alone, their primitives; a line that asks more is refused, and
+a decision not in the list is refused too, since a move no decision names
+is the owner's. So the D11 change of M5 runs with a file of one line,
+
+    D11 | errors/* | stderr | the hint line in 98's refusals
+
+`hs-standing/@summary` counts each set's items, the same, moved as decided
+and moved otherwise (`OUT/summary.tsv`), and fails a line that explained no
+difference. Each job writes `OUT/results/JOB.tsv`, an item a line with the
+parts that differ, its verdict and the line that explained it; what differs
+is kept in `OUT/items/{old,new}/ITEM.*` (the run set's in
+`OUT/{old,new}/run-set`), and what is the same is not. A job is also a
+command, against sides already prepared: `bin/rune-test hs-standing
+prepare`, `hs-standing SET K N`, `hs-standing snapshot`, `pragmas` and
+`summary`. Without `RUNE_HS_OLD` the jobs are listed and pending.
+
+The check is held to its work by `hs-standing/@faults` (nightly, and the
+tier `check-hs98-faults`): it builds rhc from this tree's sources with a 98
+change planted, as `hs-mutants` builds one, and wants each caught by the
+items that meet it: `foreign` reserved (Haskell 2010's 8.3), by
+`accept/lex.reserved.notspecial` and its tree; an n+k pattern refused, by
+the three programs of `tests/hs/lang` E3 found using one; a `LANGUAGE` or
+`OPTIONS` pragma refused in a 98 module (E4's prototype's, which D6
+forbids), by the pragmas of two vendored files. rhc built so from the
+sources unedited must move none of those items.
+
 ## rhc's Core
 
 rhc, the Haskell 98 compiler of the haskell98 roadmap

@@ -292,7 +292,7 @@ RUNE_HEAP ?= 67108864
 # bin/rune-repl (docs/repl.md), with ARGS
 RUNE_I = [ "$$1" = -i ] && shift && exec "$$d/rune-repl" "$$@"\n
 
-.PHONY: check-docs-generated test-mutants test-compiler-mutants test-cache-mutants test-rhc-mutants test-cache-random isa check-isa codecs check-codecs test-ir check-levels check-units test-incremental test-layers test-deps test-dynamic test-build test-install test-dist check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall dist test-int64 test-laws-hosts
+.PHONY: check-docs-generated test-mutants test-compiler-mutants test-cache-mutants test-rhc-mutants check-hs98 test-cache-random isa check-isa codecs check-codecs test-ir check-levels check-units test-incremental test-layers test-deps test-dynamic test-build test-install test-dist check-reproducible test-serve basis-cache repl test-repl test-terminal test-diagnostics test-repl-protocol kernel test-kernel dap test-dap test-register test-register-jit test-register-asan vm-census test-census test-gc heapsim check-heapsim check-gcsim check-layouts gcbench check-gcbench templates check-templates mlkit windows test-windows portability test-portability docs test-doc test-lib test-lib-hosts test-laws runeopt runeopt-host-builds test-opt test-native test-native-stress test-native-asan all mlton smlnj-legacy smlnj32 smlnj-dev polyml host-builds runedoc runedoc-host-builds vm vm-asan gen test test-all check-cross check-positions check-docs boot bootstrap check check-tools quick check-units-steps test-steps test-heap-steps test-native-steps test-register-jit-steps clean doctor envcheck test-basis perf-check test-stress hosts matrix-quick matrix perf install uninstall dist test-int64 test-laws-hosts
 
 all: vm boot runedoc runeopt runeffi basis-cache
 
@@ -2228,7 +2228,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/hsconformance.sml tests/runner/hslang.sml tests/runner/hsroundtrip.sml \
                tests/runner/hssyntax.sml tests/runner/hsnames.sml tests/runner/hslibrary.sml tests/runner/hsmutantlist.sml tests/runner/hsmutants.sml \
                tests/runner/hsmeta.sml tests/runner/hsgen.sml tests/runner/hsreduce.sml tests/runner/hsinterp.sml tests/runner/hsdesugar.sml tests/runner/hssimplify.sml tests/runner/hsperf.sml tests/runner/hslint.sml tests/runner/hssource.sml tests/runner/hscorpus.sml \
-               tests/runner/hsoracles.sml tests/runner/hsrhccorpus.sml tests/runner/hslazyports.sml tests/runner/hscorpusrun.sml tests/runner/hssimplifyfigures.sml tests/runner/hssnapshot.sml tests/runner/hsiface.sml tests/runner/hschecks.sml tests/runner/hsunits.sml \
+               tests/runner/hsoracles.sml tests/runner/hsrhccorpus.sml tests/runner/hslazyports.sml tests/runner/hscorpusrun.sml tests/runner/hssimplifyfigures.sml tests/runner/hssnapshot.sml tests/runner/hsiface.sml tests/runner/hschecks.sml tests/runner/hsunits.sml tests/runner/hsstanding.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) FORCE \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)
@@ -2306,6 +2306,15 @@ test-compiler-mutants: $(RUNE) vm basis-cache bin/rune-test bin/rune-incremental
 # runs those alone; make check only builds them.
 test-rhc-mutants: $(RUNE) vm bin/rune-test bin/rhc
 	$(RUNE_TEST) --tier test-rhc-mutants
+
+# 98 mode held (the haskell2010 roadmap's M3; tests/runner/hsstanding.sml;
+# docs/testing.md, 98 mode held): this tree's rhc, or NEW's, against OLD's, each a
+# tree or a commit, on tests/hs/lang, errors and accept, their views, D56's run set,
+# the snapshot and the vendored files with pragmas; EXPECT names the moves the
+# decided exceptions make. Not part of make check.
+check-hs98: $(RUNE) vm bin/rune-test bin/rhc
+	@test -n "$(OLD)" || { echo "usage: make check-hs98 OLD=TREE-OR-COMMIT [NEW=TREE-OR-COMMIT] [EXPECT=FILE]" >&2; exit 2; }
+	RUNE_HS_OLD='$(OLD)' $(if $(NEW),RUNE_HS_NEW='$(NEW)') $(if $(EXPECT),RUNE_HS_EXPECT='$(EXPECT)') $(RUNE_TEST) --tier check-hs98
 
 # Those of the cache alone (tests/runner/cachemutantlist.sml; docs/testing.md, The
 # checks of the cache), each against the checks that must see it: minutes

@@ -13,6 +13,11 @@ struct
      the harness *)
   val dataOverride = ref (NONE : string option)
   fun data () = case !dataOverride of SOME d => d | NONE => env ("RUNE_HS_DATA", fromRoot "tests/hs/corpus")
+  (* whether prepare keeps each source's LANGUAGE and OPTIONS pragmas as
+     written: false, as the oracles' copies are made, but where 98 mode is
+     held to read them as it reads the copy with them blanked
+     (tests/runner/hsstanding.sml) *)
+  val keepPragmas = ref false
   (* the root of the trees; another for programs read from elsewhere, as the
      -lazy ports' Haskell sources are (tests/runner/hslazyports.sml) *)
   val rootOverride = ref (NONE : string option)
@@ -192,7 +197,7 @@ struct
           let
             val t = HsSource.universal (read q)
             val cpp = HsSource.wantsCpp t
-            val t' = HsSource.blankPragmas t
+            val t' = if !keepPragmas then t else HsSource.blankPragmas t
             val () = if t' <> t then write (q, t') else ()
             val q' = if cpp then expandCpp (q, [p, work]) else q
             val () = if q' <> q andalso OS.Path.file q = !mainName then mainName := OS.Path.file q' else ()

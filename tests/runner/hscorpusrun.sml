@@ -25,7 +25,13 @@ structure HsCorpusRun =
 struct
   open Sh
 
-  fun out () = fromRoot (env ("RUNE_HS_OUT", run ^ "/hs-corpus-run"))
+  (* where a run's logs and work go, by the environment, or set here by a
+     check that runs the harness in its own process for each of two rhcs
+     (tests/runner/hsstanding.sml), which also has each bytecode the run
+     compiles kept in `keep`, KEEP/ID/TARGET.rbc *)
+  val outOverride = ref (NONE : string option)
+  val keep = ref (NONE : string option)
+  fun out () = case !outOverride of SOME d => d | NONE => fromRoot (env ("RUNE_HS_OUT", run ^ "/hs-corpus-run"))
   fun vendoredRoot () = HsCorpus.data () ^ "/vendored"
   val gib = 1024 * 1024 * 1024
   val limits = {addressSpace = SOME (6 * gib), cpuTime = NONE, fileSize = SOME gib, core = SOME 0}
@@ -150,6 +156,12 @@ struct
               else NONE
             end
       val fails = List.mapPartial way ways'
+      val () = case !keep of
+                 NONE => ()
+               | SOME k => List.app (fn (target, (ok, p, rbc)) =>
+                                       let val dst = k ^ "/" ^ id ^ "/" ^ target ^ ".rbc"
+                                       in (OS.FileSys.remove dst handle OS.SysErr _ => ());
+                                          if ok then HsCorpus.copyFile (p ^ "/" ^ rbc, dst) else () end) compiled
       val () = rmTree work
       val outcome = {id = id, label = label, got = case fails of [] => label | (g, _) :: _ => g,
                      said = String.concatWith "; " (List.map #2 fails), passed = null fails, judged = judge row,
