@@ -2751,7 +2751,7 @@ GENERATE_SRCS := tests/runner/sh.sml tests/runner/children.sml tests/runner/comm
                  tools/generate/xc2-nj.sml tools/generate/structures.sml tools/generate/inventory-base.sml \
                  tools/generate/inventory-discover.sml tools/generate/inventory-classify.sml \
                  tools/generate/inventory-credits.sml tools/generate/inventory-build.sml tools/generate/inventory.sml \
-                 tools/generate/main.sml
+                 tools/generate/hs2010.sml tools/generate/main.sml
 bin/rune-generate.rbc: $(RUNE) $(GENERATE_SRCS) $(wildcard tools/generate/data/*) FORCE
 	$(RUNE) --library test/runner --library json --library digest --library unicode $(GENERATE_SRCS) -o $@
 bin/rune-generate bin/rune-inventory: bin/rune-generate.rbc bin/runevm Makefile

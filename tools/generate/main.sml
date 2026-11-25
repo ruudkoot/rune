@@ -46,6 +46,7 @@ struct
     | main ("fxp"::args)=GenerateFXP.main args
     | main ("entities"::args)=GenerateFixtures.entities args
     | main ("digest-vectors"::args)=GenerateFixtures.digest args
+    | main ("hs2010-programs"::args)=GenerateHs2010.main args
     | main _=raise MeasureCommon.Usage "rune-generate perf|fxp|entities|digest-vectors [ARGS]"
 end
 val ()=let val status=GenerateMain.main (CommandLine.arguments ())

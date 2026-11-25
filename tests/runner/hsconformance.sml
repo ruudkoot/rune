@@ -162,7 +162,28 @@ struct
 
   (* ---- the programs *)
   type program = {dir : string, path : string, name : string, ids : string list, pins : string list, deviation : bool,
-                  expected : string}
+                  expected : string, imports98 : bool}
+
+  (* the modules of Haskell 98's library that Haskell 2010's renames or
+     drops: all but Numeric (D38's (e); tools/generate/hs2010.sml's import
+     map) *)
+  val only98 = ["Array", "Char", "Complex", "CPUTime", "Directory", "IO", "Ix", "List", "Locale", "Maybe", "Monad", "Random",
+                "Ratio", "System", "Time"]
+  (* whether a program imports one of them, in any of its modules: such a
+     program stays 98's, and its 2010 program is written with its imports
+     rewritten (bin/rune-generate hs2010-programs) *)
+  fun importsOnly98 (p : Lang.program) =
+    let
+      val files = if isDir (#base p) then glob (#base p, ".hs") @ glob (#base p, ".lhs") else [#src p]
+      fun imports file =
+        List.exists (fn l =>
+          let val c = if String.isSuffix ".lhs" file then (if String.isPrefix "> " l then String.extract (l, 2, NONE) else "") else l
+          in case String.tokens Char.isSpace c of
+               "import" :: "qualified" :: m :: _ => member (hd (String.fields (fn ch => ch = #"(" orelse ch = #";") m), only98)
+             | "import" :: m :: _ => member (hd (String.fields (fn ch => ch = #"(" orelse ch = #";") m), only98)
+             | _ => false
+          end) (String.fields (fn c => c = #"\n") (read file))
+    in List.exists imports files end
   (* the first line of the file f, to Haskell's first newline: a return, a
      line feed or a form feed (2.2) *)
   fun firstLine f = hd (String.fields (fn c => c = #"\n" orelse c = #"\r" orelse c = #"\f") (read f))
@@ -186,7 +207,7 @@ struct
           val ids = idsOf p
         in
           {dir = d, path = prefix ^ d ^ "/" ^ #name p, name = #name p, ids = ids, pins = List.filter isReading ws,
-           deviation = member ("deviation", ws), expected = #base p ^ ".expected"}
+           deviation = member ("deviation", ws), expected = #base p ^ ".expected", imports98 = importsOnly98 p}
         end)
         (Lang.programsOf (root ^ "/" ^ base ^ "/" ^ d, [".hs", ".lhs"], ["Main.hs", "Main.lhs"])))
       dirs)
@@ -247,6 +268,7 @@ struct
      name it *)
   fun shared2010 kind (p : Lang.program) =
     List.all (fn id => case row2010 id of SOME (_, delta) => delta <> "removed-in-2010" | NONE => false) (idsOf p)
+    andalso not (importsOnly98 p)
     andalso not (member ("hs/" ^ kind ^ "/" ^ #name p, unshared2010 ()))
   (* whether bin/rhc checks a program of Haskell 2010, a Main that is main
      alone: it takes --language=haskell2010 from the roadmap's M4, and reads
@@ -426,7 +448,8 @@ struct
                            | (false, true) => fail ("errata: an erratum lists " ^ #id r ^ ", whose text names none")
                            | _ => ()) rows
       (* the programs: the table's own, and those it shares, which name only
-         rows it keeps and which its unshared.tsv does not name *)
+         rows it keeps, import no module of 98's library that 2010's renames
+         or drops, and which its unshared.tsv does not name *)
       fun kept id = case row id of SOME r => #delta r <> "removed-in-2010" | NONE => false
       val own = programsUnder (root, base, "")
       val (shared, _) =
@@ -437,12 +460,13 @@ struct
               val prefix = OS.Path.file other ^ "/"
               val exceptions = List.map (fn fs => (hd fs, List.nth (fs, 1))) (tsv (base ^ "/unshared.tsv", unsharedHeader))
               val theirs = programsUnder (root, other, prefix)
-              fun sharable (p : program) = List.all kept (#ids p)
+              fun sharable (p : program) = List.all kept (#ids p) andalso not (#imports98 p)
               val () = List.app (fn (path, why) =>
                                    case List.find (fn (p : program) => #path p = path) theirs of
                                      NONE => fail ("unshared: " ^ path ^ " is no program of " ^ other)
                                    | SOME p => if not (sharable p) then
-                                                 fail ("unshared: " ^ path ^ " names a row the table does not keep, and is shared by none")
+                                                 fail ("unshared: " ^ path ^ " names a row the table does not keep, or imports a module "
+                                                       ^ "of 98's library that 2010's renames or drops, and is shared by none")
                                                else if trim why = "" then fail ("unshared: " ^ path ^ " says not why")
                                                else ()) exceptions
             in (List.filter (fn (p : program) => sharable p andalso not (List.exists (fn (q, _) => q = #path p) exceptions)) theirs,
@@ -740,9 +764,137 @@ struct
            ^ Int.toString (length progs) ^ " programs\n")
     end
 
+  (* ---- the generator of 2010's programs (tools/generate/hs2010.sml),
+     held to its work: over this tree, what it writes keeps the 2010 table's
+     rules where it would land, and imports no module 2010 renames or drops;
+     over planted programs, it writes what it should and leaves out what it
+     should, each for its reason *)
+  fun copyDir (src, dst) =
+    (mkdirs dst;
+     List.app (fn n => let val s = src ^ "/" ^ n and d = dst ^ "/" ^ n
+                       in if isDir s then copyDir (s, d) else write (d, read s) end) (entries src))
+  fun generate (root', out) =
+    let
+      val log = out ^ ".log"
+      val () = mkdirs (OS.Path.dir out)
+      val status = execProcess false Subprocess.unlimited (fn e => e)
+                     {cmd = [fromRoot "bin/rune-generate", "hs2010-programs", "--root", root', "--out", out], dir = SOME root,
+                      stdin = "", stdout = log, stderr = log, timeout = 600}
+    in
+      if status = 0 then firstNonEmpty log
+      else raise Fail ("bin/rune-generate hs2010-programs: status " ^ Int.toString status ^ ": " ^ firstNonEmpty log)
+    end
+  fun tsvLines f = List.map (String.fields (fn c => c = #"\t")) (tl (lines (read f)) handle Empty => [])
+
+  fun generatorTree () =
+    let
+      val base = run ^ "/hs2010-generate-tree"
+      val out = base ^ "/out"
+      val priv = base ^ "/tree"
+      val () = (rmTree base; mkdirs base)
+      val said = generate (root, out)
+      val () = copyTreeOf edition2010 (priv, [])
+      val () = List.app (fn d => if isDir (out ^ "/" ^ d) then copyDir (out ^ "/" ^ d, priv ^ "/tests/hs2010/" ^ d) else ()) dirs
+      val (errors, _, progs) = checkWith edition2010 priv
+      val written = tsvLines (out ^ "/generated.tsv")
+      (* what was written imports no module 2010 renames or drops *)
+      val still = List.filter (fn (p : program) => #imports98 p) progs
+    in
+      List.app (fn e => say ("FAIL hs2010 generate: a program written breaks the 2010 table's rules: " ^ e ^ "\n")) errors;
+      List.app (fn (p : program) => say ("FAIL hs2010 generate: " ^ #path p ^ " still imports a module 2010 renames or drops\n")) still;
+      if null written then say "FAIL hs2010 generate: no program written\n" else ();
+      if length progs <> length written then
+        say ("FAIL hs2010 generate: " ^ Int.toString (length written) ^ " lines of generated.tsv, " ^ Int.toString (length progs)
+             ^ " programs written\n")
+      else ();
+      say ("hs2010 generate: " ^ said ^ "\n")
+    end
+
+  (* the planted programs: each a path under tests/hs, its text, and what
+     the generator must make of it, under tests/hs2010, or why it leaves it
+     out *)
+  val planted : (string * string * string) list =
+    [("lang/lib.list.sort_basic.hs",
+      "-- rows: a.same R7 R5\nmodule Main (main) where\nimport List (sort,\n             nub)\nimport qualified Char as C\nmain = print (sort [2, 1 :: Int])\n",
+      "lang/lib.datalist.sort_basic.hs\t-- rows: a.same R7\nmodule Main (main) where\nimport Data.List as List (sort, nub)\n\nimport qualified Data.Char as C\nmain = print (sort [2, 1 :: Int])\n"),
+     ("lang/lib.list.sort_basic.expected", "tests/hs/lang/lib.list.sort_basic.hs:6: [1,2]\n",
+      "lang/lib.datalist.sort_basic.expected\ttests/hs2010/lang/lib.datalist.sort_basic.hs:6: [1,2]\n"),
+     ("lang/lib.io.hclose_split.hs",
+      "module Main (main) where\nimport IO (hClose, ioError, IOMode(..))\nimport IO hiding (hClose)\nimport qualified IO as I\nmain = return ()\n",
+      "lang/lib.systemio.hclose_split.hs\tmodule Main (main) where\nimport System.IO as IO (hClose, IOMode(..)); import System.IO.Error as IO (ioError)\n"
+      ^ "import System.IO as IO hiding (hClose); import System.IO.Error as IO\nimport qualified System.IO as I; import qualified System.IO.Error as I\nmain = return ()\n"),
+     ("lang/a.same_lit.lhs", "> module Main (main) where\n> import List\n\n> main = print (List.sort [1 :: Int])\n",
+      "lang/a.same_lit.lhs\t> module Main (main) where\n> import Data.List as List\n\n> main = print (List.sort [1 :: Int])\n"),
+     ("lang/a.same_plain.hs", "module Main (main) where\nmain = return ()\n", ""),
+     ("errors/a.same_time.hs", "import Time\nmain = return ()\n", "skipped\tit imports Time, which Haskell 2010's library drops"),
+     ("lang/pat.npk.toplevel_n.hs", "import List\nmain = return ()\n", "skipped\tit names pat.npk.toplevel, which Haskell 2010 removes"),
+     ("lang/x.y_z.hs", "import List\nmain = return ()\n",
+      "skipped\tit names x.y, which Haskell 2010 changes beyond a rename (x.y.h2010): its 2010 program is written by hand"),
+     ("errors/lib.io.hclose_bad.hs", "import IO (nosuch)\nmain = return ()\n",
+      "skipped\tit imports nosuch of IO, which no module of System.IO or System.IO.Error exports")]
+  val plantedTable =
+    String.concatWith "\t" (#header edition2010) ^ "\n"
+    ^ String.concat (List.map (fn (id, statement, how, reading, map98, delta) =>
+                                 String.concatWith "\t" [id, "1", statement, "library", "run", how, "hand", "Planned", reading, "", map98,
+                                                         delta] ^ "\n")
+        [("a.same", "a row kept", "", "R7", "a.same", "same"),
+         ("lib.datalist.sort", "sort", "rename List -> Data.List", "", "lib.list.sort", "changed"),
+         ("lib.datachar.toupper", "toUpper", "rename Char -> Data.Char", "", "lib.char.toupper", "changed"),
+         ("lib.systemio.hclose", "hClose", "rename IO -> System.IO", "", "lib.io.hclose", "changed"),
+         ("lib.systemioerror.ioerror", "ioError", "rename IO -> System.IO.Error", "", "lib.io.ioerror", "changed"),
+         ("lib.systemio.export.hclose", "module System.IO exports hClose", "", "", "-", "new"),
+         ("lib.systemio.export.iomode", "module System.IO exports IOMode(ReadMode,WriteMode)", "", "", "-", "new"),
+         ("lib.systemioerror.export.ioerror", "module System.IO.Error exports ioError", "", "", "-", "new"),
+         ("pat.npk.toplevel", "n+k", "removed in 2010", "", "pat.npk.toplevel", "removed-in-2010"),
+         ("x.y.h2010", "changed", "a change", "", "x.y", "changed")])
+
+  fun generatorFaults () =
+    let
+      val base = run ^ "/hs2010-generate-faults"
+      val priv = base ^ "/tree"
+      val out = base ^ "/out"
+      val () = (rmTree base; List.app (fn d => mkdirs (priv ^ "/tests/hs/" ^ d)) dirs; mkdirs (priv ^ "/tests/hs2010"))
+      val () = write (priv ^ "/tests/hs2010/conformance.tsv", plantedTable)
+      val () = List.app (fn (path, text, _) => write (priv ^ "/tests/hs/" ^ path, text)) planted
+      val _ = generate (priv, out)
+      val skipped = tsvLines (out ^ "/skipped.tsv")
+      val generated = tsvLines (out ^ "/generated.tsv")
+      fun check (path, _, want) =
+        case String.fields (fn c => c = #"\t") want of
+          [""] => if List.exists (fn fs => List.nth (fs, 1) = OS.Path.base (OS.Path.file path)) (generated @ skipped)
+                  then say ("FAIL hs2010 generate fault: " ^ path ^ ", which needs nothing of 2010, is written or left out\n") else ()
+        | ["skipped", why] =>
+            (case List.find (fn fs => List.nth (fs, 1) = OS.Path.base (OS.Path.file path)) skipped of
+               SOME fs => if List.nth (fs, 2) = why then ()
+                          else say ("FAIL hs2010 generate fault: " ^ path ^ " left out because `" ^ List.nth (fs, 2) ^ "`, not `" ^ why ^ "`\n")
+             | NONE => say ("FAIL hs2010 generate fault: " ^ path ^ " is not left out (" ^ why ^ ")\n"))
+        | [file, text] =>
+            let val got = read (out ^ "/" ^ file)
+            in if got = text then ()
+               else say ("FAIL hs2010 generate fault: " ^ path ^ " gives " ^ out ^ "/" ^ file ^ ", " ^ difference' (got, text) ^ "\n") end
+        | _ => say ("FAIL hs2010 generate fault: a planted case of no form: " ^ want ^ "\n")
+      and difference' (a, b) =
+        let fun go (n, x :: xs, y :: ys) = if x = y then go (n + 1, xs, ys) else "line " ^ Int.toString n ^ ": `" ^ x ^ "`, not `" ^ y ^ "`"
+              | go (n, x :: _, []) = "line " ^ Int.toString n ^ ": `" ^ x ^ "` past the end"
+              | go (n, [], y :: _) = "line " ^ Int.toString n ^ ": nothing, not `" ^ y ^ "`"
+              | go (_, [], []) = "the same"
+        in go (1, String.fields (fn c => c = #"\n") a, String.fields (fn c => c = #"\n") b) end
+      val sortRow = List.find (fn fs => List.nth (fs, 1) = "lib.list.sort_basic") generated
+    in
+      List.app check planted;
+      case sortRow of
+        SOME fs => if List.nth (fs, 3) = "lib.datalist.sort a.same" andalso List.nth (fs, 4) = "dropped R5" then ()
+                   else say ("FAIL hs2010 generate fault: lib.list.sort_basic's rows and drops are `" ^ List.nth (fs, 3) ^ "`, `"
+                             ^ List.nth (fs, 4) ^ "`\n")
+      | NONE => say "FAIL hs2010 generate fault: lib.list.sort_basic is not written\n";
+      say ("hs2010 generate faults: " ^ Int.toString (length planted) ^ " planted cases\n")
+    end
+
   fun command args =
     case args of
-      ["hs-conformance"] => SOME (tableOf edition98)
+      ["hs2010-generate", "tree"] => SOME (fn () => generatorTree () handle Fail m => say ("FAIL hs2010 generate: " ^ m ^ "\n"))
+    | ["hs2010-generate", "faults"] => SOME (fn () => generatorFaults () handle Fail m => say ("FAIL hs2010 generate: " ^ m ^ "\n"))
+    | ["hs-conformance"] => SOME (tableOf edition98)
     | ["hs-conformance", "2010"] => SOME (tableOf edition2010)
     | ["hs-conformance-faults"] => SOME faults
     | ["hs-conformance-faults", "2010"] => SOME (fn () => faultsOf edition2010)
@@ -760,7 +912,9 @@ struct
          [Test.describe "hs/conformance" [job ("table", ["hs-conformance"]), job ("faults", ["hs-conformance-faults"])],
           Test.tag "covers:tests/hs2010/*"
             (Test.describe "hs2010/conformance" [job ("table", ["hs-conformance", "2010"]),
-                                                 job ("faults", ["hs-conformance-faults", "2010"])])])
+                                                 job ("faults", ["hs-conformance-faults", "2010"])]),
+          Test.tag "covers:tools/generate/hs2010.sml"
+            (Test.describe "hs2010/generate" [job ("tree", ["hs2010-generate", "tree"]), job ("faults", ["hs2010-generate", "faults"])])])
       ["check", "hs", "quick", "covers:tests/hs/conformance.tsv", "covers:tests/hs/errata.tsv", "covers:tests/hs/deviations.tsv", "covers:tests/hs/readings.md",
        "covers:tests/hs/lang/*", "covers:tests/hs/accept/*", "covers:tests/hs/errors/*", "covers:tests/runner/hsconformance.sml"]
 end

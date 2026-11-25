@@ -25,6 +25,7 @@ version, host provisioning and installation adapters remain independent.
 | `entities` / `digest-vectors` | Named HTML references / independently established cryptographic vectors |
 | `unicode [UCD_DIR] [--out-root DIR]` | Six Unicode tables and ten conformance datasets from pinned sources |
 | `inventory [OPTIONS]` | Pinned benchmark discovery, classification, provenance and TSV publication |
+| `hs2010-programs --out DIR [--root ROOT]` | rhc's 98 programs that import a module Haskell 2010 renames or drops, or name a row it renames, written for `tests/hs2010` by the 2010 table's import map and rows (`hs2010.sml`); `generated.tsv` and `skipped.tsv` say what was written and what was left out, and why |
 
 Run `bin/rune-inventory` for the inventory mode directly. Its `--query` interface
 retains the JSON operations used by the independent handwritten regressions.
