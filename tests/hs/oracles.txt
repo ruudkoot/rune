@@ -535,3 +535,52 @@ rhc | yhc-conformance/FFI/sizedtypes/Int::conformance | FAILS | reject: not Hask
 rhc | yhc-conformance/float/show::conformance | FAILS | reject: yhc's copy has trailing text that every judge refuses
 rhc | yhc-conformance/getargs::conformance | FAILS | reject: not Haskell 98: System.Environment, a dotted module name, which rhc refuses without --dotted-names (D35)
 rhc | yhc-conformance/packedstring::conformance | FAILS | reject: not Haskell 98: Data.PackedString
+
+# Haskell 2010 (the haskell2010 roadmap's D39, M2; tests/hs/oracles/README.md, The 2010 oracles). The oracles are g10
+# (GHC 9.4.7 over the shim of the Report's library), gbase (GHC's Haskell2010 over base), gext (GHC's own language with
+# each file's pragmas), mhs, hugs and nhc98, as E8 asked them; the labels are tests/runner/hsoracles2010.sml's: h10 (a
+# candidate accepted or not with its pragmas blanked, held to E8's record), h10ext (gext's, the same), h10probe (a probe
+# of tests/hs2010/corpus/limits, held to the Report) and h10run (the run tier, held to E8's record).
+
+# g10's limits: where the shim cannot give the Report's library (E8, limits.tsv; W8 counted eight)
+g10 | limits/L01_ratio_poly_ord::h10probe | HOST-BUG | reject: base's Ratio: GHC types a fractional literal at base's Rational even under RebindableSyntax, so Ord (Ratio a) needs base's Integral a for a type variable a (T10 22)
+g10 | limits/L02_user_ifthenelse::h10probe | HOST-BUG | reject: RebindableSyntax reads if through the ifThenElse in scope, the shim's Prelude exports one, and a program's own is ambiguous with it (T10 3.6: if is not overloaded)
+g10 | limits/L03_user_bind::h10probe | HOST-BUG | reject: RebindableSyntax reads do through the >>= in scope, the program's own, where do means the Prelude's (T10 3.14)
+g10 | limits/L04_show_record::h10probe | HOST-BUG | output: base's derived Show parenthesises a record argument, Just (R {f = 1}), where only needed parentheses are added (T10 11.4; GHC's bugs.rst)
+g10 | limits/L05_read_hex::h10probe | HOST-BUG | output: base's derived Read reads read "0x10" :: Int as 16, where Read Int is readSigned readDec (T10 9)
+g10 | limits/L06_bang_ws::h10probe | HOST-BUG | reject: GHC reads a prefix ! as a bang pattern in every language (proposal 229, bugs.rst), where ! is an operator (T10 2.4)
+g10 | limits/L15_array_dup::h10probe | HOST-BUG | output: GHC's array keeps the last of duplicate indices, where the element is undefined (T10 14.1; bugs.rst)
+g10 | limits/L23_hiding_negate::h10probe | HOST-BUG | output: RebindableSyntax reads -e through the negate in scope, the program's own, where it means the Prelude's (T10 3.4)
+g10 | limits/L22_realtofrac_nan::h10probe | SPEC-AMBIGUOUS | output: agrees by reading (W8): -Infinity, which is what the Report's realToFrac = fromRational . toRational makes of a NaN through toRational, which 6.4.6 leaves to the implementation; not NaN, as E8's expectation says
+
+# gbase: GHC's Haskell2010 over base, its library base's (E8, limits.tsv)
+gbase | limits/L04_show_record::h10probe | HOST-BUG | output: base's derived Show parenthesises a record argument (T10 11.4)
+gbase | limits/L05_read_hex::h10probe | HOST-BUG | output: base's Read Int reads hexadecimal (T10 9)
+gbase | limits/L06_bang_ws::h10probe | HOST-BUG | reject: GHC reads a prefix ! as a bang pattern in every language (T10 2.4)
+gbase | limits/L08_splitat::h10probe | HOST-BUG | output: base's splitAt is strict in its count, where the Report's is take and drop, lazy in it (T10 9.1; bugs.rst)
+gbase | limits/L10_monad_fail_method::h10probe | HOST-BUG | reject: base's Monad has no fail, MonadFail's (T10 6.3.6)
+gbase | limits/L11_num_eq::h10probe | HOST-BUG | reject: base's Num has no superclasses Eq and Show (T10 6.4)
+gbase | limits/L12_bits_num::h10probe | HOST-BUG | reject: base's Bits has no superclass Num (T10 15)
+gbase | limits/L13_functor_either::h10probe | HOST-BUG | reject: base has Functor (Either e), which a program may define under the Report (T10 13)
+gbase | limits/L14_applicative_absent::h10probe | HOST-BUG | reject: base's Prelude exports pure, which a program may define under the Report (T10 9)
+gbase | limits/L15_array_dup::h10probe | HOST-BUG | output: GHC's array keeps the last of duplicate indices (T10 14.1)
+gbase | limits/L22_realtofrac_nan::h10probe | SPEC-AMBIGUOUS | output: agrees by reading (W8), as g10's: -Infinity is not NaN
+
+# Hugs +98, nhc98 and MicroHs on the probes: other languages than 2010's (E8, limits.tsv; the roadmap, D39)
+hugs | limits/L06_bang_ws::h10probe | HOST-BUG | reject: Hugs refuses the probe's prefix ! in a pattern, Syntax error in declaration (T10 2.4)
+hugs | limits/L16_foreign_ccall::h10probe | HOST-BUG | reject: Hugs loads a foreign import from the stub library ffihugs makes, which the judge does not run: Error while importing DLL (T10 8)
+hugs | limits/L17_pattern_guard_let::h10probe | HOST-BUG | reject: Hugs has no pattern guards (L17; T10 3.13)
+hugs | limits/L18_n_plus_k::h10probe | HOST-BUG | accept: Hugs +98 takes n+k patterns, which 2010 removed (L18)
+nhc98 | limits/L06_bang_ws::h10probe | HOST-BUG | reject: nhc98 fails on the probe's prefix ! in a pattern, typePat (T10 2.4)
+nhc98 | limits/L15_array_dup::h10probe | HOST-BUG | reject: nhc98's library has no Data.Array, the probe's import (T10 14)
+nhc98 | limits/L18_n_plus_k::h10probe | HOST-BUG | accept: nhc98 takes n+k patterns, which 2010 removed (L18)
+nhc98 | limits/L19_do_if_then_else::h10probe | HOST-BUG | reject: nhc98 has no DoAndIfThenElse (L19; T10 3.14)
+nhc98 | limits/L21_relaxed_poly_rec::h10probe | HOST-BUG | reject: nhc98 groups by 98's stricter dependency analysis (L21; T10 4.5.1)
+mhs | limits/L07_forall_var::h10probe | HOST-BUG | reject: MicroHs reserves forall (T10 2.4)
+mhs | limits/L10_monad_fail_method::h10probe | HOST-BUG | reject: MicroHs's Monad has no fail, superflous instance binding (T10 6.3.6)
+mhs | limits/L11_num_eq::h10probe | HOST-BUG | reject: MicroHs's Num has no superclasses Eq and Show (T10 6.4)
+mhs | limits/L12_bits_num::h10probe | HOST-BUG | reject: MicroHs's Bits has no superclass Num (T10 15)
+mhs | limits/L13_functor_either::h10probe | HOST-BUG | reject: MicroHs has Functor (Either e) (T10 13)
+
+# g10's verdicts on the corpus that differ from E8's record
+g10 | hackage/blas-hs-0.1.1.0/library::h10 | HOST-BUG | accept: g10's ninth limit: the shim exports CFloat and CDouble with their constructors, which the Report exports abstractly (T10 28), so import Foreign.C (CFloat(CFloat)) is taken; E8 recorded the refusal of the shim before that change of 2026-11-21, and re-asked only the candidates with a foreign declaration

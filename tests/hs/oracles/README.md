@@ -78,3 +78,86 @@ MicroHs has no Haskell 98 mode: `mhs-shim/` holds the Report's modules for it th
 the rest are the GHC shim's. `Random.hs`, `Locale.hs` and `ShimTime.hs` are GHC's libraries' code (`random`,
 `old-locale`, and `old-time` over `time`), under the BSD licence of GHC's `base`, which is `BASE-LICENSE` here; the rest
 is this project's.
+
+## The 2010 oracles
+
+The judges of rhc's Haskell 2010 mode (the haskell2010 roadmap's D39, M2), as E8 built and asked them: they find
+disagreements, not truth, as the 98 ones do, and rhc follows the 2010 Report.
+
+| Oracle | What it is | What it judges |
+|---|---|---|
+| `g10` | GHC 9.4.7 `-XHaskell2010 -XRebindableSyntax -XImplicitPrelude -hide-all-packages`, over the shim below and its defaulting plugin | acceptance and output, its limits stated |
+| `gbase` | GHC 9.4.7 `-XHaskell2010` over base and 14 common packages | beside g10, to tell the language from the library |
+| `gext` | GHC 9.4.7's default language with each file's own LANGUAGE pragmas and every installed package | the extension corpus, for track X |
+| `mhs` | MicroHs, with its own library, the cache of `mhs2010-shim/` | acceptance only: it accepts much that 2010 refuses |
+| `hugs`, `nhc98` | Hugs `+98`, nhc98 | further opinions on programs without 2010's changes (Hugs has no pattern guards, nhc98 no DoAndIfThenElse nor relaxed dependency analysis, both take n+k) |
+
+They are the 98 oracles' binaries, found through the same variables (above), and GHC 9.4.7 is `RUNE_HS_GHC`. The
+jobs are `hs-oracles2010/ORACLE/judge-SET`, `probes`, `run` and `@stale` (`tests/runner/hsoracles2010.sml`), in
+the tier `nightly`, each needing its oracle's capability and its set's trees (`hs2010-corpus`, `hs-corpus`,
+`hs-hackage`: `../../hs2010/corpus/README.md`). Before judging, each builds and runs hello on its oracle. With no
+rhc they reproduce E8's evidence, each outcome under a label:
+
+| Label | What is asked | Held to |
+|---|---|---|
+| `h10` | each candidate, after the filter, with its LANGUAGE, OPTIONS, INCLUDE and ANN pragmas blanked (the program must be 2010 without them), g10's copy importing `RebindableH2010` where its own Prelude import does not bring what RebindableSyntax reads: `accept`, `reject`, or `filtered` | E8's record (`judged.tsv`) |
+| `h10ext` | gext on the same with its LANGUAGE pragmas kept and its suite's `-X` flags | E8's record |
+| `h10probe` | the 23 probes of `../../hs2010/corpus/limits/`, built and run by g10 and gbase (`accept`, `output` where it prints other than the Report says, `reject`), checked by the others | the Report (`limits.tsv`) |
+| `h10run` | the run tier's 90 programs built with `ghc -O0` over g10 or gbase as E8 built each, and run: `ok/STATUS/OUTPUT` or `fail` | E8's record (`run.tsv`) |
+
+A difference is a line of `../oracles.txt` with the outcome first, as the 98 oracles' are, and `@stale` fails a line
+that explains no failure of a job that ran. Every departure E8 recorded on a probe is such a line, so that a rebuilt
+shim or oracle cannot move a limit silently: g10's eight limits, with L22, which agrees by reading (below); gbase's
+ten and L22; Hugs's four, nhc98's five and MicroHs's five. `make check` holds the lines to the record
+(`hs2010-corpus/data`: each names something with a record of its oracle under its label and an outcome other than
+the one it is held to, and each recorded departure of a probe has its line).
+
+### The shim: `ghc2010-shim/`
+
+GHC's base is not the Report's library, so g10 compiles over two packages that the job `hs-oracles2010/@ghc2010-shim`
+builds in each run, as E8's `build.sh` built them:
+
+- **`haskell2010-report`** (`src/`): the Prelude and the Report's 30 modules, exactly their export lists (checked by
+  E8 against T10's chapters 13 to 42), and `RebindableH2010`, the names RebindableSyntax looks up, for a program
+  module whose own Prelude import does not bring them; hidden, `H2010.Classes` (the numeric and monadic classes),
+  `H2010.Bits` and `H2010.Instances` (the classes' instances for base's other numeric types, written by E8's generator
+  and kept by hand since). The numeric classes' code is the Report's, as rhc's haskell98 Prelude has it; Numeric,
+  Data.Complex and Data.Ratio are 98's code over these classes; the rest delegates to base, each module's head saying
+  which.
+- **`h2010-default`** (`plugin/H2010Default.hs`): a defaulting plugin (GHC 9.4's `DefaultingPlugin`) that applies
+  4.3.4's rule to the shim's classes, which GHC's own defaulting knows only by base's keys.
+
+What it reproduces: Num with Eq and Show as superclasses; Monad with `fail` and no Applicative superclass; Functor,
+Monad and MonadPlus with only the Report's instances; Bits under Num; the Prelude at list types, with no Applicative,
+Semigroup, Monoid, Word or MonadFail names; the Report's `catch`, `try`, `splitAt` and `error`; 4.3.4's defaulting,
+`default ()` included; the 2010 language's changes. **What it cannot** (E8's `oracles/README.md`; each but the last
+measured by a probe):
+
+1. Eq, Ord, Enum, Bounded, Show, Read and Ix are base's, since `deriving` names only base's: derived Show
+   parenthesises a record argument (L04), and `read "0x10" :: Int` parses (L05).
+2. Ratio is base's, since GHC types a fractional literal at base's Rational even under RebindableSyntax: Ord of
+   `Ratio a` for a type variable `a` is refused (L01).
+3. RebindableSyntax reads literals, negation, `do` and `if` through the names in scope: the Prelude exports one name
+   more, `ifThenElse`, and a program that defines its own, or hides and redefines `>>=`, `negate` or the like, is
+   misjudged (L02, L03, L23).
+4. GHC's own departures from the Report (its `bugs.rst`): a prefix `!` read as a bang pattern (L06), duplicate array
+   indices unchecked (L15), and the rest that file lists.
+5. Int is 64 bits and wraps; Char is Unicode as base 4.17 has it; I/O encodings are the locale's.
+6. **The ninth limit, which no probe covers:** Foreign.C.Types exports the arithmetic C types with their newtype
+   constructors, and Foreign.Ptr `IntPtr` and `WordPtr` with theirs, where the Report exports them abstractly, since
+   GHC marshals a newtype in a foreign declaration only with its constructor in scope (L16 was refused until E8 made
+   this change). So a program that writes `CInt 3` is wrongly accepted.
+
+Measured on the probes: g10 agrees with the Report on 14, departs on 8 (L01 to L06, L15, L23), and on L22
+(`realToFrac` of a NaN) prints `-Infinity`, which agrees by reading: the Report's `realToFrac = fromRational .
+toRational` makes of a NaN what `toRational` makes of it, and that is not NaN (W8). GHC 9.4.7 accepts `forall` as a
+term variable (L07), which 9.14.1 no longer does.
+
+MicroHs has no array package: `mhs2010-shim/Data/Array.hs` is `mhs-shim/Array.hs` under its 2010 name, and the job
+`hs-oracles2010/@mhs2010-cache` writes the cache every MicroHs job reads, from a program that imports every module
+of the Report.
+
+The shim's code is the Report's (its numeric classes and the modules of 98's code), base's (the definitions of 2010's
+added names, Foreign.C.Error's and Foreign.Marshal's functions over the shim's classes) and E8's own, all of it under
+`BASE-LICENSE`, base's licence, which carries the Haskell 98 Report's notice and the FFI Addendum's beside the
+University of Glasgow's.
