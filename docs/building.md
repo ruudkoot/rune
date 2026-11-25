@@ -240,6 +240,7 @@ name the tools to check.
 | `make test-cache-random` | the random edits at length, every warm build verified: what a change to a key runs |
 | `make test-cache-mutants` | the mutants of the cache alone, each against the checks that must see it; `make test-compiler-mutants` includes them |
 | `make test-rhc-mutants` | rhc's mutants (`tests/runner/hsmutantlist.sml`), each built into an rhc of its own and held to the jobs it names; `make check` only builds them |
+| `make check-hs98 OLD=...` | 98 mode held (the haskell2010 roadmap's M3): this tree's rhc, or `NEW`'s, against `OLD`'s, each a tree or a commit, in Haskell 98 mode on `tests/hs/lang` (both targets, `-O1` and `-O2`), `errors`, `accept`, their views, D56's run set, the snapshot and the vendored files with pragmas, every difference failing but those `EXPECT` names by a decided exception (`tests/runner/hsstanding.sml`; [testing.md](testing.md), *98 mode held*); not part of `make check` |
 | `make test-repl` | the REPL's transcripts on every mode of the JIT ([repl.md](repl.md)) |
 | `make test-terminal` | programs on a terminal: the scripts of `tests/terminal` on the runtime pseudo-terminal and SML screen emulator; native ConPTY on Windows ([testing.md](testing.md), *Programs on a terminal*) |
 | `make test-diagnostics` | diagnostics rendered with colour and excerpts (`tests/diagnostics`), and the contrast of the palette (`tests/color`) ([diagnostics.md](diagnostics.md)) |
