@@ -25,7 +25,9 @@ struct
 
   val hier = ref false
 
-  fun lexOpts () : HsLexer.options = {hierarchical = !hier}
+  (* Haskell 98's language, with --hier its dotted module names *)
+  fun lexOpts () : HsLexer.options =
+    {language = HsLanguage.resolve (HsLanguage.Haskell98, if !hier then [HsLanguage.On HsLanguage.HierarchicalModules] else [])}
   fun opts a : P.options = {lexer = lexOpts (), annotations = a}
 
   fun readFile path =

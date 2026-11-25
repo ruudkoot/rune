@@ -18,6 +18,7 @@
 - `pat_` (type): [HS_AST](../sig/HS_AST.md#type-pat_)
 - `patitem` (type): [HS_AST](../sig/HS_AST.md#type-patitem)
 - `pattern` (val): [HS_MATCH](../sig/HS_MATCH.md#val-pattern)
+- `PatternGuards` (con): [HS_LANGUAGE](../sig/HS_LANGUAGE.md#con-patternguards)
 - `PCon` (con): [HS_AST](../sig/HS_AST.md#con-pcon)
 - `Pedantic` (con): [CORE_SIMPLIFY](../sig/CORE_SIMPLIFY.md#con-pedantic)
 - `peek` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-peek)

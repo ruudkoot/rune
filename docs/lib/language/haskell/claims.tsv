@@ -21,11 +21,14 @@ HS_DS_ENV	signature			required	declared	lib/language/haskell/desugar_env_sig.sml
 HS_DUMP	signature			required	declared	lib/language/haskell/dump_sig.sml
 HS_EVIDENCE	signature			required	declared	lib/language/haskell/evidence_sig.sml
 HS_FIXITY	signature			required	declared	lib/language/haskell/fixity_sig.sml
+HS_HEADER	signature			required	declared	lib/language/haskell/header_sig.sml
 HS_IFACE	signature			required	declared	lib/language/haskell/hsiface_sig.sml
 HS_INFER	signature			required	declared	lib/language/haskell/infer_sig.sml
 HS_KINDS	signature			required	declared	lib/language/haskell/kinds_sig.sml
+HS_LANGUAGE	signature			required	declared	lib/language/haskell/language_sig.sml
 HS_LAYOUT	signature			required	declared	lib/language/haskell/layout_sig.sml
 HS_LEXER	signature			required	declared	lib/language/haskell/lexer_sig.sml
+HS_LIBRARY_NAMES	signature			required	declared	lib/language/haskell/library_names_sig.sml
 HS_LINT	signature			required	declared	lib/language/haskell/hslint_sig.sml
 HS_LITERATE	signature			required	declared	lib/language/haskell/literate_sig.sml
 HS_MATCH	signature			required	declared	lib/language/haskell/match_sig.sml
@@ -62,11 +65,14 @@ HsDsEnv	structure	HS_DS_ENV		required	claimed	lib/language/haskell/desugar_env.s
 HsDump	structure	HS_DUMP		required	claimed	lib/language/haskell/dump.sml
 HsEvidence	structure	HS_EVIDENCE		required	claimed	lib/language/haskell/evidence.sml
 HsFixity	structure	HS_FIXITY		required	claimed	lib/language/haskell/fixity.sml
+HsHeader	structure	HS_HEADER		required	claimed	lib/language/haskell/header.sml
 HsIface	structure	HS_IFACE		required	ascribed	lib/language/haskell/hsiface.sml
 HsInfer	structure	HS_INFER		required	claimed	lib/language/haskell/infer.sml
 HsKinds	structure	HS_KINDS		required	claimed	lib/language/haskell/kinds.sml
+HsLanguage	structure	HS_LANGUAGE		required	claimed	lib/language/haskell/language.sml
 HsLayout	structure	HS_LAYOUT		required	claimed	lib/language/haskell/layout.sml
 HsLexer	structure	HS_LEXER		required	claimed	lib/language/haskell/lexer.sml
+HsLibraryNames	structure	HS_LIBRARY_NAMES		required	claimed	lib/language/haskell/library_names.sml
 HsLint	structure	HS_LINT		required	claimed	lib/language/haskell/hslint.sml
 HsLiterate	structure	HS_LITERATE		required	claimed	lib/language/haskell/literate.sml
 HsMatch	structure	HS_MATCH		required	claimed	lib/language/haskell/match.sml

@@ -55,7 +55,7 @@ binding is inlined into a lambda only where it is a value.
 signature CORE_SIMPLIFY =
 sig
   datatype <a href="#type-eta">eta</a> = <a href="#con-pedantic">Pedantic</a> | <a href="#con-ghc">Ghc</a>
-  type <a href="#type-options">options</a> = {<a href="#fld-options.spend">spend</a> : unit -&gt; bool, <a href="#fld-options.whole">whole</a> : bool, <a href="#fld-options.eta">eta</a> : eta, <a href="#fld-options.cheap">cheap</a> : bool}
+  type <a href="#type-options">options</a> = {<a href="#fld-options.spend">spend</a> : unit -&gt; bool, <a href="#fld-options.whole">whole</a> : bool, <a href="#fld-options.eta">eta</a> : eta, <a href="#fld-options.cheap">cheap</a> : bool, <a href="#fld-options.library">library</a> : HsLibraryNames.t}
   val <a href="#val-passes">passes</a> : unit -&gt; (string * (options -&gt; Core.program -&gt; Core.program)) list
   val <a href="#val-simplify">simplify</a> : options -&gt; Core.program -&gt; Core.program
   val <a href="#val-specialise">specialise</a> : options -&gt; Core.program -&gt; Core.program
@@ -84,7 +84,7 @@ measured).
 ### <a name="type-options"></a>`options`
 
 ```sml
-type options = {spend : unit -> bool, whole : bool, eta : eta, cheap : bool}
+type options = {spend : unit -> bool, whole : bool, eta : eta, cheap : bool, library : HsLibraryNames.t}
 ```
 
 What the passes are given: what is asked before each rewrite, whether
@@ -92,7 +92,9 @@ the program is whole, the eta rule, and whether cheap eagerness runs.
 
 `spend` is asked before each rewrite (Pass.spend, so that --fuel stops
 them); with `whole` a value main does not reach may go. `cheap` is
-rhc's default, which --no-cheap-eagerness turns off.
+rhc's default, which --no-cheap-eagerness turns off. `library` is the
+names of the program's library, whose Prelude's and Ratio's entities
+the simplifier knows.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -100,6 +102,7 @@ rhc's default, which --no-cheap-eagerness turns off.
 | <a name="fld-options.whole"></a>`whole` | `bool` |  |
 | <a name="fld-options.eta"></a>`eta` | `eta` |  |
 | <a name="fld-options.cheap"></a>`cheap` | `bool` |  |
+| <a name="fld-options.library"></a>`library` | `HsLibraryNames.t` |  |
 
 ### <a name="val-passes"></a>`passes`
 

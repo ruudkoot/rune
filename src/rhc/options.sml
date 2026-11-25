@@ -87,6 +87,10 @@ struct
     \  --dump-usages         print what each unit of FILE.hs's program reads of its imports (M21)\n\
     \  --by-interface        with --typecheck-only, check each group of the program from the\n\
     \                        interfaces of the groups before it (M21)\n\
+    \  --language=EDITION    haskell98 (the default) or haskell2010: the edition every module\n\
+    \                        of the program starts from, and its library, DIR/EDITION\n\
+    \  -XNAME, -XNoNAME      a feature of every module's language on or off, as a LANGUAGE\n\
+    \                        pragma names it; -XHaskell98, -XHaskell2010 an edition\n\
     \  --names=least|greatest  the solution of a cycle's exports (D29): the least fixpoint,\n\
     \                        the default, or the greatest; chapter 5 is met by either\n\
     \  --cycle-default=module|scc  in a cycle of modules, each module's default declaration\n\
@@ -94,7 +98,9 @@ struct
     \                        extension, which the checker of M13 reads)\n\
     \  --dotted-names        read a module name with dots, Data.List, as one, which Haskell\n\
     \                        98's modid is not (D35); module A.B is the file A/B.hs\n\
-    \  --share DIR           where rhc's library is, DIR/haskell98 (bin/rhc gives it)\n\
+    \  --share DIR           where rhc's libraries are, DIR/haskell98 (bin/rhc gives it)\n\
+    \  --library-modules     print the modules a program may import of the library\n\
+    \                        --language selects\n\
     \  --read-core FILE      read FILE as Core text; given again, the files make one program\n\
     \  --typecheck-only      read and check, and run nothing: on a program of Haskell, its\n\
     \                        names, fixity, kinds, types and classes\n\

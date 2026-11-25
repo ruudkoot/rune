@@ -170,10 +170,14 @@ struct
      read by headers, a state of the units before, a unit taken ---- *)
 
   (* what of rhc's front end changes a unit's interface or Core: the
-     strings' form, the match's order, the driver (RhcStoreConfig) *)
+     strings' form, the match's order, the driver (RhcStoreConfig); and the
+     program's library, but Haskell 98's, so that a store of Haskell 98's
+     keeps its configurations (the haskell2010 roadmap's D9). A module's
+     language is in its unit's key (unitKey), not here *)
   fun extraOf (strings : CoreRuntime.strings) : (string * string) list =
     [("strings", case strings of CoreRuntime.Lazy => "lazy" | CoreRuntime.Whole => "whole"),
      ("match", case !HsMatch.order of HsMatch.Report => "report" | HsMatch.Sestoft => "sestoft"), ("driver", "hs")]
+    @ (if RhcLibrary.name () = "haskell98" then [] else [("library", RhcLibrary.name ())])
     (* the interface's unfoldings and strictness signatures, which only
        --unfoldings at -O2 writes: an entry with them shares with none
        without *)
@@ -189,14 +193,19 @@ struct
   fun headerKey ({name, mode, hash, ...} : headerAt) : string = RhcStore.key ("module:" ^ mode, [(name, hash)])
 
   (* a header as bytes, and the header of bytes, its spans in `file`, the
-     file read now; NONE where they are not one *)
-  fun headerText ({name, at, imports} : G.header) : string =
+     file read now; NONE where they are not one. The names of its LANGUAGE
+     pragmas are kept where it has any, so that a header without is the
+     bytes it was before the language was read (the haskell2010
+     roadmap's D9) *)
+  fun headerText ({name, at, imports, pragmas} : G.header) : string =
     let
       val w = Pickle.writer ()
       fun span (w, {start, stop, ...} : HsSource.span) = (Pickle.int (w, start); Pickle.int (w, stop))
     in
       Pickle.string (w, name); span (w, at);
       Pickle.list (fn (w, (m, s)) => (Pickle.string (w, m); span (w, s))) (w, imports);
+      if null pragmas then ()
+      else Pickle.list (fn (w, {name, at} : HsHeader.name) => (Pickle.string (w, name); Pickle.int (w, at))) (w, pragmas);
       Pickle.contents w
     end
 
@@ -207,8 +216,10 @@ struct
       val name = Pickle.rstring r
       val at = span r
       val imports = Pickle.rlist (fn r => let val m = Pickle.rstring r in (m, span r) end) r
+      val pragmas = if Pickle.atEnd r then []
+                    else Pickle.rlist (fn r => let val n = Pickle.rstring r in {name = n, at = Pickle.rint r} end) r
     in
-      if Pickle.atEnd r then SOME {name = name, at = at, imports = imports} else NONE
+      if Pickle.atEnd r then SOME {name = name, at = at, imports = imports, pragmas = pragmas} else NONE
     end
     handle Pickle.Bad _ => NONE | Subscript => NONE | Overflow => NONE
 
@@ -233,21 +244,23 @@ struct
                 | _ => NONE,
      keep = fn (k : headerAt, h) => keep (headerKey k, {iface = headerText h, parts = fn _ => "", count = 0})}
 
-  (* A unit's key: its name, and each member with the hash of its text and
+  (* A unit's key: its name, and each member with the hash of its text,
      whether the text is literate, which reads it as another program
-     (build-cache-issues.md, issue 27), over every member of an SCC (H8), a
-     module's `default` in its text (H4) *)
+     (build-cache-issues.md, issue 27), and its language's set, by which it
+     is read and checked (the haskell2010 roadmap's D9: nothing for Haskell
+     98's own, so that a key of Haskell 98's is what it was), over every
+     member of an SCC (H8), a module's `default` in its text (H4) *)
+  fun memberId (f : G.found) =
+    G.keyed (#id f ^ (if HsLiterate.isLiterate (#file f) then " literate" else ""), HsLanguage.key (#language f))
   fun unitKey (name : string, found : G.found list) : string =
-    RhcStore.key ("hs:" ^ name,
-                  List.map (fn (f : G.found) => (#id f ^ (if HsLiterate.isLiterate (#file f) then " literate" else ""), #hash f))
-                    found)
+    RhcStore.key ("hs:" ^ name, List.map (fn (f : G.found) => (memberId f, #hash f)) found)
 
   (* rhc's leaves the program's modules import (RhcNames.leavesOf, of the
      imports found) *)
   fun leavesOf (groups : G.found list list) =
     List.filter (fn (l, _) => List.exists (fn (f : G.found) => List.exists (fn t => t = RhcLibrary.identity l) (#imports f))
                                 (List.concat groups))
-      RhcLibrary.leaves
+      (RhcLibrary.leaves ())
 
   (* a state with the interfaces of the units before installed, as F's
      turns, and an evidence table of its own *)
@@ -314,7 +327,7 @@ struct
              let
                val {target, part = mine, ...} =
                  HsLint.check
-                   {groups = [modules], main = main, cycleDefault = false,
+                   {groups = [modules], main = main, names = RhcLibrary.names (),
                     records = Option.map (fn env => {table = #evidence r, env = env, derived = #derived r}) (#types r),
                     claims = Option.map (HsLint.claims o RhcLint.readFile) (!RhcLint.claims),
                     where_ = fn sp => getOpt (RhcLint.lineColumn sp, "0:0"), fault = RhcLint.fault (),
@@ -329,7 +342,9 @@ struct
 
   (* the modules of a unit's state as HsLint reads them *)
   fun lintModules (own : string -> bool, r : N.result) : HsLint.module list =
-    List.mapPartial (fn (n : G.node, ast) => if own (#id n) then SOME {id = #id n, ast = ast, library = #library n} else NONE)
+    List.mapPartial (fn (n : G.node, ast) => if own (#id n) then SOME {id = #id n, ast = ast, library = #library n,
+                                                                        language = #language n}
+                                             else NONE)
       (#modules r)
 
   (* the program's main in a unit, where the unit holds the root named Main *)
@@ -430,8 +445,9 @@ struct
      stands for the entities it stood for, and only their fingerprints can
      have moved, which the units before give without the unit's modules
      read or named. Where one moved, the unit is named and each usage
-     asked, as before. Not under the greatest fixpoint of exports, whose
-     start is every entity of the program. *)
+     asked, as before. Not for a unit whose cycle's exports are at the
+     greatest fixpoint (--names=greatest), whose start is every entity of
+     the program. *)
   val scopePrefix = "scope "
   fun isScope (k : string) = String.isPrefix scopePrefix k
 
@@ -488,7 +504,7 @@ struct
         String.concatWith " " (RhcIface.sortStrings (List.map one (String.tokens (fn c => c = #" ") v)))
       end
 
-  fun front {roots : string list, dotted : bool, fixpoint : HsModules.fixpoint, check : HsInfer.cycleDefault option,
+  fun front {roots : string list, setting : HsLanguage.setting, check : bool,
              store : string option, layers : string list, strings : CoreRuntime.strings, show : bool} : front =
     let
       val mark = ref (!Pass.instructions ())
@@ -496,8 +512,9 @@ struct
       fun counted what = if show then what ^ ", " ^ Int.toString (since ()) ^ " instructions" else what
       fun say (name, what) = if show then TextIO.output (TextIO.stdErr, "rhc: unit " ^ name ^ ": " ^ counted what ^ "\n") else ()
       fun said what = if show then TextIO.output (TextIO.stdErr, "rhc: link: " ^ counted what ^ "\n") else ()
-      (* and --dotted-names, by which a module's text is read otherwise *)
-      val extra = extraOf strings @ (if dotted then [("names", "dotted")] else [])
+      (* a module's language, --dotted-names and the rest of the command
+         line's setting among it, is its unit's key's *)
+      val extra = extraOf strings
       (* a unit's entries in the configuration of units, which no back end's
          setting divides; the link's in the whole one, made where the link
          is looked up or kept: after the compile's own options have set the
@@ -527,7 +544,7 @@ struct
       fun recorded f = if isSome store then RhcIface.recording f else (f (), [])
       val reader = readerOf {memo = statMemo, lookup = lookup,
                              keep = fn (k, sections) => if isSome store then ignore (keepUnit (k, [], "", sections)) else ()}
-      val plan = G.scan {roots = roots, dotted = dotted, known = M.empty, library = false, reader = reader}
+      val plan = G.scan {roots = roots, setting = setting, known = M.empty, library = false, reader = reader}
       val () = if show then TextIO.output (TextIO.stdErr, "rhc: " ^ counted "the graph read" ^ "\n") else ()
       (* the interfaces of the units before a unit installed once, as each
          is done, and not again from all of them for each unit, which made
@@ -547,7 +564,10 @@ struct
         case M.find (!digests, m) of
           SOME d => d
         | NONE => let val d = scopeDigest (s, m) in digests := M.insert (!digests, m, d); d end
-      val twoPhase = case fixpoint of HsModules.Least => true | HsModules.Greatest => false
+      (* a unit judged in two phases: one whose cycle's exports are at the
+         least fixpoint *)
+      fun twoPhaseOf (found : G.found list) =
+        not (List.exists (fn (f : G.found) => HsLanguage.has (#language f, HsLanguage.GreatestFixpointNames)) found)
       (* RHC_HIT=asked: each usage of an entry asked, as a hit was judged
          before issue 37's A and B, what they keep kept alike: so that a
          test holds a hit to where it stood (hs/units/holes) *)
@@ -556,7 +576,8 @@ struct
          it, where each has an entry: a unit taken, or made and kept (keep),
          in order; NONE after one that has none, a unit made by this
          compile not yet kept *)
-      val namesSetting = "names " ^ (case fixpoint of HsModules.Least => "least" | HsModules.Greatest => "greatest")
+      val greatestNames = HsLanguage.has (HsLanguage.ofSetting setting, HsLanguage.GreatestFixpointNames)
+      val namesSetting = "names " ^ (if greatestNames then "greatest" else "least")
       fun priorAfter (p : string option, u : unit_) : string option =
         case (p, !(#entry u)) of
           (SOME p, SOME s) => SOME (RhcStore.priorNext (p, (#name u, #key u, s)))
@@ -567,6 +588,7 @@ struct
           val ids = List.map #id found
           val name = String.concatWith "+" ids
           val key = unitKey (name, found)
+          val twoPhase = twoPhaseOf found
           val nodes = once (fn () => List.map (fn (f : G.found) => #node f ()) found)
           fun own home = List.exists (fn i => i = home) ids
           fun answerIn s r = RhcIface.answer {state = s, fingerprint = fn k => M.find (prints, k), own = own} r
@@ -577,7 +599,7 @@ struct
           fun now () =
             case !nowCell of
               SOME s => s
-            | NONE => let val s = N.groups (N.extend (start installed, nodes ()), [nodes ()], fixpoint, NONE)
+            | NONE => let val s = N.groups (N.extend (start installed, nodes ()), [nodes ()], false)
                       in nowCell := SOME s; s end
           fun current k = case HsUsage.fromKey k of SOME r => answerIn (now ()) r | NONE => "?"
           (* the modules the unit imports, and the digest of each now *)
@@ -626,10 +648,9 @@ struct
           fun make (why, stored) =
             let
               val (s, reads) =
-                recorded (fn () => N.groups (N.extend (start installed, nodes ()), [nodes ()], fixpoint,
-                                             if failed then NONE else check))
+                recorded (fn () => N.groups (N.extend (start installed, nodes ()), [nodes ()], not failed andalso check))
               val r : N.result = {modules = List.rev (#modules s), exports = #exports s, diags = #diags s,
-                                  types = if failed orelse not (isSome check) then NONE else SOME (#types s),
+                                  types = if failed orelse not check then NONE else SOME (#types s),
                                   evidence = #evidence s, derived = #derived s}
               val ds = List.filter (fn d => not (#library d)) (#diags s)
               val mods = RhcIface.ofModules (s, ids)

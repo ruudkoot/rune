@@ -187,7 +187,7 @@ struct
   (* built when asked, not when the runner starts: a command of a job
      (bin/rune-test hs-roundtrip-one ...) needs none of it *)
   fun tests () = List.foldl (fn (path, tree) => Test.tag ("covers:" ^ path) tree)
-    (Test.describe "" [make, expected, Lang.tests (), Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, HsCore.tree (), TerminalJobs.tree, Protocols.tree, Portability.tree, ForeignModelJobs.tree, FfiJobs.tree, Canary.tests, CompilerMutants.tree (), HsLang.tree (), HsRoundTrip.tree (), HsConformance.tree (), HsSyntax.tree (), HsNames.tree (), HsMutants.tree (), HsMeta.tree (), HsGen.tree (), HsReduce.tree (), HsInterpVm.tree (), HsOracles.tree (), HsLibrary.tree (), HsPerf.tree (), HsLintJobs.tree (), HsRhcCorpus.tree (), HsLazyPorts.tree (), HsCorpusRun.tree (), HsUnits.tree (), Thunks.tree, HsSnapshotJobs.tree (), HsIfaceJobs.tree (), HsDesugarJobs.tree (), HsSimplifyJobs.tree (), HsSimplifyFigures.tree ()]) broadInputs
+    (Test.describe "" [make, expected, Lang.tests (), Basis.tree, Laws.tree, LibHosts.tree, HostChecks.tree, BuildChecks.tree, Migration.tree, Native.tree, Heap.tree, HostLaws.tree (), matrixFaults, checkRequirements, DocChecks.tree, Mutants.tree (), Matrix.tree (), Matrix.faults, Benchmarks.tree (), ScenarioJobs.tree (), IntInfJobs.tree, MeasurementJobs.tree, GMPJobs.tree, WindowsJobs.tree (), WindowsJobs.faults, Oracles.tree, Tools.tree, HsCore.tree (), TerminalJobs.tree, Protocols.tree, Portability.tree, ForeignModelJobs.tree, FfiJobs.tree, Canary.tests, CompilerMutants.tree (), HsLang.tree (), HsRoundTrip.tree (), HsConformance.tree (), HsSyntax.tree (), HsNames.tree (), HsMutants.tree (), HsMeta.tree (), HsGen.tree (), HsReduce.tree (), HsInterpVm.tree (), HsOracles.tree (), HsLibrary.tree (), HsPerf.tree (), HsLintJobs.tree (), HsRhcCorpus.tree (), HsLazyPorts.tree (), HsCorpusRun.tree (), HsUnits.tree (), Thunks.tree, HsSnapshotJobs.tree (), HsIfaceJobs.tree (), HsDesugarJobs.tree (), HsSimplifyJobs.tree (), HsSimplifyFigures.tree (), HsLanguageJobs.tree ()]) broadInputs
 
   fun requirements () =
     let val rows = Test.leaves (tests ())
@@ -296,6 +296,9 @@ val () =
             SOME f => f ()
           | NONE =>
           case HsUnits.command args of
+            SOME f => f ()
+          | NONE =>
+          case HsLanguageJobs.command args of
             SOME f => f ()
           | NONE => case Protocols.command args of
                       SOME f => f ()

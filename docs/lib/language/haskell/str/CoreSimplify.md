@@ -25,7 +25,7 @@ What each means is on [`CORE_SIMPLIFY`](../sig/CORE_SIMPLIFY.md); the types are 
 |  | Member | Is |
 | --- | --- | --- |
 | datatype | [`eta`](../sig/CORE_SIMPLIFY.md#type-eta) | `Pedantic` &#124; `Ghc` |
-| type | [`options`](../sig/CORE_SIMPLIFY.md#type-options) | `{cheap : bool, eta : eta, spend : unit -> bool, whole : bool}` |
+| type | [`options`](../sig/CORE_SIMPLIFY.md#type-options) | `{cheap : bool, eta : eta, library : {builtin : string, ix : string, prefix : string, prelude : string, ratio : string, text : string}, spend : unit -> bool, whole : bool}` |
 | val | [`counts`](../sig/CORE_SIMPLIFY.md#val-counts) | `unit -> (string * int) list` |
 | val | [`eta`](../sig/CORE_SIMPLIFY.md#val-eta) | `options -> Core.decl list -> Core.decl list` |
 | val | [`passes`](../sig/CORE_SIMPLIFY.md#val-passes) | `unit -> (string * (options -> Core.decl list -> Core.decl list)) list` |

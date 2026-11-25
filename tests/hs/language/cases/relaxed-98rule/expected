@@ -1,0 +1,2 @@
+Main.hs:4:1: error: the signatures of `f` and `g`, one declaration group, have contexts that differ, which 4.5.2 requires to be identical up to renaming (R21)
+status 1

@@ -63,6 +63,18 @@ block in braces, by layout, or exactly as its file was (D28), and `HsDump`
 as text. `HsSource` holds spans and the front end's errors, `HsChar` the
 Report's classes of characters.
 
+A module is read and checked under its language (the haskell2010
+roadmap's M4, D4 to D10): `HsLanguage` is its edition, Haskell 98 or
+Haskell 2010, and the set of rhc's features it has, resolved once from the
+command line's setting and the module's header as GHC resolves them, which
+every stage asks of the module it is working on, never of the run, and a
+unit's key holds in a canonical form. `HsHeader` reads the header's
+LANGUAGE pragmas from a module's text before it is lexed, each name with
+its place; in a module of Haskell 98 only the editions are read.
+`HsLibraryNames` are the names of the program's library that the stages
+name: the prefix of its modules' identities and the module of each role,
+the Prelude's, Ratio's and the rest.
+
 Desugaring (`desugar.build`, the roadmap's M15) makes a checked program
 the Core it means: `HsDesugar` applies the Report's translations of
 chapters 3 and 4 literally (D34's A), each class a data type of
@@ -72,4 +84,4 @@ in the Report's order, or as decision trees in Sestoft's order, rhc's at
 `-O2` (D34); `HsDsEnv` is what desugaring knows of the program, its names,
 types and records in Core, and `HsDsCore` builds Core with its types.
 
-The roadmap is `docs/plans/language/haskell98.md`.
+The roadmaps are `docs/plans/language/haskell98.md` and `docs/plans/language/haskell2010.md`.

@@ -13,10 +13,15 @@
    Area: Languages *)
 signature HS_LINT =
 sig
-  (* A module of a program as HsLint reads it: its identity, its tree as
-     `HsRename` renamed it and `HsFixity` resolved it, and whether it is
-     one of rhc's library's. *)
-  type module = {id : string, ast : HsAst.module, library : bool}
+  (* A module of a program as HsLint reads it: its identity, its tree,
+     whether it is one of rhc's library's, and its language.
+
+     The tree is as `HsRename` renamed it and `HsFixity` resolved it. Of
+     the language (HsLanguage), RelaxedPolyRec puts every signature of a
+     group in which any module has it in scope from the start, and a group
+     whose modules have CycleDefaultScc shares one `default` and Rule 2
+     closes at its end (D30's `--cycle-default=scc`). *)
+  type module = {id : string, ast : HsAst.module, library : bool, language : HsLanguage.t}
 
   (* A binding of the top level as the second inference left it: its
      module, its name, its type as text, whether a signature declared it.
@@ -56,18 +61,16 @@ sig
      row of the conformance table it is for where there is one. *)
   exception Refused of HsSource.span * string
 
-  (* `infer {groups, main, cycleDefault}` is the report of the second
-     inference over the program whose groups of modules are `groups`.
+  (* `infer {groups, main, names}` is the report of the second inference
+     over the program whose groups of modules are `groups`.
 
      The groups are the strongly connected ones, dependencies first;
      `main` is the identity of the module whose `main` must have the type
-     `IO t` (5), if any; and `cycleDefault` is whether a group's modules
-     share one `default` and Rule 2 closes at the group's end (D30's
-     `--cycle-default=scc`) rather than each module's.
+     `IO t` (5), if any; and `names` are the program's library's names.
 
      Raises: `Refused` at the first breach of the Report's static rules
      the second inference finds. *)
-  val infer : {groups : module list list, main : string option, cycleDefault : bool} -> report
+  val infer : {groups : module list list, main : string option, names : HsLibraryNames.t} -> report
 
   (* What a record claims of a program, in the form `dump` prints.
 
@@ -112,8 +115,8 @@ sig
      inferred alone (D45). *)
   type library
 
-  (* `check {groups, main, cycleDefault, records, claims, where_, fault,
-     library}` is `infer`'s report, with the checker's records replayed and
+  (* `check {groups, main, names, records, claims, where_, fault, library}`
+     is `infer`'s report, with the checker's records replayed and
      compared.
 
      With `library`, the groups of its modules are not inferred again: the
@@ -132,7 +135,7 @@ sig
      `fault` is as `compare`'s, for every rule.
 
      Raises: `Refused` at the first breach. *)
-  val check : {groups : module list list, main : string option, cycleDefault : bool,
+  val check : {groups : module list list, main : string option, names : HsLibraryNames.t,
                records : {table : HsEvidence.table, env : HsInfer.env,
                           derived : (string * string * HsAst.decl list) list} option,
                claims : claims option, where_ : HsSource.span -> string, fault : string, library : library option}

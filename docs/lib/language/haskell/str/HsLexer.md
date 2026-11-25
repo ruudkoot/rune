@@ -22,7 +22,7 @@ What each means is on [`HS_LEXER`](../sig/HS_LEXER.md); the types are this struc
 
 |  | Member | Is |
 | --- | --- | --- |
-| type | [`options`](../sig/HS_LEXER.md#type-options) | `{hierarchical : bool}` |
+| type | [`options`](../sig/HS_LEXER.md#type-options) | `{language : HsLanguage.t}` |
 | val | [`defaults`](../sig/HS_LEXER.md#val-defaults) | `options` |
 | val | [`tokens`](../sig/HS_LEXER.md#val-tokens) | `options * string * string -> {column : int, first : bool, line : int, start : int, stop : int, token : HsToken.token, trivia : {kind : HsToken.trivia, start : int, stop : int} list} vector` |
 

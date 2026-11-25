@@ -38,7 +38,7 @@ program the compile accepts is a bug of rhc's.
 <pre>
 signature HS_LINT =
 sig
-  type <a href="#type-module">module</a> = {<a href="#fld-module.id">id</a> : string, <a href="#fld-module.ast">ast</a> : HsAst.module, <a href="#fld-module.library">library</a> : bool}
+  type <a href="#type-module">module</a> = {<a href="#fld-module.id">id</a> : string, <a href="#fld-module.ast">ast</a> : HsAst.module, <a href="#fld-module.library">library</a> : bool, <a href="#fld-module.language">language</a> : HsLanguage.t}
   type <a href="#type-binding">binding</a> = {<a href="#fld-binding.module">module</a> : string, <a href="#fld-binding.name">name</a> : string, <a href="#fld-binding.scheme">scheme</a> : string, <a href="#fld-binding.signed">signed</a> : bool, <a href="#fld-binding.restricted">restricted</a> : bool,
                   <a href="#fld-binding.span">span</a> : HsSource.span}
   type <a href="#type-default">default</a> = {<a href="#fld-default.module">module</a> : string, <a href="#fld-default.span">span</a> : HsSource.span, <a href="#fld-default.preds">preds</a> : string, <a href="#fld-default.choice">choice</a> : string, <a href="#fld-default.ruletwo">ruleTwo</a> : bool}
@@ -48,7 +48,7 @@ sig
   type <a href="#type-report">report</a> = {<a href="#fld-report.bindings">bindings</a> : binding list, <a href="#fld-report.defaults">defaults</a> : default list, <a href="#fld-report.kinds">kinds</a> : kind list, <a href="#fld-report.derived">derived</a> : derived list,
                  <a href="#fld-report.classes">classes</a> : class_ list}
   exception <a href="#exn-refused">Refused</a> of HsSource.span * string
-  val <a href="#val-infer">infer</a> : {<a href="#fld-infer.groups">groups</a> : module list list, <a href="#fld-infer.main">main</a> : string option, <a href="#fld-infer.cycledefault">cycleDefault</a> : bool} -&gt; report
+  val <a href="#val-infer">infer</a> : {<a href="#fld-infer.groups">groups</a> : module list list, <a href="#fld-infer.main">main</a> : string option, <a href="#fld-infer.names">names</a> : HsLibraryNames.t} -&gt; report
   type <a href="#type-claims">claims</a>
   val <a href="#val-claims">claims</a> : string -&gt; claims
   val <a href="#val-rules">rules</a> : (string * string) list
@@ -56,7 +56,7 @@ sig
   val <a href="#val-replayrules">replayRules</a> : (string * string) list
   type <a href="#type-target">target</a>
   type <a href="#type-library">library</a>
-  val <a href="#val-check">check</a> : {<a href="#fld-check.groups">groups</a> : module list list, <a href="#fld-check.main">main</a> : string option, <a href="#fld-check.cycledefault">cycleDefault</a> : bool,
+  val <a href="#val-check">check</a> : {<a href="#fld-check.groups">groups</a> : module list list, <a href="#fld-check.main">main</a> : string option, <a href="#fld-check.names">names</a> : HsLibraryNames.t,
                <a href="#fld-check.records">records</a> : {table : HsEvidence.table, env : HsInfer.env,
                           derived : (string * string * HsAst.decl list) list} option,
                <a href="#fld-check.claims">claims</a> : claims option, <a href="#fld-check.where_">where_</a> : HsSource.span -&gt; string, <a href="#fld-check.fault">fault</a> : string, <a href="#fld-check.library">library</a> : library option}
@@ -76,18 +76,24 @@ end
 ### <a name="type-module"></a>`module`
 
 ```sml
-type module = {id : string, ast : HsAst.module, library : bool}
+type module = {id : string, ast : HsAst.module, library : bool, language : HsLanguage.t}
 ```
 
-A module of a program as HsLint reads it: its identity, its tree as
-[`HsRename`](../str/HsRename.md) renamed it and [`HsFixity`](../str/HsFixity.md) resolved it, and whether it is
-one of rhc's library's.
+A module of a program as HsLint reads it: its identity, its tree,
+whether it is one of rhc's library's, and its language.
+
+The tree is as [`HsRename`](../str/HsRename.md) renamed it and [`HsFixity`](../str/HsFixity.md) resolved it. Of
+the language (HsLanguage), RelaxedPolyRec puts every signature of a
+group in which any module has it in scope from the start, and a group
+whose modules have CycleDefaultScc shares one [`default`](#type-default) and Rule 2
+closes at its end (D30's `--cycle-default=scc`).
 
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-module.id"></a>`id` | `string` |  |
 | <a name="fld-module.ast"></a>`ast` | `HsAst.module` |  |
 | <a name="fld-module.library"></a>`library` | `bool` |  |
+| <a name="fld-module.language"></a>`language` | `HsLanguage.t` |  |
 
 ### <a name="type-binding"></a>`binding`
 
@@ -207,17 +213,15 @@ row of the conformance table it is for where there is one.
 ### <a name="val-infer"></a>`infer`
 
 ```sml
-val infer : {groups : module list list, main : string option, cycleDefault : bool} -> report
+val infer : {groups : module list list, main : string option, names : HsLibraryNames.t} -> report
 ```
 
-`infer {groups, main, cycleDefault}` is the report of the second
-inference over the program whose groups of modules are `groups`.
+`infer {groups, main, names}` is the report of the second inference
+over the program whose groups of modules are `groups`.
 
 The groups are the strongly connected ones, dependencies first;
 `main` is the identity of the module whose `main` must have the type
-`IO t` (5), if any; and `cycleDefault` is whether a group's modules
-share one [`default`](#type-default) and Rule 2 closes at the group's end (D30's
-`--cycle-default=scc`) rather than each module's.
+`IO t` (5), if any; and `names` are the program's library's names.
 
 **Raises** [`Refused`](#exn-refused) at the first breach of the Report's static rules
 the second inference finds.
@@ -226,7 +230,7 @@ the second inference finds.
 | --- | --- | --- |
 | <a name="fld-infer.groups"></a>`groups` | `module list list` |  |
 | <a name="fld-infer.main"></a>`main` | `string option` |  |
-| <a name="fld-infer.cycledefault"></a>`cycleDefault` | `bool` |  |
+| <a name="fld-infer.names"></a>`names` | `HsLibraryNames.t` |  |
 
 ### <a name="type-claims"></a>`claims`
 
@@ -309,14 +313,15 @@ inferred alone (D45).
 ### <a name="val-check"></a>`check`
 
 ```sml
-val check : {groups : module list list, main : string option, cycleDefault : bool,
+val check : {groups : module list list, main : string option, names : HsLibraryNames.t,
              records : {table : HsEvidence.table, env : HsInfer.env,
                         derived : (string * string * HsAst.decl list) list} option,
              claims : claims option, where_ : HsSource.span -> string, fault : string, library : library option}
             -> {report : report, target : target, part : library}
 ```
 
-`check {groups, main, cycleDefault, records, claims, where_, fault, library}` is [`infer`](#val-infer)'s report, with the checker's records replayed and
+`check {groups, main, names, records, claims, where_, fault, library}`
+is [`infer`](#val-infer)'s report, with the checker's records replayed and
 compared.
 
 With `library`, the groups of its modules are not inferred again: the
@@ -340,7 +345,7 @@ inference as claims ([`compare`](#val-compare)); with `claims`, those are too.
 | --- | --- | --- |
 | <a name="fld-check.groups"></a>`groups` | `module list list` |  |
 | <a name="fld-check.main"></a>`main` | `string option` |  |
-| <a name="fld-check.cycledefault"></a>`cycleDefault` | `bool` |  |
+| <a name="fld-check.names"></a>`names` | `HsLibraryNames.t` |  |
 | <a name="fld-check.records"></a>`records` | `{table : HsEvidence.table, env : HsInfer.env, derived : (string * string * HsAst.decl list) list} option` |  |
 | <a name="fld-check.claims"></a>`claims` | `claims option` |  |
 | <a name="fld-check.where_"></a>`where_` | `HsSource.span -> string` |  |

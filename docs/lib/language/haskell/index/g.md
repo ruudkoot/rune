@@ -7,6 +7,7 @@
 - `Ghc` (con): [CORE_SIMPLIFY](../sig/CORE_SIMPLIFY.md#con-ghc)
 - `global` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-global)
 - `Greatest` (con): [HS_MODULES](../sig/HS_MODULES.md#con-greatest)
+- `GreatestFixpointNames` (con): [HS_LANGUAGE](../sig/HS_LANGUAGE.md#con-greatestfixpointnames)
 - `Guard` (con): [HS_AST](../sig/HS_AST.md#con-guard)
 - `guard` (type): [HS_AST](../sig/HS_AST.md#type-guard)
 - `Guarded` (con): [HS_AST](../sig/HS_AST.md#con-guarded)

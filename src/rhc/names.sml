@@ -1,7 +1,8 @@
 (* The names of a program (the haskell98 roadmap's M12): each group of
    RhcGraph's, dependencies first, solved for its exports and scopes by
-   HsModules at the fixpoint asked for (D29: `--names=least`, the default,
-   or `--names=greatest`), each of its modules renamed by HsRename, and
+   HsModules at the fixpoint its modules' language asks for (D29:
+   `--names=least`, the default, or `--names=greatest`, a cycle's setting,
+   on which its modules agree), each of its modules renamed by HsRename, and
    then resolved by HsFixity, with the fixities of every entity of the
    program, which their modules declare, read after names and with no
    iteration. Instances are not names: every one a module declares is
@@ -54,7 +55,7 @@ struct
   fun leavesOf (nodes : G.node list) =
     List.filter (fn (l, _) => List.exists (fn (n : G.node) => List.exists (fn (_, t) => t = RhcLibrary.identity l) (#imports n))
                                 nodes)
-      RhcLibrary.leaves
+      (RhcLibrary.leaves ())
 
   (* `extend (s, nodes)` is `s` with the entities and fixities of `nodes`,
      which follow its groups *)
@@ -146,11 +147,30 @@ struct
       1000000 * (1 + least)
     end
 
-  (* `groups (s, gs, fixpoint, check)`: each group of `gs` solved for its
-     exports and scopes, its modules renamed and resolved, and with
-     `check`, each group checked too, its types, classes and instances
-     (HsInfer, M13), under the setting of --cycle-default *)
-  fun groups (s : state, gs : G.node list list, fixpoint : Mo.fixpoint, check : HsInfer.cycleDefault option) : state =
+  (* `ofCycle (members, f)`: whether the group `members` has the feature
+     `f` of a cycle's own (the haskell2010 roadmap's D8, D10: the fixpoint
+     of its exports, --names=greatest, and its one default,
+     --cycle-default=scc), and the error where its modules differ on it,
+     said at the first module's header (E13's combination C2) *)
+  fun ofCycle (members : G.node list, f : HsLanguage.feature) : bool * (HsSource.span * string) list =
+    let
+      val ons = List.map (fn (n : G.node) => HsLanguage.has (#language n, f)) members
+      val on = List.all (fn b => b) ons
+    in
+      if on orelse List.all not ons then (on, [])
+      else
+        (false,
+         [(G.headerSpan (#ast (hd members)),
+           "the modules of a cycle, " ^ String.concatWith ", " (List.map #name members) ^ ", differ on " ^
+           HsLanguage.featureName f ^ ", which is the cycle's setting: a combination rhc cannot support (12.3)")])
+    end
+
+  (* `groups (s, gs, check)`: each group of `gs` solved for its exports
+     and scopes, its modules renamed and resolved, and with `check`, each
+     group checked too, its types, classes and instances (HsInfer, M13),
+     each binding under its module's language, the fixpoint of a cycle's
+     exports and its default by its modules' agreement (ofCycle) *)
+  fun groups (s : state, gs : G.node list list, check : bool) : state =
     let
       val defTable = #defs s
       fun defOf k = M.find (defTable, k)
@@ -173,8 +193,9 @@ struct
       fun prelude (space, name) =
         let
           val from =
-            if List.exists (fn n => n = name) ["Ix", "range", "index", "inRange", "rangeSize"] then RhcLibrary.identity "Ix"
-            else RhcLibrary.identity "Prelude"
+            if List.exists (fn n => n = name) ["Ix", "range", "index", "inRange", "rangeSize"]
+            then RhcLibrary.identity (RhcLibrary.roleModule "Ix")
+            else RhcLibrary.identity (RhcLibrary.roleModule "Prelude")
           val sp = if space = "t" then Mo.Type else Mo.Value
         in
           HsUsage.read (HsUsage.Standard {space = space, name = name});
@@ -183,8 +204,11 @@ struct
       fun group members =
         let
           val units = List.map (fn (n : G.node) => {id = #id n, name = #name n, ast = #ast n, imports = #imports n}) members
+          val (greatest, gerrs) = ofCycle (members, HsLanguage.GreatestFixpointNames)
+          val (scc, cerrs) = ofCycle (members, HsLanguage.CycleDefaultScc)
+          val () = add (gerrs @ cerrs)
           val solved = Mo.solve {group = units, exportsOf = exportsOf, defOf = defOf, universe = universe,
-                                 fixpoint = fixpoint}
+                                 fixpoint = if greatest then Mo.Greatest else Mo.Least}
           val () = exports := M.foldl (fn (id, es, m) => M.insert (m, id, es)) (!exports) (#exports solved)
           val () = scopes := M.foldl (fn (id, sc, m) => M.insert (m, id, sc)) (!scopes) (#scopes solved)
           val () = add (#errors solved)
@@ -207,9 +231,9 @@ struct
           val failed = List.exists (fn d => not (#library d)) (!diags)
         in
           case (check, failed) of
-            (NONE, _) => ()
+            (false, _) => ()
           | (_, true) => ()
-          | (SOME cycleDefault, false) =>
+          | (true, false) =>
               let
                 val () = if List.all #library members then HsInfer.numberFrom (librarySlot members)
                          else HsInfer.numberFrom (programSlot members)
@@ -217,9 +241,13 @@ struct
                 (* 5.4: an instance in scope where imports reach it *)
                 val () = HsInfer.setReaches RhcGraph.reaches
                 val {env, errors, derived} =
-                  HsInfer.check {env = !types, cycleDefault = cycleDefault, prelude = prelude, evidence = evidence,
-                                 fixity = fn k => M.find (fixTable, k),
-                                 unit = List.map (fn (n : G.node, m) => {id = #id n, ast = m, library = #library n}) resolved}
+                  HsInfer.check {env = !types, cycleDefault = if scc then HsInfer.PerGroup else HsInfer.PerModule,
+                                 prelude = prelude, evidence = evidence, fixity = fn k => M.find (fixTable, k),
+                                 (* 4.3.4's standard classes: the program's library's (D20) *)
+                                 standard = fn cls => String.isPrefix ("t" ^ RhcLibrary.name () ^ ":") cls,
+                                 unit = List.map (fn (n : G.node, m) => {id = #id n, ast = m, library = #library n,
+                                                                         language = #language n})
+                                          resolved}
               in
                 types := env;
                 derivedOut := !derivedOut @ derived;
@@ -237,12 +265,11 @@ struct
     {modules = List.rev (#modules s), exports = #exports s, diags = #diags s,
      types = if checked then SOME (#types s) else NONE, evidence = #evidence s, derived = #derived s}
 
-  (* `run (g, fixpoint, check)`: with `check`, each group is checked too,
-     its types, classes and instances (HsInfer, M13), under the setting
-     of --cycle-default *)
-  fun run (g : G.graph, fixpoint : Mo.fixpoint, check : HsInfer.cycleDefault option) : result =
+  (* `run (g, check)`: with `check`, each group is checked too, its types,
+     classes and instances (HsInfer, M13), under its modules' languages *)
+  fun run (g : G.graph, check : bool) : result =
     let val nodes = List.concat (#groups g)
-    in result (groups (extend (initial (leavesOf nodes), nodes), #groups g, fixpoint, check), isSome check) end
+    in result (groups (extend (initial (leavesOf nodes), nodes), #groups g, check), check) end
 
   (* ---- --dump-names ---- *)
 

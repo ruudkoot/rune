@@ -39,7 +39,8 @@ struct
     if not (enabled ()) then ([], [])
     else
       let
-        val opts = {spend = fn () => true, whole = false, eta = !RhcOptions.eta, cheap = !RhcOptions.cheap}
+        val opts = {spend = fn () => true, whole = false, eta = !RhcOptions.eta, cheap = !RhcOptions.cheap,
+                    library = RhcLibrary.names ()}
         val p' = List.foldl (fn ((_, pass), p) => pass opts p) p (CoreSimplify.passes ())
         val strictness =
           if not (!CoreStrict.enabled) then []
@@ -57,7 +58,8 @@ struct
     if not (enabled ()) then p
     else
       let
-        val opts = {spend = Pass.spend, whole = whole, eta = !RhcOptions.eta, cheap = !RhcOptions.cheap}
+        val opts = {spend = Pass.spend, whole = whole, eta = !RhcOptions.eta, cheap = !RhcOptions.cheap,
+                    library = RhcLibrary.names ()}
         fun lint name p =
           (Pass.lintAt name (fn p => CoreLint.check p handle CoreLint.Error msg => raise Error.Bug ("Core after " ^ name ^ ": " ^ msg)) p;
            RhcLint.targetAfter (name, p);

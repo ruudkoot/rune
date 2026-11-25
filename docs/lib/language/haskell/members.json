@@ -364,8 +364,8 @@
     {
      "kind": "type",
      "name": "options",
-     "spec": "type options = {spend : unit -> bool, whole : bool, eta : eta, cheap : bool}",
-     "doc": "What the passes are given: what is asked before each rewrite, whether\nthe program is whole, the eta rule, and whether cheap eagerness runs.\n\n`spend` is asked before each rewrite (Pass.spend, so that --fuel stops\nthem); with `whole` a value main does not reach may go. `cheap` is\nrhc's default, which --no-cheap-eagerness turns off.\n\n",
+     "spec": "type options = {spend : unit -> bool, whole : bool, eta : eta, cheap : bool, library : HsLibraryNames.t}",
+     "doc": "What the passes are given: what is asked before each rewrite, whether\nthe program is whole, the eta rule, and whether cheap eagerness runs.\n\n`spend` is asked before each rewrite (Pass.spend, so that --fuel stops\nthem); with `whole` a value main does not reach may go. `cheap` is\nrhc's default, which --no-cheap-eagerness turns off. `library` is the\nnames of the program's library, whose Prelude's and Ratio's entities\nthe simplifier knows.\n\n",
      "page": "sig/CORE_SIMPLIFY.md#type-options"
     },
     {
@@ -2204,6 +2204,26 @@
     }
    ]
   },
+  "HS_HEADER": {
+   "doc": "The header of a module of Haskell (the haskell2010 roadmap's D6): the\npragmas, comments and white space before its first token, which 12.3\ncalls the file-header pragmas' place (\"A file-header pragma must precede\nthe module keyword in a source file\"). It is read before the lexer, whose\noptions a module's language sets, from the program text, a literate\nfile's once unlit; its words keep their offsets in that text, which a\nliterate file's unlit text keeps too, so that a diagnostic of a name is\nsaid where the name is written.\n\nA pragma's keyword is read in any case, as GHC reads it; the names it\nwrites are case-sensitive, separated by commas. A pragma after the first\ntoken is not the header's.\n\n",
+   "page": "sig/HS_HEADER.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "name",
+     "spec": "type name = {name : string, at : int}",
+     "doc": "A name a pragma writes, and its offset in the text.\n\n",
+     "page": "sig/HS_HEADER.md#type-name"
+    },
+    {
+     "kind": "val",
+     "name": "languages",
+     "spec": "val languages : string -> name list",
+     "doc": "`languages text` is the names the LANGUAGE pragmas of the header of\nthe program text `text` write, in the order of the text.\n\n",
+     "page": "sig/HS_HEADER.md#val-languages"
+    }
+   ]
+  },
   "HS_IFACE": {
    "doc": "HsIface, rhc's interface of a unit (the haskell98 roadmap's M21, D44):\nwhat a store keeps of a unit for a client, written and read back. Each\nof its modules' interfaces as the renamer and the checker make them\n(HsModIface). The unfoldings section is in the format from the start\nand empty until M23 (D44's C). The desugaring's part, its Core among\nit, is the desugaring's own text, which a client keeps beside this one:\nrhc's driver keeps it as a section of its own, read only where a unit\nis desugared after it. The strictness section (M24) is each function's\nstrictness signature, by its Core name, in CoreStrict.show's text;\nempty below -O2.\n\n",
    "page": "sig/HS_IFACE.md",
@@ -2280,15 +2300,15 @@
     {
      "kind": "type",
      "name": "module_",
-     "spec": "type module_ = {id : string, ast : HsAst.module, library : bool}",
-     "doc": "A module of a unit: its identity, its renamed and resolved tree, and\nwhether it is the library's.\n\n",
+     "spec": "type module_ = {id : string, ast : HsAst.module, library : bool, language : HsLanguage.t}",
+     "doc": "A module of a unit: its identity, its renamed and resolved tree,\nwhether it is the library's, and its language.\n\nEach of its bindings is checked under its language (HsLanguage; the\nhaskell2010 roadmap's D10).\n\n",
      "page": "sig/HS_INFER.md#type-module_"
     },
     {
      "kind": "val",
      "name": "check",
-     "spec": "val check : {env : env, unit : module_ list, cycleDefault : cycleDefault,\n             prelude : string * string -> string option, fixity : string -> (HsAst.fixity * int) option,\n             evidence : HsEvidence.table}\n            -> {env : env, errors : (HsSource.span * string) list, derived : (string * string * HsAst.decl list) list}",
-     "doc": "`check {env, unit, cycleDefault, prelude, fixity, evidence}` checks\nthe modules of `unit`, recording into `evidence`.\n\nIt gives the environment with the unit's types, constructors,\nclasses, instances and values, the errors, and the derived\ninstances' methods, made by HsDerive (M14), each with its module and\nits instance's identity. `fixity key` is the fixity of the operator\nof `key`, for a derived `Show` and `Read`. `prelude (space, name)` is\nthe key of the entity the Prelude exports under `name`, `\"t\"` for a\ntype or class and `\"v\"` for a value, for what the Report's\ntranslations name: `Bool`, `Char`, `Integer`, `Double`, `Num`,\n`Fractional`, `Eq`, `Ord`, `Enum`, `Integral`, `Monad`.\n\n",
+     "spec": "val check : {env : env, unit : module_ list, cycleDefault : cycleDefault,\n             prelude : string * string -> string option, fixity : string -> (HsAst.fixity * int) option,\n             evidence : HsEvidence.table, standard : string -> bool}\n            -> {env : env, errors : (HsSource.span * string) list, derived : (string * string * HsAst.decl list) list}",
+     "doc": "`check {env, unit, cycleDefault, prelude, fixity, evidence, standard}` checks the modules of `unit`, recording into `evidence`.\n\nEach binding is checked under its module's language: under\nRelaxedPolyRec (2010's 4.5.1) a use of a variable with a signature\nmakes no dependency of the binding that uses it. `cycleDefault` is the\nunit's, on which a cycle's modules agree.\n\nIt gives the environment with the unit's types, constructors,\nclasses, instances and values, the errors, and the derived\ninstances' methods, made by HsDerive (M14), each with its module and\nits instance's identity. `fixity key` is the fixity of the operator\nof `key`, for a derived `Show` and `Read`. `prelude (space, name)` is\nthe key of the entity the Prelude exports under `name`, `\"t\"` for a\ntype or class and `\"v\"` for a value, for what the Report's\ntranslations name: `Bool`, `Char`, `Integer`, `Double`, `Num`,\n`Fractional`, `Eq`, `Ord`, `Enum`, `Integral`, `Monad`. `standard key`\nis whether the class of `key` is a standard class, one the Prelude\nor a standard library defines (4.3.4): the program's library's\n(the haskell2010 roadmap's D20).\n\n",
      "page": "sig/HS_INFER.md#val-check"
     },
     {
@@ -2425,6 +2445,159 @@
     }
    ]
   },
+  "HS_LANGUAGE": {
+   "doc": "The language a module of Haskell is read and checked under (the\nhaskell2010 roadmap's D4, D5, D8 and D10): an edition, the Report of\nHaskell 98 or of Haskell 2010, and the set of rhc's features the module\nhas, resolved once from the command line and the module's header, as GHC\nresolves them. The edition is a base, the last named winning; a step\nturns a feature on or off, and the steps are replayed over the edition's\nown set in the order they are written, the command line's first, then\nthe header's. Every stage asks a module's language whether it has a\nfeature (`has`), the lexer and the parser of the file they read, the\nchecker and HsLint of the module a binding belongs to; never a setting\nof the run. A unit's key holds each member's set in its canonical form,\nwithout the edition (`key`), Haskell 98's own set as nothing, so that two\nspellings of one set are one key and a store of Haskell 98's keeps its\nkeys.\n\nA name a command line or a LANGUAGE pragma writes is read by `read`: an\nedition, a feature or its `No` form, or a name rhc does not know. In a\nmodule whose edition is Haskell 98 the header's names other than the\neditions are not read at all (`ofHeader`, the roadmap's D6), as the 98\nReport asks of a pragma an implementation does not handle; the command\nline's steps apply to every module of the program alike. The library is\nread under its own language, whatever the program's.\n\n",
+   "page": "sig/HS_LANGUAGE.md",
+   "members": [
+    {
+     "kind": "datatype",
+     "name": "edition",
+     "spec": "datatype edition =\n    Haskell98\n  | Haskell2010",
+     "doc": "The Reports rhc reads a module by.\n\n",
+     "page": "sig/HS_LANGUAGE.md#type-edition"
+    },
+    {
+     "kind": "datatype",
+     "name": "feature",
+     "spec": "datatype feature =\n    CycleDefaultScc\n  | DoAndIfThenElse\n  | EmptyDataDecls\n  | ForeignFunctionInterface\n  | GreatestFixpointNames\n  | HierarchicalModules\n  | NPlusKPatterns\n  | PatternGuards\n  | RelaxedPolyRec",
+     "doc": "A rule a stage of rhc tests, which a module's language has or not.\n\nHaskell 2010's are on in its edition, Haskell 98's n+k patterns in\nHaskell 98's; the two settings of a cycle are rhc's own options, set\nfrom the command line alone (the roadmap's D8), and a cycle's modules\nagree on them.\n\n",
+     "page": "sig/HS_LANGUAGE.md#type-feature"
+    },
+    {
+     "kind": "datatype",
+     "name": "step",
+     "spec": "datatype step =\n    On of feature\n  | Off of feature",
+     "doc": "A step of a setting: a feature turned on, or off.\n\n",
+     "page": "sig/HS_LANGUAGE.md#type-step"
+    },
+    {
+     "kind": "type",
+     "name": "t",
+     "spec": "type t",
+     "doc": "A language resolved: its edition and its set of features.\n\n",
+     "page": "sig/HS_LANGUAGE.md#type-t"
+    },
+    {
+     "kind": "val",
+     "name": "ofEdition",
+     "spec": "val ofEdition : edition -> t",
+     "doc": "`ofEdition e` is the language of the edition `e`, no step after it.\n\n",
+     "page": "sig/HS_LANGUAGE.md#val-ofedition"
+    },
+    {
+     "kind": "val",
+     "name": "resolve",
+     "spec": "val resolve : edition * step list -> t",
+     "doc": "`resolve (e, steps)` is the language of the edition `e` with `steps`\nreplayed over its own set, the first first.\n\nA feature a step turns on is in it, one it turns off is not, whatever\nthe steps before.\n\n",
+     "page": "sig/HS_LANGUAGE.md#val-resolve"
+    },
+    {
+     "kind": "val",
+     "name": "edition",
+     "spec": "val edition : t -> edition",
+     "doc": "`edition t` is the edition of `t`, which only a message names.\n\n",
+     "page": "sig/HS_LANGUAGE.md#val-edition"
+    },
+    {
+     "kind": "val",
+     "name": "features",
+     "spec": "val features : t -> feature list",
+     "doc": "`features t` is the set of `t`, in canonical order.\n\n",
+     "page": "sig/HS_LANGUAGE.md#val-features"
+    },
+    {
+     "kind": "val",
+     "name": "has",
+     "spec": "val has : t * feature -> bool",
+     "doc": "`has (t, f)` is whether `t` has the feature `f`.\n\n",
+     "page": "sig/HS_LANGUAGE.md#val-has"
+    },
+    {
+     "kind": "val",
+     "name": "same",
+     "spec": "val same : t * t -> bool",
+     "doc": "`same (a, b)` is whether `a` and `b` have one set, whatever their\neditions.\n\n",
+     "page": "sig/HS_LANGUAGE.md#val-same"
+    },
+    {
+     "kind": "val",
+     "name": "canonical",
+     "spec": "val canonical : t -> string",
+     "doc": "`canonical t` is the set of `t` as text: its features' names in order\nof their names, joined by commas, without the edition.\n\n",
+     "page": "sig/HS_LANGUAGE.md#val-canonical"
+    },
+    {
+     "kind": "val",
+     "name": "key",
+     "spec": "val key : t -> string",
+     "doc": "`key t` is what a unit's key holds of a member under `t`.\n\nIt is nothing where `t`'s set is Haskell 98's own, and its canonical\nform in braces otherwise, the empty set's among them.\n\n",
+     "page": "sig/HS_LANGUAGE.md#val-key"
+    },
+    {
+     "kind": "val",
+     "name": "editionName",
+     "spec": "val editionName : edition -> string",
+     "doc": "`editionName e` is the name of `e` that a pragma writes.\n\n",
+     "page": "sig/HS_LANGUAGE.md#val-editionname"
+    },
+    {
+     "kind": "val",
+     "name": "featureName",
+     "spec": "val featureName : feature -> string",
+     "doc": "`featureName f` is the name of `f` in a canonical form and in a\nmessage: the name a pragma writes, or for rhc's own, the option that\nsets it.\n\n",
+     "page": "sig/HS_LANGUAGE.md#val-featurename"
+    },
+    {
+     "kind": "datatype",
+     "name": "reading",
+     "spec": "datatype reading =\n    Edition of edition\n  | Steps of step list\n  | Unknown",
+     "doc": "What a name of a pragma or of `-X` on the command line means.\n\n",
+     "page": "sig/HS_LANGUAGE.md#type-reading"
+    },
+    {
+     "kind": "val",
+     "name": "read",
+     "spec": "val read : string -> reading",
+     "doc": "`read name` is what `name` means, as it is written: names are\ncase-sensitive.\n\n",
+     "page": "sig/HS_LANGUAGE.md#val-read"
+    },
+    {
+     "kind": "type",
+     "name": "setting",
+     "spec": "type setting = {edition : edition, steps : step list}",
+     "doc": "The setting the command line gives every module of a program: an\nedition and steps.\n\nThe edition is the last it names (`--language=`, `-XHaskell2010`),\nhaskell98 where it names none; the steps are in its order (`-X`,\n`--dotted-names`, `--names=`, `--cycle-default=`).\n\n",
+     "page": "sig/HS_LANGUAGE.md#type-setting"
+    },
+    {
+     "kind": "val",
+     "name": "ofSetting",
+     "spec": "val ofSetting : setting -> t",
+     "doc": "`ofSetting s` is the language the setting `s` gives a module whose\nheader names nothing.\n\n",
+     "page": "sig/HS_LANGUAGE.md#val-ofsetting"
+    },
+    {
+     "kind": "val",
+     "name": "settingKey",
+     "spec": "val settingKey : setting -> string",
+     "doc": "`settingKey s` is the setting `s` as text, nothing for Haskell 98\nwith no step: what decides how a header is read beside its text.\n\n",
+     "page": "sig/HS_LANGUAGE.md#val-settingkey"
+    },
+    {
+     "kind": "exception",
+     "name": "Refused",
+     "spec": "exception Refused of int * string",
+     "doc": "A name of the header refused: its offset in the module's text, and\nwhy.\n\n",
+     "page": "sig/HS_LANGUAGE.md#exn-refused"
+    },
+    {
+     "kind": "val",
+     "name": "ofHeader",
+     "spec": "val ofHeader : setting * {name : string, at : int} list -> t",
+     "doc": "`ofHeader (s, names)` is the language of a module under the setting\n`s` whose header's LANGUAGE pragmas write `names`.\n\nEach name is given with its offset in the module's text, in order. The\nedition is the last the header names, else `s`'s. Where it is Haskell\n98, the header's other names are dropped unread; else each is read, its\nsteps after `s`'s.\n\n**Raises** `Refused` for a name rhc does not know, in a module whose\nedition is not Haskell 98, with the name's offset and why (12.3: a\nrequest rhc cannot honour fails).\n\n",
+     "page": "sig/HS_LANGUAGE.md#val-ofheader"
+    }
+   ]
+  },
   "HS_LAYOUT": {
    "doc": "The layout algorithm of Haskell 98, the function `L` of the Report's\nsection 9.3, run on demand: the parser pulls one token at a time, so\nthat when it takes an implicit close, the side condition\n`parse-error(t)` of the equation for `t`, the stack of layout contexts\nis that of the point it has reached and nothing past that token has\nbeen laid out (the haskell98 roadmap's D27).\n\nThe equations and where they are kept:\n\n- `<n>` with `m = n`, `n < m`, and otherwise: a token first on its line;\n- `{n}` with `n > m`, `n > 0`, and otherwise: a token after `let`,\n  `where`, `do` or `of` that is not `{`, and the first of a module that\n  is neither `{` nor `module`; an empty block makes the next token's\n  `{n}` an `<n>`;\n- `}` with an explicit context on top, `{`, and the end of the input:\n  `advance`;\n- `t` with an implicit context on top and `parse-error(t)`:\n  `closeImplicit`, which the parser calls.\n\nIt makes two readings of the roadmap's evidence (`results/E9/readings.md`):\nR2, an explicit `}` may close an implicit block, as section 2.7 reads,\nwhere 9.3's Note 3 alone would refuse it; and R3, a block opens only\nat a column strictly greater than the enclosing one, so that a `do`\nat the column of its context is empty.\n\nThere is one stream at a time: `start` begins it, and the parser reads\nand moves it.\n\n",
    "page": "sig/HS_LAYOUT.md",
@@ -2529,15 +2702,15 @@
     {
      "kind": "type",
      "name": "options",
-     "spec": "type options = {hierarchical : bool}",
-     "doc": "How to read: whether dotted module names are read.\n\n`hierarchical` reads a dotted module name, such as Data.List, as one\nqualifier, which Haskell 98's `modid` is not (the roadmap's D35,\nrefused by default).\n\n",
+     "spec": "type options = {language : HsLanguage.t}",
+     "doc": "How to read: the language of the module read (HsLanguage).\n\nThe lexer tests its HierarchicalModules: a dotted module name, such as\nData.List, read as one qualifier, which Haskell 98's `modid` is not\n(the haskell98 roadmap's D35, Haskell 2010's 5.1).\n\n",
      "page": "sig/HS_LEXER.md#type-options"
     },
     {
      "kind": "val",
      "name": "defaults",
      "spec": "val defaults : options",
-     "doc": "Haskell 98's: no dotted module names.\n\n",
+     "doc": "Haskell 98's.\n\n",
      "page": "sig/HS_LEXER.md#val-defaults"
     },
     {
@@ -2549,6 +2722,47 @@
     }
    ]
   },
+  "HS_LIBRARY_NAMES": {
+   "doc": "The names of a program's library that the stages name (the haskell2010\nroadmap's D1 and D20): the prefix of its modules' identities, which is\nalso its directory under rhc's share, and the module of each role a\nstage names by its Haskell 98 name: the Prelude (the translations,\ndefaulting, the simplifier's folding of literals), PreludeText (the\nclasses Read and Show of HsLint's tuples), Ix (derived Ix), Ratio (`:%`,\nwhich the simplifier folds) and rhc's leaf of primitives. The driver's\ndescriptor of a library holds them (src/rhc/library.sml); a stage is\ngiven the program's.\n\n",
+   "page": "sig/HS_LIBRARY_NAMES.md",
+   "members": [
+    {
+     "kind": "type",
+     "name": "t",
+     "spec": "type t = {prefix : string,\n          prelude : string,\n          text : string,\n          ix : string,\n          ratio : string,\n          builtin : string}",
+     "doc": "A library's names.\n\nrhc's leaf of the primitives the library names\n\n",
+     "page": "sig/HS_LIBRARY_NAMES.md#type-t"
+    },
+    {
+     "kind": "val",
+     "name": "haskell98",
+     "spec": "val haskell98 : t",
+     "doc": "The names of the library of Haskell 98, share/rhc/haskell98.\n\n",
+     "page": "sig/HS_LIBRARY_NAMES.md#val-haskell98"
+    },
+    {
+     "kind": "val",
+     "name": "identity",
+     "spec": "val identity : t * string -> string",
+     "doc": "`identity (t, m)` is the identity of the library's module `m`.\n\n",
+     "page": "sig/HS_LIBRARY_NAMES.md#val-identity"
+    },
+    {
+     "kind": "val",
+     "name": "isLibrary",
+     "spec": "val isLibrary : t * string -> bool",
+     "doc": "`isLibrary (t, id)` is whether the identity `id` is of one of the\nlibrary's modules.\n\n",
+     "page": "sig/HS_LIBRARY_NAMES.md#val-islibrary"
+    },
+    {
+     "kind": "val",
+     "name": "entity",
+     "spec": "val entity : t * (t -> string) * string -> string",
+     "doc": "`entity (t, role, name)` is the key of the library's entity `name`\nof the module that `role` gives: `prefix:M.name`.\n\n",
+     "page": "sig/HS_LIBRARY_NAMES.md#val-entity"
+    }
+   ]
+  },
   "HS_LINT": {
    "doc": "HsLint (the haskell98 roadmap's M16, D54): the independent check of\nrhc's types, as AstLint is Rune's. Its first part is a second\ninference: a transliteration of Typing Haskell in Haskell (Jones 1999)\nin the form its 11.6.3 calls conformant, with kinds and dependency\ngroups recomputed, the monomorphism restriction and defaulting as the\nroadmap's D32 reads the Report (R18, R20, R21, R22), over the renamed\ntree. It shares nothing with rhc's checker but the renamer: its\nunifier, its kinds and its context reduction are its own, so that a\ndisagreement between the two is a finding. rhc runs it among the\nchecks of level 2 (`--lint=2`, `RUNE_LINT=2`), where a refusal of a\nprogram the compile accepts is a bug of rhc's.\n\n",
    "page": "sig/HS_LINT.md",
@@ -2556,8 +2770,8 @@
     {
      "kind": "type",
      "name": "module",
-     "spec": "type module = {id : string, ast : HsAst.module, library : bool}",
-     "doc": "A module of a program as HsLint reads it: its identity, its tree as\n`HsRename` renamed it and `HsFixity` resolved it, and whether it is\none of rhc's library's.\n\n",
+     "spec": "type module = {id : string, ast : HsAst.module, library : bool, language : HsLanguage.t}",
+     "doc": "A module of a program as HsLint reads it: its identity, its tree,\nwhether it is one of rhc's library's, and its language.\n\nThe tree is as `HsRename` renamed it and `HsFixity` resolved it. Of\nthe language (HsLanguage), RelaxedPolyRec puts every signature of a\ngroup in which any module has it in scope from the start, and a group\nwhose modules have CycleDefaultScc shares one `default` and Rule 2\ncloses at its end (D30's `--cycle-default=scc`).\n\n",
      "page": "sig/HS_LINT.md#type-module"
     },
     {
@@ -2612,8 +2826,8 @@
     {
      "kind": "val",
      "name": "infer",
-     "spec": "val infer : {groups : module list list, main : string option, cycleDefault : bool} -> report",
-     "doc": "`infer {groups, main, cycleDefault}` is the report of the second\ninference over the program whose groups of modules are `groups`.\n\nThe groups are the strongly connected ones, dependencies first;\n`main` is the identity of the module whose `main` must have the type\n`IO t` (5), if any; and `cycleDefault` is whether a group's modules\nshare one `default` and Rule 2 closes at the group's end (D30's\n`--cycle-default=scc`) rather than each module's.\n\n**Raises** `Refused` at the first breach of the Report's static rules\nthe second inference finds.\n\n",
+     "spec": "val infer : {groups : module list list, main : string option, names : HsLibraryNames.t} -> report",
+     "doc": "`infer {groups, main, names}` is the report of the second inference\nover the program whose groups of modules are `groups`.\n\nThe groups are the strongly connected ones, dependencies first;\n`main` is the identity of the module whose `main` must have the type\n`IO t` (5), if any; and `names` are the program's library's names.\n\n**Raises** `Refused` at the first breach of the Report's static rules\nthe second inference finds.\n\n",
      "page": "sig/HS_LINT.md#val-infer"
     },
     {
@@ -2668,8 +2882,8 @@
     {
      "kind": "val",
      "name": "check",
-     "spec": "val check : {groups : module list list, main : string option, cycleDefault : bool,\n             records : {table : HsEvidence.table, env : HsInfer.env,\n                        derived : (string * string * HsAst.decl list) list} option,\n             claims : claims option, where_ : HsSource.span -> string, fault : string, library : library option}\n            -> {report : report, target : target, part : library}",
-     "doc": "`check {groups, main, cycleDefault, records, claims, where_, fault, library}` is `infer`'s report, with the checker's records replayed and\ncompared.\n\nWith `library`, the groups of its modules are not inferred again: the\nrest are inferred after its environment and findings, and only the\nrecords of those modules are replayed, the library's having been\nreplayed where it was inferred. The report is of the modules inferred,\nand `part` what was inferred of them alone, for the units after them.\n\nIt gives what the target check reads with the report. With `records`,\nthe checker's evidence records and environment (HsEvidence, HsInfer) and the derived instances it made as trees\n(HsDerive: each one's module, identity and methods), the second\ninference checks those instances' methods as any instance's, each\nrecord is replayed by Faxén's rules and rhc's (`replayRules`), the\nderived methods' records too, and the records are then held to the\ninference as claims (`compare`); with `claims`, those are too.\n`fault` is as `compare`'s, for every rule.\n\n**Raises** `Refused` at the first breach.\n\n",
+     "spec": "val check : {groups : module list list, main : string option, names : HsLibraryNames.t,\n             records : {table : HsEvidence.table, env : HsInfer.env,\n                        derived : (string * string * HsAst.decl list) list} option,\n             claims : claims option, where_ : HsSource.span -> string, fault : string, library : library option}\n            -> {report : report, target : target, part : library}",
+     "doc": "`check {groups, main, names, records, claims, where_, fault, library}`\nis `infer`'s report, with the checker's records replayed and\ncompared.\n\nWith `library`, the groups of its modules are not inferred again: the\nrest are inferred after its environment and findings, and only the\nrecords of those modules are replayed, the library's having been\nreplayed where it was inferred. The report is of the modules inferred,\nand `part` what was inferred of them alone, for the units after them.\n\nIt gives what the target check reads with the report. With `records`,\nthe checker's evidence records and environment (HsEvidence, HsInfer) and the derived instances it made as trees\n(HsDerive: each one's module, identity and methods), the second\ninference checks those instances' methods as any instance's, each\nrecord is replayed by Faxén's rules and rhc's (`replayRules`), the\nderived methods' records too, and the records are then held to the\ninference as claims (`compare`); with `claims`, those are too.\n`fault` is as `compare`'s, for every rule.\n\n**Raises** `Refused` at the first breach.\n\n",
      "page": "sig/HS_LINT.md#val-check"
     },
     {
@@ -3742,11 +3956,14 @@
   "HsDump": "HS_DUMP",
   "HsEvidence": "HS_EVIDENCE",
   "HsFixity": "HS_FIXITY",
+  "HsHeader": "HS_HEADER",
   "HsIface": "HS_IFACE",
   "HsInfer": "HS_INFER",
   "HsKinds": "HS_KINDS",
+  "HsLanguage": "HS_LANGUAGE",
   "HsLayout": "HS_LAYOUT",
   "HsLexer": "HS_LEXER",
+  "HsLibraryNames": "HS_LIBRARY_NAMES",
   "HsLint": "HS_LINT",
   "HsLiterate": "HS_LITERATE",
   "HsMatch": "HS_MATCH",

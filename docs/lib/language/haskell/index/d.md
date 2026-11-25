@@ -44,6 +44,7 @@
 - `DInstance` (con): [HS_AST](../sig/HS_AST.md#con-dinstance)
 - `DNewtype` (con): [HS_AST](../sig/HS_AST.md#con-dnewtype)
 - `DO` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-do)
+- `DoAndIfThenElse` (con): [HS_LANGUAGE](../sig/HS_LANGUAGE.md#con-doandifthenelse)
 - `DOTDOT` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-dotdot)
 - `DParam` (con): [HS_EVIDENCE](../sig/HS_EVIDENCE.md#con-dparam)
 - `DPat` (con): [HS_AST](../sig/HS_AST.md#con-dpat)

@@ -29,12 +29,12 @@ What each means is on [`HS_LINT`](../sig/HS_LINT.md); the types are this structu
 | type | [`derived`](../sig/HS_LINT.md#type-derived) | `{instance : string, module : string}` |
 | type | [`kind`](../sig/HS_LINT.md#type-kind) | `{kind : string, module : string, name : string}` |
 | type | [`library`](../sig/HS_LINT.md#type-library) | *a type of its own* |
-| type | [`module`](../sig/HS_LINT.md#type-module) | `{ast : HsAst.module, id : string, library : bool}` |
+| type | [`module`](../sig/HS_LINT.md#type-module) | `{ast : HsAst.module, id : string, language : HsLanguage.t, library : bool}` |
 | type | [`report`](../sig/HS_LINT.md#type-report) | `{bindings : binding list, classes : class_ list, defaults : default list, derived : derived list, kinds : kind list}` |
 | type | [`target`](../sig/HS_LINT.md#type-target) | *a type of its own* |
 | exception | [`Decode`](../sig/HS_LINT.md#exn-decode) | `of string` |
 | exception | [`Refused`](../sig/HS_LINT.md#exn-refused) | `of {file : string, start : int, stop : int} * string` |
-| val | [`check`](../sig/HS_LINT.md#val-check) | `{claims : claims option, cycleDefault : bool, fault : string, groups : module list list, library : library option, main : string option, records : {derived : (string * string * HsAst.decl list) list, env : HsInfer.env, table : HsEvidence.table} option, where_ : {file : string, start : int, stop : int} -> string} -> {part : library, report : report, target : target}` |
+| val | [`check`](../sig/HS_LINT.md#val-check) | `{claims : claims option, fault : string, groups : module list list, library : library option, main : string option, names : {builtin : string, ix : string, prefix : string, prelude : string, ratio : string, text : string}, records : {derived : (string * string * HsAst.decl list) list, env : HsInfer.env, table : HsEvidence.table} option, where_ : {file : string, start : int, stop : int} -> string} -> {part : library, report : report, target : target}` |
 | val | [`claims`](../sig/HS_LINT.md#val-claims) | `string -> claims` |
 | val | [`compare`](../sig/HS_LINT.md#val-compare) | `report * claims * ({file : string, start : int, stop : int} -> string) * string -> unit` |
 | val | [`counterFrom`](../sig/HS_LINT.md#val-counterfrom) | `library * int -> library` |
@@ -42,7 +42,7 @@ What each means is on [`HS_LINT`](../sig/HS_LINT.md); the types are this structu
 | val | [`decode`](../sig/HS_LINT.md#val-decode) | `string -> library` |
 | val | [`dump`](../sig/HS_LINT.md#val-dump) | `report * ({file : string, start : int, stop : int} -> string) * bool -> string` |
 | val | [`encode`](../sig/HS_LINT.md#val-encode) | `library -> string` |
-| val | [`infer`](../sig/HS_LINT.md#val-infer) | `{cycleDefault : bool, groups : module list list, main : string option} -> report` |
+| val | [`infer`](../sig/HS_LINT.md#val-infer) | `{groups : module list list, main : string option, names : {builtin : string, ix : string, prefix : string, prelude : string, ratio : string, text : string}} -> report` |
 | val | [`join`](../sig/HS_LINT.md#val-join) | `library list -> library` |
 | val | [`replayRules`](../sig/HS_LINT.md#val-replayrules) | `(string * string) list` |
 | val | [`rules`](../sig/HS_LINT.md#val-rules) | `(string * string) list` |

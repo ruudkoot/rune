@@ -1,0 +1,2 @@
+Main.hs:2:8: error: a dotted module name after `import`, `Data.Thing`, which Haskell 98 does not have
+status 1

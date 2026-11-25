@@ -3,7 +3,7 @@
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) **c** [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) [i](i.md) [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
 - `C` (con): [HS_AST](../sig/HS_AST.md#con-c)
-- `canonical` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-canonical), [HS_MOD_IFACE](../sig/HS_MOD_IFACE.md#val-canonical)
+- `canonical` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-canonical), [HS_LANGUAGE](../sig/HS_LANGUAGE.md#val-canonical), [HS_MOD_IFACE](../sig/HS_MOD_IFACE.md#val-canonical)
 - `canonicalDecl` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-canonicaldecl)
 - `canonicalTy` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-canonicalty)
 - `CASE` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-case)
@@ -55,6 +55,7 @@
 - `current` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-current)
 - `currentStart` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-currentstart)
 - `cycleDefault` (type): [HS_INFER](../sig/HS_INFER.md#type-cycledefault)
+- `CycleDefaultScc` (con): [HS_LANGUAGE](../sig/HS_LANGUAGE.md#con-cycledefaultscc)
 
 ---
 

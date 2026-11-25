@@ -447,7 +447,7 @@ struct
      bound to *)
   fun ratioOf (env : env) (x : string) : (IntInf.int * IntInf.int) option =
     case knownOf (env, x) of
-      SOME (KCon (c, _, [Lit (LInteger n), Lit (LInteger d)])) => if c = "haskell98:Ratio.:%" then SOME (n, d) else NONE
+      SOME (KCon (c, _, [Lit (LInteger n), Lit (LInteger d)])) => if c = B.libraryEntity (#ratio, ":%") then SOME (n, d) else NONE
     | _ => NONE
 
   (* ---- Expressions ---- *)

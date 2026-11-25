@@ -36,11 +36,14 @@ the signature names and no others.
 | [`HsDump`](str/HsDump.md) | :> | [`HS_DUMP`](sig/HS_DUMP.md) |  |  | [lib/language/haskell/dump.sml](../../../../lib/language/haskell/dump.sml) |
 | [`HsEvidence`](str/HsEvidence.md) | :> | [`HS_EVIDENCE`](sig/HS_EVIDENCE.md) |  |  | [lib/language/haskell/evidence.sml](../../../../lib/language/haskell/evidence.sml) |
 | [`HsFixity`](str/HsFixity.md) | :> | [`HS_FIXITY`](sig/HS_FIXITY.md) |  |  | [lib/language/haskell/fixity.sml](../../../../lib/language/haskell/fixity.sml) |
+| [`HsHeader`](str/HsHeader.md) | :> | [`HS_HEADER`](sig/HS_HEADER.md) |  |  | [lib/language/haskell/header.sml](../../../../lib/language/haskell/header.sml) |
 | [`HsIface`](str/HsIface.md) | :> | [`HS_IFACE`](sig/HS_IFACE.md) |  |  | [lib/language/haskell/hsiface.sml](../../../../lib/language/haskell/hsiface.sml) |
 | [`HsInfer`](str/HsInfer.md) | :> | [`HS_INFER`](sig/HS_INFER.md) |  |  | [lib/language/haskell/infer.sml](../../../../lib/language/haskell/infer.sml) |
 | [`HsKinds`](str/HsKinds.md) | :> | [`HS_KINDS`](sig/HS_KINDS.md) |  |  | [lib/language/haskell/kinds.sml](../../../../lib/language/haskell/kinds.sml) |
+| [`HsLanguage`](str/HsLanguage.md) | :> | [`HS_LANGUAGE`](sig/HS_LANGUAGE.md) |  |  | [lib/language/haskell/language.sml](../../../../lib/language/haskell/language.sml) |
 | [`HsLayout`](str/HsLayout.md) | :> | [`HS_LAYOUT`](sig/HS_LAYOUT.md) |  |  | [lib/language/haskell/layout.sml](../../../../lib/language/haskell/layout.sml) |
 | [`HsLexer`](str/HsLexer.md) | :> | [`HS_LEXER`](sig/HS_LEXER.md) |  |  | [lib/language/haskell/lexer.sml](../../../../lib/language/haskell/lexer.sml) |
+| [`HsLibraryNames`](str/HsLibraryNames.md) | :> | [`HS_LIBRARY_NAMES`](sig/HS_LIBRARY_NAMES.md) |  |  | [lib/language/haskell/library\_names.sml](../../../../lib/language/haskell/library_names.sml) |
 | [`HsLint`](str/HsLint.md) | :> | [`HS_LINT`](sig/HS_LINT.md) |  |  | [lib/language/haskell/hslint.sml](../../../../lib/language/haskell/hslint.sml) |
 | [`HsLiterate`](str/HsLiterate.md) | :> | [`HS_LITERATE`](sig/HS_LITERATE.md) |  |  | [lib/language/haskell/literate.sml](../../../../lib/language/haskell/literate.sml) |
 | [`HsMatch`](str/HsMatch.md) | :> | [`HS_MATCH`](sig/HS_MATCH.md) |  |  | [lib/language/haskell/match.sml](../../../../lib/language/haskell/match.sml) |
