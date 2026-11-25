@@ -1181,7 +1181,8 @@ it was made from by `OLD=haskell2010`.
 `hs-standing/@prepare` copies each side, its VM, `rhc.rbc` and library,
 into `OUT/old` and `OUT/new` (`OUT` is `RUNE_HS_STANDING_OUT`, or
 `hs-standing` in the run's directory), and makes each its snapshot there as
-make makes `bin/rhc.layer`, from the modules its own Makefile names. Each
+make makes `bin/rhc.layer`, from the modules its rhc lists (`--library-modules`), or, for an rhc before the
+roadmap's M4, its own Makefile names. Each
 side's rhc then runs as `bin/rhc` runs it, cold (`RHC_STORE` empty), at
 `RUNE_LINT=2`, from this tree's root, on this tree's programs. An item is
 one run of rhc on both sides, and it differs by the parts that do:

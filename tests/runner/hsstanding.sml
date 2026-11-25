@@ -13,8 +13,9 @@
    tree's VM; RUNE_HS_VM puts both sides on one VM. @prepare copies each
    side into OUT/old and OUT/new (OUT is RUNE_HS_STANDING_OUT, or the run's
    directory's hs-standing), its rhc run as bin/rhc runs it, and makes each
-   its snapshot there as make makes bin/rhc.layer, from the modules its own
-   Makefile names, through OUT/SIDE/bin/../share/rhc: two paths that differ
+   its snapshot there as make makes bin/rhc.layer, from the modules its rhc
+   lists (`--library-modules`) or, before M4, its Makefile names, through
+   OUT/SIDE/bin/../share/rhc: two paths that differ
    by the side's name alone, which is put out of what is compared.
 
    What is compared are items, each the same run of rhc on both sides, and
@@ -295,13 +296,27 @@ struct
 
   fun sourceOf spec = let val t = fromRoot spec in if isDir t then ofTree t else ofCommit spec end
 
-  (* the modules the snapshot imports, as its Makefile names them *)
-  fun modulesOf makefile =
-    case List.find (String.isPrefix "RHC_LIBRARY_MODULES") (lines (read makefile)) of
-      SOME l => (case String.fields (fn c => c = #"=") l of
-                   _ :: rest => String.tokens Char.isSpace (String.concatWith "=" rest)
-                 | [] => [])
-    | NONE => raise Failed (makefile ^ " names no RHC_LIBRARY_MODULES, the modules of the snapshot")
+  (* the modules a side's snapshot imports, as make finds them: from its rhc,
+     `--library-modules` (the haskell2010 roadmap's M4 on), or else from its
+     Makefile's RHC_LIBRARY_MODULES, as before *)
+  fun modulesOf (s, makefile) =
+    let
+      val d = sideDir s
+      val f = d ^ "/library-modules"
+      val status = execProcess false limits (fn e => e)
+                     {cmd = [d ^ "/bin/runevm", d ^ "/bin/rhc.rbc", "--library-modules"], dir = SOME d, stdin = "", stdout = f,
+                      stderr = f ^ ".err", timeout = 300}
+      val ms = String.tokens Char.isSpace (read f)
+    in
+      if status = 0 andalso not (null ms) then ms
+      else
+        case List.find (String.isPrefix "RHC_LIBRARY_MODULES") (lines (read makefile)) of
+          SOME l => (case String.fields (fn c => c = #"=") l of
+                       _ :: rest => String.tokens Char.isSpace (String.concatWith "=" rest)
+                     | [] => [])
+        | NONE => raise Failed (s ^ "'s rhc lists no --library-modules, and " ^ makefile
+                                ^ " names no RHC_LIBRARY_MODULES: the modules of the snapshot")
+    end
 
   (* a side's snapshot, as make makes bin/rhc.layer: a Main importing each
      module, compiled into the store once in each order of a match, at
@@ -338,7 +353,7 @@ struct
       val () = HsCorpus.copyTree (#share src, d ^ "/share/rhc")
       val () = write (d ^ "/bin/rhc", "#!/bin/sh\nexec " ^ String.concatWith " " (List.map quote (rhcOf s)) ^ " \"$@\"\n")
       val () = Posix.FileSys.chmod (d ^ "/bin/rhc", Posix.FileSys.S.irwxu)
-      val () = snapshot (s, modulesOf (#makefile src))
+      val () = snapshot (s, modulesOf (s, #makefile src))
       val what = #what src ^ "; rhc.rbc " ^ CompilerMutants.hash (d ^ "/bin/rhc.rbc") ^ ", runevm "
                  ^ CompilerMutants.hash (d ^ "/bin/runevm")
     in write (d ^ "/ready", what ^ "\n"); say ("hs-standing: " ^ s ^ " is " ^ what ^ "\n") end
