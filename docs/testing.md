@@ -1269,6 +1269,46 @@ the three programs of `tests/hs/lang` E3 found using one; a `LANGUAGE` or
 forbids), by the pragmas of two vendored files. rhc built so from the
 sources unedited must move none of those items.
 
+### Haskell 2010's table and suites
+
+The haskell2010 roadmap's second table (its M1 and D38; `tests/runner/hsconformance.sml`, `tests/runner/hslang.sml`):
+`tests/hs2010/conformance.tsv` has a row for each clause of the Haskell 2010 Report, read with the four corrections
+of its sources that were never published, and is held to rhc's programs by the five rules of 98's table, each
+program by its own table. Its rows are E1's 5,259 (98's columns, and two more: `map98`, the rows of 98's a row comes
+from, and `delta`, `same`, `changed`, `new` or `removed-in-2010`), every one `Planned` as it lands, with these
+corrections: `lay.parseerror.doif` and `lay.parseerror.thensamecol` become `changed`, since DoAndIfThenElse accepts
+them (W8); `lex.qual.modname` is `removed-in-2010`, since 2010's modid is dotted; the four rows E1 made `changed` for
+an erratum of 98's alone are 98's again (`same`), since 98's errata are read onto 2010's identical text, the reading
+N18 on the 13 rows they touch; `dec.gen.sig.identical` has no test, since no function binding reaches 4.5.2's rule
+under relaxed groups; and the five rows of 98's chapter 23 leave the table (N21), each named in
+`HsConformance.edition2010`, so that it holds 5,254. Its errata are none, and its readings R1 to R54 and 98's later
+ones on the rows whose text 2010 keeps, and N1 to N25 of `tests/hs2010/readings.md`: E1's N1 to N21 and the
+sources' corrections N22 to N25. `tests/hs2010/deviations.tsv` holds 98's six deviations on rows 2010 keeps (98's
+two others, R1's and R9's, are 2010's text) and IEEE's `0 ** (-1)` against the corrected 6.4.3, pinned by
+`tests/hs2010/lang/std.pow.undefined.h2010_ieee`.
+
+The table also holds each row against 98's (`hs2010/conformance/table`): its delta is one of the four, each of
+its 98 rows is one of 98's, a `same` row is the 98 row of its id, and every row of 98's is some row's `map98` or
+one of a row that left. Its programs are those of `tests/hs2010/{lang,accept,errors}`, paths `lang/NAME`, and the
+programs of `tests/hs/{lang,accept,errors}` it shares, paths `hs/lang/NAME`: a program of `tests/hs` serves the
+2010 table when every row it names is a row of 2010's that its text keeps (not `removed-in-2010`), and
+`tests/hs2010/unshared.tsv` does not name it; a line there says why a program stays 98's (one that 2010 refuses
+elsewhere, or no longer reaches its clause), and fails where its program names a row 2010 does not keep, which
+shares it already. So E3's 21 programs that 2010 flips are all 98's: 19 name a row 2010 changes or removes, and two
+are named there, beside `errors/dec.gen.sig.identical`, which 2010 refuses for another clause. `hs2010/conformance/faults` plants each of the five rules' breaches in a private tree as 98's
+faults do, and those of a table beside 98's: a delta of no kind, a row from no row of 98's, a 98 row unmapped, a
+`same` row from another, a row that left back in it, a shared program of a row of another class, and stale and
+missing lines of `unshared.tsv`.
+
+The suites: `hs2010/...` compiles, runs and checks the programs of `tests/hs2010` with `bin/rhc
+--language=haskell2010` in the tiers of 98's, and `hs2010/shared/...` the programs of `tests/hs` the table shares,
+under the same flag, to the same siblings, their checks (`--typecheck-only`) in `make check` and their compiles and
+runs nightly, since `make check` runs them in 98 mode (D41). Every job of both is listed and pending until `bin/rhc
+--language=haskell2010 --typecheck-only` accepts a Main of `main` alone, which it does once the roadmap's M10 and M12
+give it a 2010 Prelude (M4 gave it the flag; the probe's answer is kept in `tests/out/hs2010-probe` while
+`bin/rhc.rbc` and `share/rhc/haskell2010` are as they were), and then while every row it names is `Planned` in the
+2010 table, as every row is until its program has run under 2010.
+
 ## rhc's Core
 
 rhc, the Haskell 98 compiler of the haskell98 roadmap
