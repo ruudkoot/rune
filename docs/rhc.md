@@ -72,8 +72,9 @@ made again.
 
 - `--whole` reads, checks and desugars the library as well, with the
   program, as the reference the snapshot is held to (`hs/snapshot/*` in
-  [testing.md](testing.md)). The options that change how the library is
-  read go whole too: `--names=greatest`, `--cycle-default=scc`.
+  [testing.md](testing.md)). No option of the command line reaches the
+  library, which is read under its own language (*A module's language*,
+  below), so none goes whole.
 - The order of a match changes the library's Core, so the snapshot holds
   the library's units in each, the Report's for `-O0` and `-O1` and
   Sestoft's trees for `-O2` (below). `--strings=whole` changes it too, and
@@ -146,13 +147,17 @@ How a unit is kept, what its usages hold and what its compile costs are in
 | `--dump-after=STAGE` | what a stage makes: `read`, `desugar` (the program's Core), `coretomid` (Mid's text), `mid`, a pass on Mid, `lower`, `registers` or `stack`, or `all` |
 | `--pass-stats` | the time and size of every stage, on standard error |
 
-**Names and modules.**
+**The language, names and modules.** Each but `--by-interface` is a step
+of the program's setting, which every module of the program starts from
+and the library never sees (*A module's language*, below).
 
 | Option | What it does |
 |---|---|
-| `--names=least\|greatest` | the solution of a cycle's exports: the least fixpoint (the default) or the greatest; chapter 5 is met by either (D29) |
+| `--language=haskell98\|haskell2010` | the edition every module of the program starts from, and the program's library, `DIR/EDITION` of `--share` (the haskell2010 roadmap's D1); `haskell98` by default. The 2010 library is written by that roadmap's M12 to M16 |
+| `-XNAME`, `-XNoNAME` | a feature of the language on or off in every module of the program, as a `LANGUAGE` pragma names it; `-XHaskell98` and `-XHaskell2010` an edition, which leaves the library to `--language` |
+| `--names=least\|greatest` | the solution of a cycle's exports: the least fixpoint (the default) or the greatest; chapter 5 is met by either (D29). A cycle's own setting: the library's cycle keeps the least |
 | `--cycle-default=module\|scc` | in a cycle of modules, each module's `default` declaration and Rule 2 at its end (the default), or the cycle's, an extension (D30) |
-| `--dotted-names` | read a module name with dots, `Data.List`, as one, which Haskell 98's `modid` is not; module `A.B` is the file `A/B.hs` (D35) |
+| `--dotted-names` | read a module name with dots, `Data.List`, as one, which Haskell 98's `modid` is not; module `A.B` is the file `A/B.hs` (D35): HierarchicalModules in the record |
 | `--by-interface` | with `--typecheck-only`, check each group of the program from the interfaces of the groups before it, the library's computed too |
 
 **Checks.** `--lint[=N]`, or `RUNE_LINT=N`, sets the level: `off`, or 0
@@ -210,7 +215,8 @@ of them is a bug of rhc's.
 
 | Option | What it does |
 |---|---|
-| `--share DIR` | where the library is, `DIR/haskell98` (`bin/rhc` gives it) |
+| `--share DIR` | where the libraries are, `DIR/haskell98` and `DIR/haskell2010` (`bin/rhc` gives it) |
+| `--library-modules` | print the modules a program may import of the library `--language` selects, which make's snapshot imports |
 | `--snapshot DIR` | the store the library's units are taken from, read only (`bin/rhc` gives it) |
 | `--whole` | read, check and desugar the library too, not take it from the snapshot |
 | `--read-core FILE` | read `FILE` as Core text; given again, the files make one program |
@@ -255,6 +261,47 @@ the corpus at `-O2` the trees run in 0.81 of the instructions and make
 0.69 of the suspensions; their code is a little smaller and its compile
 within 1%. `--match=report` keeps the Report's order at `-O2`, and
 `--match=sestoft` takes the trees at `-O0` and `-O1`.
+
+## A module's language
+
+Every module has a language (the haskell2010 roadmap's *Tracking language
+settings*, D4 to D10): an edition, the Report of Haskell 98 or of Haskell
+2010, and a set of rhc's features, which each stage asks of the module it
+is working on: the lexer and the parser of the file they read, the graph of
+the module that imports, the checker and HsLint of the module a binding
+belongs to. It is resolved once, as GHC resolves a module's, from
+
+1. the edition `--language` names, `haskell98` by default;
+2. the command line's steps in order: `-XNAME` and `-XNoNAME`, and rhc's
+   own options of the language, `--dotted-names`, `--names=` and
+   `--cycle-default=`; `-XHaskell2010` names an edition;
+3. the module's header: the `LANGUAGE` pragmas before its first token, a
+   literate file's once unlit, in the order of the text, their keyword in
+   any case and their names as written.
+
+The last edition named is the base; the steps are replayed over its own
+set, the command line's first. In a module whose edition is Haskell 98 the
+header's names other than the editions are not read at all, as rhc read no
+pragma before (D6): only `-X` gives such a module a feature. In any other a
+name rhc does not know is an error at the name (12.3). Haskell 98's own set
+has n+k patterns; Haskell 2010's has DoAndIfThenElse, EmptyDataDecls,
+ForeignFunctionInterface, HierarchicalModules, PatternGuards and
+RelaxedPolyRec, of which rhc so far reads HierarchicalModules and
+RelaxedPolyRec (a signature cuts a dependency, 4.5.1), and n+k patterns are
+off. The two settings of a cycle, `--names=greatest` and
+`--cycle-default=scc`, are features too, and a cycle's modules must agree
+on them.
+
+A unit's key holds each member's set in a canonical form, without the
+edition, and Haskell 98's own set as nothing (D9): a store or a snapshot of
+Haskell 98's keeps its keys, two spellings of one set share a unit, and no
+unit made under one setting is taken by a compile under another. A header
+kept in the store keeps its pragmas' names, and is keyed by the command
+line's setting. The library is read under its own language, its
+descriptor's, whatever the program's (`src/rhc/library.sml`): the
+descriptor names the library's modules of the roles the stages name (the
+Prelude, `Ratio`, `Ix` and the rest), its sources under `--share`, its
+hidden modules and the modules it offers.
 
 ## The library
 
@@ -329,10 +376,12 @@ where no default does: `--eta=ghc` breaks `seq` on a partial application
 
 ## What rhc does not do
 
-- Any language but Haskell 98: no extension of GHC's or Hugs', no Haskell
-  2010, no hierarchical module names but by `--dotted-names`, which reads a
-  file, and no module of a library but the Report's: no `Foreign`, no
-  `IORef`, no concurrency.
+- Any language but Haskell 98: no extension of GHC's or Hugs', and of
+  Haskell 2010 only its record (*A module's language*): its library and most
+  of its features are the haskell2010 roadmap's later milestones; no
+  hierarchical module names but by `--dotted-names` or in a module of
+  Haskell 2010, and no module of a library but the Report's: no `Foreign`,
+  no `IORef`, no concurrency.
 - Optimise a unit with what its imports export: the Core simplifier and
   the strictness analysis work on a program's Core whole, and the
   unfoldings and strictness signatures a unit can write (`--unfoldings`)

@@ -37,28 +37,32 @@
      library so): the overlay's entries of I4, I5 and I7, which type them.
 
    A program's own module of any of these names is the program's: a
-   module of the library has the identity `haskell98:` and its name. *)
+   module of the library has the identity `haskell98:` and its name.
+
+   A library is a descriptor (the haskell2010 roadmap's D1, D25): its
+   names, the stages' (HsLibraryNames: the prefix of its modules'
+   identities, and the module of each role a stage names), the language
+   its modules are read under whatever the program's, where its files are
+   (`sources`), the modules a program cannot import, rhc's leaves, which no
+   file holds, and the modules a program may import, which make's snapshot
+   imports (`rhc --library-modules`). A program has one, which --language=
+   chooses: nothing else in rhc names a library.
+
+   Its files are its sources' under --share, in order: a directory, and the
+   modules the library takes of it, every module where it names none; a
+   module's first file is the one. So a runtime layer both editions'
+   libraries share (D25's B) is a directory each names with the modules it
+   takes, and a module there has the identity of the library that reads it
+   all the same: no key or identity names a directory, so that moving a
+   module between them is a change of the descriptor alone. *)
 structure RhcLibrary =
 struct
-  (* the library's name, the prefix of its modules' identities *)
-  val name = "haskell98"
-
-  (* where the library is: --share's DIR *)
-  val share : string option ref = ref NONE
-
-  fun identity m = name ^ ":" ^ m
-
-  fun dir () = Option.map (fn d => OS.Path.concat (d, name)) (!share)
-
-  (* the modules a program cannot import: the three the Prelude is made of
-     (chapter 8, D36), rhc's two of primitives, and rhc's own two of the
-     library, PreludeRuntime and PreludeEnum (M17) *)
-  val hidden = ["PreludeList", "PreludeText", "PreludeIO", "PreludeBuiltin", "UnicodePrims", "PreludeRuntime", "PreludeEnum"]
-
-  fun isHidden m = List.exists (fn h => h = m) hidden
+  type descriptor = {names : HsLibraryNames.t, language : HsLanguage.t,
+                     sources : {dir : string, modules : string list option} list,
+                     hidden : string list, leaves : (string * string list) list, modules : string list}
 
   (* the modules no file holds, and what they export *)
-  val leaves =
+  val leaves98 =
     [("PreludeBuiltin",
       ["primAppendFile", "primCatch", "primCharToInt", "primElided", "primError", "primGetChar", "primGetContents",
        "primIOError", "primIntToChar", "primPutChar", "primReadFile", "primUserError", "primWriteFile"]),
@@ -66,7 +70,85 @@ struct
       ["primUnicodeIsAlphaNum", "primUnicodeIsLower", "primUnicodeIsPrint", "primUnicodeIsUpper",
        "primUnicodeMaxChar", "primUnicodeToLower", "primUnicodeToUpper"])]
 
-  fun isLeaf m = List.exists (fn (l, _) => l = m) leaves
+  (* Haskell 98's library: the modules a program cannot import are the
+     three the Prelude is made of (chapter 8, D36), rhc's two of
+     primitives, and rhc's own two of the library, PreludeRuntime and
+     PreludeEnum (M17) *)
+  val haskell98 : descriptor =
+    {names = HsLibraryNames.haskell98, language = HsLanguage.ofEdition HsLanguage.Haskell98,
+     sources = [{dir = "haskell98", modules = NONE}],
+     hidden = ["PreludeList", "PreludeText", "PreludeIO", "PreludeBuiltin", "UnicodePrims", "PreludeRuntime", "PreludeEnum"],
+     leaves = leaves98,
+     modules = ["Array", "Char", "Complex", "CPUTime", "Directory", "IO", "Ix", "List", "Locale", "Maybe", "Monad",
+                "Numeric", "Random", "Ratio", "System", "Time"]}
+
+  (* Haskell 2010's, share/rhc/haskell2010, read under 2010's language:
+     its roles' modules are the ones its Prelude's code imports (T10:7543,
+     8422; D23). Its modules join `modules` as the roadmap's M12 to M16 write
+     them, and the runtime layer's directory joins its sources with M12 *)
+  val haskell2010 : descriptor =
+    {names = {prefix = "haskell2010", prelude = "Prelude", text = "PreludeText", ix = "Data.Ix", ratio = "Data.Ratio",
+              builtin = "PreludeBuiltin"},
+     language = HsLanguage.ofEdition HsLanguage.Haskell2010, sources = [{dir = "haskell2010", modules = NONE}],
+     hidden = #hidden haskell98, leaves = leaves98,
+     modules = []}
+
+  (* the program's library *)
+  val current = ref haskell98
+
+  (* `select e` makes the library of the edition `e` the program's *)
+  fun select HsLanguage.Haskell98 = current := haskell98
+    | select HsLanguage.Haskell2010 = current := haskell2010
+
+  fun names () = #names (!current)
+  fun language () = #language (!current)
+  fun modules () = #modules (!current)
+
+  (* the library's name, the prefix of its modules' identities *)
+  fun name () = #prefix (names ())
+
+  (* where the libraries are: --share's DIR *)
+  val share : string option ref = ref NONE
+
+  fun identity m = HsLibraryNames.identity (names (), m)
+
+  fun isLibrary id = HsLibraryNames.isLibrary (names (), id)
+
+  (* the library's sources under --share, in the order a module's file is
+     looked for: each directory, and whether it holds the library's module
+     of a name *)
+  fun sources () : (string * (string -> bool)) list =
+    case !share of
+      SOME d =>
+        List.map (fn {dir, modules} =>
+                    (OS.Path.concat (d, dir),
+                     case modules of NONE => (fn _ => true) | SOME ms => (fn m => List.exists (fn x => x = m) ms)))
+          (#sources (!current))
+    | NONE => []
+
+  fun isHidden m = List.exists (fn h => h = m) (#hidden (!current))
+
+  fun leaves () = #leaves (!current)
+
+  fun isLeaf m = List.exists (fn (l, _) => l = m) (leaves ())
+
+  (* rhc's leaf of the primitives the library names *)
+  fun builtin () = #builtin (names ())
+
+  (* the module of a role a stage names by its Haskell 98 name: the
+     Prelude, PreludeText, Ix, Ratio, PreludeBuiltin; any other name is
+     itself *)
+  fun roleModule role =
+    let val n = names ()
+    in
+      case role of
+        "Prelude" => #prelude n
+      | "PreludeText" => #text n
+      | "Ix" => #ix n
+      | "Ratio" => #ratio n
+      | "PreludeBuiltin" => #builtin n
+      | _ => role
+    end
 
   (* ---- the Report's illustrations, read until M17 ---- *)
 
@@ -213,10 +295,10 @@ struct
       fun var s = A.Name (A.noAnn, {qual = "", name = s})
       val elided = A.E (A.noAnn, A.EVar (var "primElided"))
       val added = List.map (fn v => A.D (A.noAnn, A.DPat (A.P (A.noAnn, A.PVar v), A.Rhs (A.noAnn, A.Plain (elided, NONE))))) unbound
-      val importsBuiltin = List.exists (fn A.Import (_, {module = m, ...}) => nameOf m = "PreludeBuiltin") imports
+      val importsBuiltin = List.exists (fn A.Import (_, {module = m, ...}) => nameOf m = builtin ()) imports
       val extra =
         if importsBuiltin orelse not (elidedText orelse not (null unbound)) then []
-        else [A.Import (A.noAnn, {qualified = false, module = var "PreludeBuiltin", as_ = NONE, hiding = false,
+        else [A.Import (A.noAnn, {qualified = false, module = var (builtin ()), as_ = NONE, hiding = false,
                                   spec = SOME [A.Ent (A.noAnn, A.EntVar (var "primElided"))]})]
     in
       A.Module (a, {name = n, exports = exports, imports = imports @ extra, decls = decls @ added})

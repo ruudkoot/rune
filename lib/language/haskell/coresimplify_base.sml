@@ -40,6 +40,10 @@ struct
   (* the question asked before each rewrite (Pass.spend, so that --fuel
      can stop the rewriting) *)
   val spendRef : (unit -> bool) ref = ref (fn () => true)
+  (* the names of the program's library, which setup sets, and the key of
+     its entity `name` of the module of a role *)
+  val library : HsLibraryNames.t ref = ref HsLibraryNames.haskell98
+  fun libraryEntity (role : HsLibraryNames.t -> string, name : string) = HsLibraryNames.entity (!library, role, name)
 
   (* each kind of rewrite with how many were made *)
   val counts : (string * int ref) list ref = ref []
@@ -183,7 +187,7 @@ struct
   fun isBottom (e : exp) : bool =
     case e of
       Prim (p, _, _) => p = "raise" orelse p = "raise_io"
-    | App (Atom (Var f), _) => String.isPrefix "%raise:" f orelse f = "primError" orelse f = "haskell98:Prelude.error"
+    | App (Atom (Var f), _) => String.isPrefix "%raise:" f orelse f = "primError" orelse f = libraryEntity (#prelude, "error")
     | Let (_, _, _, b) => isBottom b
     | Case (_, _, [AltDefault b]) => isBottom b
     | _ => false

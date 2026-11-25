@@ -7,14 +7,14 @@ struct
 
   datatype eta = Pedantic | Ghc
 
-  type options = {spend : unit -> bool, whole : bool, eta : eta, cheap : bool}
+  type options = {spend : unit -> bool, whole : bool, eta : eta, cheap : bool, library : HsLibraryNames.t}
 
   (* how many rounds a simplification runs at most, and how many rounds of
      copies a specialisation makes *)
   val maxRounds = 6
   val maxSpecRounds = 6
 
-  fun setup (opts : options) = (B.spendRef := #spend opts; S.whole := #whole opts)
+  fun setup (opts : options) = (B.spendRef := #spend opts; S.whole := #whole opts; B.library := #library opts)
 
   fun total () = List.foldl (fn ((_, r), n) => n + !r) 0 (!B.counts)
 

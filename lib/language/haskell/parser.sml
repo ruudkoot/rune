@@ -157,6 +157,10 @@ struct
     | _ => expected ("a constructor", ctx)
 
   val dotted = ref false
+  (* the language of the module being read (HsLanguage), which `run` sets
+     for each file: what a feature allows is the module's own *)
+  val language = ref (HsLanguage.ofEdition HsLanguage.Haskell98)
+  fun on f = HsLanguage.has (!language, f)
 
   fun modid ctx =
     case !cur of
@@ -562,6 +566,11 @@ struct
     | A.PSeq [A.PA (A.P (va, A.PVar v)), A.PO (A.VarOp (A.Name (pa, {qual = "", name = "+"}))),
               A.PA (A.P (ka, A.PLit (k as A.Lit (_, A.LInt (kv, _)))))] =>
         if not nk then failAt (sp, "an n+k pattern where only an atomic pattern or a constructor's may stand")
+        (* Haskell 2010 removed them (its preface), and -XNoNPlusKPatterns turns them off *)
+        else if not (on HsLanguage.NPlusKPatterns) then
+          failAt (sp, case HsLanguage.edition (!language) of
+                        HsLanguage.Haskell2010 => "an n+k pattern, which Haskell 2010 does not have (NPlusKPatterns is off)"
+                      | HsLanguage.Haskell98 => "an n+k pattern, with NPlusKPatterns turned off")
         (* 3.17.2's positive integer literal, over the grammar's integer (R15, as Hugs) *)
         else if kv = IntInf.fromInt 0 then failAt (ka, "an n+k pattern's k is a positive integer literal (3.17.2), and 0 is not")
         else A.P (absorb (sp, mergeToks (toksOf va, mergeToks (toksOf pa, toksOf ka))), A.PNPlusK (v, k))
@@ -1584,8 +1593,9 @@ struct
           in theEnd (); A.Module (ann s, {name = NONE, exports = NONE, imports = imports, decls = decls}) end
     end
 
-  fun run ({lexer = {hierarchical}, annotations} : options, f, items, traced) =
-    (mode := annotations; file := (if f = "" then "<input>" else f); dotted := hierarchical;
+  fun run ({lexer = {language = lang}, annotations} : options, f, items, traced) =
+    (mode := annotations; file := (if f = "" then "<input>" else f);
+     language := lang; dotted := HsLanguage.has (lang, HsLanguage.HierarchicalModules);
      seq := 0; pending := []; tracing := traced; trace := []; stopArrow := false;
      starts := (case annotations of Bare => Array.array (0, 0) | _ => Array.array (2 * Vector.length items + 64, 0));
      L.start (!file, items);

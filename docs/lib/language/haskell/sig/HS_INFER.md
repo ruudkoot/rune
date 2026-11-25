@@ -55,10 +55,10 @@ sig
   type <a href="#type-env">env</a>
   val <a href="#val-initial">initial</a> : {<a href="#fld-initial.primitives">primitives</a> : string list} -&gt; env
   datatype <a href="#type-cycledefault">cycleDefault</a> = <a href="#con-permodule">PerModule</a> | <a href="#con-pergroup">PerGroup</a>
-  type <a href="#type-module_">module_</a> = {<a href="#fld-module_.id">id</a> : string, <a href="#fld-module_.ast">ast</a> : HsAst.module, <a href="#fld-module_.library">library</a> : bool}
+  type <a href="#type-module_">module_</a> = {<a href="#fld-module_.id">id</a> : string, <a href="#fld-module_.ast">ast</a> : HsAst.module, <a href="#fld-module_.library">library</a> : bool, <a href="#fld-module_.language">language</a> : HsLanguage.t}
   val <a href="#val-check">check</a> : {<a href="#fld-check.env">env</a> : env, <a href="#fld-check.unit">unit</a> : module_ list, <a href="#fld-check.cycledefault">cycleDefault</a> : cycleDefault,
                <a href="#fld-check.prelude">prelude</a> : string * string -&gt; string option, <a href="#fld-check.fixity">fixity</a> : string -&gt; (HsAst.fixity * int) option,
-               <a href="#fld-check.evidence">evidence</a> : HsEvidence.table}
+               <a href="#fld-check.evidence">evidence</a> : HsEvidence.table, <a href="#fld-check.standard">standard</a> : string -&gt; bool}
               -&gt; {env : env, errors : (HsSource.span * string) list, derived : (string * string * HsAst.decl list) list}
   val <a href="#val-renumber">renumber</a> : int -&gt; unit
   val <a href="#val-numberfrom">numberFrom</a> : int -&gt; unit
@@ -116,29 +116,37 @@ Where Rule 2 closes and which `default` holds in a cycle (D30).
 ### <a name="type-module_"></a>`module_`
 
 ```sml
-type module_ = {id : string, ast : HsAst.module, library : bool}
+type module_ = {id : string, ast : HsAst.module, library : bool, language : HsLanguage.t}
 ```
 
-A module of a unit: its identity, its renamed and resolved tree, and
-whether it is the library's.
+A module of a unit: its identity, its renamed and resolved tree,
+whether it is the library's, and its language.
+
+Each of its bindings is checked under its language (HsLanguage; the
+haskell2010 roadmap's D10).
 
 | Field | Type | Description |
 | --- | --- | --- |
 | <a name="fld-module_.id"></a>`id` | `string` |  |
 | <a name="fld-module_.ast"></a>`ast` | `HsAst.module` |  |
 | <a name="fld-module_.library"></a>`library` | `bool` |  |
+| <a name="fld-module_.language"></a>`language` | `HsLanguage.t` |  |
 
 ### <a name="val-check"></a>`check`
 
 ```sml
 val check : {env : env, unit : module_ list, cycleDefault : cycleDefault,
              prelude : string * string -> string option, fixity : string -> (HsAst.fixity * int) option,
-             evidence : HsEvidence.table}
+             evidence : HsEvidence.table, standard : string -> bool}
             -> {env : env, errors : (HsSource.span * string) list, derived : (string * string * HsAst.decl list) list}
 ```
 
-`check {env, unit, cycleDefault, prelude, fixity, evidence}` checks
-the modules of `unit`, recording into `evidence`.
+`check {env, unit, cycleDefault, prelude, fixity, evidence, standard}` checks the modules of `unit`, recording into `evidence`.
+
+Each binding is checked under its module's language: under
+RelaxedPolyRec (2010's 4.5.1) a use of a variable with a signature
+makes no dependency of the binding that uses it. `cycleDefault` is the
+unit's, on which a cycle's modules agree.
 
 It gives the environment with the unit's types, constructors,
 classes, instances and values, the errors, and the derived
@@ -148,7 +156,10 @@ of `key`, for a derived `Show` and `Read`. `prelude (space, name)` is
 the key of the entity the Prelude exports under `name`, `"t"` for a
 type or class and `"v"` for a value, for what the Report's
 translations name: [`Bool`](../../../basis/str/Bool.md), [`Char`](../../../basis/str/Char.md), `Integer`, `Double`, `Num`,
-`Fractional`, `Eq`, `Ord`, `Enum`, `Integral`, `Monad`.
+`Fractional`, `Eq`, `Ord`, `Enum`, `Integral`, `Monad`. `standard key`
+is whether the class of `key` is a standard class, one the Prelude
+or a standard library defines (4.3.4): the program's library's
+(the haskell2010 roadmap's D20).
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -158,6 +169,7 @@ translations name: [`Bool`](../../../basis/str/Bool.md), [`Char`](../../../basis
 | <a name="fld-check.prelude"></a>`prelude` | `string * string -> string option` |  |
 | <a name="fld-check.fixity"></a>`fixity` | `string -> (HsAst.fixity * int) option` |  |
 | <a name="fld-check.evidence"></a>`evidence` | `HsEvidence.table` |  |
+| <a name="fld-check.standard"></a>`standard` | `string -> bool` |  |
 
 ### <a name="val-renumber"></a>`renumber`
 

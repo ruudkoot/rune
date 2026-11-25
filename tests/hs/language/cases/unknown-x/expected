@@ -1,0 +1,3 @@
+rhc: -XFooBar: no language or extension FooBar that rhc knows
+rhc --help says what rhc takes
+status 1

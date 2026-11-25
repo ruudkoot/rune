@@ -1,0 +1,2 @@
+Main.lhs:4:10: error: an n+k pattern, which Haskell 2010 does not have (NPlusKPatterns is off)
+status 1

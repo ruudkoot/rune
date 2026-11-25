@@ -115,8 +115,9 @@ struct
       | HsUsage.Standard {space, name} =>
           let
             val from =
-              if List.exists (fn n => n = name) ["Ix", "range", "index", "inRange", "rangeSize"] then RhcLibrary.identity "Ix"
-              else RhcLibrary.identity "Prelude"
+              if List.exists (fn n => n = name) ["Ix", "range", "index", "inRange", "rangeSize"]
+              then RhcLibrary.identity (RhcLibrary.roleModule "Ix")
+              else RhcLibrary.identity (RhcLibrary.roleModule "Prelude")
           in
             ents (List.filter (fn (e : Mo.entity) => #space e = spaceOf space andalso #name e = name) (exportsOf from))
           end
@@ -131,7 +132,7 @@ struct
      is named and not checked, as a whole check does. *)
   type turn = {group : G.node list, state : N.state, ifaces : HsModIface.t list, reads : HsUsage.read list}
 
-  fun turns (g : G.graph, fixpoint, check, evidence) : turn list =
+  fun turns (g : G.graph, check : bool, evidence) : turn list =
     let
       val leaves = N.leavesOf (List.concat (#groups g))
       fun start ifaces : N.state =
@@ -145,7 +146,7 @@ struct
         | go (group :: rest, ifaces, failed, acc) =
             let
               val (s, reads) =
-                recording (fn () => N.groups (N.extend (start ifaces, group), [group], fixpoint, if failed then NONE else check))
+                recording (fn () => N.groups (N.extend (start ifaces, group), [group], not failed andalso check))
               val mine = ofModules (s, List.map #id group)
               val failedNow = failed orelse List.exists (fn d => not (#library d)) (#diags s)
             in
@@ -155,18 +156,18 @@ struct
       go (#groups g, [], false, [])
     end
 
-  (* `program (g, fixpoint, check)` names and checks the program of `g`
+  (* `program (g, check)` names and checks the program of `g`
      group by group from interfaces: the result a whole check gives *)
-  fun program (g : G.graph, fixpoint, check) : N.result =
+  fun program (g : G.graph, check : bool) : N.result =
     let
       val evidence = HsEvidence.empty ()
-      val ts = turns (g, fixpoint, check, evidence)
+      val ts = turns (g, check, evidence)
       val all = List.concat (List.map #ifaces ts)
       val final = N.install (N.initial (N.leavesOf (List.concat (#groups g))), all)
     in
       {modules = List.concat (List.map (fn {state, ...} : turn => List.rev (#modules state)) ts),
        exports = #exports final, diags = List.concat (List.map (fn {state, ...} : turn => #diags state) ts),
-       types = Option.map (fn _ => #types final) check, evidence = evidence,
+       types = if check then SOME (#types final) else NONE, evidence = evidence,
        derived = List.concat (List.map (fn {state, ...} : turn => #derived state) ts)}
     end
 
@@ -175,9 +176,9 @@ struct
   fun programModules (g : G.graph) =
     List.filter (fn grp => not (List.all #library grp)) (#groups g)
 
-  fun dumpIface (g : G.graph, fixpoint, check) =
+  fun dumpIface (g : G.graph, check : bool) =
     let
-      val ts = turns (g, fixpoint, check, HsEvidence.empty ())
+      val ts = turns (g, check, HsEvidence.empty ())
       val fps : string M.map ref = ref M.empty
       fun escape t = String.concatWith " | " (String.fields (fn c => c = #"\n") t)
     in
@@ -207,7 +208,7 @@ struct
         ts
     end
 
-  fun dumpUsages (g : G.graph, fixpoint, check) =
+  fun dumpUsages (g : G.graph, check : bool) =
     List.app
       (fn {group, state, reads, ...} : turn =>
          if List.all #library group then ()
@@ -220,5 +221,5 @@ struct
                                       answer {state = state, fingerprint = fn _ => NONE, own = fn _ => true} r ^ "\n"))
                reads
            end)
-      (turns (g, fixpoint, check, HsEvidence.empty ()))
+      (turns (g, check, HsEvidence.empty ()))
 end

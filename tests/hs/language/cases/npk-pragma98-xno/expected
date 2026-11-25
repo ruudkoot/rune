@@ -1,0 +1,2 @@
+Main.hs:6:7: error: an n+k pattern, with NPlusKPatterns turned off
+status 1

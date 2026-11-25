@@ -23,7 +23,7 @@ What each means is on [`HS_PARSER`](../sig/HS_PARSER.md); the types are this str
 |  | Member | Is |
 | --- | --- | --- |
 | datatype | [`annotations`](../sig/HS_PARSER.md#type-annotations) | `Bare` &#124; `Spans` &#124; `Full` |
-| type | [`options`](../sig/HS_PARSER.md#type-options) | `{annotations : annotations, lexer : {hierarchical : bool}}` |
+| type | [`options`](../sig/HS_PARSER.md#type-options) | `{annotations : annotations, lexer : {language : HsLanguage.t}}` |
 | val | [`defaults`](../sig/HS_PARSER.md#val-defaults) | `options` |
 | val | [`parse`](../sig/HS_PARSER.md#val-parse) | `options * string * {column : int, first : bool, line : int, start : int, stop : int, token : HsToken.token, trivia : {kind : HsToken.trivia, start : int, stop : int} list} vector -> HsAst.module` |
 | val | [`parseFile`](../sig/HS_PARSER.md#val-parsefile) | `options * string * string -> HsAst.module` |

@@ -818,11 +818,14 @@ bin/rhc.rbc: $(RUNE) rhc.build $(SOURCES_RHC) src/main/rhc-main.sml
 # and after each make holds the configurations of the rhc that made it
 # alone (--prune-store drops the others, file by file as the store's trim
 # drops what it drops).
+# The modules Main imports are those the library's descriptor lists
+# (src/rhc/library.sml, `rhc --library-modules`; the haskell2010 roadmap's
+# M4).
 RHC_SHARE := $(shell find share/rhc -type f 2>/dev/null)
-RHC_LIBRARY_MODULES := Array Char Complex CPUTime Directory IO Ix List Locale Maybe Monad Numeric Random Ratio System Time
 bin/rhc.layer: bin/rhc.rbc bin/runevm $(RHC_SHARE)
 	mkdir -p build/rhc-layer
-	{ for m in $(RHC_LIBRARY_MODULES); do echo "import $$m"; done; printf 'main :: IO ()\nmain = return ()\n'; } > build/rhc-layer/Main.hs
+	ms=$$(bin/runevm bin/rhc.rbc --library-modules) && \
+	  { for m in $$ms; do echo "import $$m"; done; printf 'main :: IO ()\nmain = return ()\n'; } > build/rhc-layer/Main.hs
 	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --store $@ --match=report build/rhc-layer/Main.hs -o build/rhc-layer/main.rbc < /dev/null
 	RUNE_LINT=2 bin/runevm bin/rhc.rbc --share "$(CURDIR)/bin/../share/rhc" --store $@ --match=sestoft build/rhc-layer/Main.hs -o build/rhc-layer/main.rbc < /dev/null
 	bin/runevm bin/rhc.rbc --prune-store $@
@@ -2229,6 +2232,7 @@ RUNNER_SRCS := tests/runner/canary.sml tests/runner/langchecks.sml tests/runner/
                tests/runner/hssyntax.sml tests/runner/hsnames.sml tests/runner/hslibrary.sml tests/runner/hsmutantlist.sml tests/runner/hsmutants.sml \
                tests/runner/hsmeta.sml tests/runner/hsgen.sml tests/runner/hsreduce.sml tests/runner/hsinterp.sml tests/runner/hsdesugar.sml tests/runner/hssimplify.sml tests/runner/hsperf.sml tests/runner/hslint.sml tests/runner/hssource.sml tests/runner/hscorpus.sml \
                tests/runner/hsoracles.sml tests/runner/hsrhccorpus.sml tests/runner/hslazyports.sml tests/runner/hscorpusrun.sml tests/runner/hssimplifyfigures.sml tests/runner/hssnapshot.sml tests/runner/hsiface.sml tests/runner/hschecks.sml tests/runner/hsunits.sml tests/runner/hsstanding.sml \
+               tests/runner/hslanguage.sml \
                tests/runner/main.sml
 bin/rune-test.rbc: $(RUNE) $(RUNNER_SRCS) FORCE \
                    $(wildcard lib/test/runner/*.sml lib/test/unit/*.sml lib/test/property/*.sml lib/random/*.sml lib/terminal/*.sml lib/json/*.sml lib/digest/*.sml)

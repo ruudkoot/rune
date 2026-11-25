@@ -8,18 +8,19 @@ structure NamesDriver =
 struct
   fun main () =
     let
-      val fixpoint = ref HsModules.Least
-      val dotted = ref false
+      (* the options of names, steps of the program's setting, as rhc's *)
+      val steps = ref []
+      fun step s = steps := !steps @ [s]
       fun go ([], files) = List.rev files
         | go ("--share" :: d :: rest, files) = (RhcLibrary.share := SOME d; go (rest, files))
-        | go ("--names=least" :: rest, files) = (fixpoint := HsModules.Least; go (rest, files))
-        | go ("--names=greatest" :: rest, files) = (fixpoint := HsModules.Greatest; go (rest, files))
-        | go ("--dotted-names" :: rest, files) = (dotted := true; go (rest, files))
+        | go ("--names=least" :: rest, files) = (step (HsLanguage.Off HsLanguage.GreatestFixpointNames); go (rest, files))
+        | go ("--names=greatest" :: rest, files) = (step (HsLanguage.On HsLanguage.GreatestFixpointNames); go (rest, files))
+        | go ("--dotted-names" :: rest, files) = (step (HsLanguage.On HsLanguage.HierarchicalModules); go (rest, files))
         | go (f :: rest, files) = go (rest, f :: files)
       val files = go (CommandLine.arguments (), [])
-      val g = RhcGraph.load {roots = files, dotted = !dotted}
+      val g = RhcGraph.load {roots = files, setting = {edition = HsLanguage.Haskell98, steps = !steps}}
     in
-      RhcNames.dump (g, RhcNames.run (g, !fixpoint, NONE));
+      RhcNames.dump (g, RhcNames.run (g, false));
       OS.Process.success
     end
     handle HsSource.Error (_, msg) => (TextIO.output (TextIO.stdErr, msg ^ "\n"); OS.Process.failure)

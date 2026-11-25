@@ -19,8 +19,8 @@ struct
   structure M = HsStringMap
 
   (* a module of the program: its identity, its renamed and resolved
-     tree, and whether it is the library's *)
-  type module = {id : string, ast : A.module, library : bool}
+     tree, whether it is the library's, and its language *)
+  type module = {id : string, ast : A.module, library : bool, language : HsLanguage.t}
 
   (* a type constructor: a data type or newtype with its constructors, a
      synonym with its arity and its expansion over generic variables, or
@@ -60,6 +60,12 @@ struct
   (* the identity of the Prelude, and the modules of the program *)
   val prelude = ref ""
   val programModules : bool M.map ref = ref M.empty
+  (* the program's library's names, which each inference and check sets,
+     and the language of each module given *)
+  val names : HsLibraryNames.t ref = ref HsLibraryNames.haskell98
+  fun libraryId m = HsLibraryNames.identity (!names, m)
+  val languages : HsLanguage.t M.map ref = ref M.empty
+  fun languageOf id = getOpt (M.find (!languages, id), HsLanguage.ofEdition HsLanguage.Haskell98)
 
   (* each module's imports, the Prelude's implicit one among them, and the
      module of each file: 5.4's scope of instances (R26) *)
@@ -71,7 +77,7 @@ struct
   fun reset () =
     (tydefs := M.empty; cons := M.empty; fields := M.empty; methods := M.empty; classKinds := M.empty;
      defaults := M.empty; instances := []; classDecls := []; prelude := ""; programModules := M.empty;
-     imports := M.empty; fileModule := M.empty; closures := M.empty;
+     languages := M.empty; imports := M.empty; fileModule := M.empty; closures := M.empty;
      C.reset ())
 
   fun refuse (span, msg) = raise T.Refuse (span, msg)
@@ -88,7 +94,7 @@ struct
   (* the identity of the program's module of the name `m`, the library's
      where there is one *)
   fun moduleId m =
-    if M.member (!programModules, "haskell98:" ^ m) then SOME ("haskell98:" ^ m)
+    if M.member (!programModules, libraryId m) then SOME (libraryId m)
     else if M.member (!programModules, m) then SOME m
     else NONE
 
@@ -606,7 +612,7 @@ struct
   fun classes (ds : tdecl list) =
     let
       val cls = List.mapPartial (fn TClass r => SOME r | _ => NONE) ds
-      fun std ({qual, ...} : T.id) = String.isPrefix "haskell98:" qual
+      fun std ({qual, ...} : T.id) = HsLibraryNames.isLibrary (!names, qual)
       fun head {id, cx, var, span, ...} =
         let
           val name = plain (nameOf var)
@@ -779,8 +785,8 @@ struct
       val classes =
         List.filter (fn c => isSome (M.find (!C.classes, T.idKey c)))
           (List.mapPartial (fn (m, n) => Option.map (fn mid => {qual = mid, name = n}) (moduleId m))
-             [("Prelude", "Eq"), ("Prelude", "Ord"), ("Prelude", "Bounded"), ("PreludeText", "Read"),
-              ("PreludeText", "Show"), ("Ix", "Ix")])
+             (let val {prelude = p, text, ix, ...} = !names
+              in [(p, "Eq"), (p, "Ord"), (p, "Bounded"), (text, "Read"), (text, "Show"), (ix, "Ix")] end))
       fun one (cls, n) =
         let
           val tc = T.builtin (T.tupleName n)
@@ -1085,7 +1091,7 @@ struct
        instances = List.concat (List.map #instances parts), classDecls = List.concat (List.map #classDecls parts),
        prelude = prelude, programModules = union #programModules, classes = classes, insts = insts, heads = heads,
        imports = union #imports, fileModule = union #fileModule,
-       numId = let val num = {qual = if prelude = "" then "haskell98:Prelude" else prelude, name = "Num"} : T.id
+       numId = let val num = {qual = if prelude = "" then libraryId (#prelude (!names)) else prelude, name = "Num"} : T.id
                in if M.member (classes, T.idKey num) then SOME num else NONE end}
     end
 
@@ -1099,7 +1105,7 @@ struct
         prelude :=
           (case List.find (fn {id, ...} => HsModules.moduleName id = "Prelude") modules of
              SOME {id, ...} => id
-           | NONE => "haskell98:Prelude")
+           | NONE => libraryId (#prelude (!names)))
     in
       extend (modules, true)
     end
@@ -1109,6 +1115,7 @@ struct
   and extend (modules : module list, whole : bool) =
     let
       val () = List.app (fn {id, ...} => programModules := M.insert (!programModules, id, true)) modules
+      val () = List.app (fn {id, language, ...} : module => languages := M.insert (!languages, id, language)) modules
       (* the modules each imports, by the names it writes, the Prelude's
          implicit import with them, and each module's file *)
       val () =

@@ -24,8 +24,10 @@ struct
       (* what the Prelude exports, which the translations name *)
       fun prelude (space, name) =
         Option.map Mo.key (List.find (fn (e : Mo.entity) => #space e = spaceOf space andalso #name e = name)
-                             (exportsOf (RhcLibrary.identity "Prelude")))
-      fun entity (space, m, name) = Mo.key {space = spaceOf space, home = RhcLibrary.identity m, name = name}
+                             (exportsOf (RhcLibrary.identity (RhcLibrary.roleModule "Prelude"))))
+      (* an entity of the library, by the role of its module *)
+      fun entity (space, m, name) =
+        Mo.key {space = spaceOf space, home = RhcLibrary.identity (RhcLibrary.roleModule m), name = name}
     in
       {modules = List.map (fn (n : RhcGraph.node, m) => {id = #id n, ast = m, library = #library n}) (#modules r),
        infer = infer, evidence = #evidence r, derived = #derived r, prelude = prelude, entity = entity}
@@ -35,7 +37,7 @@ struct
      order *)
   fun groupsOf (g : RhcGraph.graph) = List.map (List.map (fn (n : RhcGraph.node) => #id n)) (#groups g)
 
-  fun leaves () = List.map (fn (l, names) => (RhcLibrary.identity l, names)) RhcLibrary.leaves
+  fun leaves () = List.map (fn (l, names) => (RhcLibrary.identity l, names)) (RhcLibrary.leaves ())
 
   (* the key of the program's main: what Main exports by the name, wherever
      it is defined (5: Main may import it and export it again) *)

@@ -4,8 +4,8 @@ struct
   structure T = HsToken
   structure C = HsChar
 
-  type options = {hierarchical : bool}
-  val defaults : options = {hierarchical = false}
+  type options = {language : HsLanguage.t}
+  val defaults : options = {language = HsLanguage.ofEdition HsLanguage.Haskell98}
 
   val asciiNames =
     [("NUL", 0), ("SOH", 1), ("STX", 2), ("ETX", 3), ("EOT", 4), ("ENQ", 5), ("ACK", 6),
@@ -21,8 +21,9 @@ struct
 
   fun hexCode c = "U+" ^ StringCvt.padLeft #"0" 4 (Int.fmt StringCvt.HEX c)
 
-  fun tokens ({hierarchical} : options, file, src) : T.item vector =
+  fun tokens ({language} : options, file, src) : T.item vector =
     let
+      val hierarchical = HsLanguage.has (language, HsLanguage.HierarchicalModules)
       val n = size src
       val i = ref 0
       val line = ref 1

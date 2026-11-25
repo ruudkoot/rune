@@ -5,6 +5,7 @@
 - `Lam` (con): [CORE](../sig/CORE.md#con-lam)
 - `lam` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-lam)
 - `lamTy` (val): [CORE](../sig/CORE.md#val-lamty)
+- `languages` (val): [HS_HEADER](../sig/HS_HEADER.md#val-languages)
 - `Large` (con): [HS_CHAR](../sig/HS_CHAR.md#con-large)
 - `LARROW` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-larrow)
 - `lastStop` (val): [HS_LAYOUT](../sig/HS_LAYOUT.md#val-laststop)

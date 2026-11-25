@@ -54,7 +54,7 @@ roadmap's evidence:
 <pre>
 signature HS_LEXER =
 sig
-  type <a href="#type-options">options</a> = {<a href="#fld-options.hierarchical">hierarchical</a> : bool}
+  type <a href="#type-options">options</a> = {<a href="#fld-options.language">language</a> : HsLanguage.t}
   val <a href="#val-defaults">defaults</a> : options
   val <a href="#val-tokens">tokens</a> : options * string * string -&gt; HsToken.item vector
 end
@@ -63,18 +63,18 @@ end
 ### <a name="type-options"></a>`options`
 
 ```sml
-type options = {hierarchical : bool}
+type options = {language : HsLanguage.t}
 ```
 
-How to read: whether dotted module names are read.
+How to read: the language of the module read (HsLanguage).
 
-`hierarchical` reads a dotted module name, such as Data.List, as one
-qualifier, which Haskell 98's `modid` is not (the roadmap's D35,
-refused by default).
+The lexer tests its HierarchicalModules: a dotted module name, such as
+Data.List, read as one qualifier, which Haskell 98's `modid` is not
+(the haskell98 roadmap's D35, Haskell 2010's 5.1).
 
 | Field | Type | Description |
 | --- | --- | --- |
-| <a name="fld-options.hierarchical"></a>`hierarchical` | `bool` |  |
+| <a name="fld-options.language"></a>`language` | `HsLanguage.t` |  |
 
 ### <a name="val-defaults"></a>`defaults`
 
@@ -82,7 +82,7 @@ refused by default).
 val defaults : options
 ```
 
-Haskell 98's: no dotted module names.
+Haskell 98's.
 
 ### <a name="val-tokens"></a>`tokens`
 

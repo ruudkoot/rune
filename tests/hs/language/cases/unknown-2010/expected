@@ -1,0 +1,2 @@
+Main.hs:2:14: error: the language `FooBar` of a LANGUAGE pragma, which rhc does not know: a module that asks for a feature rhc does not support is refused (12.3)
+status 1

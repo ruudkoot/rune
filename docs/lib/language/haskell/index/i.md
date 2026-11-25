@@ -2,6 +2,7 @@
 
 [Overview](../README.md) &middot; [a](a.md) [b](b.md) [c](c.md) [d](d.md) [e](e.md) [f](f.md) [g](g.md) [h](h.md) **i** [j](j.md) [k](k.md) [l](l.md) [m](m.md) [n](n.md) [o](o.md) [p](p.md) [q](q.md) [r](r.md) [s](s.md) [t](t.md) [u](u.md) [v](v.md) [w](w.md) [z](z.md)
 
+- `identity` (val): [HS_LIBRARY_NAMES](../sig/HS_LIBRARY_NAMES.md#val-identity)
 - `IF` (con): [HS_TOKEN](../sig/HS_TOKEN.md#con-if)
 - `ifBool` (val): [HS_DS_CORE](../sig/HS_DS_CORE.md#val-ifbool)
 - `implicit` (val): [HS_PRINT](../sig/HS_PRINT.md#val-implicit)
@@ -39,7 +40,7 @@
 - `ioTy` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-ioty)
 - `isEval` (val): [CORE](../sig/CORE.md#val-iseval)
 - `isIdent` (val): [HS_CHAR](../sig/HS_CHAR.md#val-isident)
-- `isLibrary` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-islibrary)
+- `isLibrary` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-islibrary), [HS_LIBRARY_NAMES](../sig/HS_LIBRARY_NAMES.md#val-islibrary)
 - `isLiterate` (val): [HS_LITERATE](../sig/HS_LITERATE.md#val-isliterate)
 - `isPrimType` (val): [HS_DS_ENV](../sig/HS_DS_ENV.md#val-isprimtype)
 - `isSpecial` (val): [HS_AST](../sig/HS_AST.md#val-isspecial)
