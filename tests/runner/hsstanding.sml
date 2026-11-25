@@ -724,6 +724,169 @@ struct
       outOverride := NONE
     end
 
+  (* ---- The manifest (the roadmap's M3, Holding 98 mode byte-identical,
+     nightly; the lead's ruling of 2026-11-25, which takes hashes for the
+     texts, 180 MB of Core): tests/hs/manifest.tsv, a line an item, what this
+     tree's rhc says of each in 98 mode, by its status and the hashes of its
+     standard output and error (SHA-256, 16 hex digits, the tree's root read
+     as <root>): each program of tests/hs/lang and accept's canonical Core
+     (`--desugar-only --dump-after=desugar --canonical-core`,
+     core/DIR/NAME), each refusal of tests/hs/errors as hs/errors compiles
+     it (errors/NAME) and the four views of each file of lang and accept
+     (views/DIR/FILE/VIEW), as the per-change check names them. Core is
+     rhc's own, so a change to Rune moves none of it [inferred]. Nightly,
+     hs-standing/manifest/K-of-N fails an item whose line is not what rhc
+     says now, and @stale a line that names no item; the texts are the
+     per-change check's (make check-hs98 OLD=<the commit that last wrote
+     the manifest>). A commit that moves an item writes the manifest again
+     (make hs-manifest: the shards, then `hs-standing manifest-write`,
+     which joins what they found) and names its decision. @faults holds the
+     job to its work: rhc's mutant HM01 (a match's clauses tried last first)
+     must move items of it, and this tree's rhc none *)
+  val manifestFile = "tests/hs/manifest.tsv"
+  val manifestHeader = "item\tstatus\tstdout\tstderr"
+  val manifestShards = 8
+  fun hash16 text = String.substring (Hex.fromBytes (Sha256.digest text), 0, 16)
+
+  (* the items: a name and rhc's arguments, run from the root; an item that
+     writes bytecode writes it to `scratch` *)
+  fun manifestItems scratch =
+    List.concat (List.map (fn d =>
+      List.map (fn (p : Lang.program) =>
+                  ("core/" ^ d ^ "/" ^ #name p, ["--desugar-only", "--dump-after=desugar", "--canonical-core"] @ cargs p @ [srcOf p]))
+               (programs ("tests/hs/" ^ d))) ["lang", "accept"])
+    @ List.map (fn (p : Lang.program) => ("errors/" ^ #name p, cargs p @ [srcOf p, "-o", scratch ^ "/prog.rbc"]))
+               (programs "tests/hs/errors")
+    @ List.concat (List.map (fn f => List.map (fn v => ("views/" ^ String.extract (f, size "tests/hs/", NONE) ^ "/" ^ v,
+                                                        ["--" ^ v, f])) views)
+                            (viewFiles ()))
+
+  (* an item's line, by the rhc `cmd` *)
+  fun manifestLine (cmd, scratch) (item, args) =
+    let
+      val () = mkdirs scratch
+      val base = scratch ^ "/run"
+      val status = execProcess false limits environment
+                     {cmd = cmd @ args, dir = SOME root, stdin = "", stdout = base ^ ".out", stderr = base ^ ".err",
+                      timeout = 900}
+      fun normal f = replaceAll (replaceAll (read f, scratch, "<scratch>"), root, "<root>")
+    in String.concatWith "\t" [item, Int.toString status, hash16 (normal (base ^ ".out")), hash16 (normal (base ^ ".err"))] end
+
+  (* the manifest's lines, by item; none where there is no manifest yet,
+     which @stale fails *)
+  fun manifestLines () =
+    case lines (read (fromRoot manifestFile)) of
+      h :: rest => if h = manifestHeader then List.map (fn l => (hd (String.fields (fn c => c = #"\t") l), l)) rest
+                   else raise Failed (manifestFile ^ " does not begin with its header: " ^ manifestHeader)
+    | [] => []
+  (* the commit that last wrote the manifest, whose rhc the per-change check
+     takes as OLD to show the texts *)
+  fun manifestCommit () =
+    let val f = out () ^ "/manifest-commit"
+        val () = mkdirs (out ())
+        val status = execProcess false Subprocess.unlimited (fn e => e)
+                       {cmd = ["git", "log", "-1", "--format=%h", "--", manifestFile], dir = SOME root, stdin = "", stdout = f,
+                        stderr = f ^ ".err", timeout = 60}
+    in if status = 0 andalso trim (read f) <> "" then trim (read f) else "<the commit that last wrote it>" end
+
+  (* the parts of an item's line that differ from the manifest's *)
+  fun movedParts (was, now) =
+    let val (a, b) = (String.fields (fn c => c = #"\t") was, String.fields (fn c => c = #"\t") now)
+    in List.mapPartial (fn (i, name) => if List.nth (a, i) <> List.nth (b, i) then SOME name else NONE)
+                       [(1, "status"), (2, "stdout"), (3, "stderr")]
+       handle Subscript => ["the line's form"] end
+
+  (* a shard: each item's line now, kept in OUT/manifest/now-K-of-N.tsv for
+     manifest-write, and a FAIL for each that is not the manifest's *)
+  fun manifestShard (k, n) =
+    let
+      val dir = out () ^ "/manifest"
+      val scratch = dir ^ "/scratch-" ^ Int.toString k
+      val known = manifestLines ()
+      val items = shard (k, n) (manifestItems scratch)
+      val now = List.map (manifestLine ([fromRoot "bin/rhc"], scratch)) items
+      val () = (mkdirs dir; write (dir ^ "/now-" ^ Int.toString k ^ "-of-" ^ Int.toString n ^ ".tsv",
+                                   String.concat (List.map (fn l => l ^ "\n") now)))
+      val commit = manifestCommit ()
+      val fails =
+        List.mapPartial (fn l =>
+                           let val item = hd (String.fields (fn c => c = #"\t") l)
+                           in case List.find (fn (i, _) => i = item) known of
+                                NONE => SOME (item ^ ": no line in " ^ manifestFile)
+                              | SOME (_, was) => if was = l then NONE
+                                                 else SOME (item ^ ": " ^ commas (movedParts (was, l)) ^ " moved since " ^ commit)
+                           end) now
+    in
+      List.app (fn m => say ("FAIL hs-standing manifest " ^ m ^ "\n")) fails;
+      if null fails then
+        say ("PASS hs-standing manifest " ^ Int.toString k ^ "-of-" ^ Int.toString n ^ ": " ^ Int.toString (length now)
+             ^ " items as " ^ manifestFile ^ " has them\n")
+      else
+        say ("SUMMARY hs-standing manifest " ^ Int.toString k ^ "-of-" ^ Int.toString n ^ ": " ^ Int.toString (length fails)
+             ^ " of " ^ Int.toString (length now) ^ " items moved: make check-hs98 OLD=" ^ commit ^ " shows the texts; "
+             ^ "a commit that moves them names its decision and writes the manifest again (make hs-manifest)\n")
+    end
+
+  (* the lines that name no item, and the manifest's form *)
+  fun manifestStale () =
+    let
+      val known = manifestLines ()
+      val () = need (not (null known), "no " ^ manifestFile ^ ", or no line in it: make hs-manifest writes it")
+      val items = List.map #1 (manifestItems (out () ^ "/manifest/scratch"))
+      val sorted = sort (List.map #1 known)
+      val twice = List.filter (fn (a, b) => a = b) (ListPair.zip (sorted, tl sorted)) handle Empty => []
+      val stale = List.filter (fn (i, _) => not (member i items)) known
+    in
+      List.app (fn (i, _) => say ("FAIL hs-standing manifest: " ^ i ^ " is twice in " ^ manifestFile ^ "\n")) twice;
+      List.app (fn (i, _) => say ("FAIL hs-standing manifest: " ^ manifestFile ^ " names " ^ i ^ ", which is no item\n")) stale;
+      List.app (fn (_, l) => if length (String.fields (fn c => c = #"\t") l) <> 4
+                             then say ("FAIL hs-standing manifest: not item, status and two hashes: " ^ l ^ "\n") else ()) known;
+      say ("hs-standing manifest: " ^ Int.toString (length known) ^ " lines, " ^ Int.toString (length items) ^ " items\n")
+    end
+
+  (* the manifest written again from the shards' lines of a run of them *)
+  fun manifestWrite () =
+    let
+      val dir = out () ^ "/manifest"
+      val parts = List.tabulate (manifestShards, fn i => dir ^ "/now-" ^ Int.toString (i + 1) ^ "-of-" ^ Int.toString manifestShards ^ ".tsv")
+      val () = List.app (fn f => need (exists f, "no " ^ f ^ ": run the shards first, with RUNE_HS_STANDING_OUT set as here "
+                                                ^ "(make hs-manifest does both)")) parts
+      val ls = sort (List.concat (List.map (fn f => lines (read f)) parts))
+    in
+      write (fromRoot manifestFile, manifestHeader ^ "\n" ^ String.concat (List.map (fn l => l ^ "\n") ls));
+      say ("hs-standing manifest: wrote " ^ Int.toString (length ls) ^ " lines to " ^ manifestFile ^ "\n")
+    end
+
+  (* the manifest's job held to its work: a Core change planted (HM01) moves
+     items, and this tree's rhc moves none, on the first items of Core *)
+  fun manifestFaults () =
+    let
+      val base = out () ^ "/manifest-faults"
+      val () = (if isDir base then rmTree base else (); mkdirs base)
+      val m = case List.find (fn (m : HsMutantList.mutant) => #id m = "HM01") HsMutantList.mutants of
+                SOME m => m | NONE => raise Failed "no mutant HM01 in tests/runner/hsmutantlist.sml"
+      val known = manifestLines ()
+      val items = List.take (manifestItems (base ^ "/scratch"), 24)
+      fun moved cmd = List.filter (fn l => case List.find (fn (i, _) => i = hd (String.fields (fn c => c = #"\t") l)) known of
+                                             SOME (_, was) => was <> l | NONE => true)
+                                  (List.map (manifestLine (cmd, base ^ "/scratch")) items)
+      val good = moved [fromRoot "bin/rhc"]
+      val () = outOverride := SOME base
+      val (rbc, status) = CompilerMutants.buildFrom {id = "HM01", edits = #edits m, srcs = HsMutants.sources "manifest-HM01",
+                                                     dir = base ^ "/build", out = "rhc.rbc"}
+      val () = need (isSome rbc, "HM01 does not build: " ^ status)
+      val () = materialize ("new", {rbc = valOf rbc, vm = fromRoot "bin/runevm", share = fromRoot "share/rhc",
+                                    makefile = fromRoot "Makefile", what = "HM01 built from this tree's sources"})
+      val planted = moved (rhcOf "new")
+      val () = outOverride := NONE
+    in
+      if null good then say ("PASS hs-standing manifest @faults: this tree's rhc moves none of the first 24 items\n")
+      else List.app (fn l => say ("FAIL hs-standing manifest @faults: this tree's rhc moves " ^ l ^ "\n")) good;
+      if null planted then say ("FAIL hs-standing manifest @faults: HM01 (" ^ #note m ^ ") moves none of the first 24 items\n")
+      else say ("PASS hs-standing manifest @faults: HM01 (" ^ #note m ^ ") moves " ^ Int.toString (length planted)
+                ^ " of the first 24 items\n")
+    end
+
   fun protect f () = f () handle Failed why => say ("FAIL hs-standing: " ^ why ^ "\n")
                                | e => say ("FAIL hs-standing: " ^ exnText e ^ "\n")
   fun number s = case Int.fromString s of SOME n => n | NONE => 0
@@ -734,6 +897,10 @@ struct
     | ["hs-standing", "pragmas"] => SOME (protect pragmasJob)
     | ["hs-standing", "summary"] => SOME (protect summary)
     | ["hs-standing", "faults"] => SOME (protect faults)
+    | ["hs-standing", "manifest", k, n] => SOME (protect (fn () => manifestShard (number k, number n)))
+    | ["hs-standing", "manifest-stale"] => SOME (protect manifestStale)
+    | ["hs-standing", "manifest-write"] => SOME (protect manifestWrite)
+    | ["hs-standing", "manifest-faults"] => SOME (protect manifestFaults)
     | ["hs-standing", set, k, n] =>
         if List.exists (fn (s, _) => s = set) shardsOf then SOME (protect (fn () => runSet (set, number k, number n))) else NONE
     | _ => NONE
@@ -762,7 +929,14 @@ struct
       List.foldl (fn (c, t) => Test.tag c t)
         (Test.requires ["rhc"]
           (Test.describe "hs-standing"
-             [check, Test.tag "nightly" (Test.tag "check-hs98-faults" (job ("@faults", ["hs-standing", "faults"], [], 7200, 2000)))]))
+             [check, Test.tag "nightly" (Test.tag "check-hs98-faults" (job ("@faults", ["hs-standing", "faults"], [], 7200, 2000))),
+              Test.tag "nightly" (Test.tag "covers:tests/hs/manifest.tsv"
+                (Test.describe "manifest"
+                   (List.tabulate (manifestShards, fn i => job (Int.toString (i + 1) ^ "-of-" ^ Int.toString manifestShards,
+                                                                ["hs-standing", "manifest", Int.toString (i + 1),
+                                                                 Int.toString manifestShards], [], 7200, 2000))
+                    @ [job ("@stale", ["hs-standing", "manifest-stale"], [], 600, 500),
+                       Test.tag "check-hs98-faults" (job ("@faults", ["hs-standing", "manifest-faults"], [], 7200, 2000))])))]))
         covers
     end
 end
