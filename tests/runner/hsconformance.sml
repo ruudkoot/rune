@@ -248,24 +248,51 @@ struct
   fun shared2010 kind (p : Lang.program) =
     List.all (fn id => case row2010 id of SOME (_, delta) => delta <> "removed-in-2010" | NONE => false) (idsOf p)
     andalso not (member ("hs/" ^ kind ^ "/" ^ #name p, unshared2010 ()))
-  (* whether bin/rhc takes --language=haskell2010, which it does from the
-     roadmap's M6: its usage names it. Asked once *)
+  (* whether bin/rhc checks a program of Haskell 2010, a Main that is main
+     alone: it takes --language=haskell2010 from the roadmap's M4, and reads
+     the 2010 Prelude once M10 and M12 give it one. Asked once a run, and
+     kept between runs in tests/out/hs2010-probe while bin/rhc.rbc and the
+     files of share/rhc/haskell2010 are as they were, since the check reads
+     the whole 2010 library until M6 makes its snapshot *)
   val languageCache : string option option ref = ref NONE
   fun language2010 () =
     case !languageCache of
       SOME x => x
     | NONE =>
         let
-          val out = run ^ "/hs2010-language"
-          val () = mkdirs run
+          fun stamp f = (Position.toString (OS.FileSys.fileSize f) ^ "@" ^ Time.toString (OS.FileSys.modTime f))
+                        handle OS.SysErr _ => "-"
+          fun files d = List.concat (List.map (fn n => let val p = d ^ "/" ^ n in if isDir p then files p else [p] end)
+                                              (sort (entries d)))
+          val key = String.concatWith " " (List.map stamp (fromRoot "bin/rhc.rbc" :: files (fromRoot "share/rhc/haskell2010")))
+          val memo = fromRoot "tests/out/hs2010-probe"
+          val dir = run ^ "/hs2010-probe"
+          fun probe () =
+            let
+              val () = mkdirs dir
+              val () = write (dir ^ "/Main.hs", "main :: IO ()\nmain = return ()\n")
+              val status = execProcess false Subprocess.unlimited (fn e => setEnv ("RHC_STORE", "") e)
+                             {cmd = [fromRoot "bin/rhc", "--language=haskell2010", "--typecheck-only", "Main.hs"], dir = SOME dir,
+                              stdin = "", stdout = dir ^ "/out", stderr = dir ^ "/out", timeout = 120}
+            in
+              if status = 0 then NONE
+              else SOME ("bin/rhc checks no Haskell 2010 program yet, a Main of main alone (until the roadmap's M10 and M12 "
+                         ^ "make its 2010 library check): " ^ firstNonEmpty (dir ^ "/out"))
+            end
+          (* what the last probe of these files said: SOME (NONE) where it checked *)
+          val memoed = case lines (read memo) of
+                         k :: rest => if k = key then SOME (case rest of [] => NONE | w :: _ => SOME w) else NONE
+                       | [] => NONE
           val why =
             if not (exists (fromRoot "bin/rhc")) then SOME "no bin/rhc"
-            else if (ignore (execProcess false Subprocess.unlimited (fn e => e)
-                               {cmd = [fromRoot "bin/rhc", "--help"], dir = SOME root, stdin = "", stdout = out, stderr = out,
-                                timeout = 60});
-                     String.isSubstring "--language" (read out))
-            then NONE
-            else SOME "bin/rhc takes no --language=haskell2010 yet (the haskell2010 roadmap's M6)"
+            else
+              case memoed of
+                SOME w => w
+              | NONE => let val w = probe ()
+                        in ((mkdirs (fromRoot "tests/out");
+                             write (memo, key ^ "\n" ^ (case w of SOME x => x ^ "\n" | NONE => "")))
+                            handle IO.Io _ => () | OS.SysErr _ => ());
+                           w end
         in languageCache := SOME why; why end
   fun pending2010 p =
     case language2010 () of

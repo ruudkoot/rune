@@ -118,8 +118,9 @@ struct
      2010 table shares by clause id (HsConformance.shared2010), group
      hs2010/shared, each compiled, checked and run by rhc with
      --language=haskell2010 to the same siblings. Every job is listed and
-     pending until bin/rhc takes the flag (M6), and then while the rows it
-     tests are Planned in tests/hs2010/conformance.tsv
+     pending until bin/rhc checks a 2010 Main (M10 and M12 give it a 2010
+     Prelude), and then while the rows it tests are Planned in
+     tests/hs2010/conformance.tsv
      (HsConformance.pending2010). tests/hs2010's programs take the tiers of
      98's; a shared program is checked (--typecheck-only) in make check and
      compiled and run nightly, since make check runs it in 98 mode (D41) *)

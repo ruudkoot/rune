@@ -1272,7 +1272,10 @@ The suites: `hs2010/...` compiles, runs and checks the programs of `tests/hs2010
 --language=haskell2010` in the tiers of 98's, and `hs2010/shared/...` the programs of `tests/hs` the table shares,
 under the same flag, to the same siblings, their checks (`--typecheck-only`) in `make check` and their compiles and
 runs nightly, since `make check` runs them in 98 mode (D41). Every job of both is listed and pending until `bin/rhc
---help` names `--language` (the roadmap's M6), and then while every row it names is `Planned` in the 2010 table.
+--language=haskell2010 --typecheck-only` accepts a Main of `main` alone, which it does once the roadmap's M10 and M12
+give it a 2010 Prelude (M4 gave it the flag; the probe's answer is kept in `tests/out/hs2010-probe` while
+`bin/rhc.rbc` and `share/rhc/haskell2010` are as they were), and then while every row it names is `Planned` in the
+2010 table, as every row is until its program has run under 2010.
 
 ## rhc's Core
 
