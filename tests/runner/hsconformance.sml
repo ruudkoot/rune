@@ -36,7 +36,22 @@
 
    `hs/conformance/table` checks the tree's; `hs/conformance/faults` plants
    a breach of each rule, and of the table's form, in a private tree, and
-   wants it refused, and a row pinned as the rules want accepted. *)
+   wants it refused, and a row pinned as the rules want accepted.
+
+   A table is an edition's (the haskell2010 roadmap's M1 and D38): Haskell
+   98's, above, and Haskell 2010's, tests/hs2010/conformance.tsv, E1's
+   5,259 rows with W8's corrections, less the five of 98's chapter 23 that
+   leave it (N21), every row Planned, with two more columns: map98, the 98
+   rows a row comes from, and delta (same, changed, new or removed-in-2010).
+   Its errata are none (the Report of 2010 has none published), its
+   readings R1 to R54 and 98's later ones, and N1 to N21 of E1 with those
+   tests/hs2010/readings.md heads; its programs are tests/hs2010's, and
+   those of tests/hs it shares by clause id: a program of tests/hs serves
+   it when every row the program names is a row of it that its text keeps
+   (not removed-in-2010), but those tests/hs2010/unshared.tsv names, each
+   with why it stays 98's. The same five rules hold of it, each program
+   judged by its own table, and `hs2010/conformance/table` and `faults` are
+   its jobs. *)
 structure HsConformance =
 struct
   open Sh
@@ -56,6 +71,34 @@ struct
      have their headings in tests/hs/readings.md *)
   val readings = 54
   val dirs = ["lang", "accept", "errors"]
+
+  (* ---- the tables, an edition each: its name; its jobs' family; where its
+     files are; its header; the rows it was made with and those a decision
+     took out of it, each with the 98 row it came from; its errata; its
+     readings (a letter, how many its experiment numbered, and the file whose
+     headings name more); and where the programs are whose ids it shares, if
+     another table's *)
+  type edition =
+    {name : string, group : string, root : string, header : string list, clauses : int,
+     left : (string * string) list, errataCount : int, readings : (string * int * string) list, shared : string option}
+  val edition98 : edition =
+    {name = "98", group = "hs/conformance", root = "tests/hs", header = header, clauses = clauses, left = [],
+     errataCount = errataCount, readings = [("R", readings, "tests/hs/readings.md")], shared = NONE}
+  val deltas = ["same", "changed", "new", "removed-in-2010"]
+  (* Haskell 2010's (D38): E1's rows, less 98's chapter 23's that leave it
+     under N21 (D38's (d)(i): 98's behaviour kept as rhc's documented choice),
+     no errata, E1's readings N1 to N21 beside 98's, and 98's programs shared *)
+  val edition2010 : edition =
+    {name = "2010", group = "hs2010/conformance", root = "tests/hs2010", header = header @ ["map98", "delta"],
+     clauses = 5259,
+     left = [("lib.r.systemexit.term.error", "lib.r.system.term.error"),
+             ("lib.r.systemexit.term.ioerror", "lib.r.system.term.ioerror"),
+             ("lib.r.systemexit.term.normal", "lib.r.system.term.normal"),
+             ("lib.r.systemenvironment.exitwith.close", "lib.r.system.exitwith.close"),
+             ("lib.r.systemenvironment.term.loop", "lib.r.system.term.loop")],
+     errataCount = 0, readings = [("R", readings, "tests/hs/readings.md"), ("N", 21, "tests/hs2010/readings.md")],
+     shared = SOME "tests/hs"}
+  val unsharedHeader = ["program", "why"]
 
   fun member (x, xs) = List.exists (fn y => y = x) xs
   fun trim s = Substring.string (Substring.dropl Char.isSpace (Substring.dropr Char.isSpace (Substring.full s)))
@@ -83,27 +126,39 @@ struct
 
   (* ---- the table *)
   type row = {id : string, section : string, statement : string, test : string, how : string, status : string,
-              reading : string list, deviation : string}
-  fun field (fields, name) =
+              reading : string list, deviation : string, map98 : string list, delta : string}
+  (* a field of a row of a table whose header is hdr *)
+  fun fieldIn hdr (fields, name) =
     let fun go (h :: hs, f :: fs) = if h = name then f else go (hs, fs)
           | go _ = ""
-    in go (header, fields) end
+    in go (hdr, fields) end
+  fun field (fields, name) = fieldIn header (fields, name)
   fun goodId id =
     id <> "" andalso Char.isLower (String.sub (id, 0))
     andalso CharVector.all (fn c => Char.isLower c orelse Char.isDigit c orelse c = #".") id
-  (* the readings of tests/hs/readings.md under root: its headings ### Rn. *)
-  fun readingsOf root =
+  (* the readings a file under root heads, ### Ln. for the letter L *)
+  fun headedIn (root, letter, file) =
     List.mapPartial (fn l => case String.tokens Char.isSpace l of
-                               "###" :: r :: _ => if size r > 2 andalso String.sub (r, 0) = #"R" andalso String.isSuffix "." r
+                               "###" :: r :: _ => if size r > 2 andalso String.isPrefix letter r andalso String.isSuffix "." r
                                                   then Int.fromString (String.substring (r, 1, size r - 2)) else NONE
                              | _ => NONE)
-                    (String.fields (fn c => c = #"\n") (read (root ^ "/tests/hs/readings.md")))
-  fun goodReading more r =
-    size r > 1 andalso String.sub (r, 0) = #"R" andalso CharVector.all Char.isDigit (String.extract (r, 1, NONE))
-    andalso (case Int.fromString (String.extract (r, 1, NONE)) of
-               SOME n => (n >= 1 andalso n <= readings) orelse List.exists (fn m => m = n) more
-             | NONE => false)
-  fun isReading w = size w > 1 andalso String.sub (w, 0) = #"R" andalso CharVector.all Char.isDigit (String.extract (w, 1, NONE))
+                    (String.fields (fn c => c = #"\n") (read (root ^ "/" ^ file)))
+  fun readingsOf root = headedIn (root, "R", "tests/hs/readings.md")
+  (* whether r is a reading of an edition's: its letter's, numbered by the
+     experiment or headed (`more`, by letter) *)
+  fun goodReadingOf (ed : edition) more r =
+    size r > 1 andalso CharVector.all Char.isDigit (String.extract (r, 1, NONE))
+    andalso List.exists (fn (letter, n, _) =>
+                           String.isPrefix letter r
+                           andalso (case Int.fromString (String.extract (r, 1, NONE)) of
+                                      SOME k => (k >= 1 andalso k <= n)
+                                                orelse List.exists (fn (l, ks) => l = letter andalso List.exists (fn m => m = k) ks) more
+                                    | NONE => false))
+                        (#readings ed)
+  fun goodReading more r = goodReadingOf edition98 [("R", more)] r
+  (* a reading's name in a program's first line: R or N and its number *)
+  fun isReading w = size w > 1 andalso (String.sub (w, 0) = #"R" orelse String.sub (w, 0) = #"N")
+                    andalso CharVector.all Char.isDigit (String.extract (w, 1, NONE))
 
   (* ---- the programs *)
   type program = {dir : string, path : string, name : string, ids : string list, pins : string list, deviation : bool,
@@ -121,18 +176,21 @@ struct
   fun idsOf (p : Lang.program) =
     hd (String.fields (fn c => c = #"_") (#name p))
     :: List.filter (fn w => not (isReading w) andalso w <> "deviation") (firstWords (#src p))
-  fun programs root : program list =
+  (* the programs of the directories lang, accept and errors under `base`
+     (from root), each path from there with `prefix` before it *)
+  fun programsUnder (root, base, prefix) : program list =
     List.concat (List.map (fn d =>
       List.map (fn (p : Lang.program) =>
         let
           val ws = firstWords (#src p)
           val ids = idsOf p
         in
-          {dir = d, path = d ^ "/" ^ #name p, name = #name p, ids = ids, pins = List.filter isReading ws,
+          {dir = d, path = prefix ^ d ^ "/" ^ #name p, name = #name p, ids = ids, pins = List.filter isReading ws,
            deviation = member ("deviation", ws), expected = #base p ^ ".expected"}
         end)
-        (Lang.programsOf (root ^ "/tests/hs/" ^ d, [".hs", ".lhs"], ["Main.hs", "Main.lhs"])))
+        (Lang.programsOf (root ^ "/" ^ base ^ "/" ^ d, [".hs", ".lhs"], ["Main.hs", "Main.lhs"])))
       dirs)
+  fun programs root = programsUnder (root, "tests/hs", "")
   (* ---- whether a program's jobs run: not while every row it names is
      Planned (or no row), so that a row leaves Planned with its program's
      jobs, which rhc then passes (docs/testing.md, rhc's conformance table) *)
@@ -154,6 +212,67 @@ struct
   fun planned (p : Lang.program) =
     List.all (fn id => case statusOf id of SOME "Planned" => true | NONE => true | SOME _ => false) (idsOf p)
   fun pending p = if planned p then SOME "the rows it tests are Planned (tests/hs/conformance.tsv)" else NONE
+
+  (* ---- the same for the 2010 suites (tests/runner/hslang.sml): a row's
+     status and delta in tests/hs2010/conformance.tsv, read once *)
+  val cache2010 : (string * (string * string)) vector option ref = ref NONE
+  fun row2010 id =
+    let
+      val v =
+        case !cache2010 of
+          SOME v => v
+        | NONE =>
+            let
+              val hdr = #header edition2010
+              fun one line = case String.fields (fn c => c = #"\t") line of
+                               fs as _ :: _ => if length fs = length hdr
+                                               then SOME (hd fs, (fieldIn hdr (fs, "status"), fieldIn hdr (fs, "delta"))) else NONE
+                             | [] => NONE
+              val lines = String.fields (fn c => c = #"\n") (read (fromRoot "tests/hs2010/conformance.tsv"))
+              val v = Vector.fromList (sortBy #1 (List.mapPartial one (if null lines then [] else tl lines)))
+            in cache2010 := SOME v; v end
+    in case lookup (v, #1) id of (_, x) :: _ => SOME x | [] => NONE end
+  (* the programs of tests/hs that tests/hs2010/unshared.tsv keeps 98's *)
+  val unsharedCache : string list option ref = ref NONE
+  fun unshared2010 () =
+    case !unsharedCache of
+      SOME xs => xs
+    | NONE => let val xs = List.mapPartial (fn l => case String.fields (fn c => c = #"\t") l of
+                                                      p :: _ :: _ => if p = "program" then NONE else SOME p
+                                                    | _ => NONE)
+                                          (String.fields (fn c => c = #"\n") (read (fromRoot "tests/hs2010/unshared.tsv")))
+              in unsharedCache := SOME xs; xs end
+  (* whether a program of tests/hs/KIND serves the 2010 table: every row it
+     names is a row of 2010's that its text keeps, and unshared.tsv does not
+     name it *)
+  fun shared2010 kind (p : Lang.program) =
+    List.all (fn id => case row2010 id of SOME (_, delta) => delta <> "removed-in-2010" | NONE => false) (idsOf p)
+    andalso not (member ("hs/" ^ kind ^ "/" ^ #name p, unshared2010 ()))
+  (* whether bin/rhc takes --language=haskell2010, which it does from the
+     roadmap's M6: its usage names it. Asked once *)
+  val languageCache : string option option ref = ref NONE
+  fun language2010 () =
+    case !languageCache of
+      SOME x => x
+    | NONE =>
+        let
+          val out = run ^ "/hs2010-language"
+          val () = mkdirs run
+          val why =
+            if not (exists (fromRoot "bin/rhc")) then SOME "no bin/rhc"
+            else if (ignore (execProcess false Subprocess.unlimited (fn e => e)
+                               {cmd = [fromRoot "bin/rhc", "--help"], dir = SOME root, stdin = "", stdout = out, stderr = out,
+                                timeout = 60});
+                     String.isSubstring "--language" (read out))
+            then NONE
+            else SOME "bin/rhc takes no --language=haskell2010 yet (the haskell2010 roadmap's M6)"
+        in languageCache := SOME why; why end
+  fun pending2010 p =
+    case language2010 () of
+      SOME why => SOME why
+    | NONE =>
+        if List.all (fn id => case row2010 id of SOME ("Planned", _) => true | NONE => true | SOME _ => false) (idsOf p)
+        then SOME "the rows it tests are Planned (tests/hs2010/conformance.tsv)" else NONE
   (* the same of a file of a program of tests/hs/lang or tests/hs/accept,
      a module of a directory among them *)
   (* the programs of a directory, listed once: every job's runner builds the
@@ -185,78 +304,142 @@ struct
   (* the directories whose programs serve a row's test *)
   fun serves test = case test of "accept" => ["accept", "lang"] | "run" => ["lang"] | "reject" => ["errors"] | _ => []
 
-  (* ---- the check: the failures of the tree at root *)
-  fun check root =
+  (* ---- the check: the failures of an edition's table in the tree at root *)
+  fun checkWith (ed : edition) root =
     let
       val errors = ref [] : string list ref
       fun fail m = errors := m :: !errors
+      val base = #root ed
       fun tsv (file, hdr) =
         DocChecks.tsv (root ^ "/" ^ file) hdr
         handle DocChecks.Failed m => (fail ("table: " ^ m); [])
-      val table = tsv ("tests/hs/conformance.tsv", header)
-      val errata = tsv ("tests/hs/errata.tsv", errataHeader)
-      val notes = tsv ("tests/hs/deviations.tsv", deviationsHeader)
-      val more = readingsOf root
+      val table = tsv (base ^ "/conformance.tsv", #header ed)
+      val errata = tsv (base ^ "/errata.tsv", errataHeader)
+      val notes = tsv (base ^ "/deviations.tsv", deviationsHeader)
+      val more = List.map (fn (l, _, f) => (l, headedIn (root, l, f))) (#readings ed)
+      val hasDelta = member ("delta", #header ed)
+      val readingsText = "neither " ^ String.concatWith " nor "
+                                        (List.concat (List.map (fn (l, n, f) => ["one of " ^ l ^ "1 to " ^ l ^ Int.toString n, "one of " ^ f])
+                                                               (#readings ed)))
       (* the table's form *)
       val rows : row list =
         List.map (fn fs =>
           let
-            val id = field (fs, "id")
-            val reading = String.tokens Char.isSpace (field (fs, "reading"))
+            val get = fn name => fieldIn (#header ed) (fs, name)
+            val id = get "id"
+            val reading = String.tokens Char.isSpace (get "reading")
             fun one (name, allowed) =
-              if member (field (fs, name), allowed) then ()
-              else fail ("table: " ^ id ^ " has the " ^ name ^ " " ^ field (fs, name) ^ ", not one of " ^ String.concatWith ", " allowed)
+              if member (get name, allowed) then ()
+              else fail ("table: " ^ id ^ " has the " ^ name ^ " " ^ get name ^ ", not one of " ^ String.concatWith ", " allowed)
           in
             if goodId id then () else fail ("table: the id " ^ id ^ " is not lower-case letters, digits and dots");
             one ("class", classes); one ("test", testKinds); one ("status", statuses); one ("source", sources);
-            List.app (fn r => if goodReading more r then ()
-                              else fail ("table: " ^ id ^ " has the reading " ^ r ^ ", neither one of R1 to R" ^ Int.toString readings
-                                         ^ " nor one of tests/hs/readings.md")) reading;
-            {id = id, section = field (fs, "section"), statement = field (fs, "statement"), test = field (fs, "test"),
-             how = field (fs, "how"), status = field (fs, "status"), reading = reading, deviation = field (fs, "deviation")}
+            if hasDelta then one ("delta", deltas) else ();
+            List.app (fn r => if goodReadingOf ed more r then ()
+                              else fail ("table: " ^ id ^ " has the reading " ^ r ^ ", " ^ readingsText)) reading;
+            {id = id, section = get "section", statement = get "statement", test = get "test",
+             how = get "how", status = get "status", reading = reading, deviation = get "deviation",
+             map98 = String.tokens Char.isSpace (get "map98"), delta = get "delta"}
           end) table
       val byId = Vector.fromList (sortBy #id rows)
       fun row id = case lookup (byId, #id) id of r :: _ => SOME r | [] => NONE
       val () = Vector.appi (fn (i, r : row) => if i > 0 andalso #id (Vector.sub (byId, i - 1)) = #id r
                                                 then fail ("table: the id " ^ #id r ^ " is twice") else ()) byId
+      (* the rows a decision took out, out; and, for a table of another
+         edition than 98, its rows against 98's: each row's 98 rows are
+         rows of 98's, a row the same as 98's is 98's, and every row of 98's
+         is one some row comes from, or one that left *)
+      val () = List.app (fn (id, _) => if isSome (row id) then fail ("table: " ^ id ^ " left the table by a decision, and is in it")
+                                       else ()) (#left ed)
+      val () =
+        if not hasDelta then ()
+        else
+          let
+            val ids98 = Vector.fromList (sortBy (fn x => x) (List.map (fn fs => field (fs, "id"))
+                                                              (tsv ("tests/hs/conformance.tsv", header))))
+            fun is98 id = not (null (lookup (ids98, fn x => x) id))
+            val mapped = Vector.fromList (sortBy (fn x => x) (List.concat (List.map #map98 rows) @ List.map #2 (#left ed)))
+          in
+            List.app (fn (r : row) =>
+                        (List.app (fn m => if m = "-" orelse is98 m then ()
+                                           else fail ("table: " ^ #id r ^ " comes from " ^ m ^ ", which is no row of 98's")) (#map98 r);
+                         if #delta r = "new" orelse not (null (#map98 r) orelse #map98 r = ["-"]) then ()
+                         else fail ("table: " ^ #id r ^ " is " ^ #delta r ^ ", and comes from no row of 98's");
+                         if #delta r = "same" andalso #map98 r <> [#id r] then
+                           fail ("table: " ^ #id r ^ " is the same as 98's, and comes from " ^ String.concatWith " " (#map98 r))
+                         else ())) rows;
+            Vector.app (fn id => if null (lookup (mapped, fn x => x) id)
+                                 then fail ("table: 98's row " ^ id ^ " is no row's map98, and left no row") else ()) ids98
+          end
       (* the errata *)
       fun words s = String.tokens Char.isSpace s
       val added = List.concat (List.map (fn fs => words (List.nth (fs, 4))) errata)
       val listed = List.concat (List.map (fn fs => words (List.nth (fs, 3))) errata) @ added
-      val () = if length errata = errataCount then ()
-               else fail ("errata: tests/hs/errata.tsv lists " ^ Int.toString (length errata) ^ " errata, not the page's "
-                          ^ Int.toString errataCount)
+      val () = if length errata = #errataCount ed then ()
+               else fail ("errata: " ^ base ^ "/errata.tsv lists " ^ Int.toString (length errata) ^ " errata, not the page's "
+                          ^ Int.toString (#errataCount ed))
       val () = List.app (fn fs => case List.filter (fn gs => List.take (gs, 2) = List.take (fs, 2)) errata of
                                     [_] => ()
                                   | _ => fail ("errata: " ^ String.concatWith " " (List.take (fs, 2)) ^ " is listed twice")) errata
       val () = List.app (fn id => if isSome (row id) then () else fail ("errata: an erratum names " ^ id ^ ", which is no row")) listed
-      val () = if length rows = clauses + length added then ()
-               else fail ("table: " ^ Int.toString (length rows) ^ " rows, where E9's " ^ Int.toString clauses ^ " and the "
-                          ^ Int.toString (length added) ^ " the errata add are " ^ Int.toString (clauses + length added))
+      val clausesText = if null (#left ed) then Int.toString (#clauses ed)
+                        else Int.toString (#clauses ed) ^ " less the " ^ Int.toString (length (#left ed)) ^ " that left it"
+      val () = if length rows = #clauses ed - length (#left ed) + length added then ()
+               else fail ("table: " ^ Int.toString (length rows) ^ " rows, where E9's " ^ clausesText ^ " and the "
+                          ^ Int.toString (length added) ^ " the errata add are "
+                          ^ Int.toString (#clauses ed - length (#left ed) + length added))
       fun namesErratum (r : row) =
         let fun has s = String.isSubstring "errat" (String.map Char.toLower s) in has (#statement r) orelse has (#how r) end
-      val () = List.app (fn (r : row) =>
+      (* a table with errata of its own holds each row that names one to it;
+         2010's has none, and 98's it does not absorb are its reading N18 *)
+      val () = if #errataCount ed = 0 then ()
+               else List.app (fn (r : row) =>
                            case (namesErratum r, member (#id r, listed)) of
                              (true, false) => fail ("errata: " ^ #id r ^ " names an erratum, and no erratum lists it")
                            | (false, true) => fail ("errata: an erratum lists " ^ #id r ^ ", whose text names none")
                            | _ => ()) rows
-      (* the programs, and the rows each names *)
-      val progs = programs root
+      (* the programs: the table's own, and those it shares, which name only
+         rows it keeps and which its unshared.tsv does not name *)
+      fun kept id = case row id of SOME r => #delta r <> "removed-in-2010" | NONE => false
+      val own = programsUnder (root, base, "")
+      val (shared, _) =
+        case #shared ed of
+          NONE => ([], [])
+        | SOME other =>
+            let
+              val prefix = OS.Path.file other ^ "/"
+              val exceptions = List.map (fn fs => (hd fs, List.nth (fs, 1))) (tsv (base ^ "/unshared.tsv", unsharedHeader))
+              val theirs = programsUnder (root, other, prefix)
+              fun sharable (p : program) = List.all kept (#ids p)
+              val () = List.app (fn (path, why) =>
+                                   case List.find (fn (p : program) => #path p = path) theirs of
+                                     NONE => fail ("unshared: " ^ path ^ " is no program of " ^ other)
+                                   | SOME p => if not (sharable p) then
+                                                 fail ("unshared: " ^ path ^ " names a row the table does not keep, and is shared by none")
+                                               else if trim why = "" then fail ("unshared: " ^ path ^ " says not why")
+                                               else ()) exceptions
+            in (List.filter (fn (p : program) => sharable p andalso not (List.exists (fn (q, _) => q = #path p) exceptions)) theirs,
+                exceptions) end
+      val progs = own @ shared
       val naming = Vector.fromList (sortBy #1 (List.concat (List.map (fn (p : program) => List.map (fn id => (id, p)) (#ids p)) progs)))
       fun programsOf id = List.map #2 (lookup (naming, #1) id)
       val () = List.app (fn (p : program) =>
                            let
-                             val twice = List.filter (fn (q : program) => #dir q = #dir p andalso #name q = #name p) progs
+                             val twice = List.filter (fn (q : program) => #path q = #path p) progs
                            in if length twice > 1 then fail ("table: two programs named " ^ #path p) else () end) progs
       (* a program is a row's pin: it says deviation, and the row names it *)
       fun pins (p : program, r : row) = #deviation p andalso #deviation r = #path p
+      (* the directory a program is in, from the root *)
+      fun dirOf (p : program) = if String.isPrefix (#dir p ^ "/") (#path p) then base ^ "/" ^ #dir p else "tests/" ^ OS.Path.dir (#path p)
+      fun dirsText test = base ^ "/" ^ String.concatWith (" or " ^ base ^ "/") (serves test)
+                          ^ (case #shared ed of SOME other => ", or of " ^ other ^ " that it shares," | NONE => "")
       (* rule 1 *)
       val () = List.app (fn (r : row) =>
                            if #status r = "Planned" orelse #test r = "none" then ()
                            else if List.exists (fn (p : program) => member (#dir p, serves (#test r)) orelse pins (p, r))
                                                (programsOf (#id r)) then ()
-                           else fail ("rule 1: " ^ #id r ^ " is " ^ #status r ^ ", and no program of tests/hs/"
-                                      ^ String.concatWith " or tests/hs/" (serves (#test r)) ^ " names it")) rows
+                           else fail ("rule 1: " ^ #id r ^ " is " ^ #status r ^ ", and no program of "
+                                      ^ dirsText (#test r) ^ " names it")) rows
       (* rule 2 *)
       val () = List.app (fn (p : program) =>
                            List.app (fn id =>
@@ -264,7 +447,7 @@ struct
                                          NONE => fail ("rule 2: " ^ #path p ^ " names " ^ id ^ ", which is no row")
                                        | SOME r => if member (#dir p, serves (#test r)) orelse pins (p, r) then ()
                                                    else fail ("rule 2: " ^ #path p ^ " names " ^ id ^ ", whose test is " ^ #test r
-                                                              ^ ", which tests/hs/" ^ #dir p ^ " does not serve"))
+                                                              ^ ", which " ^ dirOf p ^ " does not serve"))
                                     (#ids p)) progs
       (* rule 3 *)
       val () = List.app (fn (r : row) => if #test r = "none" andalso trim (#how r) = "" then
@@ -280,6 +463,7 @@ struct
                                               else fail ("rule 4: " ^ #path p ^ " pins " ^ rd ^ ", the reading of no row it names"))
                                     (#pins p)) progs
       (* rule 4: deviations, their pins and their notes *)
+      val notesFile = base ^ "/deviations.tsv"
       fun noteOf id = List.filter (fn fs => hd fs = id) notes
       val () = List.app (fn (r : row) =>
                            if #deviation r = "" then ()
@@ -298,12 +482,12 @@ struct
                                                 ^ String.concatWith ", " grounds)
                                         else if trim (List.nth (fs, 3)) = "" then fail ("rule 4: the note of " ^ #id r ^ " says nothing")
                                         else ()
-                              | [] => fail ("rule 4: " ^ #id r ^ " deviates, and has no note in tests/hs/deviations.tsv")
-                              | _ => fail ("rule 4: " ^ #id r ^ " has two notes in tests/hs/deviations.tsv"))) rows
+                              | [] => fail ("rule 4: " ^ #id r ^ " deviates, and has no note in " ^ notesFile)
+                              | _ => fail ("rule 4: " ^ #id r ^ " has two notes in " ^ notesFile))) rows
       val () = List.app (fn fs => case row (hd fs) of
-                                    SOME r => if #deviation r = "" then fail ("rule 4: tests/hs/deviations.tsv notes " ^ hd fs
+                                    SOME r => if #deviation r = "" then fail ("rule 4: " ^ notesFile ^ " notes " ^ hd fs
                                                                               ^ ", which does not deviate") else ()
-                                  | NONE => fail ("rule 4: tests/hs/deviations.tsv notes " ^ hd fs ^ ", which is no row")) notes
+                                  | NONE => fail ("rule 4: " ^ notesFile ^ " notes " ^ hd fs ^ ", which is no row")) notes
       val () = List.app (fn (p : program) =>
                            if #deviation p andalso not (List.exists (fn id => case row id of SOME r => #deviation r = #path p | NONE => false)
                                                                      (#ids p))
@@ -318,44 +502,45 @@ struct
     in
       (List.rev (!errors), rows, progs)
     end
-
-  fun table () =
-    let
-      val (errors, rows, progs) = check root
-      fun count s = Int.toString (length (List.filter (fn (r : row) => #status r = s) rows))
-    in
-      List.app (fn m => say ("FAIL " ^ m ^ "\n")) errors;
-      say ("hs-conformance: " ^ Int.toString (length rows) ^ " rows (" ^ count "Supported" ^ " Supported, " ^ count "Partial"
-           ^ " Partial, " ^ count "Planned" ^ " Planned), " ^ Int.toString (length progs) ^ " programs\n")
-    end
+  fun check root = checkWith edition98 root
 
   (* ---- breaches planted in a private tree *)
-  (* the base of each: the tree's table with every row Planned and no
-     deviation, none noted, and the tree's errata and readings; no program *)
+  (* the base of each: an edition's table with every row Planned and no
+     deviation, none noted, and the tree's errata and readings, and for a
+     table that shares 98's programs, 98's table, readings and unshared.tsv
+     empty; no program *)
   val deviationsHead = String.concatWith "\t" deviationsHeader ^ "\n"
-  fun tableText () =
+  fun tableTextOf (ed : edition) =
     String.concatWith "\n"
       (List.map (fn line =>
                    case String.fields (fn c => c = #"\t") line of
-                     fs as [_, _, _, _, _, _, _, _, _, _] =>
-                       if hd fs = "id" then line
-                       else String.concatWith "\t" (List.take (fs, 7) @ ["Planned", List.nth (fs, 8), ""])
-                   | _ => line)
-                (String.fields (fn c => c = #"\n") (read (fromRoot "tests/hs/conformance.tsv"))))
-  fun copyTree (dir, edits : (string * string) list) =
+                     fs as _ :: _ =>
+                       if length fs <> length (#header ed) orelse hd fs = "id" then line
+                       else String.concatWith "\t" (List.take (fs, 7) @ ["Planned", List.nth (fs, 8), ""] @ List.drop (fs, 10))
+                   | [] => line)
+                (String.fields (fn c => c = #"\n") (read (fromRoot (#root ed ^ "/conformance.tsv")))))
+  fun tableText () = tableTextOf edition98
+  fun copyTreeOf (ed : edition) (dir, edits : (string * string) list) =
     let
-      val base = [("tests/hs/conformance.tsv", tableText ()), ("tests/hs/errata.tsv", read (fromRoot "tests/hs/errata.tsv")),
-                  ("tests/hs/readings.md", read (fromRoot "tests/hs/readings.md")),
-                  ("tests/hs/deviations.tsv", deviationsHead)]
-      fun one (file, text) = write (dir ^ "/" ^ file, case List.find (fn (f, _) => f = file) edits of
-                                                        SOME (_, edited) => edited
-                                                      | NONE => text)
+      val b = #root ed
+      val base = [(b ^ "/conformance.tsv", tableTextOf ed), (b ^ "/errata.tsv", read (fromRoot (b ^ "/errata.tsv"))),
+                  (b ^ "/deviations.tsv", deviationsHead)]
+                 @ List.map (fn (_, _, f) => (f, read (fromRoot f))) (#readings ed)
+                 @ (case #shared ed of
+                      SOME _ => [("tests/hs/conformance.tsv", read (fromRoot "tests/hs/conformance.tsv")),
+                                 (b ^ "/unshared.tsv", String.concatWith "\t" unsharedHeader ^ "\n")]
+                    | NONE => [])
+      fun one (file, text) = (mkdirs (OS.Path.dir (dir ^ "/" ^ file));
+                              write (dir ^ "/" ^ file, case List.find (fn (f, _) => f = file) edits of
+                                                         SOME (_, edited) => edited
+                                                       | NONE => text))
     in
-      rmTree dir; List.app (fn d => mkdirs (dir ^ "/tests/hs/" ^ d)) dirs;
+      rmTree dir; List.app (fn d => (mkdirs (dir ^ "/" ^ b ^ "/" ^ d); mkdirs (dir ^ "/tests/hs/" ^ d))) dirs;
       List.app one base
     end
+  fun copyTree x = copyTreeOf edition98 x
   (* the table with the fields of some rows set *)
-  fun setFields (text, sets : (string * string * string) list) =
+  fun setFieldsOf hdr (text, sets : (string * string * string) list) =
     String.concatWith "\n"
       (List.map (fn line =>
                    case String.fields (fn c => c = #"\t") line of
@@ -365,60 +550,71 @@ struct
                          if null mine then line
                          else String.concatWith "\t"
                                 (ListPair.map (fn (h, f) => case List.find (fn (_, n, _) => n = h) mine of SOME (_, _, v) => v | NONE => f)
-                                              (header, fs))
+                                              (hdr, fs))
                        end
                    | [] => line)
                 (String.fields (fn c => c = #"\n") text))
+  fun setFields x = setFieldsOf header x
   fun lineOf (text, id) = valOf (List.find (fn l => String.isPrefix (id ^ "\t") l) (String.fields (fn c => c = #"\n") text))
 
-  fun faults () =
+  (* the rows each edition's faults use, from its table: an accept row, a
+     run row with a reading, two reject rows, the second with no reading, a
+     row with no test *)
+  fun faultRows (ed : edition) =
+    if #name ed = "98" then
+      {accept = "lex.comment.dashcolon", run = "exp.parse.letnonassoc", runReading = "R9", reject = "lex.any.invalid",
+       reject2 = "lex.comment.unterminated", none = "intro.implementation"}
+    else
+      {accept = "lex.comment.dashcolon", run = "lex.string.list", runReading = "R14", reject = "lex.any.invalid",
+       reject2 = "lex.comment.unterminated", none = "intro.implementation"}
+
+  fun faultsOf (ed : edition) =
     let
-      val base = run ^ "/hs-conformance-faults"
-      val text = tableText ()
+      val base = run ^ "/hs-conformance-faults" ^ (if #name ed = "98" then "" else "-" ^ #name ed)
+      val text = tableTextOf ed
+      val b = #root ed
+      val what = "hs-conformance " ^ #name ed
       (* a case: its name, the edits of the tables, the programs it adds
-         (path from tests/hs, without its suffix, first line, and .expected),
-         and the rule it must break, or "" for none *)
-      fun attempt (name, edits, progs, rule) =
+         (path from the table's directory, or from tests/ where it begins
+         with hs/, without its suffix, first line, and .expected), and the
+         rule it must break, or "" for none *)
+      fun attemptWith want (name, edits, progs, rule) =
         let
           val dir = base ^ "/" ^ name
-          val () = copyTree (dir, edits)
+          val () = copyTreeOf ed (dir, edits)
+          fun at path = if String.isPrefix "hs/" path andalso b <> "tests/hs" then dir ^ "/tests/" ^ path else dir ^ "/" ^ b ^ "/" ^ path
           val () = List.app (fn (path, first, expected) =>
-                               (write (dir ^ "/tests/hs/" ^ path ^ ".hs", first ^ "\nmain :: IO ()\nmain = return ()\n");
-                                case expected of SOME e => write (dir ^ "/tests/hs/" ^ path ^ ".expected", e) | NONE => ()))
+                               (write (at path ^ ".hs", first ^ "\nmain :: IO ()\nmain = return ()\n");
+                                case expected of SOME e => write (at path ^ ".expected", e) | NONE => ()))
                             progs
-          val (errors, _, _) = check dir
-          val ok = if rule = "" then null errors else List.exists (String.isPrefix (rule ^ ":")) errors
+          val (errors, _, _) = checkWith ed dir
+          val ok = if rule = "" then null errors
+                   else List.exists (fn e => String.isPrefix (rule ^ ":") e andalso String.isSubstring want e) errors
         in
           if ok then ()
-          else if rule = "" then say ("FAIL hs-conformance fault " ^ name ^ ": a tree that keeps the rules is refused: "
+          else if rule = "" then say ("FAIL " ^ what ^ " fault " ^ name ^ ": a tree that keeps the rules is refused: "
                                       ^ String.concatWith "; " errors ^ "\n")
-          else say ("FAIL hs-conformance fault " ^ name ^ ": not refused by " ^ rule ^ "; it says: "
-                    ^ (if null errors then "nothing" else String.concatWith "; " errors) ^ "\n")
+          else say ("FAIL " ^ what ^ " fault " ^ name ^ ": not refused by " ^ rule ^ (if want = "" then "" else " (" ^ want ^ ")")
+                    ^ "; it says: " ^ (if null errors then "nothing" else String.concatWith "; " errors) ^ "\n")
         end
-      val t = "tests/hs/conformance.tsv"
-      fun table sets = [(t, setFields (text, sets))]
-      val errata = read (fromRoot "tests/hs/errata.tsv")
-      (* rows of each kind, from the table: an accept row, a run row with a
-         reading, two reject rows, the second with no reading, a row with no
-         test *)
-      val accept = "lex.comment.dashcolon"
-      val run = "exp.parse.letnonassoc"
-      val runReading = "R9"
-      val reject = "lex.any.invalid"
-      val reject2 = "lex.comment.unterminated"
-      val none = "intro.implementation"
+      val attempt = attemptWith ""
+      val t = b ^ "/conformance.tsv"
+      val dv = b ^ "/deviations.tsv"
+      fun table sets = [(t, setFieldsOf (#header ed) (text, sets))]
+      val errata = read (fromRoot (b ^ "/errata.tsv"))
+      val {accept, run, runReading, reject, reject2, none} = faultRows ed
       val () = if String.isSubstring ("\t" ^ runReading ^ "\t") (lineOf (text, run)) then ()
-               else say ("FAIL hs-conformance faults: " ^ run ^ " no longer has the reading " ^ runReading ^ "; choose another row\n")
+               else say ("FAIL " ^ what ^ " faults: " ^ run ^ " no longer has the reading " ^ runReading ^ "; choose another row\n")
       (* reject2's pin pins no reading, so reject2 must have none *)
       val () = if String.isSubstring "\tPlanned\t\t" (lineOf (text, reject2)) then ()
-               else say ("FAIL hs-conformance faults: " ^ reject2 ^ " is no longer Planned with no reading; choose another row\n")
+               else say ("FAIL " ^ what ^ " faults: " ^ reject2 ^ " is no longer Planned with no reading; choose another row\n")
     in
       attempt ("keeps-the-rules",
                table [(accept, "status", "Supported"), (run, "status", "Partial"), (reject, "status", "Supported"),
                       (run, "deviation", "lang/" ^ run ^ "_pin"), (reject2, "status", "Supported"),
                       (reject2, "deviation", "accept/" ^ reject2 ^ "_taken")]
-               @ [("tests/hs/deviations.tsv", deviationsHead ^ run ^ "\tconceded by the Report\tlang/" ^ run ^ "_pin\tpinned\n"
-                                                ^ reject2 ^ "\tcontradictory\taccept/" ^ reject2 ^ "_taken\ttaken\n")],
+               @ [(dv, deviationsHead ^ run ^ "\tconceded by the Report\tlang/" ^ run ^ "_pin\tpinned\n"
+                       ^ reject2 ^ "\tcontradictory\taccept/" ^ reject2 ^ "_taken\ttaken\n")],
                [("accept/" ^ accept ^ "_op", "-- an accepted program", NONE),
                 ("lang/" ^ run ^ "_pin", "-- rows: " ^ runReading ^ " deviation", SOME ""),
                 ("errors/" ^ reject ^ "_raw", "-- rows: " ^ reject, SOME "unexpected character"),
@@ -438,16 +634,16 @@ struct
       attempt ("a-deviation-without-a-note", table [(run, "deviation", "lang/" ^ run ^ "_pin")],
                [("lang/" ^ run ^ "_pin", "-- rows: " ^ runReading ^ " deviation", SOME "")], "rule 4");
       attempt ("a-note-without-a-deviation",
-               [("tests/hs/deviations.tsv", deviationsHead ^ run ^ "\tconceded by the Report\tlang/" ^ run ^ "_pin\tparse-error(t)\n")],
+               [(dv, deviationsHead ^ run ^ "\tconceded by the Report\tlang/" ^ run ^ "_pin\tparse-error(t)\n")],
                [], "rule 4");
       attempt ("a-pin-of-no-deviation", [], [("lang/" ^ run ^ "_loose", "-- rows: deviation", SOME "")], "rule 4");
       attempt ("a-pin-that-says-nothing",
                table [(run, "deviation", "lang/" ^ run ^ "_quiet")]
-               @ [("tests/hs/deviations.tsv", deviationsHead ^ run ^ "\tconceded by the Report\tlang/" ^ run ^ "_quiet\tparse-error(t)\n")],
+               @ [(dv, deviationsHead ^ run ^ "\tconceded by the Report\tlang/" ^ run ^ "_quiet\tparse-error(t)\n")],
                [("lang/" ^ run ^ "_quiet", "-- no deviation said", SOME "")], "rule 4");
       attempt ("a-ground-of-no-kind",
                table [(run, "deviation", "lang/" ^ run ^ "_pin")]
-               @ [("tests/hs/deviations.tsv", deviationsHead ^ run ^ "\tunpopular\tlang/" ^ run ^ "_pin\tparse-error(t)\n")],
+               @ [(dv, deviationsHead ^ run ^ "\tunpopular\tlang/" ^ run ^ "_pin\tparse-error(t)\n")],
                [("lang/" ^ run ^ "_pin", "-- rows: " ^ runReading ^ " deviation", SOME "")], "rule 4");
       attempt ("no-message", table [(reject, "status", "Supported")], [("errors/" ^ reject ^ "_raw", "-- refused", NONE)], "rule 5");
       attempt ("a-row-twice", [(t, text ^ lineOf (text, accept) ^ "\n")], [], "table");
@@ -458,18 +654,71 @@ struct
       attempt ("a-reading-of-no-number", table [(accept, "reading", "R99")], [], "table");
       attempt ("a-row-lost", [(t, String.concatWith "\n" (List.filter (fn l => not (String.isPrefix (accept ^ "\t") l))
                                                                       (String.fields (fn c => c = #"\n") text)))], [], "table");
-      attempt ("an-erratum-of-no-row", [("tests/hs/errata.tsv", errata ^ "Jan 2026\t1\tplanted\tno.such.row\t\t\n")], [], "errata");
-      attempt ("an-erratum-unlisted", table [(none, "how", "an erratum, planted")], [], "errata");
-      attempt ("an-erratum-lost",
-               [("tests/hs/errata.tsv", String.concatWith "\n" (List.filter (fn l => not (String.isPrefix "Dec 2005" l))
-                                                                            (String.fields (fn c => c = #"\n") errata)))],
-               [], "errata")
+      attempt ("an-erratum-of-no-row", [(b ^ "/errata.tsv", errata ^ "Jan 2026\t1\tplanted\tno.such.row\t\t\n")], [], "errata");
+      if #errataCount ed = 0 then ()
+      else
+        (attempt ("an-erratum-unlisted", table [(none, "how", "an erratum, planted")], [], "errata");
+         attempt ("an-erratum-lost",
+                  [(b ^ "/errata.tsv", String.concatWith "\n" (List.filter (fn l => not (String.isPrefix "Dec 2005" l))
+                                                                         (String.fields (fn c => c = #"\n") errata)))],
+                  [], "errata"));
+      (* a table that shares another's programs: its own columns, its rows
+         against 98's, and what it shares *)
+      case #shared ed of
+        NONE => ()
+      | SOME _ =>
+          let
+            val (leftId, left98) = hd (#left ed)
+            val leftLine = String.concatWith "\t" [leftId, "40", "planted", "library", "run", "", "hand", "Planned", "", "", left98,
+                                                   "changed"]
+            val removed = valOf (List.find (fn l => String.isSubstring "\tremoved-in-2010" l) (String.fields (fn c => c = #"\n") text))
+            val removedId = hd (String.fields (fn c => c = #"\t") removed)
+          in
+            attemptWith "the delta moved" ("a-delta-of-no-kind", table [(accept, "delta", "moved")], [], "table");
+            attemptWith "which is no row of 98's" ("a-map98-of-no-row", table [(accept, "map98", "no.such.row")], [], "table");
+            attemptWith "98's row exp.parse.letnonassoc is no row's map98"
+                        ("a-row-of-98-unmapped", table [("exp.parse.letnonassoc.h2010", "map98", none)], [], "table");
+            attemptWith "is the same as 98's, and comes from" ("a-same-row-from-another", table [(accept, "map98", none)], [],
+                                                               "table");
+            attemptWith "left the table by a decision" ("a-row-that-left", [(t, text ^ leftLine ^ "\n")], [], "table");
+            (* 98's program of a row 2010 keeps is shared, and held to 2010's
+               table: here it names a row of another class *)
+            attempt ("a-shared-program-of-another-class", table [(reject, "test", "run")],
+                     [("hs/errors/" ^ reject ^ "_raw", "-- rows: " ^ reject, SOME "unexpected character")], "rule 2");
+            (* one that names a row 2010 removes is not shared at all *)
+            attempt ("a-program-of-a-removed-row", [],
+                     [("hs/errors/" ^ removedId ^ "_raw", "-- a removed row's", SOME "x")], "");
+            attempt ("an-unshared-program-shared-by-none",
+                     [(b ^ "/unshared.tsv", String.concatWith "\t" unsharedHeader ^ "\nhs/errors/" ^ removedId ^ "_raw\tplanted\n")],
+                     [("hs/errors/" ^ removedId ^ "_raw", "-- a removed row's", SOME "x")], "unshared");
+            attempt ("an-unshared-program-of-none",
+                     [(b ^ "/unshared.tsv", String.concatWith "\t" unsharedHeader ^ "\nhs/errors/no.such_program\tplanted\n")],
+                     [], "unshared");
+            attempt ("an-unshared-program-kept",
+                     table [(reject, "test", "run")]
+                     @ [(b ^ "/unshared.tsv", String.concatWith "\t" unsharedHeader ^ "\nhs/errors/" ^ reject ^ "_raw\tplanted\n")],
+                     [("hs/errors/" ^ reject ^ "_raw", "-- rows: " ^ reject, SOME "unexpected character")], "")
+          end
+    end
+  fun faults () = faultsOf edition98
+
+  fun tableOf (ed : edition) () =
+    let
+      val (errors, rows, progs) = checkWith ed root
+      fun count s = Int.toString (length (List.filter (fn (r : row) => #status r = s) rows))
+    in
+      List.app (fn m => say ("FAIL " ^ m ^ "\n")) errors;
+      say ("hs-conformance" ^ (if #name ed = "98" then "" else " " ^ #name ed) ^ ": " ^ Int.toString (length rows)
+           ^ " rows (" ^ count "Supported" ^ " Supported, " ^ count "Partial" ^ " Partial, " ^ count "Planned" ^ " Planned), "
+           ^ Int.toString (length progs) ^ " programs\n")
     end
 
   fun command args =
     case args of
-      ["hs-conformance"] => SOME table
+      ["hs-conformance"] => SOME (tableOf edition98)
+    | ["hs-conformance", "2010"] => SOME (tableOf edition2010)
     | ["hs-conformance-faults"] => SOME faults
+    | ["hs-conformance-faults", "2010"] => SOME (fn () => faultsOf edition2010)
     | _ => NONE
 
   fun job (name, args) =
@@ -480,7 +729,11 @@ struct
        pools = [], exclusive = false, after = [], judge = failLines} : Run.command Test.tree
   fun tree () =
     List.foldl (fn (tag, t) => Test.tag tag t)
-      (Test.describe "hs/conformance" [job ("table", ["hs-conformance"]), job ("faults", ["hs-conformance-faults"])])
+      (Test.describe ""
+         [Test.describe "hs/conformance" [job ("table", ["hs-conformance"]), job ("faults", ["hs-conformance-faults"])],
+          Test.tag "covers:tests/hs2010/*"
+            (Test.describe "hs2010/conformance" [job ("table", ["hs-conformance", "2010"]),
+                                                 job ("faults", ["hs-conformance-faults", "2010"])])])
       ["check", "hs", "quick", "covers:tests/hs/conformance.tsv", "covers:tests/hs/errata.tsv", "covers:tests/hs/deviations.tsv", "covers:tests/hs/readings.md",
        "covers:tests/hs/lang/*", "covers:tests/hs/accept/*", "covers:tests/hs/errors/*", "covers:tests/runner/hsconformance.sml"]
 end

@@ -113,6 +113,45 @@ struct
      wayNeeds = fn _ => fn t => t,
      selected = fn _ => fn _ => true, pending = HsConformance.pending, programTags = tiers}
 
+  (* ---- the 2010 suites (the haskell2010 roadmap's M1, D38 and D41): the
+     programs of tests/hs2010, group hs2010, and those of tests/hs that the
+     2010 table shares by clause id (HsConformance.shared2010), group
+     hs2010/shared, each compiled, checked and run by rhc with
+     --language=haskell2010 to the same siblings. Every job is listed and
+     pending until bin/rhc takes the flag (M6), and then while the rows it
+     tests are Planned in tests/hs2010/conformance.tsv
+     (HsConformance.pending2010). tests/hs2010's programs take the tiers of
+     98's; a shared program is checked (--typecheck-only) in make check and
+     compiled and run nightly, since make check runs it in 98 mode (D41) *)
+  val rhc2010 = "bin/rhc --language=haskell2010"
+  val covers2010 = ["covers:tests/hs2010/*", "covers:lib/language/haskell/*", "covers:src/rhc/*", "covers:share/rhc/*",
+                    "covers:rhc.build", "covers:rhc.plan"]
+  fun sharedTiers kind (_ : Lang.program) =
+    if kind = "accept" orelse String.isSuffix "/typecheck" kind then ["check"] else ["nightly"]
+  fun suite2010 (group, base, covers, selected, programTags) : Lang.suite =
+    {group = group, lang = base ^ "/lang", errors = base ^ "/errors", accept = SOME (base ^ "/accept"),
+     suffixes = suffixes, mains = mains,
+     compilers = [("stack", rhc2010 ^ rhcFlags ^ " --target=stack", "hs"), ("register", rhc2010 ^ rhcFlags, "hs")],
+     errorCompilers = [("register", rhc2010, "hs")],
+     ways = rhcWays,
+     out = fn compiler => "\"$RUNE_TEST_RUN\"/" ^ group ^ "/c/" ^ compiler,
+     binary = fn name => name ^ "/prog.rbc", scratch = group ^ "/",
+     writer = "register", writerWay = "register",
+     typecheck = SOME (rhc2010 ^ " --typecheck-only"), stackDone = false, covers = covers,
+     compileTags = ["hs"], errorTags = fn _ => ["hs"], typecheckTags = ["hs"],
+     wayTags = fn (w : Lang.way) => ["hs"],
+     needs = fn (n : string) => Test.requires (["rhc"] @ (if String.isSubstring ".err.perm" n then ["unprivileged"] else [])),
+     wayNeeds = fn _ => fn t => t,
+     selected = selected, pending = HsConformance.pending2010, programTags = programTags}
+  val rhcOwn2010 = suite2010 ("hs2010", "tests/hs2010", covers2010, fn _ => fn _ => true, tiers)
+  val rhcShared2010 =
+    suite2010 ("hs2010/shared", "tests/hs", covers @ covers2010,
+               fn kind => fn name =>
+                 case List.find (fn (p : Lang.program) => #name p = name) (HsConformance.programsIn ("tests/hs/" ^ kind)) of
+                   SOME p => HsConformance.shared2010 kind p
+                 | NONE => false,
+               sharedTiers)
+
   val capabilities =
     [{name = "rhc", probe = "test -x bin/rhc", hint = "run: make bin/rhc (rhc.build; docs/testing.md, rhc's tests)"},
      {name = "unprivileged", probe = "test \"$(id -u)\" -ne 0",
@@ -412,6 +451,8 @@ struct
   fun tree () =
     Test.describe ""
       [Lang.tree rhc,
+       Lang.tree rhcOwn2010,
+       Lang.tree rhcShared2010,
        Test.requires ["rhc"] (tagged (["nightly", "hs"] @ covers)
                                 (Test.describe "hs/jit" (List.map jit (Lang.programsOf (#lang rhc, suffixes, mains))))),
        Test.requires ["rhc", "jit"]
