@@ -1,0 +1,24 @@
+probe	report	report_out	g10	g10_out	g10_agrees	gbase	gbase_out	gbase_agrees	hugs	nhc98	mhs	g10_why	gbase_why	rests_on
+L01_ratio_poly_ord	accept	True	reject		no	accept	True	yes	accept	accept	accept	* Could not deduce (base-4.17.2.0:GHC.Real.Integral a) / arising from a use of `<' / from the context: Integral a		T10 22 (instance Integral a => Ord (Ratio a))
+L02_user_ifthenelse	accept	1	reject		no	accept	1	yes	accept	accept	accept	Ambiguous occurrence `ifThenElse' / It could refer to / either `Prelude.ifThenElse',		T10 3.6: if is not overloaded
+L03_user_bind	accept	3	reject		no	accept	3	yes	accept	accept	accept	* Couldn't match expected type `IO t0' with actual type `Int' / * When checking the type of the IO action `main'		T10 3.14: do translates with the Prelude's >>=
+L04_show_record	accept	Just R {f = 1}	accept	Just (R {f = 1})	output	accept	Just (R {f = 1})	output	accept	accept	accept			T10 11.4: "Parentheses are only added where needed"; ghc bugs.rst:438
+L05_read_hex	accept	[(0,"x10")]	accept	[(16,"")]	output	accept	[(16,"")]	output	accept	accept	accept			T10 9 (PreludeText): Read Int is readSigned readDec; ghc bugs.rst:453
+L06_bang_ws	accept	3	reject		no	reject		no	reject	reject	accept	Illegal bang-pattern / !x / Suggested fix: Perhaps you intended to use BangPatterns	Illegal bang-pattern / !x / Suggested fix: Perhaps you intended to use BangPatterns	T10 2.4: ! is an operator; ghc bugs.rst (proposal 229)
+L07_forall_var	accept	3	accept	3	yes	accept	3	yes	accept	accept	reject			T10 2.4: forall is no reservedid; ghc bugs.rst
+L08_splitat	accept	pair	accept	pair	yes	accept	 [rc 1: Main.gbase: Prelude.undefined / CallStack (from HasCallStack): /   undefined, called]	output	accept	accept	accept			T10 9.1: splitAt n xs = (take n xs, drop n xs); ghc bugs.rst:424
+L09_default_unit	reject		reject		yes	reject		yes	reject	reject	reject	* Ambiguous type variable `a0' arising from a use of `print' / prevents the constraint `(Show a0)' from being solved. / Probable fix: use a type annotation to specify what `a0' should be.	* Ambiguous type variable `a0' arising from a use of `print' / prevents the constraint `(Show a0)' from being solved. / Probable fix: use a type annotation to specify what `a0' should be.	T10 4.3.4: default () turns defaulting off
+L10_monad_fail_method	accept	M Nothing	accept	M Nothing	yes	reject		no	accept	accept	reject		`fail' is not a (visible) method of class `Monad' / 8 | fail _ = M Nothing	T10 6.3.6, 3.14: fail is a Monad method, called on pattern failure
+L11_num_eq	accept	zero 5	accept	zero 5	yes	reject		no	accept	accept	reject		* Could not deduce (Eq a) arising from a use of `==' / from the context: Num a / bound by the type signature for:	T10 6.4: class (Eq a, Show a) => Num a
+L12_bits_num	accept	7	accept	7	yes	reject		no	accept	accept	reject		* Could not deduce (Num a) arising from a use of `+' / from the context: Bits a / bound by the type signature for:	T10 15: class Num a => Bits a
+L13_functor_either	accept	Right 3	accept	Right 3	yes	reject		no	accept	accept	reject		Duplicate instance declarations: / instance Functor (Either e) -- Defined at Main.hs:3:10 / instance Functor (Either a) -- Defined in `Data.Either'	T10 13: Functor instances are [], IO, Maybe, Array i
+L14_applicative_absent	accept	"ab"	accept	"ab"	yes	reject		no	accept	accept	accept		Ambiguous occurrence `pure' / It could refer to / either `Prelude.pure',	T10 9: the Prelude exports no pure, no <>
+L15_array_dup	accept	undefined element (Report) / runtime error	accept	'b'	output	accept	'b'	output	accept	reject	accept			T10 14.1: duplicate indices make the element undefined
+L16_foreign_ccall	accept	0.0	accept	0.0	yes	accept	0.0	yes	reject	accept	accept			T10 8: foreign import ccall
+L17_pattern_guard_let	accept	four other	accept	four other	yes	accept	four other	yes	reject	accept	accept			T10 3.13: pattern guards
+L18_n_plus_k	reject		reject		yes	reject		yes	accept	accept	reject	Parse error in pattern: n + 1 / 4 | f (n+1) = n	Parse error in pattern: n + 1 / 4 | f (n+1) = n	T10 1.4 (preface): n+k patterns removed
+L19_do_if_then_else	accept	yes	accept	yes	yes	accept	yes	yes	accept	reject	accept			T10 3.14: DoAndIfThenElse
+L20_empty_data	accept	ok	accept	ok	yes	accept	ok	yes	accept	accept	accept			T10 4.2.1: empty data declarations
+L21_relaxed_poly_rec	accept	True	accept	True	yes	accept	True	yes	accept	reject	accept			T10 4.5.1: dependency analysis ignores signed variables
+L22_realtofrac_nan	accept	by the Report's code: not NaN	accept	-Infinity	output	accept	-Infinity	output	accept	accept	accept			T10 6.4.6: realToFrac = fromRational . toRational
+L23_hiding_negate	accept	-3	accept	3	output	accept	-3	yes	accept	accept	accept			T10 3.4: -e means negate e with the Prelude's negate

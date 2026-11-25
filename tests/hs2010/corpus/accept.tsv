@@ -1,0 +1,1280 @@
+id	set	expect	lines	files	agree	gbase	mhs	hugs	nhc98	nonreport	rebind
+ghc/deSugar/should_run/T18151.hs	ghc-h2010	run	11	1	GMHN	accept	accept	accept	accept		
+ghc/dmdanal/should_compile/T8743.hs	ghc-h2010	compile	16	2	GM--	accept	accept	reject	reject		
+ghc/dmdanal/should_compile/T8743a.hs	ghc-h2010	aux	16	2	GM--	accept	accept	reject	reject		
+ghc/driver/T706a.hs	ghc-h2010	aux	7	1	GM--	accept	accept	reject	reject		
+ghc/ghci/scripts/T5820.hs	ghc-h2010	none	4	1	GMHN	accept	accept	accept	accept		
+ghc/ghci/scripts/ghci019.hs	ghc-h2010	none	10	1	GMHN	accept	accept	accept	accept		inject
+ghc/parser/should_compile/DumpParsedAstComments.hs	ghc-h2010	compile	19	1	GM-N	accept	accept	reject	accept		
+ghc/plugins/frontend01.hs	ghc-h2010	none	2	1	GMHN	accept	accept	accept	accept		
+ghc/pmcheck/should_compile/T11374.hs	ghc-h2010	compile	59	1	GM-N	accept	accept	reject	accept		
+ghc/rename/should_compile/T1972.hs	ghc-h2010	compile	21	1	GMHN	accept	accept	accept	accept		
+ghc/safeHaskell/check/Check06_A.hs	ghc-h2010	aux	7	1	GMHN	accept	accept	accept	accept		
+ghc/safeHaskell/check/Check08_B.hs	ghc-h2010	aux	9	1	GMHN	accept	accept	accept	accept		
+ghc/safeHaskell/flags/SafeFlags21.hs	ghc-h2010	compile	10	1	GMHN	accept	accept	accept	accept		
+ghc/safeHaskell/flags/SafeFlags25.hs	ghc-h2010	compile	10	1	GMHN	accept	accept	accept	accept		
+ghc/safeHaskell/ghci/T19243.hs	ghc-h2010	none	4	1	GMHN	accept	accept	accept	accept		
+ghc/safeHaskell/overlapping/SH_Overlap10_B.hs	ghc-h2010	aux	9	1	GMHN	accept	accept	accept	accept		
+ghc/safeHaskell/overlapping/SH_Overlap11_B.hs	ghc-h2010	aux	9	1	GMHN	accept	accept	accept	accept		
+ghc/safeHaskell/overlapping/SH_Overlap6_B.hs	ghc-h2010	aux	9	1	GMHN	accept	accept	accept	accept		
+ghc/safeHaskell/overlapping/SH_Overlap9_B.hs	ghc-h2010	aux	9	1	GMHN	accept	accept	accept	accept		
+ghc/safeHaskell/safeInfered/SafeInfered01_A.hs	ghc-h2010	aux	7	1	GMHN	accept	accept	accept	accept		
+ghc/safeHaskell/safeInfered/SafeInfered03_A.hs	ghc-h2010	aux	9	1	GM-N	accept	accept	reject	accept		
+ghc/safeHaskell/safeInfered/SafeInfered04_A.hs	ghc-h2010	aux	9	1	GMHN	accept	accept	accept	accept		
+ghc/safeHaskell/safeInfered/UnsafeInfered11_A.hs	ghc-h2010	aux	40	1	GM--	accept	accept	reject	reject		
+ghc/safeHaskell/safeInfered/UnsafeWarn06.hs	ghc-h2010	compile	13	1	GMHN	accept	accept	accept	accept		
+ghc/safeHaskell/warnings/T22728_B.hs	ghc-h2010	aux	6	1	GMHN	accept	accept	accept	accept		
+ghc/safeHaskell/warnings/T22728b_B.hs	ghc-h2010	aux	6	1	GMHN	accept	accept	accept	accept		
+ghc/simplCore/should_compile/T16038/A.hs	ghc-h2010	aux	18	2	G---	accept	reject	reject	reject		
+ghc/simplCore/should_compile/T16038/B.hs	ghc-h2010	aux	18	2	G---	accept	reject	reject	reject		
+ghc/simplCore/should_compile/T20894.hs	ghc-h2010	compile	23	1	GMH-	accept	accept	accept	reject		inject
+ghc/typecheck/should_compile/Tc271.hs	ghc-h2010	none	17	2	GM--	accept	accept	reject	reject		
+ghc/typecheck/should_compile/Tc271a.hs	ghc-h2010	aux	17	2	GM--	accept	accept	reject	reject		
+ghc/typecheck/should_compile/tc153.hs	ghc-h2010	compile	13	1	G-HN	accept	reject	accept	accept		
+h98acc/conformance98/Emptydecls	h98-accept	compile	9	1	G...	accept					
+h98acc/conformance98/Enum/succ	h98-accept	compile	1	1	G...	accept					
+h98acc/conformance98/Misc/wolfram	h98-accept	compile	5	1	G...	accept					
+h98acc/conformance98/NewType	h98-accept	compile	12	2	G...	accept					
+h98acc/conformance98/Queens	h98-accept	compile	50	1	G...	accept					
+h98acc/conformance98/chr	h98-accept	compile	10	1	G...	accept					
+h98acc/conformance98/ctxsimpl	h98-accept	compile	5	1	G...	accept					
+h98acc/conformance98/fields/empty	h98-accept	compile	9	1	G...	accept					
+h98acc/conformance98/fields/operator	h98-accept	compile	11	1	G...	accept					
+h98acc/conformance98/fields/showread	h98-accept	compile	18	1	G...	accept					
+h98acc/conformance98/fields/type	h98-accept	compile	15	1	G...	accept					
+h98acc/conformance98/float/show	h98-accept	compile	5	1	G...	accept					
+h98acc/conformance98/import/emptyprelude	h98-accept	compile	15	3	G...	accept					inject
+h98acc/conformance98/infix/constructor	h98-accept	compile	8	1	G...	accept					
+h98acc/conformance98/infix/infix	h98-accept	compile	17	1	G...	accept					
+h98acc/conformance98/infix/local	h98-accept	compile	6	1	G...	accept					
+h98acc/conformance98/infix/operator	h98-accept	compile	7	1	G...	accept					
+h98acc/conformance98/layout/brace	h98-accept	compile	7	1	G...	accept					
+h98acc/conformance98/layout/case	h98-accept	compile	5	1	G...	accept					
+h98acc/conformance98/layout/do	h98-accept	compile	4	1	G...	accept					
+h98acc/conformance98/layout/tullsen1	h98-accept	compile	5	1	G...	accept					
+h98acc/conformance98/layout/tullsen2	h98-accept	compile	8	1	G...	accept					
+h98acc/conformance98/layout/whitespace	h98-accept	compile	5	1	G...	accept					
+h98acc/conformance98/lex	h98-accept	compile	1	1	G...	accept					
+h98acc/conformance98/maintype	h98-accept	compile	7	1	G...	accept					
+h98acc/conformance98/numbers/floatdouble	h98-accept	compile	2	1	G...	accept					
+h98acc/conformance98/numbers/integerdouble	h98-accept	compile	1	1	G...	accept					
+h98acc/conformance98/numbers/negliteral	h98-accept	compile	14	1	G...	accept					
+h98acc/conformance98/numbers/subtract	h98-accept	compile	3	1	G...	accept					
+h98acc/conformance98/read/readex	h98-accept	compile	9	1	G...	accept					
+h98acc/conformance98/read/singleconstr	h98-accept	compile	8	1	G...	accept					
+h98acc/conformance98/self-print	h98-accept	compile	3	1	G...	accept					
+h98acc/conformance98/semicolon	h98-accept	compile	8	1	G...	accept					
+h98acc/ghc/deriving/should_compile/drv001	h98-accept	compile	23	1	G...	accept					
+h98acc/ghc/deriving/should_compile/drv002	h98-accept	compile	16	1	G...	accept					
+h98acc/ghc/deriving/should_compile/drv003	h98-accept	compile	19	1	G...	accept					
+h98acc/ghc/deriving/should_compile/drv004	h98-accept	compile	9	1	G...	accept					
+h98acc/ghc/deriving/should_compile/drv005	h98-accept	compile	6	1	G...	accept					
+h98acc/ghc/deriving/should_compile/drv006	h98-accept	compile	9	1	G...	accept					
+h98acc/ghc/deriving/should_compile/drv007	h98-accept	compile	6	1	G...	accept					
+h98acc/ghc/deriving/should_compile/drv008	h98-accept	compile	7	1	G...	accept					
+h98acc/ghc/deriving/should_compile/drv009	h98-accept	compile	6	1	G...	accept					
+h98acc/ghc/deriving/should_compile/drv010	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/deriving/should_compile/drv011	h98-accept	compile	6	1	G...	accept					
+h98acc/ghc/deriving/should_compile/drv015	h98-accept	compile	14	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun001	h98-accept	run	13	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun002	h98-accept	run	17	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun003	h98-accept	run	30	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun004	h98-accept	run	10	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun005	h98-accept	run	27	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun006	h98-accept	run	49	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun007	h98-accept	run	6	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun008	h98-accept	run	8	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun009	h98-accept	run	20	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun010	h98-accept	run	12	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun011	h98-accept	run	16	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun012	h98-accept	run	11	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun013	h98-accept	run	19	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun014	h98-accept	run	19	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun015	h98-accept	run	8	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun016	h98-accept	run	18	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun018	h98-accept	run	9	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun020	h98-accept	run	46	1	G...	accept					
+h98acc/ghc/deriving/should_run/drvrun021	h98-accept	run	20	1	G...	accept					
+h98acc/ghc/module/mod100	h98-accept	compile	28	1	G...	accept					
+h98acc/ghc/module/mod104	h98-accept	compile	6	1	G...	accept					
+h98acc/ghc/module/mod105	h98-accept	compile	9	1	G...	accept					inject
+h98acc/ghc/module/mod107	h98-accept	compile	6	1	G...	accept					
+h98acc/ghc/module/mod108	h98-accept	compile	6	1	G...	accept					
+h98acc/ghc/module/mod109	h98-accept	compile	7	1	G...	accept					
+h98acc/ghc/module/mod11	h98-accept	compile	2	1	G...	accept					
+h98acc/ghc/module/mod111	h98-accept	compile	12	1	G...	accept					
+h98acc/ghc/module/mod112	h98-accept	compile	12	1	G...	accept					
+h98acc/ghc/module/mod113	h98-accept	compile	7	1	G...	accept					
+h98acc/ghc/module/mod115	h98-accept	compile	22	3	G...	accept					
+h98acc/ghc/module/mod117	h98-accept	compile	16	3	G...	accept					
+h98acc/ghc/module/mod118	h98-accept	compile	22	3	G...	accept					
+h98acc/ghc/module/mod119	h98-accept	compile	7	3	G...	accept					
+h98acc/ghc/module/mod12	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/module/mod128	h98-accept	compile	10	2	G...	accept					
+h98acc/ghc/module/mod129	h98-accept	compile	10	1	G...	accept					
+h98acc/ghc/module/mod13	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/module/mod137	h98-accept	compile	15	2	G...	accept					
+h98acc/ghc/module/mod139	h98-accept	compile	30	3	G...	accept					
+h98acc/ghc/module/mod14	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/module/mod140	h98-accept	compile	9	2	G...	accept					
+h98acc/ghc/module/mod141	h98-accept	compile	14	2	G...	accept					
+h98acc/ghc/module/mod148	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/module/mod149	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/module/mod15	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/module/mod154	h98-accept	compile	9	1	G...	accept					
+h98acc/ghc/module/mod156	h98-accept	compile	2	1	G...	accept					
+h98acc/ghc/module/mod157	h98-accept	compile	28	5	G...	accept					
+h98acc/ghc/module/mod159	h98-accept	compile	33	5	G...	accept					
+h98acc/ghc/module/mod16	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/module/mod162	h98-accept	compile	9	2	G...	accept					
+h98acc/ghc/module/mod163	h98-accept	compile	9	2	G...	accept					
+h98acc/ghc/module/mod166	h98-accept	run	16	3	G...	accept					
+h98acc/ghc/module/mod167	h98-accept	run	12	2	G...	accept					
+h98acc/ghc/module/mod168	h98-accept	compile	20	1	G...	accept					hiding
+h98acc/ghc/module/mod169	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/module/mod170	h98-accept	compile	10	2	G...	accept					
+h98acc/ghc/module/mod171	h98-accept	compile	20	3	G...	accept					
+h98acc/ghc/module/mod172	h98-accept	compile	12	3	G...	accept					
+h98acc/ghc/module/mod173	h98-accept	compile	21	2	G...	accept					
+h98acc/ghc/module/mod177	h98-accept	compile	7	1	G...	accept					inject
+h98acc/ghc/module/mod179	h98-accept	compile	10	2	G...	accept					
+h98acc/ghc/module/mod30	h98-accept	compile	4	1	G...	accept					inject
+h98acc/ghc/module/mod31	h98-accept	compile	5	1	G...	accept					inject
+h98acc/ghc/module/mod32	h98-accept	compile	5	1	G...	accept					inject
+h98acc/ghc/module/mod33	h98-accept	compile	5	1	G...	accept					inject
+h98acc/ghc/module/mod34	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/module/mod35	h98-accept	compile	5	1	G...	accept					inject
+h98acc/ghc/module/mod37	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/module/mod5	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/module/mod6	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/module/mod64	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/module/mod65	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/module/mod75	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/module/mod82	h98-accept	compile	4	1	G...	accept					inject
+h98acc/ghc/module/mod83	h98-accept	compile	4	1	G...	accept					inject
+h98acc/ghc/module/mod84	h98-accept	compile	4	1	G...	accept					inject
+h98acc/ghc/module/mod85	h98-accept	compile	5	1	G...	accept					inject
+h98acc/ghc/module/mod86	h98-accept	compile	4	1	G...	accept					inject
+h98acc/ghc/module/mod92	h98-accept	compile	4	1	G...	accept					inject
+h98acc/ghc/module/mod93	h98-accept	compile	4	1	G...	accept					inject
+h98acc/ghc/module/mod94	h98-accept	compile	5	1	G...	accept					inject
+h98acc/ghc/module/mod95	h98-accept	compile	5	1	G...	accept					inject
+h98acc/ghc/module/mod96	h98-accept	compile	4	1	G...	accept					inject
+h98acc/ghc/module/mod99	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/parser/should_compile/read001	h98-accept	compile	8	1	G...	accept					inject
+h98acc/ghc/parser/should_compile/read002	h98-accept	compile	16	1	G...	accept					
+h98acc/ghc/parser/should_compile/read003	h98-accept	compile	20	1	G...	accept					
+h98acc/ghc/parser/should_compile/read004	h98-accept	compile	16	1	G...	accept					
+h98acc/ghc/parser/should_compile/read005	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/parser/should_compile/read008	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/parser/should_compile/read009	h98-accept	compile	7	1	G...	accept					
+h98acc/ghc/parser/should_compile/read010	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/parser/should_compile/read011	h98-accept	compile	24	1	G...	accept					
+h98acc/ghc/parser/should_compile/read014	h98-accept	compile	8	1	G...	accept					
+h98acc/ghc/parser/should_compile/read015	h98-accept	compile	2	1	G...	accept					
+h98acc/ghc/parser/should_compile/read017	h98-accept	compile	15	1	G...	accept					
+h98acc/ghc/parser/should_compile/read018	h98-accept	compile	17	1	G...	accept					
+h98acc/ghc/parser/should_compile/read019	h98-accept	compile	10	1	G...	accept					
+h98acc/ghc/parser/should_compile/read021	h98-accept	compile	6	1	G...	accept					
+h98acc/ghc/parser/should_compile/read024	h98-accept	compile	34	1	G...	accept					
+h98acc/ghc/parser/should_compile/read025	h98-accept	compile	9	1	G...	accept					
+h98acc/ghc/parser/should_compile/read026	h98-accept	compile	8	1	G...	accept					
+h98acc/ghc/parser/should_compile/read027	h98-accept	compile	14	1	G...	accept					
+h98acc/ghc/parser/should_compile/read028	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/parser/should_compile/read029	h98-accept	compile	14	1	G...	accept					
+h98acc/ghc/parser/should_compile/read030	h98-accept	compile	10	1	G...	accept					
+h98acc/ghc/parser/should_compile/read031	h98-accept	compile	10	1	G...	accept					
+h98acc/ghc/parser/should_compile/read032	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/parser/should_compile/read033	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/parser/should_compile/read034	h98-accept	compile	12	1	G...	accept					
+h98acc/ghc/parser/should_compile/read036	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/parser/should_compile/read037	h98-accept	compile	6	1	G...	accept					
+h98acc/ghc/parser/should_compile/read038	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/parser/should_compile/read041	h98-accept	compile	10	1	G...	accept					
+h98acc/ghc/parser/should_compile/read043	h98-accept	compile	11	1	G...	accept					
+h98acc/ghc/parser/should_compile/read044	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/parser/should_compile/read045	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/parser/should_compile/read048	h98-accept	compile	7	1	G...	accept					
+h98acc/ghc/parser/should_compile/read049	h98-accept	compile	7	1	G...	accept					
+h98acc/ghc/parser/should_compile/read064	h98-accept	compile	7	1	G...	accept					
+h98acc/ghc/parser/should_compile/read066	h98-accept	compile	8	1	G...	accept					
+h98acc/ghc/parser/should_compile/read067	h98-accept	compile	8	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn003	h98-accept	compile	9	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn005	h98-accept	compile	8	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn006	h98-accept	compile	14	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn013	h98-accept	compile	21	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn017	h98-accept	compile	28	2	G...	accept					
+h98acc/ghc/rename/should_compile/rn019	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn020	h98-accept	compile	11	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn022	h98-accept	compile	11	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn023	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn024	h98-accept	compile	9	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn025	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn026	h98-accept	compile	12	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn027	h98-accept	compile	12	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn028	h98-accept	compile	18	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn029	h98-accept	compile	17	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn031	h98-accept	compile	12	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn032	h98-accept	compile	18	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn033	h98-accept	compile	14	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn034	h98-accept	compile	12	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn035	h98-accept	compile	10	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn036	h98-accept	compile	14	1	G...	accept					hiding
+h98acc/ghc/rename/should_compile/rn039	h98-accept	run	9	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn040	h98-accept	compile	8	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn041	h98-accept	compile	13	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn042	h98-accept	compile	8	2	G...	accept					
+h98acc/ghc/rename/should_compile/rn043	h98-accept	compile	12	3	G...	accept					
+h98acc/ghc/rename/should_compile/rn044	h98-accept	compile	14	3	G...	accept					
+h98acc/ghc/rename/should_compile/rn046	h98-accept	compile	6	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn050	h98-accept	compile	23	2	G...	accept					
+h98acc/ghc/rename/should_compile/rn052	h98-accept	compile	16	2	G...	accept					
+h98acc/ghc/rename/should_compile/rn053	h98-accept	compile	17	3	G...	accept					
+h98acc/ghc/rename/should_compile/rn054	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn055	h98-accept	compile	6	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn056	h98-accept	compile	9	1	G...	accept					inject
+h98acc/ghc/rename/should_compile/rn060	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn061	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn062	h98-accept	compile	8	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn063	h98-accept	compile	14	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn064	h98-accept	compile	17	1	G...	accept					
+h98acc/ghc/rename/should_compile/rn066	h98-accept	compile	23	2	G...	accept					
+h98acc/ghc/rename/should_compile/rn067	h98-accept	compile	18	2	G...	accept					
+h98acc/ghc/rename/should_compile/rn068	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc001	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc002	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc003	h98-accept	compile	12	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc004	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc005	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc006	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc007	h98-accept	compile	9	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc008	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc009	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc010	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc011	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc012	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc013	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc014	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc015	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc016	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc017	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc018	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc019	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc020	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc021	h98-accept	compile	7	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc022	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc023	h98-accept	compile	7	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc024	h98-accept	compile	7	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc025	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc026	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc027	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc028	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc029	h98-accept	compile	6	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc030	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc031	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc032	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc033	h98-accept	compile	7	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc034	h98-accept	compile	11	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc035	h98-accept	compile	9	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc036	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc037	h98-accept	compile	9	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc038	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc039	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc040	h98-accept	compile	9	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc041	h98-accept	compile	12	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc042	h98-accept	compile	73	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc043	h98-accept	compile	18	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc044	h98-accept	compile	6	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc045	h98-accept	compile	20	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc046	h98-accept	compile	9	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc047	h98-accept	compile	23	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc048	h98-accept	compile	21	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc049	h98-accept	compile	39	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc050	h98-accept	compile	23	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc051	h98-accept	compile	32	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc052	h98-accept	compile	8	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc053	h98-accept	compile	12	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc054	h98-accept	compile	16	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc055	h98-accept	compile	3	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc056	h98-accept	compile	19	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc057	h98-accept	compile	18	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc058	h98-accept	compile	20	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc059	h98-accept	compile	15	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc060	h98-accept	compile	12	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc061	h98-accept	compile	11	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc062	h98-accept	compile	12	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc063	h98-accept	compile	18	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc064	h98-accept	compile	7	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc066	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc067	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc068	h98-accept	compile	18	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc069	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc070	h98-accept	compile	9	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc073	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc074	h98-accept	compile	18	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc076	h98-accept	compile	8	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc077	h98-accept	compile	9	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc078	h98-accept	compile	10	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc079	h98-accept	compile	18	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc080	h98-accept	compile	59	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc081	h98-accept	compile	29	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc082	h98-accept	compile	12	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc084	h98-accept	compile	23	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc088	h98-accept	compile	22	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc089	h98-accept	compile	77	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc090	h98-accept	compile	22	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc091	h98-accept	compile	69	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc094	h98-accept	compile	7	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc095	h98-accept	compile	237	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc096	h98-accept	compile	36	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc098	h98-accept	compile	31	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc099	h98-accept	compile	8	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc100	h98-accept	compile	7	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc101	h98-accept	compile	15	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc104	h98-accept	compile	4	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc107	h98-accept	compile	8	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc111	h98-accept	compile	21	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc113	h98-accept	compile	15	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc120	h98-accept	compile	8	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc128	h98-accept	compile	10	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc142	h98-accept	compile	11	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc143	h98-accept	compile	7	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc147	h98-accept	compile	8	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc153	h98-accept	compile	13	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc154	h98-accept	compile	9	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc169	h98-accept	compile	27	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc170	h98-accept	compile	41	2	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc171	h98-accept	compile	12	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc172	h98-accept	compile	11	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc175	h98-accept	compile	15	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc186	h98-accept	compile	16	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc189	h98-accept	compile	24	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc193	h98-accept	compile	16	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc196	h98-accept	compile	18	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc202	h98-accept	compile	8	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc207	h98-accept	compile	17	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc212	h98-accept	compile	9	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc226	h98-accept	compile	13	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc227	h98-accept	compile	6	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc238	h98-accept	compile	20	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc243	h98-accept	compile	11	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc246	h98-accept	compile	7	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc249	h98-accept	compile	5	1	G...	accept					
+h98acc/ghc/typecheck/should_compile/tc270	h98-accept	compile	1006	1	G...	accept					
+h98acc/ghc/typecheck/should_fail/tcfail071	h98-accept	compile	16	1	G...	accept					
+h98acc/ghc/typecheck/should_run/tcrun001	h98-accept	run	16	1	G...	accept					
+h98acc/ghc/typecheck/should_run/tcrun005	h98-accept	run	25	1	G...	accept					
+h98acc/ghc/typecheck/should_run/tcrun006	h98-accept	run	16	1	G...	accept					
+h98acc/ghc/typecheck/should_run/tcrun014	h98-accept	run	22	1	G...	accept					
+h98acc/ghc/typecheck/should_run/tcrun015	h98-accept	run	21	1	G...	accept					
+h98acc/ghc/typecheck/should_run/tcrun022	h98-accept	run	23	1	G...	accept					
+h98acc/ghc/typecheck/should_run/tcrun029	h98-accept	run	29	1	G...	accept					
+h98acc/ghc/typecheck/should_run/tcrun040	h98-accept	run	27	1	G...	accept					
+h98acc/helium/classesQualified/ClassA.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/correct/Case1.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/helium/correct/Case2.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/helium/correct/Case3.hs	h98-accept	compile	10	1	G...	accept					
+h98acc/helium/correct/Comprehension1.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/helium/correct/Comprehension2.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/correct/Daan1.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/helium/correct/DerivingShow.hs	h98-accept	compile	15	1	G...	accept					
+h98acc/helium/correct/EnumFromTo.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/correct/EnumFromTo2.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/correct/EnumFromTo3.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/correct/EnumFromTo4.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/correct/EnumFromTo5.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/correct/EnumFromTo6.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/correct/EnumFromTo7.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/correct/Exponent.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/helium/correct/Export.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/correct/Export2.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/correct/ExprIfFalse.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/correct/ExprIfTrue.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/correct/File3.hs	h98-accept	compile	10	1	G...	accept					
+h98acc/helium/correct/Fixity.hs	h98-accept	compile	22	1	G...	accept					
+h98acc/helium/correct/GCbug.hs	h98-accept	compile	103	1	G...	accept					
+h98acc/helium/correct/Import.hs	h98-accept	compile	10	2	G...	accept					
+h98acc/helium/correct/Import2.hs	h98-accept	compile	13	2	G...	accept					
+h98acc/helium/correct/ImportDict1.hs	h98-accept	compile	13	2	G...	accept					
+h98acc/helium/correct/ImportDict2.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/helium/correct/ImportTwo.hs	h98-accept	compile	12	3	G...	accept					
+h98acc/helium/correct/ImportTwo1.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/helium/correct/ImportTwo2.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/helium/correct/InfixCon1.hs	h98-accept	compile	10	1	G...	accept					
+h98acc/helium/correct/InfixCon2.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/correct/InfixCon3.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/helium/correct/InfixDefaultAssoc.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/correct/InputOutput.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/helium/correct/Lambda1.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/correct/Lambda2.hs	h98-accept	compile	5	1	G...	accept					
+h98acc/helium/correct/Lambda3.hs	h98-accept	compile	5	1	G...	accept					
+h98acc/helium/correct/OnlyGuards.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/helium/correct/PMC1.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/correct/PMC10.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/correct/PMC11.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/helium/correct/PMC12.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/helium/correct/PMC13.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/correct/PMC14.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/correct/PMC16.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/helium/correct/PMC2.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/correct/PMC3.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/helium/correct/PMC4.hs	h98-accept	compile	11	1	G...	accept					
+h98acc/helium/correct/PMC6.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/helium/correct/PMC7.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/helium/correct/PMC8.hs	h98-accept	compile	14	1	G...	accept					
+h98acc/helium/correct/PMC9.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/helium/correct/ParensInfixScope.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/correct/PatBind1.hs	h98-accept	compile	12	1	G...	accept					
+h98acc/helium/correct/PatNegateInt.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/helium/correct/PatternMatchBug1.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/correct/PatternMatchBug2.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/correct/PatternMatchBug3.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/helium/correct/PatternMatchBug4.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/helium/correct/Reexport.hs	h98-accept	compile	16	3	G...	accept					
+h98acc/helium/correct/Reexport2.hs	h98-accept	compile	10	2	G...	accept					
+h98acc/helium/correct/Reexport3.hs	h98-accept	compile	5	1	G...	accept					
+h98acc/helium/correct/Sections.hs	h98-accept	compile	34	1	G...	accept					
+h98acc/helium/correct/Show.hs	h98-accept	compile	16	1	G...	accept					
+h98acc/helium/correct/ShowSpecials.hs	h98-accept	compile	5	1	G...	accept					
+h98acc/helium/correct/ShowString.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/correct/Sieve.hs	h98-accept	compile	12	1	G...	accept					
+h98acc/helium/correct/Simple.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/correct/Tuple.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/correct/TwoLetterChar.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/helium/correct/TypeSyn1.hs	h98-accept	compile	10	2	G...	accept					
+h98acc/helium/correct/TypeSyn2.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/exports/Export10.hs	h98-accept	compile	41	3	G...	accept					
+h98acc/helium/exports/Export12.hs	h98-accept	compile	43	3	G...	accept					
+h98acc/helium/exports/Export16.hs	h98-accept	compile	68	3	G...	accept					
+h98acc/helium/exports/Export2.hs	h98-accept	compile	78	3	G...	accept					
+h98acc/helium/exports/Export20.hs	h98-accept	compile	71	4	G...	accept					
+h98acc/helium/exports/Export21.hs	h98-accept	compile	67	4	G...	accept					
+h98acc/helium/exports/Export4.hs	h98-accept	compile	48	2	G...	accept					
+h98acc/helium/exports/Export5.hs	h98-accept	compile	45	2	G...	accept					
+h98acc/helium/exports/Export7.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/exports/Export8.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/exports/Export9.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/exports/ExportBasic.hs	h98-accept	compile	27	1	G...	accept					
+h98acc/helium/exports/ExportBasic2.hs	h98-accept	compile	24	1	G...	accept					
+h98acc/helium/exports/ExportBasic3.hs	h98-accept	compile	32	2	G...	accept					
+h98acc/helium/exports/ExportBasic4.hs	h98-accept	compile	33	2	G...	accept					
+h98acc/helium/exports/ExportBasic5.hs	h98-accept	compile	46	2	G...	accept					
+h98acc/helium/exports/ExportBasic6.hs	h98-accept	compile	55	3	G...	accept					
+h98acc/helium/exports/Qual1.hs	h98-accept	compile	27	1	G...	accept					
+h98acc/helium/exports/Qual2.hs	h98-accept	compile	56	2	G...	accept					
+h98acc/helium/exports/Qual8.hs	h98-accept	compile	33	2	G...	accept					
+h98acc/helium/knowntofix/Daan.hs	h98-accept	compile	5	1	G...	accept					
+h98acc/helium/knowntofix/PrintLargeFile.hs	h98-accept	compile	20	1	G...	accept					
+h98acc/helium/knowntofix/TestTypeSynonyms.hs	h98-accept	compile	36	1	G...	accept					
+h98acc/helium/make/Diamond2.hs	h98-accept	compile	8	2	G...	accept					
+h98acc/helium/make/Diamond3.hs	h98-accept	compile	8	2	G...	accept					
+h98acc/helium/make/Diamond4.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/helium/make/ExportShowInstance2.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/make/MultipleImportA.hs	h98-accept	compile	26	4	G...	accept					
+h98acc/helium/make/MultipleImportB.hs	h98-accept	compile	19	3	G...	accept					
+h98acc/helium/make/MultipleImportC.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/make/MultipleImportD.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/make/ShowExport1.hs	h98-accept	compile	14	3	G...	accept					
+h98acc/helium/make/ShowExport2.hs	h98-accept	compile	9	2	G...	accept					
+h98acc/helium/make/ShowExport3.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/helium/make/SynExportA.hs	h98-accept	compile	20	3	G...	accept					
+h98acc/helium/make/SynExportB.hs	h98-accept	compile	13	2	G...	accept					
+h98acc/helium/make/SynExportC.hs	h98-accept	compile	5	1	G...	accept					
+h98acc/helium/make/SynExportD.hs	h98-accept	compile	18	3	G...	accept					
+h98acc/helium/runtimeerrors/CatchBug.hs	h98-accept	compile	3	1	-...	reject					
+h98acc/helium/runtimeerrors/ErrorFunction.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/helium/runtimeerrors/Lambda4.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/runtimeerrors/PMC15.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/runtimeerrors/PMCFloat.hs	h98-accept	compile	11	1	G...	accept					
+h98acc/helium/runtimeerrors/PMFailure.hs	h98-accept	compile	11	1	G...	accept					
+h98acc/helium/runtimeerrors/PatBind2.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/helium/runtimeerrors/PatBind3.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/helium/simple/correct/Irrefutable.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/simple/correct/Irrefutable2.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/helium/simple/correct/TupleMatch.hs	h98-accept	compile	5	1	G...	accept					
+h98acc/helium/simple/runtimeerrors/CatchBug.hs	h98-accept	compile	3	1	-...	reject					
+h98acc/helium/staticwarnings/DataUnusedTyvar.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/helium/staticwarnings/ExprCompShadowVar.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/helium/staticwarnings/ExprLambdaUnusedVar.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/helium/staticwarnings/ExprLetShadowVar.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/helium/staticwarnings/Generator1.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/staticwarnings/Generator2.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/staticwarnings/Generator3.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/staticwarnings/NoTypeDef.hs	h98-accept	compile	15	1	G...	accept					
+h98acc/helium/staticwarnings/Shadow.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/helium/staticwarnings/Shadow2.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/helium/staticwarnings/SuspiciousFBs.hs	h98-accept	compile	16	1	G...	accept					
+h98acc/helium/staticwarnings/SynUnusedTyvar.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/helium/staticwarnings/TypeSynWar.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/helium/testinstallation/Base.hs	h98-accept	compile	21	1	G...	accept					
+h98acc/hse/Completesig03A.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/hse/DerivingViaStealing.hs	h98-accept	compile	5	1	G...	accept					
+h98acc/hse/EmptyList.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/hse/HaddockComments.hs	h98-accept	compile	56	1	G...	accept					
+h98acc/hse/HexPrec.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/hse/InfixParser.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/hse/LineOptionsPragma.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/hse/NestedAsPat.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/hse/ParenFunBind.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/hse/QualifiedDot.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/hse/SCCPragmas.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/hse/SingleClassAsst.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/hse/Testing.hs	h98-accept	compile	2	1	G...	accept					
+h98acc/hse/TrailingWhere3.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/DoInfix.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ParseDoWhere.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/Parsing1.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/Recursive2.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/fixed_bugs/case_in_stacking.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/T3741.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read001.hs	h98-accept	compile	8	1	G...	accept					inject
+h98acc/jhc/0_parse/2_pass/ghc/read002.hs	h98-accept	compile	14	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read004.hs	h98-accept	compile	16	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read005.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read008.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read009.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read010.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read011.hs	h98-accept	compile	24	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read014.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read015.hs	h98-accept	compile	2	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read017.hs	h98-accept	compile	15	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read018.hs	h98-accept	compile	16	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read019.hs	h98-accept	compile	10	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read021.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read024.hs	h98-accept	compile	30	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read026.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read028.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read029.hs	h98-accept	compile	14	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read030.hs	h98-accept	compile	10	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read031.hs	h98-accept	compile	10	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read032.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read033.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read034.hs	h98-accept	compile	12	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read036.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read037.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read038.hs	h98-accept	compile	5	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read043.hs	h98-accept	compile	11	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read044.hs	h98-accept	compile	5	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read045.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read048.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read049.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read064.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read066.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read067.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/jhc/0_parse/2_pass/ghc/read_1821.hs	h98-accept	compile	10	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/KindInference.hs	h98-accept	compile	12	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/Qualify1.hs	h98-accept	compile	20	1	G...	accept					inject
+h98acc/jhc/1_typecheck/2_pass/edecls.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/empty.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/fixed_bugs/case-alt-where.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/fixed_bugs/lambda_const_pattern.hs	h98-accept	compile	24	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/fixed_bugs/negate_accidental_bind.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/fixed_bugs/operator_fundef.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/fixed_bugs/record_type_reversal.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/fixed_bugs/top_level_shadow.hs	h98-accept	compile	5	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/T1495.hs	h98-accept	compile	19	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/T2045.hs	h98-accept	compile	126	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/T2497.hs	h98-accept	compile	19	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/T2735.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/T3219.hs	h98-accept	compile	11	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/syn-perf2.hs	h98-accept	compile	33	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc001.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc002.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc003.hs	h98-accept	compile	12	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc004.hs	h98-accept	compile	5	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc005.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc006.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc007.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc008.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc009.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc010.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc011.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc012.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc013.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc014.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc015.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc016.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc017.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc018.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc019.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc020.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc021.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc022.hs	h98-accept	compile	5	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc023.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc024.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc025.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc026.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc027.hs	h98-accept	compile	5	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc028.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc029.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc030.hs	h98-accept	compile	5	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc031.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc032.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc033.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc034.hs	h98-accept	compile	11	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc035.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc036.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc037.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc038.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc039.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc040.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc041.hs	h98-accept	compile	12	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc042.hs	h98-accept	compile	73	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc043.hs	h98-accept	compile	18	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc044.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc045.hs	h98-accept	compile	19	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc046.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc047.hs	h98-accept	compile	23	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc048.hs	h98-accept	compile	21	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc049.hs	h98-accept	compile	39	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc050.hs	h98-accept	compile	23	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc051.hs	h98-accept	compile	30	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc052.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc053.hs	h98-accept	compile	12	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc054.hs	h98-accept	compile	16	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc055.hs	h98-accept	compile	3	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc056.hs	h98-accept	compile	19	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc057.hs	h98-accept	compile	18	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc058.hs	h98-accept	compile	18	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc059.hs	h98-accept	compile	15	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc060.hs	h98-accept	compile	12	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc061.hs	h98-accept	compile	11	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc062.hs	h98-accept	compile	12	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc063.hs	h98-accept	compile	18	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc064.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc066.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc067.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc068.hs	h98-accept	compile	18	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc069.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc070.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc073.hs	h98-accept	compile	5	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc074.hs	h98-accept	compile	18	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc076.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc077.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc078.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc079.hs	h98-accept	compile	16	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc081.hs	h98-accept	compile	28	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc082.hs	h98-accept	compile	12	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc084.hs	h98-accept	compile	23	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc088.hs	h98-accept	compile	19	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc089.hs	h98-accept	compile	78	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc090.hs	h98-accept	compile	22	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc091.hs	h98-accept	compile	67	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc093.hs	h98-accept	compile	25	1	-...	reject					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc094.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc095.hs	h98-accept	compile	237	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc096.hs	h98-accept	compile	36	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc098.hs	h98-accept	compile	31	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc099.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc100.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc101.hs	h98-accept	compile	15	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc104.hs	h98-accept	compile	4	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc107.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc113.hs	h98-accept	compile	13	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc120.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc128.hs	h98-accept	compile	10	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc142.hs	h98-accept	compile	11	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc143.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc147.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc153.hs	h98-accept	compile	12	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc154.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc169.hs	h98-accept	compile	27	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc172.hs	h98-accept	compile	11	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/tc175.hs	h98-accept	compile	15	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/uncat/tc186.hs	h98-accept	compile	16	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/uncat/tc193.hs	h98-accept	compile	16	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/uncat/tc202.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/uncat/tc227.hs	h98-accept	compile	6	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/uncat/tc238.hs	h98-accept	compile	20	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/uncat/tc243.hs	h98-accept	compile	11	1	G...	accept					
+h98acc/jhc/1_typecheck/2_pass/ghc/uncat/tc246.hs	h98-accept	compile	7	1	G...	accept					
+h98acc/jhc/2_language/Bounds.hs	h98-accept	run	13	1	G...	accept					
+h98acc/jhc/2_language/IrrefutableLambda.hs	h98-accept	run	1	1	G...	accept					
+h98acc/jhc/2_language/haskell2010.hs	h98-accept	run	35	1	G...	accept					
+h98acc/jhc/3_io/Array.hs	h98-accept	run	16	1	G...	accept					
+h98acc/jhc/3_io/HelloWorld.hs	h98-accept	run	4	1	G...	accept					
+h98acc/jhc/3_io/enum.hs	h98-accept	run	24	1	G...	accept					
+h98acc/jhc/4_rts/HelloWorld.hs	h98-accept	run	4	1	G...	accept					
+h98acc/jhc/5_known_bugs/Defaulting.hs	h98-accept	run	6	1	G...	accept					
+h98acc/jhc/5_known_bugs/Segfault1.hs	h98-accept	run	5	1	G...	accept					
+h98acc/jhc/6_fixed_bugs/StrictNewtype.hs	h98-accept	run	11	1	G...	accept					
+h98acc/jhc/6_fixed_bugs/Tree.hs	h98-accept	run	14	1	G...	accept					
+h98acc/jhc/6_fixed_bugs/UnpackedPoly.hs	h98-accept	run	7	1	G...	accept					
+h98acc/jhc/7_large/fastest_fib.hs	h98-accept	run	30	1	G...	accept					
+h98acc/jhc/8_shootout/SumFile.hs	h98-accept	run	22	1	G...	accept					
+h98acc/jhc/9_nofib/spectral/constraints.hs	h98-accept	run	271	1	G...	accept					
+h98acc/nhcnofib/UNUSED/nfib	h98-accept	run	8	1	G...	accept					
+h98acc/nhcnofib/UNUSED/nfib_overloaded	h98-accept	run	9	1	G...	accept					
+h98acc/nhcnofib/imaginary/exp3_8	h98-accept	run	89	1	G...	accept					
+h98acc/nhcnofib/imaginary/primes	h98-accept	run	13	1	G...	accept					
+h98acc/nhcnofib/imaginary/queens	h98-accept	run	14	1	G...	accept					
+h98acc/nhcnofib/imaginary/rfib	h98-accept	run	9	1	G...	accept					
+h98acc/nhcnofib/imaginary/tak	h98-accept	run	10	1	G...	accept					
+h98acc/nhcnofib/imaginary/wheel-sieve1	h98-accept	run	35	1	G...	accept					
+h98acc/nhcnofib/imaginary/wheel-sieve2	h98-accept	run	43	1	G...	accept					
+h98acc/nhcnofib/real/compress	h98-accept	run	232	5	G...	accept					
+h98acc/nhcnofib/real/lift	h98-accept	run	2031	5	-...	reject					
+h98acc/nhcnofib/real/maillist	h98-accept	run	176	1	-...	reject					
+h98acc/nhcnofib/real/rsa	h98-accept	run	74	2	G...	accept					
+h98acc/nhcnofib/spectral/ansi	h98-accept	run	125	1	G...	accept					
+h98acc/nhcnofib/spectral/atom	h98-accept	run	183	1	G...	accept					
+h98acc/nhcnofib/spectral/boyer	h98-accept	run	1014	1	G...	accept					
+h98acc/nhcnofib/spectral/boyer2	h98-accept	run	723	5	G...	accept					
+h98acc/nhcnofib/spectral/cichelli	h98-accept	run	237	4	G...	accept					
+h98acc/nhcnofib/spectral/cse	h98-accept	run	464	2	G...	accept					
+h98acc/nhcnofib/spectral/fish	h98-accept	run	125	1	G...	accept					
+h98acc/nhcnofib/spectral/gcd	h98-accept	run	56	1	G...	accept					
+h98acc/nhcnofib/spectral/life	h98-accept	run	53	1	G...	accept					
+h98acc/nhcnofib/spectral/mandel2	h98-accept	run	222	1	G...	accept					
+h98acc/nhcnofib/spectral/minimax	h98-accept	run	238	6	G...	accept					
+h98acc/nhcnofib/spectral/multiplier	h98-accept	run	498	1	G...	accept					
+h98acc/nhcnofib/spectral/pretty	h98-accept	run	265	3	G...	accept					
+h98acc/nhcnofib/spectral/puzzle	h98-accept	run	170	1	G...	accept					
+h98acc/nhcnofib/spectral/rewrite	h98-accept	run	631	1	G...	accept					
+h98acc/nhcnofib/spectral/scc	h98-accept	run	100	2	G...	accept					
+h98acc/nofib/gc/cacheprof	h98-accept	run	2152	3	G...	accept					
+h98acc/nofib/gc/circsim	h98-accept	run	668	1	G...	accept					
+h98acc/nofib/gc/constraints	h98-accept	run	271	1	G...	accept					
+h98acc/nofib/gc/lcss	h98-accept	run	60	1	G...	accept					
+h98acc/nofib/gc/linear	h98-accept	run	2139	11	G...	accept					
+h98acc/nofib/gc/power	h98-accept	run	141	1	G...	accept					
+h98acc/nofib/gc/treejoin	h98-accept	run	121	1	G...	accept					
+h98acc/nofib/imaginary/exp3_8	h98-accept	run	93	1	G...	accept					
+h98acc/nofib/imaginary/integrate	h98-accept	run	43	1	G...	accept					
+h98acc/nofib/imaginary/paraffins	h98-accept	run	92	1	G...	accept					
+h98acc/nofib/imaginary/primes	h98-accept	run	16	1	G...	accept					
+h98acc/nofib/imaginary/queens	h98-accept	run	19	1	G...	accept					
+h98acc/nofib/imaginary/rfib	h98-accept	run	12	1	G...	accept					
+h98acc/nofib/imaginary/tak	h98-accept	run	16	1	G...	accept					
+h98acc/nofib/imaginary/wheel-sieve1	h98-accept	run	49	1	G...	accept					
+h98acc/nofib/imaginary/wheel-sieve2	h98-accept	run	53	1	G...	accept					
+h98acc/nofib/imaginary/x2n1	h98-accept	run	35	1	G...	accept					
+h98acc/nofib/real/scs	h98-accept	run	586	7	G...	accept					
+h98acc/nofib/spectral/ansi	h98-accept	run	128	1	G...	accept					
+h98acc/nofib/spectral/atom	h98-accept	run	188	1	G...	accept					
+h98acc/nofib/spectral/awards	h98-accept	run	116	2	G...	accept					
+h98acc/nofib/spectral/banner	h98-accept	run	110	1	G...	accept					
+h98acc/nofib/spectral/boyer	h98-accept	run	1021	1	G...	accept					
+h98acc/nofib/spectral/boyer2	h98-accept	run	731	5	G...	accept					
+h98acc/nofib/spectral/cichelli	h98-accept	run	233	4	G...	accept					
+h98acc/nofib/spectral/circsim	h98-accept	run	670	1	G...	accept					
+h98acc/nofib/spectral/clausify	h98-accept	run	185	1	G...	accept					
+h98acc/nofib/spectral/constraints	h98-accept	run	272	1	G...	accept					
+h98acc/nofib/spectral/cse	h98-accept	run	472	2	G...	accept					
+h98acc/nofib/spectral/eliza	h98-accept	run	273	1	G...	accept					
+h98acc/nofib/spectral/exact-reals	h98-accept	run	225	1	G...	accept					
+h98acc/nofib/spectral/expert	h98-accept	run	525	6	G...	accept					
+h98acc/nofib/spectral/fft2	h98-accept	run	221	3	G...	accept					
+h98acc/nofib/spectral/fish	h98-accept	run	135	1	G...	accept					
+h98acc/nofib/spectral/gcd	h98-accept	run	60	1	G...	accept					
+h98acc/nofib/spectral/integer	h98-accept	run	68	1	G...	accept					
+h98acc/nofib/spectral/lcss	h98-accept	run	61	1	G...	accept					
+h98acc/nofib/spectral/mate	h98-accept	run	425	5	G...	accept					
+h98acc/nofib/spectral/minimax	h98-accept	run	244	6	G...	accept					
+h98acc/nofib/spectral/multiplier	h98-accept	run	501	1	G...	accept					
+h98acc/nofib/spectral/para	h98-accept	run	1785	1	G...	accept					
+h98acc/nofib/spectral/power	h98-accept	run	149	1	G...	accept					
+h98acc/nofib/spectral/pretty	h98-accept	run	265	3	G...	accept					
+h98acc/nofib/spectral/primetest	h98-accept	run	305	4	G...	accept					
+h98acc/nofib/spectral/puzzle	h98-accept	run	175	1	G...	accept					
+h98acc/nofib/spectral/rewrite	h98-accept	run	636	1	G...	accept					
+h98acc/nofib/spectral/scc	h98-accept	run	100	2	G...	accept					
+h98acc/nofib/spectral/sphere	h98-accept	run	453	1	G...	accept					
+h98acc/nofib/spectral/treejoin	h98-accept	run	122	1	G...	accept					
+h98acc/uhc/AmbigType1.hs	h98-accept	compile	16	1	G...	accept					
+h98acc/uhc/BoundedChar1.hs	h98-accept	compile	12	1	G...	accept					
+h98acc/uhc/BoundedDeriv2.hs	h98-accept	compile	18	1	G...	accept					
+h98acc/uhc/BoundedInt1.hs	h98-accept	compile	12	1	G...	accept					
+h98acc/uhc/CaseFall1.hs	h98-accept	compile	13	1	G...	accept					
+h98acc/uhc/Comment1.hs	h98-accept	compile	15	1	G...	accept					
+h98acc/uhc/DataArray1.hs	h98-accept	compile	27	1	G...	accept					
+h98acc/uhc/DataBitsInt1.hs	h98-accept	compile	27	1	G...	accept					
+h98acc/uhc/DataBitsInt2.hs	h98-accept	compile	99	1	G...	accept					
+h98acc/uhc/DataBitsInteger1.hs	h98-accept	compile	26	1	G...	accept					
+h98acc/uhc/DataBitsWord1.hs	h98-accept	compile	99	1	G...	accept					
+h98acc/uhc/DataField1.hs	h98-accept	compile	12	1	G...	accept					
+h98acc/uhc/DataField5.hs	h98-accept	compile	24	1	G...	accept					
+h98acc/uhc/DataWord1.hs	h98-accept	compile	104	1	G...	accept					
+h98acc/uhc/Defaulting1.hs	h98-accept	compile	30	1	G...	accept					
+h98acc/uhc/DerivPolyKind1.hs	h98-accept	compile	13	1	G...	accept					
+h98acc/uhc/DerivingRead1.hs	h98-accept	compile	16	1	G...	accept					
+h98acc/uhc/EmptyRecord1.hs	h98-accept	compile	11	1	G...	accept					
+h98acc/uhc/EnumDouble1.hs	h98-accept	compile	15	1	G...	accept					
+h98acc/uhc/EnumFloat1.hs	h98-accept	compile	15	1	G...	accept					
+h98acc/uhc/EnumInt1.hs	h98-accept	compile	16	1	G...	accept					
+h98acc/uhc/EnumInteger1.hs	h98-accept	compile	15	1	G...	accept					
+h98acc/uhc/EnumRational1.hs	h98-accept	compile	17	1	G...	accept					
+h98acc/uhc/FloatPrint1.hs	h98-accept	compile	39	1	G...	accept					
+h98acc/uhc/FloatingDouble1.hs	h98-accept	compile	26	1	G...	accept					
+h98acc/uhc/FloatingFloat1.hs	h98-accept	compile	26	1	G...	accept					
+h98acc/uhc/GetProgName.hs	h98-accept	compile	16	1	G...	accept					
+h98acc/uhc/HelloWorld.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/uhc/InferredContext1.hs	h98-accept	compile	36	1	G...	accept					
+h98acc/uhc/IntegralInt1.hs	h98-accept	compile	65	1	G...	accept					
+h98acc/uhc/IntegralInteger1.hs	h98-accept	compile	65	1	G...	accept					
+h98acc/uhc/IterateAndApply1.hs	h98-accept	compile	19	1	G...	accept					
+h98acc/uhc/Keywords1.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/uhc/LibraryDataInt.hs	h98-accept	compile	85	1	G...	accept					
+h98acc/uhc/LibraryDataList1.hs	h98-accept	compile	26	1	G...	accept					
+h98acc/uhc/LibraryDataMaybe1.hs	h98-accept	compile	15	1	G...	accept					
+h98acc/uhc/Minimal1.hs	h98-accept	compile	8	1	G...	accept					
+h98acc/uhc/Minimal2.hs	h98-accept	compile	9	1	G...	accept					
+h98acc/uhc/NameIntro1.hs	h98-accept	compile	13	1	G...	accept					
+h98acc/uhc/NameIntro9.hs	h98-accept	compile	17	1	G...	accept					
+h98acc/uhc/Numeric1.hs	h98-accept	compile	17	1	G...	accept					
+h98acc/uhc/PatMatchConst1.hs	h98-accept	compile	16	1	G...	accept					
+h98acc/uhc/PatMatchNameCapture1.hs	h98-accept	compile	15	1	G...	accept					
+h98acc/uhc/Print1.hs	h98-accept	compile	15	1	G...	accept					
+h98acc/uhc/ReadBasic1.hs	h98-accept	compile	17	1	G...	accept					
+h98acc/uhc/RealFloatDouble1.hs	h98-accept	compile	31	1	G...	accept					
+h98acc/uhc/RealFloatDouble2.hs	h98-accept	compile	13	1	G...	accept					
+h98acc/uhc/RealFloatFloat1.hs	h98-accept	compile	32	1	G...	accept					
+h98acc/uhc/RealFloatFloat2.hs	h98-accept	compile	13	1	G...	accept					
+h98acc/uhc/RealFracDouble1.hs	h98-accept	compile	17	1	G...	accept					
+h98acc/uhc/RealFracFloat1.hs	h98-accept	compile	17	1	G...	accept					
+h98acc/uhc/RecordConstruction1.hs	h98-accept	compile	36	1	G...	accept					
+h98acc/uhc/ShowInt1.hs	h98-accept	compile	14	1	G...	accept					
+h98acc/uhc/ShowInteger1.hs	h98-accept	compile	14	1	G...	accept					
+h98acc/uhc/Sieve1.hs	h98-accept	compile	13	1	G...	accept					
+h98acc/uhc/SysExit1.hs	h98-accept	compile	13	1	G...	accept					
+h98acc/uhc/SysExit2.hs	h98-accept	compile	13	1	G...	accept					
+h98acc/uhc/TupleInstances1.hs	h98-accept	compile	23	1	G...	accept					
+h98acc/uhc/Unicode1.hs	h98-accept	compile	21	1	G...	accept					
+h98acc/yhc-conformance/Enum/succ	h98-accept	compile	1	1	G...	accept					
+h98acc/yhc-conformance/WheelSieve	h98-accept	compile	43	1	G...	accept					
+h98acc/yhc-conformance/bugs/CaseApp	h98-accept	compile	10	1	G...	accept					
+h98acc/yhc-conformance/getargs	h98-accept	compile	7	1	G...	accept					
+h98acc/yhc-conformance/infix/derived	h98-accept	compile	12	1	G...	accept					
+h98acc/yhc-conformance/iomonad	h98-accept	compile	2	1	G...	accept					
+h98acc/yhc-conformance/parsing/rational_lits	h98-accept	compile	1	1	G...	accept					
+hackage/BNFC-meta-0.6.1/library	hackage	compile	109	1	G.H.	accept		accept			
+hackage/Cabal-3.12.1.0/library	hackage	compile	24	1	G.H.	accept		accept			
+hackage/Cabal-syntax-3.12.1.0/library	hackage	compile	27	1	G.H.	accept		accept			
+hackage/Ebnf2ps-1.0.15/executable:ebnf2ps	hackage	compile	2324	14	G.H.	accept		accept			
+hackage/FenwickTree-0.1.2.1/library	hackage	compile	184	1	G.H.	accept		accept			
+hackage/ForestStructures-0.0.1.1/benchmark:benchmark	hackage	compile	7	1	G.H.	accept		accept			
+hackage/GLURaw-2.0.0.5/library	hackage	compile	43	2	G.H.	accept		accept			
+hackage/GLUT-2.7.0.16/library	hackage	compile	242	1	G.-.	accept		reject			
+hackage/HSlippyMap-3.0.1/library	hackage	compile	58	1	G.H.	accept		accept			
+hackage/HTF-0.15.0.2/executable:htfpp	hackage	compile	60	1	G.H.	accept		accept			
+hackage/HTF-0.15.0.2/library	hackage	compile	440	1	G.H.	accept		accept			
+hackage/HUnit-1.6.2.0/library	hackage	compile	42	1	G.H.	accept		accept			
+hackage/HandsomeSoup-0.4.2/library	hackage	compile	12	1	G.H.	accept		accept			
+hackage/JuicyCairo-0.1.0.1/test-suite:JuicyCairo-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/LPFP-1.1.5/executable:LPFP-hello	hackage	compile	2	1	G.H.	accept		accept			
+hackage/LPFP-1.1.5/library	hackage	compile	256	1	G.H.	accept		accept			
+hackage/LPFP-core-1.1.5/library	hackage	compile	448	2	G.H.	accept		accept			
+hackage/MultipletCombiner-0.0.7/library	hackage	compile	364	1	G.H.	accept		accept			
+hackage/NumInstances-1.4/library	hackage	compile	320	2	G.-.	accept		reject			
+hackage/OpenAL-1.7.0.5/library	hackage	compile	59	1	G.H.	accept		accept			
+hackage/OpenGL-3.0.3.0/library	hackage	compile	107	1	G.H.	accept		accept			
+hackage/OpenGLRaw-3.3.4.1/library	hackage	compile	4482	1	G.H.	accept		accept			
+hackage/ViennaRNAParser-1.3.3/library	hackage	compile	217	8	G.H.	accept		accept			
+hackage/Vis-1.0.0/library	hackage	compile	250	1	G.H.	accept		accept			
+hackage/Yampa-0.15.1/library	hackage	compile	27	1	G.H.	accept		accept			
+hackage/aeson-attoparsec-0.0.0/test-suite:aeson-attoparsec-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/aeson-schemas-1.4.3.1/library	hackage	compile	13	1	G.H.	accept		accept			
+hackage/almost-fix-0.0.2/library	hackage	compile	17	1	G.H.	accept		accept			
+hackage/alsa-pcm-0.6.1.2/library	hackage	compile	34	1	G.H.	accept		accept			
+hackage/alsa-seq-0.6.0.10/library	hackage	compile	38	1	G.H.	accept		accept			
+hackage/arithmoi-0.13.4.0/library	hackage	compile	72	1	G.H.	accept		accept			
+hackage/astro-0.4.3.0/library	hackage	compile	28	1	G.H.	accept		accept			
+hackage/authenticate-1.3.5.2/library	hackage	compile	45	1	G.H.	accept		accept			
+hackage/base-orphans-0.9.4/test-suite:spec	hackage	compile	4	1	G.H.	accept		accept			
+hackage/base64-string-0.2/library	hackage	compile	97	1	G.H.	accept		accept			
+hackage/benchpress-0.2.3.0/library	hackage	compile	55	1	G.H.	accept		accept			
+hackage/binary-search-2.0.0/library	hackage	compile	247	3	G.H.	accept		accept			
+hackage/bindings-DSL-1.0.25/library	hackage	compile	39	1	G.H.	accept		accept			
+hackage/blank-canvas-0.7.5/library	hackage	compile	19	1	G.H.	accept		accept			
+hackage/blas-ffi-0.1/library	hackage	compile	466	5	G.-.	accept		reject			
+hackage/byteslice-0.2.15.0/library	hackage	compile	4	1	G.H.	accept		accept			
+hackage/c-enum-0.1.1.3/test-suite:c-enum-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/c-struct-0.1.3.0/test-suite:c-struct-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/cabal-debian-5.2.6/library	hackage	compile	9	1	G.H.	accept		accept			
+hackage/cabal-gild-1.6.0.4/library	hackage	compile	96	8	G.H.	accept		accept			
+hackage/cabal-install-solver-3.12.1.0/library	hackage	compile	19	2	G.H.	accept		accept			inject
+hackage/call-alloy-0.6.0.3/library	hackage	compile	22	1	G.H.	accept		accept			
+hackage/capability-0.5.0.1/library	hackage	compile	134	1	G.H.	accept		accept			
+hackage/clash-prelude-1.8.5/benchmark:benchmark-clash-prelude	hackage	compile	9	1	G.H.	accept		accept			
+hackage/clumpiness-0.17.0.2/library	hackage	compile	8	1	G.H.	accept		accept			
+hackage/cmdargs-0.10.22/library	hackage	compile	42	1	G.H.	accept		accept			
+hackage/combinatorial-0.1.1/library	hackage	compile	93	4	G.H.	accept		accept			
+hackage/comfort-array-0.5.5/library	hackage	compile	29	1	G.H.	accept		accept			
+hackage/comfort-array-0.5.5/test-suite:comfort-array-test	hackage	compile	5	1	G.H.	accept		accept			
+hackage/comfort-array-shape-0.0/test-suite:comfort-array-shape-test	hackage	compile	5	1	G.H.	accept		accept			
+hackage/comfort-blas-0.0.3.1/test-suite:comfort-blas-test	hackage	compile	16	4	G.H.	accept		accept			
+hackage/comfort-glpk-0.1/library	hackage	compile	5	1	G.H.	accept		accept			
+hackage/composition-extra-2.1.0/library	hackage	compile	488	11	G.H.	accept		accept			
+hackage/concurrent-output-1.10.21/library	hackage	compile	20	1	G.H.	accept		accept			
+hackage/concurrent-split-0.0.1.1/library	hackage	compile	17	1	G.H.	accept		accept			inject
+hackage/configurator-export-0.1.0.1/test-suite:configurator-export-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/construct-0.3.2/library	hackage	compile	16	1	G.H.	accept		accept			
+hackage/copilot-c99-4.5.1/library	hackage	compile	16	1	G.H.	accept		accept			
+hackage/core-program-0.7.0.0/library	hackage	compile	8	1	G.H.	accept		accept			
+hackage/covariance-0.2.0.1/library	hackage	compile	24	1	G.H.	accept		accept			
+hackage/cpphs-1.20.10/library	hackage	compile	836	6	G.-.	accept		reject			
+hackage/cryptonite-openssl-0.7/library	hackage	compile	95	1	G.-.	accept		reject			
+hackage/data-reify-0.6.4/executable:data-reify-test4	hackage	compile	15	1	G.H.	accept		accept			
+hackage/dbcleaner-0.1.3/library	hackage	compile	6	1	G.H.	accept		accept			
+hackage/diagrams-solve-0.1.3.1/library	hackage	compile	73	1	G.H.	accept		accept			
+hackage/discount-0.1.1/library	hackage	compile	24	1	G.-.	accept		reject			
+hackage/distributed-process-0.7.10/library	hackage	compile	27	1	G.H.	accept		accept			
+hackage/distribution-opensuse-1.1.4/library	hackage	compile	6	2	G.H.	accept		accept			
+hackage/djinn-lib-0.0.1.4/library	hackage	compile	107	1	G.H.	accept		accept			
+hackage/doctest-lib-0.1.1.1/library	hackage	compile	165	1	G.H.	accept		accept			
+hackage/doctest-parallel-0.4.1/library:spectests-modules	hackage	compile	531	38	G.-.	accept		reject			
+hackage/doldol-0.4.1.2/library	hackage	compile	13	1	G.-.	accept		reject			
+hackage/doldol-0.4.1.2/test-suite:doldol-test	hackage	compile	8	1	G.H.	accept		accept			
+hackage/dsp-0.2.5.2/executable:dsp-demo-article	hackage	compile	1278	14	G.-.	accept		reject			
+hackage/dsp-0.2.5.2/executable:dsp-demo-fft-bench	hackage	compile	1251	14	G.H.	accept		accept			
+hackage/dsp-0.2.5.2/executable:dsp-demo-fft-test	hackage	compile	1167	12	G.H.	accept		accept			
+hackage/dsp-0.2.5.2/executable:dsp-demo-freq	hackage	compile	1757	19	G.H.	accept		accept			
+hackage/dsp-0.2.5.2/executable:dsp-demo-iir	hackage	compile	2169	19	G.-.	accept		reject			
+hackage/dsp-0.2.5.2/executable:dsp-demo-noise	hackage	compile	1461	17	G.-.	accept		reject			
+hackage/dsp-0.2.5.2/library	hackage	compile	7445	79	G.-.	accept		reject			
+hackage/dyre-0.9.2/library	hackage	compile	65	1	G.H.	accept		accept			
+hackage/edit-distance-0.2.2.1/library	hackage	compile	50	1	G.H.	accept		accept			
+hackage/either-unwrap-1.1/library	hackage	compile	98	1	G.H.	accept		accept			
+hackage/ekg-core-0.1.2.0/library	hackage	compile	19	1	G.H.	accept		accept			
+hackage/elerea-2.9.0/library	hackage	compile	47	1	G.H.	accept		accept			
+hackage/elm-bridge-0.8.6/library	hackage	compile	31	2	G.H.	accept		accept			
+hackage/elm-syntax-0.3.3.0/test-suite:elm-syntax-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/elm2nix-0.4.0/test-suite:elm2nix-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/elynx-markov-0.8.0.0/benchmark:markov-bench	hackage	compile	20	1	G.H.	accept		accept			
+hackage/elynx-seq-0.8.0.0/library	hackage	compile	34	1	G.H.	accept		accept			
+hackage/elynx-tools-0.8.0.0/library	hackage	compile	25	1	G.H.	accept		accept			
+hackage/elynx-tree-0.7.2.2/library	hackage	compile	50	2	G.H.	accept		accept			
+hackage/enum-subset-generate-0.1.0.3/test-suite:enum-subset-generate-test	hackage	compile	3	1	G.H.	accept		accept			
+hackage/enumset-0.1.0.2/library	hackage	compile	14	1	G.H.	accept		accept			
+hackage/envparse-0.6.0/library	hackage	compile	63	1	G.H.	accept		accept			
+hackage/erf-2.0.0.0/library	hackage	compile	110	1	G.-.	accept		reject			
+hackage/ersatz-0.6/library	hackage	compile	36	1	G.H.	accept		accept			
+hackage/event-list-0.1.3/library	hackage	compile	68	1	G.H.	accept		accept			
+hackage/exact-combinatorics-0.2.1.0/library	hackage	compile	92	1	G.H.	accept		accept			
+hackage/exomizer-1.0.0/library	hackage	compile	59	1	G.H.	accept		accept			
+hackage/explicit-exception-0.2.0.2/executable:ee-unzip	hackage	compile	34	1	G.H.	accept		accept			
+hackage/extra-1.8.1/library	hackage	compile	50	2	G.H.	accept		accept			
+hackage/extra-data-yj-0.1.0.0/test-suite:extra-data-yj-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/fgl-5.8.3.1/library	hackage	compile	175	2	G.H.	accept		accept			
+hackage/filepath-1.5.4.0/test-suite:filepath-equivalent-tests	hackage	compile	2096	2	G.-.	accept		reject			
+hackage/fitspec-0.4.10/benchmark:avltrees	hackage	compile	250	1	G.H.	accept		accept			
+hackage/fitspec-0.4.10/benchmark:heaps	hackage	compile	49	1	G.H.	accept		accept			
+hackage/fitspec-0.4.10/benchmark:sets	hackage	compile	243	1	G.H.	accept		accept			
+hackage/fitspec-0.4.10/library	hackage	compile	145	1	G.-.	accept		reject			
+hackage/fixed-generic-0.1.0.2/test-suite:fixed-generic-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/flat-0.6/library	hackage	compile	116	1	G.H.	accept		accept			
+hackage/flow-2.0.0.11/library	hackage	compile	273	1	G.H.	accept		accept			inject
+hackage/foldl-1.4.18/library	hackage	compile	41	1	G.H.	accept		accept			
+hackage/free-foil-0.2.0/test-suite:spec	hackage	compile	2	1	G.H.	accept		accept			
+hackage/freenect-1.2.1/library	hackage	compile	192	1	G.-.	accept		reject			
+hackage/freer-par-monad-0.1.0.0/test-suite:freer-par-monad-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/freetype2-0.2.0/executable:freetype-example	hackage	compile	17	1	G.H.	accept		accept			
+hackage/funcmp-1.9/library	hackage	compile	3949	11	G.-.	accept		reject			inject
+hackage/geodetics-1.1.0/library	hackage	compile	16	1	G.H.	accept		accept			
+hackage/getopt-generics-0.13.1.0/library	hackage	compile	52	2	G.H.	accept		accept			
+hackage/glfw-group-0.1.0.6/test-suite:glfw-group-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/glib-0.13.12.0/library	hackage	compile	76	1	G.H.	accept		accept			
+hackage/glib-stopgap-0.1.0.1/library	hackage	compile	5	1	G.-.	accept		reject			
+hackage/glib-stopgap-0.1.0.1/test-suite:glib-stopgap-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/gloss-1.13.2.2/library	hackage	compile	121	4	G.H.	accept		accept			
+hackage/gloss-algorithms-1.13.0.3/library	hackage	compile	17	1	G.H.	accept		accept			
+hackage/gnuplot-0.5.7/library	hackage	compile	212	7	G.H.	accept		accept			
+hackage/graphite-0.10.0.1/library	hackage	compile	5	1	G.H.	accept		accept			
+hackage/graphs-0.7.3/library	hackage	compile	3	1	G.H.	accept		accept			
+hackage/graphviz-2999.20.2.1/library	hackage	compile	72	1	G.H.	accept		accept			
+hackage/grisette-0.13.0.1/library	hackage	compile	28	1	G.H.	accept		accept			
+hackage/hakyll-4.16.8.0/library	hackage	compile	15	1	G.H.	accept		accept			
+hackage/hall-symbols-0.1.0.6/library	hackage	compile	563	1	G.H.	accept		accept			
+hackage/haskell-lexer-1.2.1/library	hackage	compile	7621	6	G.H.	accept		accept			
+hackage/haskell-src-exts-1.23.1/library	hackage	compile	72	1	G.H.	accept		accept			
+hackage/haskey-btree-0.3.0.1/library	hackage	compile	69	3	G.H.	accept		accept			
+hackage/hedn-0.3.0.5/test-suite:edn-test	hackage	compile	5	1	G.H.	accept		accept			
+hackage/hetero-parameter-list-0.1.0.21/test-suite:hetero-parameter-list-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/hetero-parameter-list-with-typelevel-tools-0.1.0.1/test-suite:hetero-parameter-list-with-typelevel-tools-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/heterocephalus-1.0.5.7/test-suite:heterocephalus-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/hgal-2.0.0.3/test-suite:hgal-test	hackage	compile	65	1	G.H.	accept		accept			
+hackage/hinfo-0.0.3.0/test-suite:hinfo-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/hlibsass-0.1.10.3/library	hackage	compile	1204	7	G.-.	accept		reject			
+hackage/hmatrix-gsl-stats-0.4.1.8/library	hackage	compile	94	2	G.-.	accept		reject			
+hackage/hmatrix-morpheus-0.1.1.2/library	hackage	compile	20	1	G.H.	accept		accept			
+hackage/hopenssl-2.2.5/library	hackage	compile	24	1	G.H.	accept		accept			
+hackage/hopenssl-2.2.5/test-suite:check-low-level-digest-api	hackage	compile	10	1	G.H.	accept		accept			
+hackage/hosc-0.21.1/library	hackage	compile	147	2	G.H.	accept		accept			
+hackage/hourglass-0.2.12/library	hackage	compile	33	1	G.H.	accept		accept			
+hackage/hpack-0.38.3/library	hackage	compile	56	1	G.H.	accept		accept			
+hackage/hs-opentelemetry-exporter-handle-0.0.1.3/library	hackage	compile	2	1	G.H.	accept		accept			
+hackage/hs-opentelemetry-exporter-in-memory-0.0.1.5/library	hackage	compile	2	1	G.H.	accept		accept			
+hackage/hs-opentelemetry-exporter-otlp-0.1.1.0/library	hackage	compile	2	1	G.H.	accept		accept			
+hackage/hs-opentelemetry-sdk-0.1.0.1/library	hackage	compile	4	2	G.H.	accept		accept			
+hackage/hscolour-1.25/library	hackage	compile	590	7	G.H.	accept		accept			
+hackage/hspec-expectations-0.8.4/library	hackage	compile	26	1	G.H.	accept		accept			
+hackage/hspec-expectations-pretty-diff-0.7.2.6/library	hackage	compile	26	1	G.H.	accept		accept			
+hackage/hsyslog-5.0.2/library	hackage	compile	71	1	G.-.	accept		reject			
+hackage/html-1.0.1.2/library	hackage	compile	1199	2	G.H.	accept		accept			
+hackage/http-date-0.0.13/library	hackage	compile	32	1	G.H.	accept		accept			
+hackage/hw-excess-0.2.3.0/library	hackage	compile	11	1	G.H.	accept		accept			
+hackage/hw-hedgehog-0.1.1.1/test-suite:hw-hedgehog-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/hw-mquery-0.2.1.2/library	hackage	compile	10	1	G.H.	accept		accept			
+hackage/hw-mquery-0.2.1.2/test-suite:hw-mquery-test	hackage	compile	92	2	G.H.	accept		accept			
+hackage/hweblib-0.6.3/library	hackage	compile	1	1	G.H.	accept		accept			
+hackage/hwk-0.6/executable:hwk	hackage	compile	14	1	G.H.	accept		accept			
+hackage/hxt-charproperties-9.5.0.0/library	hackage	compile	7679	4	G.H.	accept		accept			
+hackage/hxt-css-0.1.0.3/library	hackage	compile	124	1	G.H.	accept		accept			
+hackage/hxt-unicode-9.0.2.4/library	hackage	compile	1204	4	G.H.	accept		accept			
+hackage/hxt-xpath-9.1.2.2/library	hackage	compile	66	1	G.H.	accept		accept			
+hackage/if-0.1.0.0/library	hackage	compile	45	1	G.H.	accept		accept			
+hackage/incremental-0.3.1/test-suite:incremental-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/indents-0.5.0.1/library	hackage	compile	21	1	G.H.	accept		accept			
+hackage/infer-license-0.2.0/library	hackage	compile	21	1	G.H.	accept		accept			
+hackage/inline-c-0.9.1.10/test-suite:tests	hackage	compile	7	1	G.H.	accept		accept			
+hackage/interpolation-0.1.1.2/library	hackage	compile	105	3	G.H.	accept		accept			
+hackage/intervals-0.9.3/test-suite:doctests	hackage	compile	19	1	G.H.	accept		accept			
+hackage/io-machine-0.2.0.0/library	hackage	compile	10	1	G.H.	accept		accept			
+hackage/io-machine-0.2.0.0/test-suite:io-machine-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/io-streams-1.5.2.2/library	hackage	compile	441	1	G.H.	accept		accept			
+hackage/iri-0.5.1.2/library:punycode	hackage	compile	39	1	G.H.	accept		accept			
+hackage/iso639-0.1.0.3/library	hackage	compile	747	1	G.H.	accept		accept			
+hackage/jack-0.7.2.2/library	hackage	compile	9	1	G.-.	accept		reject			
+hackage/jsaddle-0.9.10.0/library	hackage	compile	2	2	G.H.	accept		accept			
+hackage/jsaddle-dom-0.9.9.3/library	hackage	compile	6	1	G.H.	accept		accept			
+hackage/json-spec-elm-0.4.0.7/test-suite:compile-elm	hackage	compile	15	1	G.H.	accept		accept			
+hackage/json-spec-elm-servant-0.4.4.3/test-suite:compile-elm	hackage	compile	21	1	G.H.	accept		accept			
+hackage/language-c99-0.2.0/library	hackage	compile	677	2	G.H.	accept		accept			
+hackage/language-dot-0.1.2/library	hackage	compile	92	1	G.H.	accept		accept			
+hackage/language-glsl-0.3.0/library	hackage	compile	313	1	G.H.	accept		accept			
+hackage/language-lua-0.11.0.2/library	hackage	compile	143	1	G.H.	accept		accept			
+hackage/lapack-ffi-0.0.3/library	hackage	compile	5885	5	G.-.	accept		reject			
+hackage/leancheck-1.0.4/library	hackage	compile	714	1	G.H.	accept		accept			
+hackage/lens-5.3.6/library	hackage	compile	71	2	G.H.	accept		accept			
+hackage/lens-5.3.6/test-suite:doctests	hackage	compile	19	1	G.H.	accept		accept			
+hackage/lens-csv-0.1.1.0/test-suite:lens-csv-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/liboath-hs-0.0.1.2/test-suite:liboath-hs-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/libsodium-bindings-0.0.3.0/library	hackage	compile	75	1	G.H.	accept		accept			
+hackage/linear-1.23.3/test-suite:doctests	hackage	compile	19	1	G.H.	accept		accept			
+hackage/list-predicate-0.1.0.1/library	hackage	compile	204	1	G.H.	accept		accept			
+hackage/logging-facade-0.3.1/library	hackage	compile	18	1	G.H.	accept		accept			
+hackage/mandrill-0.5.8.0/library	hackage	compile	17	1	G.H.	accept		accept			
+hackage/math-functions-0.3.4.4/library	hackage	compile	122	1	G.H.	accept		accept			
+hackage/math-functions-0.3.4.4/test-suite:math-function-tests	hackage	compile	23	1	G.H.	accept		accept			
+hackage/mcmc-0.8.3.1/library	hackage	compile	56	1	G.H.	accept		accept			
+hackage/med-module-0.1.3/library	hackage	compile	33	2	G.H.	accept		accept			
+hackage/median-stream-0.7.0.0/test-suite:median-stream-test	hackage	compile	20	1	G.H.	accept		accept			
+hackage/melf-1.3.1/library	hackage	compile	35	1	G.H.	accept		accept			
+hackage/memory-0.18.0/library	hackage	compile	29	2	G.H.	accept		accept			
+hackage/messagepack-0.5.5/library	hackage	compile	102	1	G.H.	accept		accept			
+hackage/midi-0.2.2.6/library	hackage	compile	23	1	G.H.	accept		accept			
+hackage/midi-music-box-0.0.1.3/executable:midi-music-box	hackage	compile	39	1	G.H.	accept		accept			
+hackage/minisat-solver-0.1/library	hackage	compile	102	2	G.-.	accept		reject			
+hackage/miso-1.8.7.0/library	hackage	compile	1	1	G.H.	accept		accept			
+hackage/missing-foreign-0.1.1/library	hackage	compile	107	2	G.-.	accept		reject			
+hackage/mmsyn7ukr-common-0.3.1.0/library	hackage	compile	38	1	G.H.	accept		accept			
+hackage/mockcat-0.5.5.0/library	hackage	compile	34	1	G.H.	accept		accept			
+hackage/moffy-0.1.1.0/test-suite:moffy-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/moffy-samples-0.1.0.3/test-suite:moffy-samples-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/moffy-samples-events-0.2.2.5/library	hackage	compile	11	1	G.H.	accept		accept			
+hackage/moffy-samples-events-0.2.2.5/test-suite:moffy-samples-events-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/moffy-samples-gtk3-0.1.0.0/test-suite:moffy-samples-gtk3-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/moffy-samples-gtk3-run-0.1.0.7/test-suite:moffy-samples-gtk3-run-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/monad-metrics-0.2.2.2/test-suite:monad-metrics-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/mtl-misc-yj-0.1.0.4/test-suite:mtl-misc-yj-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/multiarg-0.30.0.10/library	hackage	compile	344	4	G.-.	accept		reject			
+hackage/nerd-font-icons-0.1.0.1/library	hackage	compile	32258	1	G.H.	accept		accept			
+hackage/network-house-0.1.0.3/library	hackage	compile	43	2	G.H.	accept		accept			
+hackage/no-value-1.0.0.0/library	hackage	compile	4	1	G.H.	accept		accept			
+hackage/nowdoc-0.1.1.0/test-suite:nowdoc-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/numbers-3000.2.0.2/library	hackage	compile	1213	6	G.H.	accept		accept			
+hackage/numeric-limits-0.1.0.0/library	hackage	compile	61	1	G.H.	accept		accept			
+hackage/numeric-prelude-0.4.4/library	hackage	compile	389	4	G.H.	accept		accept			
+hackage/oeis-0.3.10.2/library	hackage	compile	54	1	G.H.	accept		accept			
+hackage/ogma-core-1.7.0/library	hackage	compile	140	3	G.H.	accept		accept			
+hackage/ogma-extra-1.7.0/library	hackage	compile	56	1	G.H.	accept		accept			
+hackage/ogma-language-copilot-1.7.0/library	hackage	compile	53	1	G.H.	accept		accept			
+hackage/ogma-spec-1.7.0/library	hackage	compile	69	1	G.H.	accept		accept			
+hackage/once-0.4/library	hackage	compile	19	1	G.H.	accept		accept			
+hackage/optparse-applicative-0.18.1.0/library	hackage	compile	79	1	G.H.	accept		accept			
+hackage/packcheck-0.7.1/library	hackage	compile	5	1	G.H.	accept		accept			
+hackage/parameterized-utils-2.1.11.0/library	hackage	compile	16	1	G.H.	accept		accept			
+hackage/parser-regex-0.3.0.0/library	hackage	compile	1499	1	G.-.	accept		reject			
+hackage/parsers-0.12.12/library	hackage	compile	46	1	G.H.	accept		accept			
+hackage/partial-isomorphisms-0.2.4.0/library	hackage	compile	9	1	G.H.	accept		accept			inject
+hackage/pathtype-0.8.1.4/library	hackage	compile	14	1	G.H.	accept		accept			
+hackage/pdf-toolbox-content-0.1.2/library	hackage	compile	56	1	G.H.	accept		accept			
+hackage/percent-format-0.0.4/library	hackage	compile	913	4	G.H.	accept		accept			
+hackage/pointless-fun-1.1.0.13/library	hackage	compile	147	1	G.H.	accept		accept			
+hackage/portable-lines-0.1/library	hackage	compile	30	1	G.H.	accept		accept			
+hackage/possibly-1.0.0.0/library	hackage	compile	4	1	G.H.	accept		accept			
+hackage/pretty-relative-time-0.3.0.0/library	hackage	compile	31	1	G.H.	accept		accept			
+hackage/primes-0.2.1.0/library	hackage	compile	250	1	G.H.	accept		accept			
+hackage/probability-0.2.9.1/library	hackage	compile	86	2	G.H.	accept		accept			
+hackage/product-isomorphic-0.0.3.4/library	hackage	compile	18	1	G.H.	accept		accept			
+hackage/prospect-0.1.0.0/library	hackage	compile	6	1	G.H.	accept		accept			
+hackage/protobuf-simple-0.1.1.1/executable:protobuf-simple-protoc	hackage	compile	221	5	G.H.	accept		accept			inject
+hackage/protocol-radius-0.0.1.2/library	hackage	compile	40	1	G.H.	accept		accept			
+hackage/purescript-bridge-0.15.0.0/library	hackage	compile	81	1	G.H.	accept		accept			
+hackage/quickbench-1.0.1/test-suite:quickbench-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/random-1.2.1.3/test-suite:doctests	hackage	compile	4	1	G.H.	accept		accept			
+hackage/random-fu-0.3.0.1/library	hackage	compile	63	1	G.H.	accept		accept			
+hackage/rdtsc-1.3.0.1/library	hackage	compile	41	1	G.-.	accept		reject			
+hackage/real-dice-0.1.0.5/library	hackage	compile	214	6	G.H.	accept		accept			
+hackage/regex-1.1.0.2/library	hackage	compile	122	3	G.H.	accept		accept			
+hackage/relational-query-0.12.3.1/library	hackage	compile	54	2	G.H.	accept		accept			
+hackage/repa-io-3.4.2.0/library	hackage	compile	41	1	G.H.	accept		accept			
+hackage/rest-rewrite-0.4.5/library	hackage	compile	15	1	G.-.	accept		reject			
+hackage/result-0.2.6.0/test-suite:test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/rhbzquery-0.4.5/executable:rhbzquery	hackage	compile	7	1	G.H.	accept		accept			
+hackage/roc-id-0.2.0.6/library	hackage	compile	6	1	G.H.	accept		accept			
+hackage/saltine-0.2.2.0/library	hackage	compile	193	1	G.H.	accept		accept			
+hackage/sandi-0.5/test-suite:sandi-tests	hackage	compile	6	1	G.H.	accept		accept			
+hackage/sbv-11.7/library	hackage	compile	34	1	G.H.	accept		accept			
+hackage/scanner-0.3.2/library	hackage	compile	9	1	G.H.	accept		accept			
+hackage/secp256k1-haskell-1.4.6/library	hackage	compile	211	2	G.-.	accept		reject			
+hackage/sel-0.1.0.0/library	hackage	compile	21	1	G.H.	accept		accept			
+hackage/sendfile-0.7.11.6/library	hackage	compile	12	1	G.H.	accept		accept			
+hackage/set-cover-0.1.2.1/executable:tetris-cube	hackage	compile	9	1	G.H.	accept		accept			
+hackage/shakespeare-2.1.7.1/test-suite:test	hackage	compile	7	1	G.H.	accept		accept			
+hackage/shell-utility-0.1/library	hackage	compile	47	1	G.H.	accept		accept			
+hackage/shower-0.2.0.5/library	hackage	compile	49	1	G.H.	accept		accept			
+hackage/simple-pango-0.1.0.2/test-suite:simple-pango-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/snappy-0.2.0.4/library	hackage	compile	39	1	G.-.	accept		reject			
+hackage/sox-0.2.3.2/library	hackage	compile	53	3	G.H.	accept		accept			
+hackage/sphinx-0.6.1/library	hackage	compile	66	1	G.H.	accept		accept			
+hackage/split-0.2.5.1/library	hackage	compile	872	2	G.H.	accept		accept			
+hackage/squeather-0.8.0.0/library	hackage	compile	159	1	G.H.	accept		accept			
+hackage/srtree-2.0.1.8/executable:tinygp	hackage	compile	50	1	G.H.	accept		accept			
+hackage/stack-clean-old-0.5.2/executable:stack-clean-old	hackage	compile	16	1	G.H.	accept		accept			
+hackage/statistics-0.16.5.0/test-suite:statistics-tests	hackage	compile	39	1	G.H.	accept		accept			
+hackage/storable-generic-0.1.0.5/test-suite:storable-generic-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/storable-hetero-list-0.1.0.4/test-suite:storable-hetero-list-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/storable-record-0.0.7/library	hackage	compile	38	1	G.H.	accept		accept			
+hackage/storablevector-0.2.13.4/library	hackage	compile	12	1	G.H.	accept		accept			
+hackage/store-streaming-0.2.0.5/library	hackage	compile	26	1	G.H.	accept		accept			
+hackage/string-interpolate-0.3.4.0/library	hackage	compile	49	2	G.-.	accept		reject			
+hackage/stylish-haskell-0.15.1.0/library	hackage	compile	20	1	G.H.	accept		accept			
+hackage/sundown-0.6/library	hackage	compile	13	1	G.H.	accept		accept			
+hackage/swish-0.10.11.0/library	hackage	compile	193	3	G.H.	accept		accept			
+hackage/swizzle-0.1.0.4/test-suite:swizzle-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/swizzle-lens-0.1.0.0/test-suite:swizzle-lens-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/swizzle-modify-0.1.0.0/test-suite:swizzle-modify-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/swizzle-set-0.2.0.0/test-suite:swizzle-set-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/symmetry-operations-symbols-0.0.2.1/test-suite:symmetry-operations-symbols-test	hackage	compile	944	2	G.H.	accept		accept			
+hackage/table-layout-1.0.0.3/library	hackage	compile	8	1	G.H.	accept		accept			
+hackage/tce-conf-1.3/library	hackage	compile	81	1	G.H.	accept		accept			
+hackage/tdigest-0.3.1/library	hackage	compile	33	2	G.H.	accept		accept			
+hackage/template-haskell-2.22.0.0/library	hackage	compile	2094	2	G.-.	accept		reject			
+hackage/tensort-1.1.0.0/executable:tensort	hackage	compile	6	1	G.H.	accept		accept			
+hackage/tensort-1.1.0.0/library	hackage	compile	465	9	G.-.	accept		reject			
+hackage/text-misc-yj-0.1.0.2/test-suite:text-misc-yj-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/text-show-3.11.4/test-suite:spec	hackage	compile	23	1	G.H.	accept		accept			
+hackage/text-show-instances-3.9.11/test-suite:spec	hackage	compile	16	1	G.H.	accept		accept			
+hackage/thread-utils-finalizers-0.1.1.0/test-suite:thread-finalizers-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/threads-extras-0.1.0.3/test-suite:threads-extras-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/threepenny-gui-0.9.4.2/executable:threepenny-examples-chat	hackage	compile	8	1	G.H.	accept		accept			
+hackage/thyme-0.4.1/benchmark:bench	hackage	compile	2	1	G.H.	accept		accept			
+hackage/tidal-core-1.10.2/library	hackage	compile	54	2	G.H.	accept		accept			
+hackage/titlecase-1.0.2/library	hackage	compile	156	1	G.H.	accept		accept			
+hackage/tldr-0.9.3/library	hackage	compile	13	1	G.H.	accept		accept			
+hackage/tools-yj-0.1.0.45/test-suite:tools-yj-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/tuple-sop-0.3.1.0/test-suite:tuple-sop-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/type-flip-0.1.0.0/test-suite:type-flip-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/type-level-numbers-0.1.1.2/library	hackage	compile	28	3	G.H.	accept		accept			
+hackage/type-set-0.1.0.0/test-suite:type-set-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/typelevel-tools-yj-0.1.0.9/test-suite:typelevel-tools-yj-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/unicode-0.0.1.3/library	hackage	compile	75	1	G.H.	accept		accept			
+hackage/union-angle-0.1.0.1/test-suite:union-angle-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/union-color-0.1.4.0/test-suite:union-color-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/units-defs-2.2.1/library	hackage	compile	19	1	G.H.	accept		accept			
+hackage/unix-bytestring-0.4.0.4/library	hackage	compile	126	1	G.-.	accept		reject			
+hackage/utility-ht-0.0.17.2/library	hackage	compile	1319	24	G.H.	accept		accept			inject
+hackage/vector-hashtables-0.1.2.1/library	hackage	compile	11	1	G.H.	accept		accept			
+hackage/vivid-supercollider-0.4.1.2/library	hackage	compile	111	2	G.H.	accept		accept			
+hackage/vty-6.4/library	hackage	compile	40	2	G.H.	accept		accept			
+hackage/wai-middleware-caching-0.1.0.2/test-suite:wai-middleware-caching-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/wai-middleware-caching-lru-0.1.0.0/test-suite:wai-middleware-caching-lru-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/wai-middleware-caching-redis-0.2.0.0/test-suite:wai-middleware-caching-redis-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/wai-slack-middleware-0.2.0/test-suite:wai-slack-middleware-test	hackage	compile	2	1	G.H.	accept		accept			
+hackage/web3-ethereum-1.1.0.1/library	hackage	compile	37	1	G.H.	accept		accept			
+hackage/wrap-0.0.0/library	hackage	compile	109	1	G.H.	accept		accept			
+hackage/wraxml-0.5/library	hackage	compile	4	1	G.H.	accept		accept			
+hackage/xml-basic-0.1.3.3/library	hackage	compile	60	2	G.H.	accept		accept			
+hackage/xml-conduit-1.10.1.0/library	hackage	compile	164	1	G.-.	accept		reject			
+hackage/xmonad-contrib-0.18.2/library	hackage	compile	482	3	G.H.	accept		accept			
+hackage/yjtools-0.9.18/library	hackage	compile	172	6	G.H.	accept		accept			
+hackage/youtube-0.2.1.1/executable:youtube-auth	hackage	compile	16	2	G.H.	accept		accept			
+hackage/zeromq4-patterns-0.3.1.0/executable:zeromq4-patterns-exe	hackage	compile	4	1	G.H.	accept		accept			
+hackage/zot-0.0.3/executable:zot	hackage	compile	167	3	G.H.	accept		accept			
+mhs/tests/ApplySP.hs	mhs-tests	none	16	1	GM-N	accept	accept	reject	accept		
+mhs/tests/Arith.hs	mhs-tests	run	11	1	GMHN	accept	accept	accept	accept		
+mhs/tests/Arith64.hs	mhs-tests	run	23	1	GMHN	accept	accept	accept	accept		
+mhs/tests/Callback.hs	mhs-tests	none	26	1	GM--	accept	accept	reject	reject		
+mhs/tests/Case.hs	mhs-tests	run	69	1	GMHN	accept	accept	accept	accept		
+mhs/tests/DArith.hs	mhs-tests	run	17	1	GMHN	accept	accept	accept	accept		
+mhs/tests/Do.hs	mhs-tests	run	5	1	GMHN	accept	accept	accept	accept		
+mhs/tests/Eq.hs	mhs-tests	run	18	1	GMHN	accept	accept	accept	accept		
+mhs/tests/Eq1.hs	mhs-tests	run	13	1	GMHN	accept	accept	accept	accept		
+mhs/tests/FArith.hs	mhs-tests	run	20	1	GMHN	accept	accept	accept	accept		
+mhs/tests/Fac.hs	mhs-tests	run	22	1	GMHN	accept	accept	accept	accept		
+mhs/tests/Floating.hs	mhs-tests	run	11	1	GMHN	accept	accept	accept	accept		
+mhs/tests/Guard.hs	mhs-tests	run	14	1	GMHN	accept	accept	accept	accept		
+mhs/tests/Hello.hs	mhs-tests	run	4	1	GMHN	accept	accept	accept	accept		
+mhs/tests/ImpMet.hs	mhs-tests	run	9	1	GM--	accept	accept	reject	reject		inject
+mhs/tests/Infer.hs	mhs-tests	run	18	1	GMHN	accept	accept	accept	accept		
+mhs/tests/Infix.hs	mhs-tests	run	18	1	GMHN	accept	accept	accept	accept		
+mhs/tests/ListCompr.hs	mhs-tests	run	15	1	GMHN	accept	accept	accept	accept		
+mhs/tests/ListTest.hs	mhs-tests	run	11	1	GMHN	accept	accept	accept	accept		
+mhs/tests/LitMatch.hs	mhs-tests	run	31	1	GMHN	accept	accept	accept	accept		
+mhs/tests/LocalFix.hs	mhs-tests	run	15	1	GMHN	accept	accept	accept	accept		
+mhs/tests/MutRec.hs	mhs-tests	run	7	1	GMHN	accept	accept	accept	accept		
+mhs/tests/NoForall.hs	mhs-tests	run	11	1	GMHN	accept	accept	accept	accept		
+mhs/tests/ParseInd.hs	mhs-tests	run	18	1	GMHN	accept	accept	accept	accept		
+mhs/tests/PatBind.hs	mhs-tests	run	21	1	GMHN	accept	accept	accept	accept		
+mhs/tests/QualDoModule.hs	mhs-tests	none	14	1	GMHN	accept	accept	accept	accept		
+mhs/tests/Sieve.hs	mhs-tests	run	16	1	GMHN	accept	accept	accept	accept		
+nofib/gc/cacheprof	nofib-2025	run	2153	3	G-HN	accept	reject	accept	accept		
+nofib/gc/circsim	nofib-2025	none	672	1	G--N	accept	reject	reject	accept		
+nofib/gc/constraints	nofib-2025	run	272	1	GMHN	accept	accept	accept	accept		
+nofib/gc/lcss	nofib-2025	run	60	1	GMHN	accept	accept	accept	accept		
+nofib/gc/linear	nofib-2025	run	2139	11	G--N	accept	reject	reject	accept		
+nofib/gc/power	nofib-2025	run	141	1	GMHN	accept	accept	accept	accept		
+nofib/gc/treejoin	nofib-2025	run	121	1	GMHN	accept	accept	accept	accept		
+nofib/imaginary/exp3_8	nofib-2025	run	93	1	GMHN	accept	accept	accept	accept		
+nofib/imaginary/integrate	nofib-2025	run	43	1	GMHN	accept	accept	accept	accept		
+nofib/imaginary/paraffins	nofib-2025	run	92	1	GMH-	accept	accept	accept	reject		
+nofib/imaginary/primes	nofib-2025	run	16	1	GMHN	accept	accept	accept	accept		
+nofib/imaginary/queens	nofib-2025	run	19	1	GMHN	accept	accept	accept	accept		
+nofib/imaginary/rfib	nofib-2025	run	12	1	GMHN	accept	accept	accept	accept		
+nofib/imaginary/tak	nofib-2025	run	16	1	GMHN	accept	accept	accept	accept		
+nofib/imaginary/wheel-sieve1	nofib-2025	run	49	1	GMHN	accept	accept	accept	accept		
+nofib/imaginary/wheel-sieve2	nofib-2025	run	53	1	GMHN	accept	accept	accept	accept		
+nofib/imaginary/x2n1	nofib-2025	run	35	1	GMHN	accept	accept	accept	accept		
+nofib/real/scs	nofib-2025	run	589	7	GM--	accept	accept	reject	reject		
+nofib/spectral/ansi	nofib-2025	run	128	1	GMHN	accept	accept	accept	accept		
+nofib/spectral/atom	nofib-2025	run	188	1	GMHN	accept	accept	accept	accept		
+nofib/spectral/awards	nofib-2025	none	116	2	GMHN	accept	accept	accept	accept		
+nofib/spectral/banner	nofib-2025	none	112	1	GMHN	accept	accept	accept	accept		
+nofib/spectral/boyer	nofib-2025	run	1021	1	G-HN	accept	reject	accept	accept		
+nofib/spectral/boyer2	nofib-2025	run	731	5	GMHN	accept	accept	accept	accept		
+nofib/spectral/cichelli	nofib-2025	run	233	4	GMHN	accept	accept	accept	accept		
+nofib/spectral/circsim	nofib-2025	run	671	1	G--N	accept	reject	reject	accept		
+nofib/spectral/clausify	nofib-2025	run	185	1	GMHN	accept	accept	accept	accept		
+nofib/spectral/constraints	nofib-2025	run	272	1	GMHN	accept	accept	accept	accept		
+nofib/spectral/cse	nofib-2025	run	472	2	GMHN	accept	accept	accept	accept		
+nofib/spectral/eliza	nofib-2025	run	273	1	GM-N	accept	accept	reject	accept		
+nofib/spectral/exact-reals	nofib-2025	run	225	1	GMHN	accept	accept	accept	accept		
+nofib/spectral/expert	nofib-2025	run	525	6	GMHN	accept	accept	accept	accept		
+nofib/spectral/fft2	nofib-2025	run	221	3	G--N	accept	reject	reject	accept		
+nofib/spectral/fish	nofib-2025	none	135	1	GMHN	accept	accept	accept	accept		
+nofib/spectral/gcd	nofib-2025	run	60	1	GMHN	accept	accept	accept	accept		
+nofib/spectral/integer	nofib-2025	none	68	1	GMHN	accept	accept	accept	accept		
+nofib/spectral/lcss	nofib-2025	run	61	1	GMHN	accept	accept	accept	accept		
+nofib/spectral/mate	nofib-2025	run	425	5	GMHN	accept	accept	accept	accept		
+nofib/spectral/minimax	nofib-2025	none	244	6	G-HN	accept	reject	accept	accept		
+nofib/spectral/multiplier	nofib-2025	run	501	1	GMHN	accept	accept	accept	accept		
+nofib/spectral/para	nofib-2025	none	1785	1	G--N	accept	reject	reject	accept		
+nofib/spectral/power	nofib-2025	none	149	1	GM-N	accept	accept	reject	accept		
+nofib/spectral/pretty	nofib-2025	run	265	3	GMHN	accept	accept	accept	accept		
+nofib/spectral/primetest	nofib-2025	run	306	4	G-HN	accept	reject	accept	accept		
+nofib/spectral/puzzle	nofib-2025	none	175	1	GMHN	accept	accept	accept	accept		
+nofib/spectral/rewrite	nofib-2025	run	636	1	G-HN	accept	reject	accept	accept		
+nofib/spectral/scc	nofib-2025	run	100	2	GMHN	accept	accept	accept	accept		
+nofib/spectral/sphere	nofib-2025	run	453	1	G-HN	accept	reject	accept	accept		
+nofib/spectral/treejoin	nofib-2025	run	122	1	GMHN	accept	accept	accept	accept		

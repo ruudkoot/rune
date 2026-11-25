@@ -1,0 +1,91 @@
+id	set	lines	files	variant	args	stdin	stdout	build	build_s	rc	out	cpu_s	insn	why	stderr
+ghc/deSugar/should_run/T18151.hs	ghc-h2010	11	1	g10			T18151.stdout	ok	3.7	0	same-ws	0.007	591950		
+ghc/simplCore/should_run/runST.hs	ghc-h2010	14	1	gbase			runST.stdout	ok	3.5	0	same	0.005	594988		
+mhs/tests/Arith.hs	mhs-tests	11	1	g10			Arith.ref	ok	4.7	0	same	0.008	1055205		
+mhs/tests/Arith64.hs	mhs-tests	23	1	g10			Arith64.ref	ok	4.0	0	same	0.005	1675234		
+mhs/tests/BindPat.hs	mhs-tests	11	1	gbase			BindPat.ref	ok	3.3	0	same	0.003	595935		
+mhs/tests/Builder.hs	mhs-tests	70	1	gbase			Builder.ref	ok	4.9	0	same	0.01	839238		
+mhs/tests/ByteStringIO.hs	mhs-tests	15	1	gbase			ByteStringIO.ref	ok	4.2	0	same	0.004	922517		
+mhs/tests/Case.hs	mhs-tests	69	1	g10			Case.ref	ok	5.0	0	same	0.004	611229		
+mhs/tests/DArith.hs	mhs-tests	17	1	g10			DArith.ref	ok	4.9	0	same	0.006	1677613		
+mhs/tests/Do.hs	mhs-tests	5	1	g10			Do.ref	ok	5.0	0	same	0.004	592608		
+mhs/tests/Eq.hs	mhs-tests	18	1	g10			Eq.ref	ok	4.7	0	same	0.009	626026		
+mhs/tests/Eq1.hs	mhs-tests	13	1	g10			Eq1.ref	ok	5.7	0	same	0.008	593909		
+mhs/tests/Errno.hs	mhs-tests	19	1	gbase			Errno.ref	ok	3.8	0	same	0.004	594229		
+mhs/tests/FArith.hs	mhs-tests	20	1	g10			FArith.ref	ok	4.5	0	same	0.006	1667711		
+mhs/tests/Fac.hs	mhs-tests	22	1	g10			Fac.ref	ok	5.3	0	same	0.621	1559444390		
+mhs/tests/Floating.hs	mhs-tests	11	1	g10			Floating.ref	ok	5.0	0	same	0.005	682868		
+mhs/tests/ForeignPtr.hs	mhs-tests	27	1	gbase			ForeignPtr.ref	ok	4.9	0	same	0.004	853972		
+mhs/tests/Fork.hs	mhs-tests	17	1	gbase			Fork.ref	ok	3.3	0	same	0.011	16379427		
+mhs/tests/Guard.hs	mhs-tests	14	1	g10			Guard.ref	ok	6.6	0	same	0.006	597288		
+mhs/tests/Hello.hs	mhs-tests	4	1	g10			Hello.ref	ok	4.8	0	same	0.005	593891		
+mhs/tests/ImpMet.hs	mhs-tests	9	1	g10			ImpMet.ref	ok	5.3	0	same	0.016	594642		
+mhs/tests/Infer.hs	mhs-tests	18	1	g10			Infer.ref	ok	6.3	0	same	0.009	603856		
+mhs/tests/Infix.hs	mhs-tests	18	1	g10			Infix.ref	ok	5.0	0	same	0.016	595250		
+mhs/tests/InterleaveIO.hs	mhs-tests	12	1	gbase			InterleaveIO.ref	ok	4.0	0	same	0.004	596167		
+mhs/tests/LazyST.hs	mhs-tests	125	1	gbase			LazyST.ref	ok	5.2	0	diff	0.004	765051		
+mhs/tests/ListCompr.hs	mhs-tests	15	1	g10			ListCompr.ref	ok	4.2	0	same	0.003	652263		
+mhs/tests/ListTest.hs	mhs-tests	11	1	g10			ListTest.ref	ok	5.2	0	same	0.012	607812		
+mhs/tests/LitMatch.hs	mhs-tests	31	1	g10			LitMatch.ref	ok	5.4	0	same	0.007	615472		
+mhs/tests/LocalFix.hs	mhs-tests	15	1	g10			LocalFix.ref	ok	4.1	0	same	0.005	596729		
+mhs/tests/MVar.hs	mhs-tests	57	1	gbase			MVar.ref	ok	3.5	0	diff	0.043	83584334		
+mhs/tests/MutRec.hs	mhs-tests	7	1	g10			MutRec.ref	ok	4.3	0	same	0.003	620945		
+mhs/tests/NoForall.hs	mhs-tests	11	1	g10			NoForall.ref	ok	4.3	0	same	0.003	595130		
+mhs/tests/ParseInd.hs	mhs-tests	18	1	g10			ParseInd.ref	ok	3.9	0	same	0.004	600837		
+mhs/tests/PatBind.hs	mhs-tests	21	1	g10			PatBind.ref	ok	3.9	0	same	0.003	607094		
+mhs/tests/Read.hs	mhs-tests	66	1	gbase			Read.ref	ok	4.5	1	diff	0.004	684320		Main.ghc: Prelude.read: no parse 
+mhs/tests/RtsExn.hs	mhs-tests	7	1	gbase			RtsExn.ref	ok	4.3	0	same	0.003	596737		
+mhs/tests/Sieve.hs	mhs-tests	16	1	g10			Sieve.ref	ok	4.6	0	same	0.007	3677835		
+mhs/tests/ThrowMVar.hs	mhs-tests	18	1	gbase			ThrowMVar.ref	ok	3.7	0	same	0.005	603880		
+mhs/tests/ThrowToSync.hs	mhs-tests	87	1	gbase			ThrowToSync.ref	ok	4.1	0	diff	0.009	711575		
+mhs/tests/Typeable.hs	mhs-tests	20	1	gbase			Typeable.ref	ok	3.3	0	same	0.004	782921		
+mhs/tests/Weak.hs	mhs-tests	31	1	gbase			Weak.ref	ok	4.1	0	diff	0.003	1040973		
+nofib/gc/cacheprof	nofib-2025	2153	3	g10		cacheprof.stdin	cacheprof.stdout	ok	11.8	0	diff	0.07	92484395		
+nofib/gc/constraints	nofib-2025	272	1	g10	6		constraints.faststdout	ok	6.2	0	same	3.79	4947527067		
+nofib/gc/fulsom	nofib-2025	1341	12	gbase	7		fulsom.faststdout	ok	9.3	0	same-ws	1.696	1723703085		
+nofib/gc/lcss	nofib-2025	60	1	g10	1 2 2000 1000 1001 2000		lcss.faststdout	ok	5.6	0	same	2.895	4742233145		
+nofib/gc/linear	nofib-2025	2139	11	g10	14		linear.stdout	ok	9.7	0	same	8.343	11372082276		
+nofib/gc/power	nofib-2025	141	1	g10	50		power.faststdout	ok	5.7	0	same	2.561	3981295547		
+nofib/gc/spellcheck	nofib-2025	16	1	gbase	words input		spellcheck.stdout	ok	3.9	0	same	6.474	9251318971		
+nofib/gc/treejoin	nofib-2025	121	1	g10	27000.1 27000.2		treejoin.stdout	ok	3.6	0	same	1.206	1633217290		
+nofib/imaginary/exp3_8	nofib-2025	93	1	g10	8		exp3_8.faststdout	ok	4.1	0	same	0.263	772176749		
+nofib/imaginary/integrate	nofib-2025	43	1	g10	False 100000		integrate.stdout	ok	4.9	0	same	4.787	8201508453		
+nofib/imaginary/paraffins	nofib-2025	92	1	g10	11		paraffins.faststdout	ok	4.1	0	same	1.001	1152358262		
+nofib/imaginary/primes	nofib-2025	16	1	g10	400		primes.faststdout	ok	3.4	0	same	2.034	3325421675		
+nofib/imaginary/queens	nofib-2025	19	1	g10	12		queens.faststdout	ok	3.9	0	same	11.51	30799791766		
+nofib/imaginary/rfib	nofib-2025	12	1	g10	35		rfib.faststdout	ok	3.4	0	same	9.6	20359780017		
+nofib/imaginary/tak	nofib-2025	16	1	g10	31 16 8		tak.faststdout	ok	3.2	0	same	5.468	15229527071		
+nofib/imaginary/wheel-sieve1	nofib-2025	49	1	g10	3000		wheel-sieve1.faststdout	ok	5.2	0	same	2.664	5675438452		
+nofib/imaginary/wheel-sieve2	nofib-2025	53	1	g10	700		wheel-sieve2.faststdout	ok	4.6	0	same	1.546	2875041814		
+nofib/imaginary/x2n1	nofib-2025	35	1	g10	1000000		x2n1.faststdout	ok	3.5	0	same	19.229	47669001225		
+nofib/real/eff/S	nofib-2025	19	1	gbase			S.stdout	ok	2.7	0	same	7.71	15165841161		
+nofib/real/maillist	nofib-2025	176	1	gbase	runtime_files/fast		maillist.faststdout	ok	2.7	0	same	1.072	506126449		
+nofib/real/scs	nofib-2025	589	7	g10	runtime_files/inverter 345 10n 2u 1		scs.stdout	ok	5.9	0	same	2.366	2749469316		
+nofib/shootout/pidigits	nofib-2025	23	1	g10	3500		pidigits.faststdout	ok	3.1	0	same	0.313	784231443		
+nofib/smp/callback001	nofib-2025	43	1	gbase	100		callback001.faststdout	fail	3.9					undefined reference to 'callC' / collect2: error: ld returned 1 exit status / ghc-9.4.7: `x86_64-linux-gnu-gcc' failed in phase `Linker'. (Exit code: 1)	
+nofib/smp/threads001	nofib-2025	26	1	gbase	1000000		threads001.stdout	ok	2.4	0	same	0.922	1253980175		
+nofib/spectral/ansi	nofib-2025	128	1	g10	150		ansi.faststdout	ok	4.4	0	same	0.459	823402841		
+nofib/spectral/atom	nofib-2025	188	1	g10	1000		atom.faststdout	ok	4.4	0	same	0.852	1270856501		
+nofib/spectral/boyer	nofib-2025	1021	1	g10	2		boyer.faststdout	ok	4.2	0	same	1.079	2200791101		
+nofib/spectral/boyer2	nofib-2025	731	5	g10	60		boyer2.faststdout	ok	4.1	0	same	1.046	2135173192		
+nofib/spectral/cichelli	nofib-2025	233	4	g10	6		cichelli.faststdout	ok	4.1	0	same	1.196	3609113405		
+nofib/spectral/circsim	nofib-2025	671	1	g10	8 4		circsim.faststdout	ok	3.7	0	same	1.046	1518263374		
+nofib/spectral/clausify	nofib-2025	185	1	g10	1		clausify.faststdout	ok	3.7	0	same	2.037	3650403511		
+nofib/spectral/constraints	nofib-2025	272	1	g10	6		constraints.faststdout	ok	4.2	0	same	2.447	4947481361		
+nofib/spectral/cryptarithm2	nofib-2025	133	1	gbase	30		cryptarithm2.faststdout	ok	3.0	0	same	1.912	4058798877		
+nofib/spectral/cse	nofib-2025	472	2	g10	30000		cse.faststdout	ok	4.1	0	same	0.775	1709554338		
+nofib/spectral/eliza	nofib-2025	273	1	g10	1300	eliza.stdin	eliza.faststdout	ok	3.5	0	same	0.736	2122587735		
+nofib/spectral/exact-reals	nofib-2025	225	1	g10	60		exact-reals.stdout	ok	5.3	0	same	3.016	5150647160		
+nofib/spectral/expert	nofib-2025	525	6	g10	1000	expert.stdin	expert.faststdout	ok	5.0	0	same	0.696	947375173		
+nofib/spectral/fft2	nofib-2025	221	3	g10	70		fft2.stdout	ok	4.2	0	same	1.524	2886555609		
+nofib/spectral/gcd	nofib-2025	60	1	g10	400		gcd.faststdout	ok	3.9	0	same	0.615	1630507455		
+nofib/spectral/lcss	nofib-2025	61	1	g10	1 2 60 30 31 90		lcss.faststdout	ok	3.2	0	same	0.836	1657398305		
+nofib/spectral/life	nofib-2025	55	1	gbase	15		life.faststdout	ok	3.0	0	same	0.552	760892088		
+nofib/spectral/mate	nofib-2025	425	5	g10	runtime_files/heathcote3.prob		mate.faststdout	ok	6.3	0	same	0.526	905918946		
+nofib/spectral/multiplier	nofib-2025	501	1	g10	32		multiplier.faststdout	ok	4.7	0	same	1.43	2683882432		
+nofib/spectral/pretty	nofib-2025	265	3	g10			pretty.stdout	ok	4.0	0	same	0.011	755659		
+nofib/spectral/primetest	nofib-2025	306	4	g10		primetest.faststdin	primetest.faststdout	ok	4.7	0	same	0.445	867177792		
+nofib/spectral/rewrite	nofib-2025	636	1	g10	20000		rewrite.stdout	ok	4.7	0	same	1.235	2695204361		
+nofib/spectral/scc	nofib-2025	100	2	g10			scc.stdout	ok	3.6	0	same	0.004	654867		
+nofib/spectral/sphere	nofib-2025	453	1	g10	30		sphere.faststdout	ok	6.6	0	same	4.448	7424330256		
+nofib/spectral/treejoin	nofib-2025	122	1	g10	runtime_files/1500.1 runtime_files/1500.2		treejoin.stdout	ok	3.6	0	same	2.614	4428411190		

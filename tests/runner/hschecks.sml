@@ -225,7 +225,8 @@ struct
 
   fun oraclesText () =
     let
-      val ls = Expectations.read (HsOracles.oraclesFile ())
+      (* the 2010 oracles' lines are tests/runner/hsoracles2010.sml's *)
+      val ls = List.filter (not o HsOracles2010.owns) (Expectations.read (HsOracles.oraclesFile ()))
       val conf = HsCorpus.rows "conformance.tsv"
       val cands = ids (HsCorpus.rows "candidates.tsv")
       val accept = HsCorpus.rows "accept.tsv"

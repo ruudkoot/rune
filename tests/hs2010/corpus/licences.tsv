@@ -1,0 +1,91 @@
+id	set	variant	licence	stated	vendor	note	notice
+ghc/deSugar/should_run/T18151.hs	ghc-h2010	g10	The Glasgow Haskell Compiler License (BSD-3)	ghc/testsuite/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	ghc/testsuite/LICENSE
+ghc/simplCore/should_run/runST.hs	ghc-h2010	gbase	The Glasgow Haskell Compiler License (BSD-3)	ghc/testsuite/LICENSE	outside	built over base only: not a program of the Report's library	
+mhs/tests/Arith.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/Arith64.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/BindPat.hs	mhs-tests	gbase	Apache-2.0	MicroHs/LICENSE	outside	built over base only: not a program of the Report's library	
+mhs/tests/Builder.hs	mhs-tests	gbase	Apache-2.0	MicroHs/LICENSE	outside	built over base only: not a program of the Report's library	
+mhs/tests/ByteStringIO.hs	mhs-tests	gbase	Apache-2.0	MicroHs/LICENSE	outside	built over base only: not a program of the Report's library	
+mhs/tests/Case.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/DArith.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/Do.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/Eq.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/Eq1.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/Errno.hs	mhs-tests	gbase	Apache-2.0	MicroHs/LICENSE	outside	built over base only: not a program of the Report's library	
+mhs/tests/FArith.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/Fac.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/Floating.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/ForeignPtr.hs	mhs-tests	gbase	Apache-2.0	MicroHs/LICENSE	outside	built over base only: not a program of the Report's library	
+mhs/tests/Fork.hs	mhs-tests	gbase	Apache-2.0	MicroHs/LICENSE	outside	built over base only: not a program of the Report's library	
+mhs/tests/Guard.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/Hello.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/ImpMet.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/Infer.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/Infix.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/InterleaveIO.hs	mhs-tests	gbase	Apache-2.0	MicroHs/LICENSE	outside	built over base only: not a program of the Report's library	
+mhs/tests/LazyST.hs	mhs-tests	gbase	Apache-2.0	MicroHs/LICENSE	outside	its output is not what its suite expects under ghc -O0 (diff, exit 0)	
+mhs/tests/ListCompr.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/ListTest.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/LitMatch.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/LocalFix.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/MVar.hs	mhs-tests	gbase	Apache-2.0	MicroHs/LICENSE	outside	its output is not what its suite expects under ghc -O0 (diff, exit 0)	
+mhs/tests/MutRec.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/NoForall.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/ParseInd.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/PatBind.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/Read.hs	mhs-tests	gbase	Apache-2.0	MicroHs/LICENSE	outside	its output is not what its suite expects under ghc -O0 (diff, exit 1)	
+mhs/tests/RtsExn.hs	mhs-tests	gbase	Apache-2.0	MicroHs/LICENSE	outside	built over base only: not a program of the Report's library	
+mhs/tests/Sieve.hs	mhs-tests	g10	Apache-2.0	MicroHs/LICENSE	vendored	a new 2010 run program: built with g10, right, in at most 1 s under ghc -O0; its file names no other holder	MicroHs/LICENSE
+mhs/tests/ThrowMVar.hs	mhs-tests	gbase	Apache-2.0	MicroHs/LICENSE	outside	built over base only: not a program of the Report's library	
+mhs/tests/ThrowToSync.hs	mhs-tests	gbase	Apache-2.0	MicroHs/LICENSE	outside	its output is not what its suite expects under ghc -O0 (diff, exit 0)	
+mhs/tests/Typeable.hs	mhs-tests	gbase	Apache-2.0	MicroHs/LICENSE	outside	built over base only: not a program of the Report's library	
+mhs/tests/Weak.hs	mhs-tests	gbase	Apache-2.0	MicroHs/LICENSE	outside	its output is not what its suite expects under ghc -O0 (diff, exit 0)	
+nofib/gc/cacheprof	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	its output is not what its suite expects under ghc -O0 (diff, exit 0)	
+nofib/gc/constraints	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/gc/fulsom	nofib-2025	gbase	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	built over base only: not a program of the Report's library	
+nofib/gc/lcss	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (2.895 s)	
+nofib/gc/linear	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (8.343 s)	
+nofib/gc/power	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (2.561 s)	
+nofib/gc/spellcheck	nofib-2025	gbase	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	built over base only: not a program of the Report's library	
+nofib/gc/treejoin	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (1.206 s)	
+nofib/imaginary/exp3_8	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/imaginary/integrate	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (4.787 s)	
+nofib/imaginary/paraffins	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/imaginary/primes	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/imaginary/queens	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (11.51 s)	
+nofib/imaginary/rfib	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (9.6 s)	
+nofib/imaginary/tak	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (5.468 s)	
+nofib/imaginary/wheel-sieve1	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (2.664 s)	
+nofib/imaginary/wheel-sieve2	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/imaginary/x2n1	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (19.229 s)	
+nofib/real/eff/S	nofib-2025	gbase	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	built over base only: not a program of the Report's library	
+nofib/real/maillist	nofib-2025	gbase	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/real/scs	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (2.366 s)	
+nofib/shootout/pidigits	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/smp/callback001	nofib-2025	gbase	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	not built by ghc -O0	
+nofib/smp/threads001	nofib-2025	gbase	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/ansi	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/atom	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/boyer	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/boyer2	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/cichelli	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (1.196 s)	
+nofib/spectral/circsim	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/clausify	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (2.037 s)	
+nofib/spectral/constraints	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (2.447 s)	
+nofib/spectral/cryptarithm2	nofib-2025	gbase	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	built over base only: not a program of the Report's library	
+nofib/spectral/cse	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/eliza	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/exact-reals	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (3.016 s)	
+nofib/spectral/expert	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/fft2	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (1.524 s)	
+nofib/spectral/gcd	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/lcss	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/life	nofib-2025	gbase	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/mate	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/multiplier	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/pretty	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/primetest	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/rewrite	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/scc	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	in 98's D56 run set as nofib-2019's copy (tests/hs/corpus/vendored/nofib)	
+nofib/spectral/sphere	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (4.448 s)	
+nofib/spectral/treejoin	nofib-2025	g10	none stated: no LICENSE in ghc/nofib, and its README.md is silent		outside	over 1 s under ghc -O0 (2.614 s)	

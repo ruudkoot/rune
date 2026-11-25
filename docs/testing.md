@@ -442,6 +442,38 @@ rhc goes through the same corpus (`tests/runner/hsrhccorpus.sml`, `hslazyports.s
   `hs-rhc-corpus stale`, `hs-lazy-ports calendar-lazy`; `RUNE_HS_RHC`, `RUNE_HS_RUNEVM`, `RUNE_HS_RHC_TXT` and
   `RUNE_HS_LAZY_PORTS` stand in other tools and files.
 
+### rhc's Haskell 2010 oracles and corpus
+
+The judges of rhc's 2010 mode and their corpus (the haskell2010 roadmap's M2, D39, D40): GHC 9.4.7 over a shim of the
+2010 Report's library (g10), GHC's own Haskell2010 over base (gbase), GHC's default language with each file's
+pragmas (gext), MicroHs, Hugs and nhc98, as E8 asked them, on E8's 3,217 candidates in seven sets
+(`tests/hs/oracles/README.md`, *The 2010 oracles*; `tests/hs2010/corpus/README.md`). The candidates are read through
+`RUNE_HS_CORPUS` (the 98 corpus's trees, with GHC's nofib submodule and MicroHs's tree) and `RUNE_HS_HACKAGE` (the
+unpacked packages of `tests/hs2010/corpus/hackage.tsv`), and pass the untrusted-code filter before any compiler sees
+them (`tests/runner/hsfilter.sml`: Template Haskell, quasi-quotes, CPP, `capi` and options that name a
+preprocessor, a plugin or an option file keep a candidate out; ANN, INCLUDE and OPTIONS pragmas are blanked in every
+copy; by D40's B the CPP rule is a switch, `HsFilter.cppAdmitted`, which M20 turns to admit CPP without `#include`).
+The family is `tests/runner/hsfilter.sml` and `hsoracles2010.sml`:
+
+- `hs-oracles2010/ORACLE/judge-SET`, `probes`, `run` and `@stale`, with `@ghc2010-shim` and `@mhs2010-cache` first,
+  in the tier `nightly`, each needing its oracle's capability and its set's trees (`hs2010-corpus`, `hs-corpus`,
+  `hs-hackage`): they reproduce E8's verdict of each candidate in each oracle it asked (label `h10`, gext's `h10ext`),
+  the 23 probes of g10's limits held to the Report (`h10probe`), and the run tier held to E8's record (`h10run`). A
+  difference is a failure unless a line of `tests/hs/oracles.txt` explains it, its reason beginning with the outcome
+  (`g10 | limits/L04_show_record::h10probe | HOST-BUG | output: ...`); `@stale` fails a line that explains no failure
+  of a job that ran. Their output is under `RUNE_HS2010_OUT` (the run's `hs-oracles2010/` if unset).
+- `hs2010-corpus/data` (in `check` and `quick`): the data is whole and agrees with itself, the run tier's licences
+  are surveyed and only its 25 new 2010 programs are vendored, under their trees' `LICENSE` files, nothing else lands
+  under `tests/hs2010/corpus/`, and the 2010 lines of `tests/hs/oracles.txt` agree with the record, every departure
+  E8 recorded on a probe among them. `hs2010-corpus/faults` (in `check`): the filter on planted text, the switch's
+  two ways and a cabal file's `-optP` flags, and the filter before a fake GHC, which must see no Template Haskell, no
+  `#include` and no ANN pragma. Nightly, `hs2010-corpus/filter` runs the filter over the trees and holds it to E8's
+  167, and `hs2010-corpus/vendored` holds the vendored programs to the trees' bytes.
+
+A job is also a command: `bin/rune-test hs-oracle2010 judge g10 ghc-h2010`, `hs-oracle2010 probes hugs`,
+`hs-oracle2010 run gbase`, `hs-oracle2010 stale g10`, `hs-oracle2010 ghc-shim`, `hs-oracle2010 mhs-cache`;
+`RUNE_HS_ONLY` narrows a job to the candidates its glob names.
+
 ## Generated functor programs
 
 `bin/rune-functor-gen` (`tests/runner/functorgen.sml`) draws programs of
