@@ -1,0 +1,33 @@
+- this is a draft roadmap to add a concurrent runtime to rune
+  - review this roadmap critically, carefully and object where you disagree
+- this is a large roadmap and contains several key deliveries
+  - concurrency/threading support added to the runtime
+  - asynchronous io support added to the runtime
+  - a concurrent garbage collector in the runtime
+  - the bytecode and/or intermediate representations updated to expose the runtime features
+  - higher-level concurrency libraries added and examples programs created to demonstrate them
+- we are only targeting modern operating systems and hardware for this runtime:
+  - linux with io_uring and windows 11
+  - intel core 2 and amd zen
+  - older operating systems and cpus can stay on the current non-concurrent runtime
+  - you decide what the right architecture and code layout/sharing should be to support both the concurrent and current/non-concurrent runtimes
+- for the runtime concurrency model i want lightweight green threads scheduled by the runtime on one os thread per core/hyperthread
+  - please take care of numa and the memory hierarchy. modern systems are complex: multiple sockets with different latencies between them. memory connected to sockets can have different latency from each socket. cpu have different levels of groupings between the cores in them with different access times to each other's caches (l3/l2/l1) and differing amount of sharing between each cache level and core grouping. cpus can have hyperthreads that share execution resources and contend between them but may have very low latency betweeen the hyperthreads on one core.
+  - we want to support systems with very high core counts (512 or up) which still scaling down to single core systems.
+- the runtime primitives exposed may only need to be very simple (e.g. some atomic primitives like compare-and-exchange and create/destroy/schedule fiber).
+  - various kinds of higher level concurrency libraries supporting different concurrency models can and should then be build on the small set of primitives in sml97. though there should be little to no performance loss when doing so.
+- we want a concurrent/parallel garbage collector
+  - we may consider two garabage collectors like we did for the current run-time if the a single one cannot be optimal for both low/no-pause and high-throughput simultaneously
+  - some ideas on a 3rd generation collector are left at /home/ruud/rune/docs/plans/garbage-collector-v3.md (though they are just that - ideas and not a roadmap draft like this document)
+  - carefully consider how many nurseries we need (one per hyperthread, one per core, shared accross cores?) and how many heaps or even level of heaps (one for the whole vm, one per numa node, one per core group if not all cores on the cpu are equally connected to each other?)
+- the runtime should have and asynchronous io system for disk and network io that works both with with the windows nt and linux io_uring async io
+- at the library level this can be exposed through an extension in the basis library.
+  - the current sml97 library is for demonstration purposes only - we want to demonstrate what the runtime is capable of and that we an support all reasonable concurrency models, but building the final higher-level concurrency libraries will be done in a follow-up roadmap
+- please do a thorough literature review and review existing runtime implementation. of particular interest may be:
+  - ghc
+  - ocaml 5
+  - rust tokio
+  - libuv
+  - some implementation available under /home/ruud/reference
+- everything in this roadmap should be based on prototypes, simulations and benchmarks not speculation
+  - the wsl2 machine we are running on is virtualized and does not pin vCPUs to physical cores. be careful if you benchmark there. the windows host you can access from wsl2 may be more suitable
