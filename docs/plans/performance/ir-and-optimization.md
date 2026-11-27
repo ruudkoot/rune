@@ -1,0 +1,33 @@
+- this is a draft roadmap to redesign/complete the intermediate representation in rune and rhc
+  - review this roadmap critically, carefully and object where you disagree
+  - during the rhc/haskell98 we found it necessary to build and tune several variants of optimization passes and runtime mechanisms before deciding on the final version to take. we can assume this appraoch here from the outset: drafting this roadmap means planning all the variants that will need to be build and tuned during the implementation phase following roadmap creation. during roadmap creation you should also run experiments/simulations/benchmarks to constrain the design space to viable candidates.
+- this roadmap is large and has several deliverable
+  - a reconsideration of all the intermediate representations in both rune and rhc in light of the optimization passes that we want to run
+  - addition of all optimization passes required to have rune and rhc generate best-in-class code with best-in-class performance
+  - addition of a state-of-the-art native code generation back-end in addition to the current jit compiler
+- for the intermediate representations
+  - consider the pipelines of existing functional compilers and the literature to identify candidate ir pipelines that will need to be build and 
+  - on tricky aspect during optimization passes are effects. consider if we should move from typed intermediate representations to IRs with a type-and-effect system
+  - do consider that many compiler may have chosen their IRs relatively early in development and then been frozen. ruen does not necessarily want to emulate any one compiler. we want to find the most optimal pipeline and use that.
+  - you should consider separate pipelines/irs/optimizations for the separate and whole-program compilation modes so whole program compilation can produce the fastest possible code. and what the common prefix can be in that case. we may even need separte pipelines for the native and jit targets
+- research the other implemenations and literature for the optimization passes we should have at each level
+  - higher-level passes at the higher-level irs (subexpression elimination, dead code elimination, expression simplification, strictness, rewrite rules, data flow analysis, control-flow analysis, partial evalaution, etc.)
+  - also low-level passes like register allocation, data flow, control flow, vectorization, peephole optimziation, instruction selection, etc. at the low-level irs / machine code generation
+  - some optimization passes are complex enough that they are better done as their own roadmap with literature analysis, comparison of implementatios, benchmarking/simulation and tuning. be honest about this. e.g propose to do a basic version now to and the state-of-the-art version as a separate roadmap. the most important part of this roadmap is to get the intermediate representation pipeline right so we can do all the state-of-the-art optimization with them.
+  - we should measure the cost/benefit of each optimization pass to determing if they go in O1/O2/O3
+    - O1: low cost / high gain
+    - O2: balanced cost / gain
+    - O3: high cost / low gain
+- for native code generation please implement all the required machinery (assembly, linking, object file format) as rune/sml97 libraries under lib. no external dependencies.
+- use the sml and nofib benchmarks as well as compilation of rune, mlton, and hol4 to identify where rune and rhc are still lacking compared to the other sml compilers and ghc (e.g. by analyzing and comparing the generated intermediate represenations)
+- please perform a thorough literature review and review of current state-of-the-art implemenations and their intermediate representation pipelines and passes. suggestions to consider are:
+  - mlton
+  - ocaml 5 and flambda2
+  - ghc and grin
+  - llvm
+  - gcc
+  - some implementations available at /home/ruud/reference
+- future plan to take into account (but not part of this roadmap)
+  - rune is currently strict sml97. we will move this to rml: ML compiler with standard ml '97 and ocaml language modes
+  - rune will diverge from strict sml97 and incorporate soem successor ml and haskell language features (rank-n types, higher-kinded types, existential types, lazyness annotations)
+  - we will add a coq/lean compiler to prototype dependent types and may extend rune itself with dependent types after the rune/rml split

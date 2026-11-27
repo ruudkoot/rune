@@ -1,0 +1,12 @@
+- this is a draft roadmap to add a haskell 2010 support to rhc
+  - please review this draft carefully and object if you disabree with anything
+- rhc needs to support both haskell98 and haskell2010 with a --language=haskell98 or --language=haskell2010 (default to 2010 after the roadmap is complete)
+- the specification can be found at https://www.haskell.org/onlinereport/haskell2010/
+  - ghc may be able to be used as a reference as well but be careful with it like for haskell 98 as it does not always agree with the report even in strict haskell 2010 mode. rhc aims to follow the report as closely as possible.
+  - the haskell98 mode needs to stay haskell 98 as per its report. in case we made an arbitrary choice during the haskell98 roadmap in rhc because the haskell 98 report was ambiguous or underspecified you may bring rhc in haskell98 mode in line with haskell 2010 (reading the haskell 2010 report as clarifying what the haskell 98 should have said, but be very explicit in the roadmap that you will be doing so, so i can review)
+- haskell 2010 has a different standard library than haskell 98. please store the haskell 2010 prelude under share/rhc/haskell2010 to keep it distinct from share/rhc/haskell98. --language= also selects the right prelude.
+- in addition to the language extensions required by the haskell 2010 reports also survey ghc's documentation and implementation for further language extensions
+  - we aim to implement as many of the extension as possible without adding outsidein(x) - that will require a full roadmap on its own - or that are highly ghc specific or require extensive runtime support
+  - classify each extension by area (parsing, desugaring, type system, runtime, ..), implementation complexity, if it can and should be implemented on the haskell 98 type system, i.e. before we have outsidein(x) and a recommendation if we should implement as part of this roadmap or defer to a future roadmap.
+  - specifications are ghc's documenation and implemenation, possibly implementations of some of the other haskell compiler and the academic literature
+- design a good way to track language extensions during rhc combination as we will have language pragma's in the source code (no necesailty corresponding one-to-one to how rhc will keep track of language flags), compiler flags on the command line, etc.
